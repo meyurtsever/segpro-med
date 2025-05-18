@@ -15450,3 +15450,715 @@ ValueError: Base image shape (320, 280, 3) and segmentation shape (512, 20) don'
 2025-05-18 23:57:34,880 - segmed_pro - INFO - Using WindowWidth from metadata: 1361.0
 2025-05-18 23:57:34,894 - segmed_pro - INFO - Applied segmentation overlay to slice 0
 2025-05-18 23:57:34,904 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:00:41,429 - segmed_pro - INFO - Starting SegMed-Pro application
+2025-05-19 00:00:41,429 - segmed_pro - INFO - Setting up DICOM pixel data handlers
+2025-05-19 00:00:41,430 - segmed_pro - INFO - Added GDCM handler
+2025-05-19 00:00:41,430 - segmed_pro - INFO - Added pylibjpeg handler
+2025-05-19 00:00:41,430 - segmed_pro - INFO - Added Pillow handler
+2025-05-19 00:00:41,430 - segmed_pro - INFO - Added NumPy handler
+2025-05-19 00:00:41,431 - segmed_pro - INFO - Configured DICOM handlers: gdcm, pylibjpeg, pillow, numpy
+2025-05-19 00:00:41,431 - segmed_pro - INFO - Initialized DICOM handlers: 4 handlers available
+2025-05-19 00:00:45,258 - segmed_pro - INFO - Loading data: file=None, directory=C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+2025-05-19 00:00:45,258 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+2025-05-19 00:00:45,259 - segmed_pro - INFO - Found 20 DICOM files
+2025-05-19 00:00:45,259 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-05-19 00:00:45,272 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-05-19 00:00:45,287 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-05-19 00:00:45,301 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-05-19 00:00:45,314 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-05-19 00:00:45,327 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-05-19 00:00:45,340 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-05-19 00:00:45,355 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-05-19 00:00:45,369 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-05-19 00:00:45,383 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341775486333211_MR.dcm
+2025-05-19 00:00:45,398 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-05-19 00:00:45,411 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-05-19 00:00:45,426 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-05-19 00:00:45,439 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-05-19 00:00:45,453 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-05-19 00:00:45,467 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-05-19 00:00:45,482 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-05-19 00:00:45,498 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
+2025-05-19 00:00:45,512 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm
+2025-05-19 00:00:45,528 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm
+2025-05-19 00:00:45,542 - segmed_pro - INFO - Successfully read 20 DICOM files
+2025-05-19 00:00:45,542 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-19 00:00:45,623 - segmed_pro - INFO - Created 3D volume with shape (20, 512, 400)
+2025-05-19 00:00:45,639 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-19 00:00:45,640 - segmed_pro - INFO - Using WindowCenter from metadata: 649.0
+2025-05-19 00:00:45,640 - segmed_pro - INFO - Using WindowWidth from metadata: 1361.0
+2025-05-19 00:00:45,800 - segmed_pro - INFO - Using WindowCenter from metadata: 649.0
+2025-05-19 00:00:45,801 - segmed_pro - INFO - Using WindowWidth from metadata: 1361.0
+2025-05-19 00:04:57,575 - segmed_pro - INFO - Starting SegMed-Pro application
+2025-05-19 00:04:57,575 - segmed_pro - INFO - Setting up DICOM pixel data handlers
+2025-05-19 00:04:57,575 - segmed_pro - INFO - Added GDCM handler
+2025-05-19 00:04:57,576 - segmed_pro - INFO - Added pylibjpeg handler
+2025-05-19 00:04:57,576 - segmed_pro - INFO - Added Pillow handler
+2025-05-19 00:04:57,576 - segmed_pro - INFO - Added NumPy handler
+2025-05-19 00:04:57,576 - segmed_pro - INFO - Configured DICOM handlers: gdcm, pylibjpeg, pillow, numpy
+2025-05-19 00:04:57,576 - segmed_pro - INFO - Initialized DICOM handlers: 4 handlers available
+2025-05-19 00:05:02,890 - segmed_pro - INFO - Loading data: file=C:\Users\Yurtsever\AppData\Local\Temp\gradio\970d1d44e1371617c931f40f7aa4010718259bfe4adc21a373a9ad6708204acd\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm, directory=
+2025-05-19 00:05:02,891 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\AppData\Local\Temp\gradio\970d1d44e1371617c931f40f7aa4010718259bfe4adc21a373a9ad6708204acd\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-05-19 00:05:02,891 - segmed_pro - INFO - Found 1 DICOM files
+2025-05-19 00:05:02,891 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\970d1d44e1371617c931f40f7aa4010718259bfe4adc21a373a9ad6708204acd\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-05-19 00:05:02,914 - segmed_pro - INFO - Successfully read 1 DICOM files
+2025-05-19 00:05:02,914 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-19 00:05:02,919 - segmed_pro - INFO - Created 3D volume with shape (1, 512, 400)
+2025-05-19 00:05:02,935 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-19 00:05:02,935 - segmed_pro - INFO - Using WindowCenter from metadata: 495.0
+2025-05-19 00:05:02,935 - segmed_pro - INFO - Using WindowWidth from metadata: 1062.0
+2025-05-19 00:05:03,121 - segmed_pro - INFO - Using WindowCenter from metadata: 495.0
+2025-05-19 00:05:03,121 - segmed_pro - INFO - Using WindowWidth from metadata: 1062.0
+2025-05-19 00:07:04,776 - segmed_pro - INFO - Direct loading segmentation file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\0e082623c0d16686258bde60a87faa2d6ee24a0afa97bec097d6635d350dc7cd\Untitled.nii
+2025-05-19 00:07:04,797 - segmed_pro - INFO - Original segmentation dimensions: (400, 512, 20)
+2025-05-19 00:07:04,798 - segmed_pro - INFO - DICOM data dimensions: (1, 512, 400)
+2025-05-19 00:07:04,798 - segmed_pro - WARNING - Dimensions don't match exactly. Using original segmentation data.
+2025-05-19 00:07:04,801 - segmed_pro - ERROR - Error in direct segmentation loading: Base image shape (512, 400, 3) and segmentation shape (512, 20) don't match
+2025-05-19 00:07:04,809 - segmed_pro - ERROR - Traceback (most recent call last):
+  File "C:\Users\Yurtsever\Downloads\segpro-med\app.py", line 1154, in direct_load_segmentation
+    overlaid_img = overlay_segmentation(
+                   ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Yurtsever\Downloads\segpro-med\utils\visualization.py", line 270, in overlay_segmentation
+    raise ValueError(f"Base image shape {base_img.shape} and segmentation shape {seg_slice.shape} don't match")
+ValueError: Base image shape (512, 400, 3) and segmentation shape (512, 20) don't match
+
+2025-05-19 00:07:53,464 - segmed_pro - INFO - Loading data: file=C:\Users\Yurtsever\AppData\Local\Temp\gradio\970d1d44e1371617c931f40f7aa4010718259bfe4adc21a373a9ad6708204acd\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm, directory=C:\Users\Yurtsever\Downloads\segpro-med\cvm_t1
+2025-05-19 00:07:53,464 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_t1
+2025-05-19 00:07:53,466 - segmed_pro - INFO - Found 20 DICOM files
+2025-05-19 00:07:53,466 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_t1\1.3.12.2.1107.5.2.18.42451.2020030102323072522500447_MR.dcm
+2025-05-19 00:07:53,539 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_t1\1.3.12.2.1107.5.2.18.42451.2020030102323072667600448_MR.dcm
+2025-05-19 00:07:53,567 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_t1\1.3.12.2.1107.5.2.18.42451.2020030102323072755300449_MR.dcm
+2025-05-19 00:07:53,589 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_t1\1.3.12.2.1107.5.2.18.42451.2020030102323073176000452_MR.dcm
+2025-05-19 00:07:53,610 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_t1\1.3.12.2.1107.5.2.18.42451.2020030102323073386400456_MR.dcm
+2025-05-19 00:07:53,631 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_t1\1.3.12.2.1107.5.2.18.42451.2020030102323073438100458_MR.dcm
+2025-05-19 00:07:53,653 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_t1\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-19 00:07:53,674 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_t1\1.3.12.2.1107.5.2.18.42451.2020030102323073940700460_MR.dcm
+2025-05-19 00:07:53,696 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_t1\1.3.12.2.1107.5.2.18.42451.2020030102323074569200461_MR.dcm
+2025-05-19 00:07:53,716 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_t1\1.3.12.2.1107.5.2.18.42451.2020030102323075223800462_MR.dcm
+2025-05-19 00:07:53,737 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_t1\1.3.12.2.1107.5.2.18.42451.2020030102323077320800465_MR.dcm
+2025-05-19 00:07:53,758 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_t1\1.3.12.2.1107.5.2.18.42451.2020030102323088932100469_MR.dcm
+2025-05-19 00:07:53,782 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_t1\1.3.12.2.1107.5.2.18.42451.2020030102323121371100474_MR.dcm
+2025-05-19 00:07:53,803 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_t1\1.3.12.2.1107.5.2.18.42451.2020030102323121590000475_MR.dcm
+2025-05-19 00:07:53,823 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_t1\1.3.12.2.1107.5.2.18.42451.2020030102323122815700480_MR.dcm
+2025-05-19 00:07:53,844 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_t1\1.3.12.2.1107.5.2.18.42451.2020030102323122836100481_MR.dcm
+2025-05-19 00:07:53,865 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_t1\1.3.12.2.1107.5.2.18.42451.2020030102323123416700488_MR.dcm
+2025-05-19 00:07:53,885 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_t1\1.3.12.2.1107.5.2.18.42451.2020030102323123568000489_MR.dcm
+2025-05-19 00:07:53,905 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_t1\1.3.12.2.1107.5.2.18.42451.2020030102323123800300492_MR.dcm
+2025-05-19 00:07:53,925 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_t1\1.3.12.2.1107.5.2.18.42451.2020030102323124066700493_MR.dcm
+2025-05-19 00:07:53,945 - segmed_pro - INFO - Successfully read 20 DICOM files
+2025-05-19 00:07:53,945 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-19 00:07:53,963 - segmed_pro - INFO - Created 3D volume with shape (20, 320, 280)
+2025-05-19 00:07:53,984 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-19 00:07:53,986 - segmed_pro - INFO - Using WindowCenter from metadata: 477.0
+2025-05-19 00:07:53,986 - segmed_pro - INFO - Using WindowWidth from metadata: 1012.0
+2025-05-19 00:07:54,202 - segmed_pro - INFO - Using WindowCenter from metadata: 477.0
+2025-05-19 00:07:54,202 - segmed_pro - INFO - Using WindowWidth from metadata: 1012.0
+2025-05-19 00:07:59,727 - segmed_pro - INFO - Direct loading segmentation file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\0e082623c0d16686258bde60a87faa2d6ee24a0afa97bec097d6635d350dc7cd\Untitled.nii
+2025-05-19 00:07:59,758 - segmed_pro - INFO - Original segmentation dimensions: (400, 512, 20)
+2025-05-19 00:07:59,759 - segmed_pro - INFO - DICOM data dimensions: (20, 320, 280)
+2025-05-19 00:07:59,759 - segmed_pro - WARNING - Dimensions don't match exactly. Using original segmentation data.
+2025-05-19 00:07:59,765 - segmed_pro - ERROR - Error in direct segmentation loading: Base image shape (320, 280, 3) and segmentation shape (512, 20) don't match
+2025-05-19 00:07:59,770 - segmed_pro - ERROR - Traceback (most recent call last):
+  File "C:\Users\Yurtsever\Downloads\segpro-med\app.py", line 1154, in direct_load_segmentation
+    overlaid_img = overlay_segmentation(
+                   ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Yurtsever\Downloads\segpro-med\utils\visualization.py", line 270, in overlay_segmentation
+    raise ValueError(f"Base image shape {base_img.shape} and segmentation shape {seg_slice.shape} don't match")
+ValueError: Base image shape (320, 280, 3) and segmentation shape (512, 20) don't match
+
+2025-05-19 00:10:57,072 - segmed_pro - INFO - Starting SegMed-Pro application
+2025-05-19 00:10:57,073 - segmed_pro - INFO - Setting up DICOM pixel data handlers
+2025-05-19 00:10:57,073 - segmed_pro - INFO - Added GDCM handler
+2025-05-19 00:10:57,073 - segmed_pro - INFO - Added pylibjpeg handler
+2025-05-19 00:10:57,073 - segmed_pro - INFO - Added Pillow handler
+2025-05-19 00:10:57,073 - segmed_pro - INFO - Added NumPy handler
+2025-05-19 00:10:57,074 - segmed_pro - INFO - Configured DICOM handlers: gdcm, pylibjpeg, pillow, numpy
+2025-05-19 00:10:57,074 - segmed_pro - INFO - Initialized DICOM handlers: 4 handlers available
+2025-05-19 00:11:09,565 - segmed_pro - INFO - Loading data: file=None, directory=C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+
+2025-05-19 00:11:09,566 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+
+2025-05-19 00:11:09,587 - segmed_pro - ERROR - Exception in load_data: No DICOM files found in directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+
+2025-05-19 00:11:09,587 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "C:\Users\Yurtsever\Downloads\segpro-med\utils\debug_utils.py", line 42, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Yurtsever\Downloads\segpro-med\app.py", line 335, in load_data
+    self.current_data, self.current_metadata, self.file_list = load_dicom_series(path)
+                                                               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Yurtsever\Downloads\segpro-med\utils\dicom_utils.py", line 220, in load_dicom_series
+    raise ValueError(f"No DICOM files found in directory: {directory}")
+ValueError: No DICOM files found in directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+
+
+2025-05-19 00:11:11,560 - segmed_pro - INFO - Loading data: file=None, directory=C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+
+2025-05-19 00:11:11,561 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+
+2025-05-19 00:11:11,562 - segmed_pro - ERROR - Exception in load_data: No DICOM files found in directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+
+2025-05-19 00:11:11,562 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "C:\Users\Yurtsever\Downloads\segpro-med\utils\debug_utils.py", line 42, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Yurtsever\Downloads\segpro-med\app.py", line 335, in load_data
+    self.current_data, self.current_metadata, self.file_list = load_dicom_series(path)
+                                                               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Yurtsever\Downloads\segpro-med\utils\dicom_utils.py", line 220, in load_dicom_series
+    raise ValueError(f"No DICOM files found in directory: {directory}")
+ValueError: No DICOM files found in directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+
+
+2025-05-19 00:11:12,322 - segmed_pro - INFO - Loading data: file=None, directory=C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+
+2025-05-19 00:11:12,322 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+
+2025-05-19 00:11:12,323 - segmed_pro - ERROR - Exception in load_data: No DICOM files found in directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+
+2025-05-19 00:11:12,323 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "C:\Users\Yurtsever\Downloads\segpro-med\utils\debug_utils.py", line 42, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Yurtsever\Downloads\segpro-med\app.py", line 335, in load_data
+    self.current_data, self.current_metadata, self.file_list = load_dicom_series(path)
+                                                               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Yurtsever\Downloads\segpro-med\utils\dicom_utils.py", line 220, in load_dicom_series
+    raise ValueError(f"No DICOM files found in directory: {directory}")
+ValueError: No DICOM files found in directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+
+
+2025-05-19 00:11:12,942 - segmed_pro - INFO - Loading data: file=None, directory=C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+
+2025-05-19 00:11:12,942 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+
+2025-05-19 00:11:12,942 - segmed_pro - ERROR - Exception in load_data: No DICOM files found in directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+
+2025-05-19 00:11:12,943 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "C:\Users\Yurtsever\Downloads\segpro-med\utils\debug_utils.py", line 42, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Yurtsever\Downloads\segpro-med\app.py", line 335, in load_data
+    self.current_data, self.current_metadata, self.file_list = load_dicom_series(path)
+                                                               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Yurtsever\Downloads\segpro-med\utils\dicom_utils.py", line 220, in load_dicom_series
+    raise ValueError(f"No DICOM files found in directory: {directory}")
+ValueError: No DICOM files found in directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+
+
+2025-05-19 00:11:14,549 - segmed_pro - INFO - Loading data: file=None, directory=C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+2025-05-19 00:11:14,549 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+2025-05-19 00:11:14,549 - segmed_pro - INFO - Found 20 DICOM files
+2025-05-19 00:11:14,550 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-05-19 00:11:14,565 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-05-19 00:11:14,579 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-05-19 00:11:14,593 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-05-19 00:11:14,607 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-05-19 00:11:14,619 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-05-19 00:11:14,633 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-05-19 00:11:14,648 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-05-19 00:11:14,662 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-05-19 00:11:14,676 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341775486333211_MR.dcm
+2025-05-19 00:11:14,690 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-05-19 00:11:14,704 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-05-19 00:11:14,718 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-05-19 00:11:14,732 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-05-19 00:11:14,748 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-05-19 00:11:14,763 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-05-19 00:11:14,778 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-05-19 00:11:14,792 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
+2025-05-19 00:11:14,806 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm
+2025-05-19 00:11:14,821 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm
+2025-05-19 00:11:14,836 - segmed_pro - INFO - Successfully read 20 DICOM files
+2025-05-19 00:11:14,836 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-19 00:11:14,918 - segmed_pro - INFO - Created 3D volume with shape (20, 512, 400)
+2025-05-19 00:11:14,933 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-19 00:11:14,934 - segmed_pro - INFO - Using WindowCenter from metadata: 649.0
+2025-05-19 00:11:14,935 - segmed_pro - INFO - Using WindowWidth from metadata: 1361.0
+2025-05-19 00:11:15,093 - segmed_pro - INFO - Using WindowCenter from metadata: 649.0
+2025-05-19 00:11:15,093 - segmed_pro - INFO - Using WindowWidth from metadata: 1361.0
+2025-05-19 00:12:40,885 - segmed_pro - INFO - Direct loading segmentation file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\0e082623c0d16686258bde60a87faa2d6ee24a0afa97bec097d6635d350dc7cd\Untitled.nii
+2025-05-19 00:12:40,901 - segmed_pro - INFO - Original segmentation dimensions: (400, 512, 20)
+2025-05-19 00:12:40,902 - segmed_pro - INFO - DICOM data dimensions: (20, 512, 400)
+2025-05-19 00:12:40,902 - segmed_pro - INFO - Dimensions match but in different order, performing axis swapping
+2025-05-19 00:12:40,902 - segmed_pro - INFO - After swapping axes: segmentation shape (20, 512, 400)
+2025-05-19 00:12:42,942 - segmed_pro - INFO - Updating slice: value=1, view=Axial
+2025-05-19 00:12:42,942 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-05-19 00:12:42,956 - segmed_pro - INFO - Updated metadata for slice 1
+2025-05-19 00:12:42,956 - segmed_pro - INFO - Using WindowCenter from metadata: 614.0
+2025-05-19 00:12:42,956 - segmed_pro - INFO - Using WindowWidth from metadata: 1287.0
+2025-05-19 00:12:42,965 - segmed_pro - INFO - Applied segmentation overlay to slice 1
+2025-05-19 00:12:42,970 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:12:43,393 - segmed_pro - INFO - Updating slice: value=2, view=Axial
+2025-05-19 00:12:43,393 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-05-19 00:12:43,410 - segmed_pro - INFO - Updated metadata for slice 2
+2025-05-19 00:12:43,411 - segmed_pro - INFO - Using WindowCenter from metadata: 549.0
+2025-05-19 00:12:43,411 - segmed_pro - INFO - Using WindowWidth from metadata: 1168.0
+2025-05-19 00:12:43,420 - segmed_pro - INFO - Applied segmentation overlay to slice 2
+2025-05-19 00:12:43,426 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:12:43,874 - segmed_pro - INFO - Updating slice: value=3, view=Axial
+2025-05-19 00:12:43,874 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-05-19 00:12:43,887 - segmed_pro - INFO - Updated metadata for slice 3
+2025-05-19 00:12:43,888 - segmed_pro - INFO - Using WindowCenter from metadata: 526.0
+2025-05-19 00:12:43,888 - segmed_pro - INFO - Using WindowWidth from metadata: 1128.0
+2025-05-19 00:12:43,897 - segmed_pro - INFO - Applied segmentation overlay to slice 3
+2025-05-19 00:12:43,902 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:12:44,278 - segmed_pro - INFO - Updating slice: value=4, view=Axial
+2025-05-19 00:12:44,278 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-05-19 00:12:44,342 - segmed_pro - INFO - Updated metadata for slice 4
+2025-05-19 00:12:44,342 - segmed_pro - INFO - Using WindowCenter from metadata: 507.0
+2025-05-19 00:12:44,343 - segmed_pro - INFO - Using WindowWidth from metadata: 1102.0
+2025-05-19 00:12:44,353 - segmed_pro - INFO - Applied segmentation overlay to slice 4
+2025-05-19 00:12:44,359 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:12:44,648 - segmed_pro - INFO - Updating slice: value=5, view=Axial
+2025-05-19 00:12:44,648 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-05-19 00:12:44,663 - segmed_pro - INFO - Updated metadata for slice 5
+2025-05-19 00:12:44,663 - segmed_pro - INFO - Using WindowCenter from metadata: 500.0
+2025-05-19 00:12:44,664 - segmed_pro - INFO - Using WindowWidth from metadata: 1086.0
+2025-05-19 00:12:44,675 - segmed_pro - INFO - Applied segmentation overlay to slice 5
+2025-05-19 00:12:44,681 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:12:45,113 - segmed_pro - INFO - Updating slice: value=6, view=Axial
+2025-05-19 00:12:45,113 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-05-19 00:12:45,126 - segmed_pro - INFO - Updated metadata for slice 6
+2025-05-19 00:12:45,127 - segmed_pro - INFO - Using WindowCenter from metadata: 495.0
+2025-05-19 00:12:45,127 - segmed_pro - INFO - Using WindowWidth from metadata: 1062.0
+2025-05-19 00:12:45,139 - segmed_pro - INFO - Applied segmentation overlay to slice 6
+2025-05-19 00:12:45,144 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:13:57,248 - segmed_pro - INFO - Updating slice: value=7, view=Axial
+2025-05-19 00:13:57,248 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-05-19 00:13:57,269 - segmed_pro - INFO - Updated metadata for slice 7
+2025-05-19 00:13:57,269 - segmed_pro - INFO - Using WindowCenter from metadata: 494.0
+2025-05-19 00:13:57,270 - segmed_pro - INFO - Using WindowWidth from metadata: 1036.0
+2025-05-19 00:13:57,292 - segmed_pro - INFO - Applied segmentation overlay to slice 7
+2025-05-19 00:13:57,302 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:13:58,306 - segmed_pro - INFO - Updating slice: value=6, view=Axial
+2025-05-19 00:13:58,307 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-05-19 00:13:58,328 - segmed_pro - INFO - Updated metadata for slice 6
+2025-05-19 00:13:58,329 - segmed_pro - INFO - Using WindowCenter from metadata: 495.0
+2025-05-19 00:13:58,329 - segmed_pro - INFO - Using WindowWidth from metadata: 1062.0
+2025-05-19 00:13:58,349 - segmed_pro - INFO - Applied segmentation overlay to slice 6
+2025-05-19 00:13:58,359 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:13:58,680 - segmed_pro - INFO - Updating slice: value=5, view=Axial
+2025-05-19 00:13:58,682 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-05-19 00:13:58,707 - segmed_pro - INFO - Updated metadata for slice 5
+2025-05-19 00:13:58,707 - segmed_pro - INFO - Using WindowCenter from metadata: 500.0
+2025-05-19 00:13:58,707 - segmed_pro - INFO - Using WindowWidth from metadata: 1086.0
+2025-05-19 00:13:58,723 - segmed_pro - INFO - Applied segmentation overlay to slice 5
+2025-05-19 00:13:58,733 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:13:59,285 - segmed_pro - INFO - Updating slice: value=4, view=Axial
+2025-05-19 00:13:59,286 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-05-19 00:13:59,308 - segmed_pro - INFO - Updated metadata for slice 4
+2025-05-19 00:13:59,309 - segmed_pro - INFO - Using WindowCenter from metadata: 507.0
+2025-05-19 00:13:59,309 - segmed_pro - INFO - Using WindowWidth from metadata: 1102.0
+2025-05-19 00:13:59,324 - segmed_pro - INFO - Applied segmentation overlay to slice 4
+2025-05-19 00:13:59,334 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:13:59,874 - segmed_pro - INFO - Updating slice: value=3, view=Axial
+2025-05-19 00:13:59,874 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-05-19 00:13:59,899 - segmed_pro - INFO - Updated metadata for slice 3
+2025-05-19 00:13:59,899 - segmed_pro - INFO - Using WindowCenter from metadata: 526.0
+2025-05-19 00:13:59,899 - segmed_pro - INFO - Using WindowWidth from metadata: 1128.0
+2025-05-19 00:13:59,912 - segmed_pro - INFO - Applied segmentation overlay to slice 3
+2025-05-19 00:13:59,922 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:14:11,935 - segmed_pro - INFO - Updating slice: value=2, view=Axial
+2025-05-19 00:14:11,935 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-05-19 00:14:11,960 - segmed_pro - INFO - Updated metadata for slice 2
+2025-05-19 00:14:11,960 - segmed_pro - INFO - Using WindowCenter from metadata: 549.0
+2025-05-19 00:14:11,960 - segmed_pro - INFO - Using WindowWidth from metadata: 1168.0
+2025-05-19 00:14:11,973 - segmed_pro - INFO - Applied segmentation overlay to slice 2
+2025-05-19 00:14:11,983 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:14:12,088 - segmed_pro - INFO - Updating slice: value=1, view=Axial
+2025-05-19 00:14:12,089 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-05-19 00:14:12,111 - segmed_pro - INFO - Updated metadata for slice 1
+2025-05-19 00:14:12,111 - segmed_pro - INFO - Using WindowCenter from metadata: 614.0
+2025-05-19 00:14:12,112 - segmed_pro - INFO - Using WindowWidth from metadata: 1287.0
+2025-05-19 00:14:12,125 - segmed_pro - INFO - Applied segmentation overlay to slice 1
+2025-05-19 00:14:12,135 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:14:12,322 - segmed_pro - INFO - Updating slice: value=0, view=Axial
+2025-05-19 00:14:12,323 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-05-19 00:14:12,345 - segmed_pro - INFO - Updated metadata for slice 0
+2025-05-19 00:14:12,346 - segmed_pro - INFO - Using WindowCenter from metadata: 649.0
+2025-05-19 00:14:12,346 - segmed_pro - INFO - Using WindowWidth from metadata: 1361.0
+2025-05-19 00:14:12,358 - segmed_pro - INFO - Applied segmentation overlay to slice 0
+2025-05-19 00:14:12,367 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:14:47,840 - segmed_pro - INFO - Updating slice: value=1, view=Axial
+2025-05-19 00:14:47,840 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-05-19 00:14:47,864 - segmed_pro - INFO - Updated metadata for slice 1
+2025-05-19 00:14:47,864 - segmed_pro - INFO - Using WindowCenter from metadata: 614.0
+2025-05-19 00:14:47,864 - segmed_pro - INFO - Using WindowWidth from metadata: 1287.0
+2025-05-19 00:14:47,877 - segmed_pro - INFO - Applied segmentation overlay to slice 1
+2025-05-19 00:14:47,887 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:15:29,064 - segmed_pro - INFO - Updating slice: value=2, view=Axial
+2025-05-19 00:15:29,065 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-05-19 00:15:29,093 - segmed_pro - INFO - Updated metadata for slice 2
+2025-05-19 00:15:29,093 - segmed_pro - INFO - Using WindowCenter from metadata: 549.0
+2025-05-19 00:15:29,093 - segmed_pro - INFO - Using WindowWidth from metadata: 1168.0
+2025-05-19 00:15:29,106 - segmed_pro - INFO - Applied segmentation overlay to slice 2
+2025-05-19 00:15:29,116 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:15:29,825 - segmed_pro - INFO - Updating slice: value=1, view=Axial
+2025-05-19 00:15:29,825 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-05-19 00:15:29,854 - segmed_pro - INFO - Updated metadata for slice 1
+2025-05-19 00:15:29,854 - segmed_pro - INFO - Using WindowCenter from metadata: 614.0
+2025-05-19 00:15:29,854 - segmed_pro - INFO - Using WindowWidth from metadata: 1287.0
+2025-05-19 00:15:29,870 - segmed_pro - INFO - Applied segmentation overlay to slice 1
+2025-05-19 00:15:29,881 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:15:30,599 - segmed_pro - INFO - Updating slice: value=2, view=Axial
+2025-05-19 00:15:30,599 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-05-19 00:15:30,627 - segmed_pro - INFO - Updated metadata for slice 2
+2025-05-19 00:15:30,628 - segmed_pro - INFO - Using WindowCenter from metadata: 549.0
+2025-05-19 00:15:30,628 - segmed_pro - INFO - Using WindowWidth from metadata: 1168.0
+2025-05-19 00:15:30,643 - segmed_pro - INFO - Applied segmentation overlay to slice 2
+2025-05-19 00:15:30,653 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:15:31,094 - segmed_pro - INFO - Updating slice: value=3, view=Axial
+2025-05-19 00:15:31,095 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-05-19 00:15:31,116 - segmed_pro - INFO - Updated metadata for slice 3
+2025-05-19 00:15:31,117 - segmed_pro - INFO - Using WindowCenter from metadata: 526.0
+2025-05-19 00:15:31,117 - segmed_pro - INFO - Using WindowWidth from metadata: 1128.0
+2025-05-19 00:15:31,130 - segmed_pro - INFO - Applied segmentation overlay to slice 3
+2025-05-19 00:15:31,140 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:15:31,590 - segmed_pro - INFO - Updating slice: value=4, view=Axial
+2025-05-19 00:15:31,591 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-05-19 00:15:31,616 - segmed_pro - INFO - Updated metadata for slice 4
+2025-05-19 00:15:31,616 - segmed_pro - INFO - Using WindowCenter from metadata: 507.0
+2025-05-19 00:15:31,617 - segmed_pro - INFO - Using WindowWidth from metadata: 1102.0
+2025-05-19 00:15:31,634 - segmed_pro - INFO - Applied segmentation overlay to slice 4
+2025-05-19 00:15:31,644 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:15:32,194 - segmed_pro - INFO - Updating slice: value=7, view=Axial
+2025-05-19 00:15:32,194 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-05-19 00:15:32,219 - segmed_pro - INFO - Updated metadata for slice 7
+2025-05-19 00:15:32,220 - segmed_pro - INFO - Using WindowCenter from metadata: 494.0
+2025-05-19 00:15:32,220 - segmed_pro - INFO - Using WindowWidth from metadata: 1036.0
+2025-05-19 00:15:32,242 - segmed_pro - INFO - Applied segmentation overlay to slice 7
+2025-05-19 00:15:32,252 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:15:32,334 - segmed_pro - INFO - Updating slice: value=8, view=Axial
+2025-05-19 00:15:32,334 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-05-19 00:15:32,356 - segmed_pro - INFO - Updated metadata for slice 8
+2025-05-19 00:15:32,356 - segmed_pro - INFO - Using WindowCenter from metadata: 494.0
+2025-05-19 00:15:32,357 - segmed_pro - INFO - Using WindowWidth from metadata: 1028.0
+2025-05-19 00:15:32,374 - segmed_pro - INFO - Applied segmentation overlay to slice 8
+2025-05-19 00:15:32,385 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:15:32,535 - segmed_pro - INFO - Updating slice: value=9, view=Axial
+2025-05-19 00:15:32,536 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-05-19 00:15:32,563 - segmed_pro - INFO - Updated metadata for slice 9
+2025-05-19 00:15:32,563 - segmed_pro - INFO - Using WindowCenter from metadata: 487.0
+2025-05-19 00:15:32,564 - segmed_pro - INFO - Using WindowWidth from metadata: 1009.0
+2025-05-19 00:15:32,589 - segmed_pro - INFO - Applied segmentation overlay to slice 9
+2025-05-19 00:15:32,598 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:15:32,737 - segmed_pro - INFO - Updating slice: value=10, view=Axial
+2025-05-19 00:15:32,737 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-05-19 00:15:32,763 - segmed_pro - INFO - Updated metadata for slice 10
+2025-05-19 00:15:32,763 - segmed_pro - INFO - Using WindowCenter from metadata: 476.0
+2025-05-19 00:15:32,764 - segmed_pro - INFO - Using WindowWidth from metadata: 987.0
+2025-05-19 00:15:32,786 - segmed_pro - INFO - Applied segmentation overlay to slice 10
+2025-05-19 00:15:32,795 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:15:32,907 - segmed_pro - INFO - Updating slice: value=11, view=Axial
+2025-05-19 00:15:32,908 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-05-19 00:15:32,936 - segmed_pro - INFO - Updated metadata for slice 11
+2025-05-19 00:15:32,936 - segmed_pro - INFO - Using WindowCenter from metadata: 468.0
+2025-05-19 00:15:32,937 - segmed_pro - INFO - Using WindowWidth from metadata: 968.0
+2025-05-19 00:15:32,958 - segmed_pro - INFO - Applied segmentation overlay to slice 11
+2025-05-19 00:15:32,967 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:15:46,824 - segmed_pro - INFO - Updating slice: value=10, view=Axial
+2025-05-19 00:15:46,824 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-05-19 00:15:46,850 - segmed_pro - INFO - Updated metadata for slice 10
+2025-05-19 00:15:46,851 - segmed_pro - INFO - Using WindowCenter from metadata: 476.0
+2025-05-19 00:15:46,851 - segmed_pro - INFO - Using WindowWidth from metadata: 987.0
+2025-05-19 00:15:46,874 - segmed_pro - INFO - Applied segmentation overlay to slice 10
+2025-05-19 00:15:46,885 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:15:48,869 - segmed_pro - INFO - Updating slice: value=9, view=Axial
+2025-05-19 00:15:48,870 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-05-19 00:15:48,894 - segmed_pro - INFO - Updated metadata for slice 9
+2025-05-19 00:15:48,895 - segmed_pro - INFO - Using WindowCenter from metadata: 487.0
+2025-05-19 00:15:48,895 - segmed_pro - INFO - Using WindowWidth from metadata: 1009.0
+2025-05-19 00:15:48,918 - segmed_pro - INFO - Applied segmentation overlay to slice 9
+2025-05-19 00:15:48,928 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:15:50,048 - segmed_pro - INFO - Updating slice: value=8, view=Axial
+2025-05-19 00:15:50,048 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-05-19 00:15:50,071 - segmed_pro - INFO - Updated metadata for slice 8
+2025-05-19 00:15:50,072 - segmed_pro - INFO - Using WindowCenter from metadata: 494.0
+2025-05-19 00:15:50,072 - segmed_pro - INFO - Using WindowWidth from metadata: 1028.0
+2025-05-19 00:15:50,089 - segmed_pro - INFO - Applied segmentation overlay to slice 8
+2025-05-19 00:15:50,100 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:15:50,774 - segmed_pro - INFO - Updating slice: value=9, view=Axial
+2025-05-19 00:15:50,775 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-05-19 00:15:50,800 - segmed_pro - INFO - Updated metadata for slice 9
+2025-05-19 00:15:50,800 - segmed_pro - INFO - Using WindowCenter from metadata: 487.0
+2025-05-19 00:15:50,801 - segmed_pro - INFO - Using WindowWidth from metadata: 1009.0
+2025-05-19 00:15:50,823 - segmed_pro - INFO - Applied segmentation overlay to slice 9
+2025-05-19 00:15:50,832 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:15:51,212 - segmed_pro - INFO - Updating slice: value=10, view=Axial
+2025-05-19 00:15:51,213 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-05-19 00:15:51,236 - segmed_pro - INFO - Updated metadata for slice 10
+2025-05-19 00:15:51,236 - segmed_pro - INFO - Using WindowCenter from metadata: 476.0
+2025-05-19 00:15:51,237 - segmed_pro - INFO - Using WindowWidth from metadata: 987.0
+2025-05-19 00:15:51,257 - segmed_pro - INFO - Applied segmentation overlay to slice 10
+2025-05-19 00:15:51,267 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:15:51,628 - segmed_pro - INFO - Updating slice: value=11, view=Axial
+2025-05-19 00:15:51,629 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-05-19 00:15:51,660 - segmed_pro - INFO - Updated metadata for slice 11
+2025-05-19 00:15:51,660 - segmed_pro - INFO - Using WindowCenter from metadata: 468.0
+2025-05-19 00:15:51,661 - segmed_pro - INFO - Using WindowWidth from metadata: 968.0
+2025-05-19 00:15:51,682 - segmed_pro - INFO - Applied segmentation overlay to slice 11
+2025-05-19 00:15:51,695 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:15:52,062 - segmed_pro - INFO - Updating slice: value=12, view=Axial
+2025-05-19 00:15:52,062 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-05-19 00:15:52,085 - segmed_pro - INFO - Updated metadata for slice 12
+2025-05-19 00:15:52,085 - segmed_pro - INFO - Using WindowCenter from metadata: 458.0
+2025-05-19 00:15:52,086 - segmed_pro - INFO - Using WindowWidth from metadata: 946.0
+2025-05-19 00:15:52,105 - segmed_pro - INFO - Applied segmentation overlay to slice 12
+2025-05-19 00:15:52,115 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:15:53,565 - segmed_pro - INFO - Updating slice: value=11, view=Axial
+2025-05-19 00:15:53,565 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-05-19 00:15:53,592 - segmed_pro - INFO - Updated metadata for slice 11
+2025-05-19 00:15:53,593 - segmed_pro - INFO - Using WindowCenter from metadata: 468.0
+2025-05-19 00:15:53,593 - segmed_pro - INFO - Using WindowWidth from metadata: 968.0
+2025-05-19 00:15:53,614 - segmed_pro - INFO - Applied segmentation overlay to slice 11
+2025-05-19 00:15:53,624 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:15:54,216 - segmed_pro - INFO - Updating slice: value=12, view=Axial
+2025-05-19 00:15:54,216 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-05-19 00:15:54,239 - segmed_pro - INFO - Updated metadata for slice 12
+2025-05-19 00:15:54,239 - segmed_pro - INFO - Using WindowCenter from metadata: 458.0
+2025-05-19 00:15:54,240 - segmed_pro - INFO - Using WindowWidth from metadata: 946.0
+2025-05-19 00:15:54,259 - segmed_pro - INFO - Applied segmentation overlay to slice 12
+2025-05-19 00:15:54,270 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:15:58,046 - segmed_pro - INFO - Updating slice: value=11, view=Axial
+2025-05-19 00:15:58,047 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-05-19 00:15:58,070 - segmed_pro - INFO - Updated metadata for slice 11
+2025-05-19 00:15:58,071 - segmed_pro - INFO - Using WindowCenter from metadata: 468.0
+2025-05-19 00:15:58,071 - segmed_pro - INFO - Using WindowWidth from metadata: 968.0
+2025-05-19 00:15:58,091 - segmed_pro - INFO - Applied segmentation overlay to slice 11
+2025-05-19 00:15:58,101 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:15:58,725 - segmed_pro - INFO - Updating slice: value=10, view=Axial
+2025-05-19 00:15:58,726 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-05-19 00:15:58,750 - segmed_pro - INFO - Updated metadata for slice 10
+2025-05-19 00:15:58,750 - segmed_pro - INFO - Using WindowCenter from metadata: 476.0
+2025-05-19 00:15:58,750 - segmed_pro - INFO - Using WindowWidth from metadata: 987.0
+2025-05-19 00:15:58,773 - segmed_pro - INFO - Applied segmentation overlay to slice 10
+2025-05-19 00:15:58,783 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:16:29,500 - segmed_pro - INFO - Updating slice: value=11, view=Axial
+2025-05-19 00:16:29,500 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-05-19 00:16:29,526 - segmed_pro - INFO - Updated metadata for slice 11
+2025-05-19 00:16:29,526 - segmed_pro - INFO - Using WindowCenter from metadata: 468.0
+2025-05-19 00:16:29,526 - segmed_pro - INFO - Using WindowWidth from metadata: 968.0
+2025-05-19 00:16:29,547 - segmed_pro - INFO - Applied segmentation overlay to slice 11
+2025-05-19 00:16:29,557 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:16:31,856 - segmed_pro - INFO - Updating slice: value=12, view=Axial
+2025-05-19 00:16:31,857 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-05-19 00:16:31,887 - segmed_pro - INFO - Updated metadata for slice 12
+2025-05-19 00:16:31,887 - segmed_pro - INFO - Using WindowCenter from metadata: 458.0
+2025-05-19 00:16:31,888 - segmed_pro - INFO - Using WindowWidth from metadata: 946.0
+2025-05-19 00:16:31,907 - segmed_pro - INFO - Applied segmentation overlay to slice 12
+2025-05-19 00:16:31,917 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:16:32,801 - segmed_pro - INFO - Updating slice: value=13, view=Axial
+2025-05-19 00:16:32,802 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-05-19 00:16:32,826 - segmed_pro - INFO - Updated metadata for slice 13
+2025-05-19 00:16:32,827 - segmed_pro - INFO - Using WindowCenter from metadata: 453.0
+2025-05-19 00:16:32,827 - segmed_pro - INFO - Using WindowWidth from metadata: 925.0
+2025-05-19 00:16:32,845 - segmed_pro - INFO - Applied segmentation overlay to slice 13
+2025-05-19 00:16:32,855 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:16:33,561 - segmed_pro - INFO - Updating slice: value=14, view=Axial
+2025-05-19 00:16:33,561 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-05-19 00:16:33,586 - segmed_pro - INFO - Updated metadata for slice 14
+2025-05-19 00:16:33,586 - segmed_pro - INFO - Using WindowCenter from metadata: 443.0
+2025-05-19 00:16:33,586 - segmed_pro - INFO - Using WindowWidth from metadata: 909.0
+2025-05-19 00:16:33,604 - segmed_pro - INFO - Applied segmentation overlay to slice 14
+2025-05-19 00:16:33,614 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:16:35,374 - segmed_pro - INFO - Updating slice: value=15, view=Axial
+2025-05-19 00:16:35,375 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
+2025-05-19 00:16:35,400 - segmed_pro - INFO - Updated metadata for slice 15
+2025-05-19 00:16:35,400 - segmed_pro - INFO - Using WindowCenter from metadata: 424.0
+2025-05-19 00:16:35,400 - segmed_pro - INFO - Using WindowWidth from metadata: 880.0
+2025-05-19 00:16:35,416 - segmed_pro - INFO - Applied segmentation overlay to slice 15
+2025-05-19 00:16:35,426 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:16:35,808 - segmed_pro - INFO - Updating slice: value=16, view=Axial
+2025-05-19 00:16:35,808 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-05-19 00:16:35,833 - segmed_pro - INFO - Updated metadata for slice 16
+2025-05-19 00:16:35,833 - segmed_pro - INFO - Using WindowCenter from metadata: 406.0
+2025-05-19 00:16:35,833 - segmed_pro - INFO - Using WindowWidth from metadata: 849.0
+2025-05-19 00:16:35,849 - segmed_pro - INFO - Applied segmentation overlay to slice 16
+2025-05-19 00:16:35,859 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:16:37,669 - segmed_pro - INFO - Updating slice: value=15, view=Axial
+2025-05-19 00:16:37,669 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
+2025-05-19 00:16:37,692 - segmed_pro - INFO - Updated metadata for slice 15
+2025-05-19 00:16:37,692 - segmed_pro - INFO - Using WindowCenter from metadata: 424.0
+2025-05-19 00:16:37,692 - segmed_pro - INFO - Using WindowWidth from metadata: 880.0
+2025-05-19 00:16:37,708 - segmed_pro - INFO - Applied segmentation overlay to slice 15
+2025-05-19 00:16:37,717 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:16:38,087 - segmed_pro - INFO - Updating slice: value=14, view=Axial
+2025-05-19 00:16:38,088 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-05-19 00:16:38,110 - segmed_pro - INFO - Updated metadata for slice 14
+2025-05-19 00:16:38,110 - segmed_pro - INFO - Using WindowCenter from metadata: 443.0
+2025-05-19 00:16:38,111 - segmed_pro - INFO - Using WindowWidth from metadata: 909.0
+2025-05-19 00:16:38,127 - segmed_pro - INFO - Applied segmentation overlay to slice 14
+2025-05-19 00:16:38,137 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:16:38,522 - segmed_pro - INFO - Updating slice: value=13, view=Axial
+2025-05-19 00:16:38,522 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-05-19 00:16:38,551 - segmed_pro - INFO - Updated metadata for slice 13
+2025-05-19 00:16:38,552 - segmed_pro - INFO - Using WindowCenter from metadata: 453.0
+2025-05-19 00:16:38,552 - segmed_pro - INFO - Using WindowWidth from metadata: 925.0
+2025-05-19 00:16:38,575 - segmed_pro - INFO - Applied segmentation overlay to slice 13
+2025-05-19 00:16:38,585 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:16:38,805 - segmed_pro - INFO - Updating slice: value=12, view=Axial
+2025-05-19 00:16:38,806 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-05-19 00:16:38,833 - segmed_pro - INFO - Updated metadata for slice 12
+2025-05-19 00:16:38,834 - segmed_pro - INFO - Using WindowCenter from metadata: 458.0
+2025-05-19 00:16:38,834 - segmed_pro - INFO - Using WindowWidth from metadata: 946.0
+2025-05-19 00:16:38,852 - segmed_pro - INFO - Applied segmentation overlay to slice 12
+2025-05-19 00:16:38,862 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:16:39,141 - segmed_pro - INFO - Updating slice: value=11, view=Axial
+2025-05-19 00:16:39,142 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-05-19 00:16:39,168 - segmed_pro - INFO - Updated metadata for slice 11
+2025-05-19 00:16:39,168 - segmed_pro - INFO - Using WindowCenter from metadata: 468.0
+2025-05-19 00:16:39,169 - segmed_pro - INFO - Using WindowWidth from metadata: 968.0
+2025-05-19 00:16:39,190 - segmed_pro - INFO - Applied segmentation overlay to slice 11
+2025-05-19 00:16:39,201 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:16:39,311 - segmed_pro - INFO - Updating slice: value=10, view=Axial
+2025-05-19 00:16:39,312 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-05-19 00:16:39,337 - segmed_pro - INFO - Updated metadata for slice 10
+2025-05-19 00:16:39,337 - segmed_pro - INFO - Using WindowCenter from metadata: 476.0
+2025-05-19 00:16:39,337 - segmed_pro - INFO - Using WindowWidth from metadata: 987.0
+2025-05-19 00:16:39,368 - segmed_pro - INFO - Applied segmentation overlay to slice 10
+2025-05-19 00:16:39,379 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:16:41,606 - segmed_pro - INFO - Updating slice: value=9, view=Axial
+2025-05-19 00:16:41,606 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-05-19 00:16:41,638 - segmed_pro - INFO - Updated metadata for slice 9
+2025-05-19 00:16:41,638 - segmed_pro - INFO - Using WindowCenter from metadata: 487.0
+2025-05-19 00:16:41,639 - segmed_pro - INFO - Using WindowWidth from metadata: 1009.0
+2025-05-19 00:16:41,662 - segmed_pro - INFO - Applied segmentation overlay to slice 9
+2025-05-19 00:16:41,675 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:16:41,977 - segmed_pro - INFO - Updating slice: value=8, view=Axial
+2025-05-19 00:16:41,978 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-05-19 00:16:42,007 - segmed_pro - INFO - Updated metadata for slice 8
+2025-05-19 00:16:42,007 - segmed_pro - INFO - Using WindowCenter from metadata: 494.0
+2025-05-19 00:16:42,008 - segmed_pro - INFO - Using WindowWidth from metadata: 1028.0
+2025-05-19 00:16:42,027 - segmed_pro - INFO - Applied segmentation overlay to slice 8
+2025-05-19 00:16:42,037 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:16:48,610 - segmed_pro - INFO - Updating slice: value=7, view=Axial
+2025-05-19 00:16:48,611 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-05-19 00:16:48,639 - segmed_pro - INFO - Updated metadata for slice 7
+2025-05-19 00:16:48,639 - segmed_pro - INFO - Using WindowCenter from metadata: 494.0
+2025-05-19 00:16:48,640 - segmed_pro - INFO - Using WindowWidth from metadata: 1036.0
+2025-05-19 00:16:48,662 - segmed_pro - INFO - Applied segmentation overlay to slice 7
+2025-05-19 00:16:48,674 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:16:49,043 - segmed_pro - INFO - Updating slice: value=6, view=Axial
+2025-05-19 00:16:49,044 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-05-19 00:16:49,069 - segmed_pro - INFO - Updated metadata for slice 6
+2025-05-19 00:16:49,069 - segmed_pro - INFO - Using WindowCenter from metadata: 495.0
+2025-05-19 00:16:49,069 - segmed_pro - INFO - Using WindowWidth from metadata: 1062.0
+2025-05-19 00:16:49,090 - segmed_pro - INFO - Applied segmentation overlay to slice 6
+2025-05-19 00:16:49,099 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:16:53,683 - segmed_pro - INFO - Updating slice: value=5, view=Axial
+2025-05-19 00:16:53,684 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-05-19 00:16:53,711 - segmed_pro - INFO - Updated metadata for slice 5
+2025-05-19 00:16:53,712 - segmed_pro - INFO - Using WindowCenter from metadata: 500.0
+2025-05-19 00:16:53,712 - segmed_pro - INFO - Using WindowWidth from metadata: 1086.0
+2025-05-19 00:16:53,730 - segmed_pro - INFO - Applied segmentation overlay to slice 5
+2025-05-19 00:16:53,741 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:16:53,961 - segmed_pro - INFO - Updating slice: value=4, view=Axial
+2025-05-19 00:16:53,961 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-05-19 00:16:53,986 - segmed_pro - INFO - Updated metadata for slice 4
+2025-05-19 00:16:53,987 - segmed_pro - INFO - Using WindowCenter from metadata: 507.0
+2025-05-19 00:16:53,987 - segmed_pro - INFO - Using WindowWidth from metadata: 1102.0
+2025-05-19 00:16:54,007 - segmed_pro - INFO - Applied segmentation overlay to slice 4
+2025-05-19 00:16:54,018 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:16:54,237 - segmed_pro - INFO - Updating slice: value=3, view=Axial
+2025-05-19 00:16:54,237 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-05-19 00:16:54,259 - segmed_pro - INFO - Updated metadata for slice 3
+2025-05-19 00:16:54,259 - segmed_pro - INFO - Using WindowCenter from metadata: 526.0
+2025-05-19 00:16:54,260 - segmed_pro - INFO - Using WindowWidth from metadata: 1128.0
+2025-05-19 00:16:54,274 - segmed_pro - INFO - Applied segmentation overlay to slice 3
+2025-05-19 00:16:54,284 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:16:54,655 - segmed_pro - INFO - Updating slice: value=4, view=Axial
+2025-05-19 00:16:54,656 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-05-19 00:16:54,683 - segmed_pro - INFO - Updated metadata for slice 4
+2025-05-19 00:16:54,683 - segmed_pro - INFO - Using WindowCenter from metadata: 507.0
+2025-05-19 00:16:54,683 - segmed_pro - INFO - Using WindowWidth from metadata: 1102.0
+2025-05-19 00:16:54,702 - segmed_pro - INFO - Applied segmentation overlay to slice 4
+2025-05-19 00:16:54,716 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:16:54,980 - segmed_pro - INFO - Updating slice: value=5, view=Axial
+2025-05-19 00:16:54,981 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-05-19 00:16:55,010 - segmed_pro - INFO - Updated metadata for slice 5
+2025-05-19 00:16:55,011 - segmed_pro - INFO - Using WindowCenter from metadata: 500.0
+2025-05-19 00:16:55,012 - segmed_pro - INFO - Using WindowWidth from metadata: 1086.0
+2025-05-19 00:16:55,031 - segmed_pro - INFO - Applied segmentation overlay to slice 5
+2025-05-19 00:16:55,041 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:16:55,104 - segmed_pro - INFO - Updating slice: value=6, view=Axial
+2025-05-19 00:16:55,105 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-05-19 00:16:55,126 - segmed_pro - INFO - Updated metadata for slice 6
+2025-05-19 00:16:55,126 - segmed_pro - INFO - Using WindowCenter from metadata: 495.0
+2025-05-19 00:16:55,127 - segmed_pro - INFO - Using WindowWidth from metadata: 1062.0
+2025-05-19 00:16:55,146 - segmed_pro - INFO - Applied segmentation overlay to slice 6
+2025-05-19 00:16:55,156 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:16:55,538 - segmed_pro - INFO - Updating slice: value=7, view=Axial
+2025-05-19 00:16:55,539 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-05-19 00:16:55,565 - segmed_pro - INFO - Updated metadata for slice 7
+2025-05-19 00:16:55,565 - segmed_pro - INFO - Using WindowCenter from metadata: 494.0
+2025-05-19 00:16:55,566 - segmed_pro - INFO - Using WindowWidth from metadata: 1036.0
+2025-05-19 00:16:55,589 - segmed_pro - INFO - Applied segmentation overlay to slice 7
+2025-05-19 00:16:55,602 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:17:03,953 - segmed_pro - INFO - Updating slice: value=6, view=Axial
+2025-05-19 00:17:03,953 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-05-19 00:17:03,980 - segmed_pro - INFO - Updated metadata for slice 6
+2025-05-19 00:17:03,981 - segmed_pro - INFO - Using WindowCenter from metadata: 495.0
+2025-05-19 00:17:03,981 - segmed_pro - INFO - Using WindowWidth from metadata: 1062.0
+2025-05-19 00:17:04,002 - segmed_pro - INFO - Applied segmentation overlay to slice 6
+2025-05-19 00:17:04,011 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:17:04,075 - segmed_pro - INFO - Updating slice: value=5, view=Axial
+2025-05-19 00:17:04,076 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-05-19 00:17:04,103 - segmed_pro - INFO - Updated metadata for slice 5
+2025-05-19 00:17:04,103 - segmed_pro - INFO - Using WindowCenter from metadata: 500.0
+2025-05-19 00:17:04,104 - segmed_pro - INFO - Using WindowWidth from metadata: 1086.0
+2025-05-19 00:17:04,121 - segmed_pro - INFO - Applied segmentation overlay to slice 5
+2025-05-19 00:17:04,131 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:17:04,463 - segmed_pro - INFO - Updating slice: value=4, view=Axial
+2025-05-19 00:17:04,464 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-05-19 00:17:04,488 - segmed_pro - INFO - Updated metadata for slice 4
+2025-05-19 00:17:04,488 - segmed_pro - INFO - Using WindowCenter from metadata: 507.0
+2025-05-19 00:17:04,488 - segmed_pro - INFO - Using WindowWidth from metadata: 1102.0
+2025-05-19 00:17:04,507 - segmed_pro - INFO - Applied segmentation overlay to slice 4
+2025-05-19 00:17:04,517 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:17:06,925 - segmed_pro - INFO - Updating slice: value=5, view=Axial
+2025-05-19 00:17:06,926 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-05-19 00:17:06,951 - segmed_pro - INFO - Updated metadata for slice 5
+2025-05-19 00:17:06,952 - segmed_pro - INFO - Using WindowCenter from metadata: 500.0
+2025-05-19 00:17:06,952 - segmed_pro - INFO - Using WindowWidth from metadata: 1086.0
+2025-05-19 00:17:06,971 - segmed_pro - INFO - Applied segmentation overlay to slice 5
+2025-05-19 00:17:06,981 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:17:09,033 - segmed_pro - INFO - Updating slice: value=6, view=Axial
+2025-05-19 00:17:09,034 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-05-19 00:17:09,058 - segmed_pro - INFO - Updated metadata for slice 6
+2025-05-19 00:17:09,059 - segmed_pro - INFO - Using WindowCenter from metadata: 495.0
+2025-05-19 00:17:09,059 - segmed_pro - INFO - Using WindowWidth from metadata: 1062.0
+2025-05-19 00:17:09,082 - segmed_pro - INFO - Applied segmentation overlay to slice 6
+2025-05-19 00:17:09,092 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:17:09,653 - segmed_pro - INFO - Updating slice: value=5, view=Axial
+2025-05-19 00:17:09,653 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-05-19 00:17:09,680 - segmed_pro - INFO - Updated metadata for slice 5
+2025-05-19 00:17:09,680 - segmed_pro - INFO - Using WindowCenter from metadata: 500.0
+2025-05-19 00:17:09,680 - segmed_pro - INFO - Using WindowWidth from metadata: 1086.0
+2025-05-19 00:17:09,697 - segmed_pro - INFO - Applied segmentation overlay to slice 5
+2025-05-19 00:17:09,707 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:17:10,040 - segmed_pro - INFO - Updating slice: value=4, view=Axial
+2025-05-19 00:17:10,040 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-05-19 00:17:10,069 - segmed_pro - INFO - Updated metadata for slice 4
+2025-05-19 00:17:10,069 - segmed_pro - INFO - Using WindowCenter from metadata: 507.0
+2025-05-19 00:17:10,070 - segmed_pro - INFO - Using WindowWidth from metadata: 1102.0
+2025-05-19 00:17:10,086 - segmed_pro - INFO - Applied segmentation overlay to slice 4
+2025-05-19 00:17:10,096 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:17:10,427 - segmed_pro - INFO - Updating slice: value=3, view=Axial
+2025-05-19 00:17:10,428 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-05-19 00:17:10,457 - segmed_pro - INFO - Updated metadata for slice 3
+2025-05-19 00:17:10,457 - segmed_pro - INFO - Using WindowCenter from metadata: 526.0
+2025-05-19 00:17:10,457 - segmed_pro - INFO - Using WindowWidth from metadata: 1128.0
+2025-05-19 00:17:10,471 - segmed_pro - INFO - Applied segmentation overlay to slice 3
+2025-05-19 00:17:10,481 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:17:17,667 - segmed_pro - INFO - Updating slice: value=4, view=Axial
+2025-05-19 00:17:17,667 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-05-19 00:17:17,692 - segmed_pro - INFO - Updated metadata for slice 4
+2025-05-19 00:17:17,693 - segmed_pro - INFO - Using WindowCenter from metadata: 507.0
+2025-05-19 00:17:17,693 - segmed_pro - INFO - Using WindowWidth from metadata: 1102.0
+2025-05-19 00:17:17,712 - segmed_pro - INFO - Applied segmentation overlay to slice 4
+2025-05-19 00:17:17,722 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)

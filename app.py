@@ -65,7 +65,7 @@ def setup_dicom_handlers():
     return pydicom.config.pixel_data_handlers
 
 # helper to wrap numpy slice array into Plotly figure
-def make_slice_figure(slice_array, dragmode='drawclosedpath'):
+def make_slice_figure(slice_array, dragmode='pan'):
     """Create a Plotly figure from a slice array, preserving original resolution"""
     # Ensure we're using high-quality image rendering
     fig = go.Figure(go.Image(
@@ -83,11 +83,15 @@ def make_slice_figure(slice_array, dragmode='drawclosedpath'):
         updatemenus=[
             dict(
                 type="buttons",
-                direction="right",
-                buttons=[
+                direction="right",                buttons=[
                     dict(
                         args=[{"dragmode": "drawclosedpath", "newshape.line.color": "cyan"}],
                         label="Draw Area",
+                        method="relayout"
+                    ),
+                    dict(
+                        args=[{"dragmode": "drawopenpath", "newshape.line.color": "cyan"}],
+                        label="Draw Open Path",
                         method="relayout"
                     ),
                     dict(
@@ -786,7 +790,7 @@ class SegMedPro:
             )
               # --- Plot tool selection logic ---
             # Store the current plot tool
-            self.current_plot_tool = "drawclosedpath"
+            self.current_plot_tool = "pan"
 
             def update_plot_tool(tool_name):
                 """Update the plotly figure to select the given drawing tool and redraw the current slice"""
@@ -996,71 +1000,6 @@ class SegMedPro:
                 outputs=[slice_slider]
             )            # Segmentation loading and overlay functions
             @log_exception
-            def load_segmentation(seg_file):
-                """Load segmentation file (NIfTI .nii.gz) and overlay on image"""
-                if self.current_data is None:
-                    return "Please load a DICOM dataset first", None
-                
-                if seg_file is None:
-                    return "No segmentation file provided", None
-                
-                try:
-                    # Load the segmentation NIfTI file
-                    seg_path = seg_file.name
-                    logger.info(f"Loading segmentation file: {seg_path}")
-                    
-                    seg_data, seg_meta = load_nifti_file(seg_path)
-                    
-                    # Check dimensions match the main data
-                    if seg_data.shape != self.current_data.shape:
-                        logger.error(f"Segmentation dimensions {seg_data.shape} don't match data dimensions {self.current_data.shape}")
-                        return f"Error: Segmentation dimensions {seg_data.shape} don't match data dimensions {self.current_data.shape}", None
-                    
-                    # Store the segmentation data
-                    self.segmentation_data = seg_data
-                    self.segmentation_loaded = True
-                    
-                    # Update display with segmentation overlay
-                    img = display_slice(
-                        self.current_data, 
-                        self.current_slice_idx, 
-                        self.current_view,
-                        crosshair=self.crosshair_position
-                    )
-                    
-                    # Get the corresponding segmentation slice
-                    if self.current_view == 'axial':
-                        seg_slice = self.segmentation_data[self.current_slice_idx, :, :]
-                    elif self.current_view == 'sagittal':
-                        seg_slice = self.segmentation_data[:, :, self.current_slice_idx]
-                    elif self.current_view == 'coronal':
-                        seg_slice = self.segmentation_data[:, self.current_slice_idx, :]
-                    
-                    # Overlay segmentation on the image
-                    from utils.visualization import overlay_segmentation
-                    overlaid_img = overlay_segmentation(
-                        img, 
-                        seg_slice, 
-                        alpha=self.segmentation_alpha,
-                        colormap=self.segmentation_colormap
-                    )
-                    
-                    fig = make_slice_figure(overlaid_img, dragmode=self.current_plot_tool)
-                    
-                    # Check unique labels in segmentation
-                    unique_labels = np.unique(seg_data)
-                    label_str = ", ".join(map(str, unique_labels))
-                    
-                    return f"Segmentation loaded, found labels: {label_str}", fig
-                
-                except Exception as e:
-                    logger.error(f"Error loading segmentation: {str(e)}")
-                    import traceback
-                    logger.error(traceback.format_exc())
-                    self.segmentation_loaded = False
-                    self.segmentation_data = None
-                    return f"Error loading segmentation: {str(e)}", None
-            @log_exception
             def direct_load_segmentation(seg_file):
                 """Direct method to load segmentation file with axis swapping for dimension mismatches"""
                 if self.current_data is None:
@@ -1155,7 +1094,7 @@ class SegMedPro:
                     )
                     
                     fig = make_slice_figure(overlaid_img, dragmode=self.current_plot_tool)
-                      # Check unique labels in segmentation
+                       # Check unique labels in segmentation
                     unique_labels = np.unique(seg_data)
                     label_str = ", ".join(map(str, unique_labels))
                     
@@ -1167,78 +1106,7 @@ class SegMedPro:
                     self.segmentation_loaded = False
                     self.segmentation_data = None
                     return f"Error loading segmentation: {str(e)}", None
-                    
-            def load_segmentation_file(self, seg_file):
-                """Load segmentation file (NIfTI .nii.gz) and prepare for overlay on image"""
-                if self.current_data is None:
-                    return "Please load a DICOM dataset first", None
-                
-                if seg_file is None:
-                    return "No segmentation file provided", None
-                
-                try:
-                    import nibabel as nib
-                    import numpy as np
-                    
-                    # Get file path from the uploaded file object
-                    seg_path = seg_file.name
-                    logger.info(f"Loading segmentation file: {seg_path}")
-                    
-                    # Load the NIfTI file directly with nibabel to avoid possible issues
-                    nii_img = nib.load(seg_path)
-                    
-                    # Get data as array with explicit cast to int for segmentation labels
-                    seg_data = np.asarray(nii_img.get_fdata()).astype(np.int32)
-                    
-                    # Check dimensions match the main data
-                    if seg_data.shape != self.current_data.shape:
-                        logger.error(f"Segmentation dimensions {seg_data.shape} don't match data dimensions {self.current_data.shape}")
-                        return f"Error: Segmentation dimensions {seg_data.shape} don't match data dimensions {self.current_data.shape}", None
-                    
-                    # Store the segmentation data
-                    self.segmentation_data = seg_data
-                    self.segmentation_loaded = True
-                    
-                    # Update display with segmentation overlay
-                    img = display_slice(
-                        self.current_data, 
-                        self.current_slice_idx, 
-                        self.current_view,
-                        crosshair=self.crosshair_position
-                    )
-                    
-                    # Get the corresponding segmentation slice
-                    if self.current_view == 'axial':
-                        seg_slice = self.segmentation_data[self.current_slice_idx, :, :]
-                    elif self.current_view == 'sagittal':
-                        seg_slice = self.segmentation_data[:, :, self.current_slice_idx]
-                    elif self.current_view == 'coronal':
-                        seg_slice = self.segmentation_data[:, self.current_slice_idx, :]
-                    
-                    # Overlay segmentation on the image
-                    from utils.visualization import overlay_segmentation
-                    overlaid_img = overlay_segmentation(
-                        img, 
-                        seg_slice, 
-                        alpha=self.segmentation_alpha,
-                        colormap=self.segmentation_colormap
-                    )
-                    
-                    fig = make_slice_figure(overlaid_img, dragmode=self.current_plot_tool)
-                    
-                    # Check unique labels in segmentation
-                    unique_labels = np.unique(seg_data)
-                    label_str = ", ".join(map(str, unique_labels))
-                    
-                    return f"Segmentation loaded, found labels: {label_str}", fig
-                
-                except Exception as e:
-                    logger.error(f"Error loading segmentation: {str(e)}")
-                    import traceback
-                    logger.error(traceback.format_exc())
-                    self.segmentation_loaded = False
-                    self.segmentation_data = None
-                    return f"Error loading segmentation: {str(e)}", None
+            
             @log_exception
             def update_segmentation_opacity(opacity):
                 """Update the opacity/transparency of the segmentation overlay"""
