@@ -65,7 +65,7 @@ def setup_dicom_handlers():
     return pydicom.config.pixel_data_handlers
 
 # helper to wrap numpy slice array into Plotly figure
-def make_slice_figure(slice_array):
+def make_slice_figure(slice_array, dragmode='drawclosedpath'):
     """Create a Plotly figure from a slice array, preserving original resolution"""
     # Ensure we're using high-quality image rendering
     fig = go.Figure(go.Image(
@@ -77,20 +77,58 @@ def make_slice_figure(slice_array):
     
     # Configure layout for high-quality display
     fig.update_layout(
-        dragmode='drawclosedpath',
+        dragmode=dragmode,
         newshape_line_color='cyan',
-        modebar=dict(
-            add=[
-                'drawline','drawopenpath','drawclosedpath','drawcircle',
-                'drawrect','eraseshape',
-                'select2d','lasso2d',
-                'pan2d','zoom2d','zoomIn2d','zoomOut2d',
-                'autoScale2d','resetScale2d','toImage'
-            ],
-            remove=[
-                'hoverClosestCartesian','hoverCompareCartesian','toggleSpikelines'
-            ]
-        ),
+        # Define custom buttons for drawing tools
+        updatemenus=[
+            dict(
+                type="buttons",
+                direction="right",
+                buttons=[
+                    dict(
+                        args=[{"dragmode": "drawclosedpath", "newshape.line.color": "cyan"}],
+                        label="Draw Area",
+                        method="relayout"
+                    ),
+                    dict(
+                        args=[{"dragmode": "drawrect", "newshape.line.color": "cyan"}],
+                        label="Draw Rectangle",
+                        method="relayout"
+                    ),
+                    dict(
+                        args=[{"dragmode": "drawcircle", "newshape.line.color": "cyan"}],
+                        label="Draw Circle",
+                        method="relayout"
+                    ),
+                    dict(
+                        args=[{"dragmode": "drawline", "newshape.line.color": "cyan"}],
+                        label="Draw Line",
+                        method="relayout"
+                    ),
+                    dict(
+                        args=[{"dragmode": "pan"}],
+                        label="Pan",
+                        method="relayout"
+                    ),
+                    dict(
+                        args=[{"dragmode": "zoom"}],
+                        label="Zoom",
+                        method="relayout"
+                    ),
+                    dict(
+                        args=[{"shapes": []}],
+                        label="Clear Shapes",
+                        method="relayout"
+                    ),
+                ],
+                pad={"r": 10, "t": 10},
+                showactive=True,
+                x=0.11,
+                xanchor="left",
+                y=1.1,
+                yanchor="top"
+            ),
+        ],
         # Preserve aspect ratio with exact 1:1 scaling
         yaxis=dict(
             scaleanchor="x",
@@ -107,7 +145,7 @@ def make_slice_figure(slice_array):
             showticklabels=False
         ),
         # Maximize image size by eliminating all margins
-        margin=dict(l=0, r=0, t=0, b=0, pad=0),
+        margin=dict(l=0, r=0, t=10, b=0, pad=0),
         # Set plot background to black for medical imaging
         plot_bgcolor='black',
         paper_bgcolor='black',
@@ -272,8 +310,7 @@ class SegMedPro:
                             convert_btn = gr.Button("Convert")
                             conversion_status = gr.Textbox(label="Conversion Status")
                             conversion_output = gr.File(label="Output File (if available)")
-            
-            # Event handlers for the viewer tab
+              # Event handlers for the viewer tab
             @log_exception
             def load_data(file_obj, directory):
                 """Load DICOM data from file or directory"""
@@ -353,7 +390,7 @@ class SegMedPro:
                     crosshair=self.crosshair_position
                 )
                 
-                fig = make_slice_figure(img)
+                fig = make_slice_figure(img, dragmode=self.current_plot_tool)
                 
                 crosshair_text = f"x: {self.crosshair_position[0]}, y: {self.crosshair_position[1]}, z: {self.crosshair_position[2]}"
                 
@@ -368,8 +405,7 @@ class SegMedPro:
                     gr.Slider(minimum=slider_min, maximum=slider_max, value=0, step=1, label="Slice Navigation", visible=visible_flag),
                     f"0/{slider_max}",
                     crosshair_text,
-                    f"DICOM data loaded: {len(self.file_list)} slice(s)",
-                    window_level_value,  # Return window level value for slider
+                    f"DICOM data loaded: {len(self.file_list)} slice(s)",window_level_value,  # Return window level value for slider
                     window_width_value   # Return window width value for slider
                 )
             
@@ -386,13 +422,12 @@ class SegMedPro:
             def reset_directory():
                 """Clear the directory textbox"""
                 return ""
+            
             reset_dir_btn.click(
                 fn=reset_directory,
                 inputs=[],
                 outputs=[dir_input]
-            )
-
-            # Auto-trigger load_data on file selection
+            )# Auto-trigger load_data on file selection
             file_input.change(
                 fn=load_data,
                 inputs=[file_input, dir_input],
@@ -534,7 +569,7 @@ class SegMedPro:
                         except Exception as e:
                             logger.error(f"Error applying segmentation overlay: {str(e)}")
                     
-                    fig = make_slice_figure(img)
+                    fig = make_slice_figure(img, dragmode=self.current_plot_tool)
                     logger.info(f"Generated slice image with shape {img.shape}")
                     
                     # Update crosshair info
@@ -557,7 +592,6 @@ class SegMedPro:
                 inputs=[slice_slider, view_selector],
                 outputs=[image_plot, slice_text, crosshair_info, metadata_display, window_level, window_width]
             )
-            
             def change_view(view):
                 """Change the viewing orientation"""
                 if self.current_data is None:
@@ -585,7 +619,30 @@ class SegMedPro:
                     self.current_view,
                     crosshair=self.crosshair_position
                 )
-                fig = make_slice_figure(img)
+                
+                # Apply segmentation overlay if loaded
+                if self.segmentation_loaded and self.segmentation_data is not None:
+                    try:
+                        # Get the corresponding segmentation slice
+                        if self.current_view == 'axial':
+                            seg_slice = self.segmentation_data[self.current_slice_idx, :, :]
+                        elif self.current_view == 'sagittal':
+                            seg_slice = self.segmentation_data[:, :, self.current_slice_idx]
+                        elif self.current_view == 'coronal':
+                            seg_slice = self.segmentation_data[:, self.current_slice_idx, :]
+                        
+                        # Overlay segmentation on the image
+                        from utils.visualization import overlay_segmentation
+                        img = overlay_segmentation(
+                            img, 
+                            seg_slice, 
+                            alpha=self.segmentation_alpha,
+                            colormap=self.segmentation_colormap
+                        )
+                    except Exception as e:
+                        logger.error(f"Error applying segmentation overlay: {str(e)}")
+                
+                fig = make_slice_figure(img, dragmode=self.current_plot_tool)
                 
                 return (gr.Slider(minimum=slider_min, maximum=slider_max, value=self.current_slice_idx), f"{self.current_slice_idx}/{slider_max}", fig)
             
@@ -594,7 +651,6 @@ class SegMedPro:
                 inputs=[view_selector],
                 outputs=[slice_slider, slice_text, image_plot]
             )
-            
             def update_window_level(level, width):
                 """Apply window/level adjustments to the current image"""
                 if self.current_data is None:
@@ -609,7 +665,30 @@ class SegMedPro:
                     window_width=width,
                     crosshair=self.crosshair_position
                 )
-                fig = make_slice_figure(img)
+                
+                # Apply segmentation overlay if loaded
+                if self.segmentation_loaded and self.segmentation_data is not None:
+                    try:
+                        # Get the corresponding segmentation slice
+                        if self.current_view == 'axial':
+                            seg_slice = self.segmentation_data[self.current_slice_idx, :, :]
+                        elif self.current_view == 'sagittal':
+                            seg_slice = self.segmentation_data[:, :, self.current_slice_idx]
+                        elif self.current_view == 'coronal':
+                            seg_slice = self.segmentation_data[:, self.current_slice_idx, :]
+                        
+                        # Overlay segmentation on the image
+                        from utils.visualization import overlay_segmentation
+                        img = overlay_segmentation(
+                            img, 
+                            seg_slice, 
+                            alpha=self.segmentation_alpha,
+                            colormap=self.segmentation_colormap
+                        )
+                    except Exception as e:
+                        logger.error(f"Error applying segmentation overlay: {str(e)}")
+                
+                fig = make_slice_figure(img, dragmode=self.current_plot_tool)
                 
                 return fig
             
@@ -618,7 +697,6 @@ class SegMedPro:
                 inputs=[window_level, window_width],
                 outputs=[image_plot]
             )
-            
             def select_file_from_browser(selected_file):
                 """When a file is selected from the browser dropdown"""
                 if not selected_file or not self.file_list:
@@ -672,7 +750,25 @@ class SegMedPro:
                         window_width=window_width,
                         crosshair=self.crosshair_position
                     )
-                    fig = make_slice_figure(img)
+                    
+                    # Apply segmentation overlay if loaded
+                    if self.segmentation_loaded and self.segmentation_data is not None:
+                        try:
+                            # Get the corresponding segmentation slice
+                            seg_slice = self.segmentation_data[slice_idx, :, :]
+                            
+                            # Overlay segmentation on the image
+                            from utils.visualization import overlay_segmentation
+                            img = overlay_segmentation(
+                                img, 
+                                seg_slice, 
+                                alpha=self.segmentation_alpha,
+                                colormap=self.segmentation_colormap
+                            )
+                        except Exception as e:
+                            logger.error(f"Error applying segmentation overlay: {str(e)}")
+                    
+                    fig = make_slice_figure(img, dragmode=self.current_plot_tool)
                     
                     # Update crosshair info
                     x, y, z = self.crosshair_position
@@ -688,13 +784,12 @@ class SegMedPro:
                 inputs=[file_browser],
                 outputs=[image_plot, slice_text, crosshair_info, metadata_display, slice_slider, window_level, window_width]
             )
-            
-            # --- Plot tool selection logic ---
+              # --- Plot tool selection logic ---
             # Store the current plot tool
             self.current_plot_tool = "drawclosedpath"
 
             def update_plot_tool(tool_name):
-                """Update the plotly figure to select the given drawing tool without reloading the image"""
+                """Update the plotly figure to select the given drawing tool and redraw the current slice"""
                 if self.current_data is None:
                     return None
                 
@@ -706,40 +801,107 @@ class SegMedPro:
                     "draw_openpath": "drawopenpath",
                     "draw_closedpath": "drawclosedpath",
                     "erase_shape": "eraseshape",
-                    "pan": "pan2d",
-                    "zoom": "zoom2d",
-                    "reset": "resetScale2d"
+                    "pan": "pan",
+                    "zoom": "zoom",
+                    "reset": None  # Special case for reset
                 }
+                
                 plotly_tool = tool_map.get(tool_name, "drawclosedpath")
                 self.current_plot_tool = plotly_tool
                 
-                # Create JavaScript for updating dragmode without reloading
-                script = f"""
-                <script>
-                (function() {{
-                    const plotDiv = document.querySelector('div[data-testid="plotly-graph-div"]');
-                    if (plotDiv && plotDiv._fullLayout) {{
-                        Plotly.relayout(plotDiv, {{dragmode: '{plotly_tool}'}});
-                        console.log('Set dragmode to: {plotly_tool}');
-                    }} else {{
-                        console.log('Plotly element not found');
-                    }}
-                }})();
-                </script>
-                """
+                # For reset, we'll return a figure with shapes cleared
+                if tool_name == "reset":
+                    img = display_slice(
+                        self.current_data, 
+                        self.current_slice_idx, 
+                        self.current_view,
+                        crosshair=self.crosshair_position
+                    )
+                    fig = make_slice_figure(img, dragmode=self.current_plot_tool)
+                    # Reset shapes
+                    fig.update_layout(shapes=[])
+                    return fig
                 
-                # Return HTML component with the script that changes the dragmode
-                return gr.HTML(script)
+                # Otherwise, redraw with the selected tool mode
+                img = display_slice(
+                    self.current_data, 
+                    self.current_slice_idx, 
+                    self.current_view,
+                    crosshair=self.crosshair_position
+                )
+                
+                # Apply segmentation overlay if loaded
+                if self.segmentation_loaded and self.segmentation_data is not None:
+                    try:
+                        # Get the corresponding segmentation slice
+                        if self.current_view == 'axial':
+                            seg_slice = self.segmentation_data[self.current_slice_idx, :, :]
+                        elif self.current_view == 'sagittal':
+                            seg_slice = self.segmentation_data[:, :, self.current_slice_idx]
+                        elif self.current_view == 'coronal':
+                            seg_slice = self.segmentation_data[:, self.current_slice_idx, :]
+                        
+                        # Overlay segmentation on the image
+                        from utils.visualization import overlay_segmentation
+                        img = overlay_segmentation(
+                            img, 
+                            seg_slice, 
+                            alpha=self.segmentation_alpha,
+                            colormap=self.segmentation_colormap
+                        )
+                    except Exception as e:
+                        logger.error(f"Error applying segmentation in plot tool: {str(e)}")
+                
+                # Create figure with the selected tool mode
+                fig = make_slice_figure(img, dragmode=plotly_tool)
+                return fig
 
-            draw_circle_btn.click(lambda: update_plot_tool("draw_circle"), None, [gr.HTML()])
-            draw_rect_btn.click(lambda: update_plot_tool("draw_rect"), None, [gr.HTML()])
-            draw_line_btn.click(lambda: update_plot_tool("draw_line"), None, [gr.HTML()])
-            draw_openpath_btn.click(lambda: update_plot_tool("draw_openpath"), None, [gr.HTML()])
-            draw_closedpath_btn.click(lambda: update_plot_tool("draw_closedpath"), None, [gr.HTML()])
-            erase_shape_btn.click(lambda: update_plot_tool("erase_shape"), None, [gr.HTML()])
-            pan_btn.click(lambda: update_plot_tool("pan"), None, [gr.HTML()])
-            zoom_btn.click(lambda: update_plot_tool("zoom"), None, [gr.HTML()])
-            reset_btn.click(lambda: update_plot_tool("reset"), None, [gr.HTML()])
+            # Connect plot tool buttons
+            draw_circle_btn.click(
+                fn=lambda: update_plot_tool("draw_circle"),
+                inputs=None,
+                outputs=image_plot
+            )
+            draw_rect_btn.click(
+                fn=lambda: update_plot_tool("draw_rect"),
+                inputs=None,
+                outputs=image_plot
+            )
+            draw_line_btn.click(
+                fn=lambda: update_plot_tool("draw_line"),
+                inputs=None,
+                outputs=image_plot
+            )
+            draw_openpath_btn.click(
+                fn=lambda: update_plot_tool("draw_openpath"),
+                inputs=None,
+                outputs=image_plot
+            )
+            draw_closedpath_btn.click(
+                fn=lambda: update_plot_tool("draw_closedpath"),
+                inputs=None,
+                outputs=image_plot
+            )
+            erase_shape_btn.click(
+                fn=lambda: update_plot_tool("erase_shape"),
+                inputs=None,
+                outputs=image_plot
+            )
+            pan_btn.click(
+                fn=lambda: update_plot_tool("pan"),
+                inputs=None,
+                outputs=image_plot
+            )
+            zoom_btn.click(
+                fn=lambda: update_plot_tool("zoom"),
+                inputs=None,
+                outputs=image_plot
+            )
+            reset_btn.click(
+                fn=lambda: update_plot_tool("reset"),
+                inputs=None,
+                outputs=image_plot
+            )
 
             # Event handlers for the conversion tab
             def convert_files(file_obj, directory, conv_type, out_dir):
@@ -832,9 +994,7 @@ class SegMedPro:
                 fn=next_slice,
                 inputs=[slice_slider],
                 outputs=[slice_slider]
-            )
-            
-            # Segmentation loading and overlay functions
+            )            # Segmentation loading and overlay functions
             @log_exception
             def load_segmentation(seg_file):
                 """Load segmentation file (NIfTI .nii.gz) and overlay on image"""
@@ -885,7 +1045,7 @@ class SegMedPro:
                         colormap=self.segmentation_colormap
                     )
                     
-                    fig = make_slice_figure(overlaid_img)
+                    fig = make_slice_figure(overlaid_img, dragmode=self.current_plot_tool)
                     
                     # Check unique labels in segmentation
                     unique_labels = np.unique(seg_data)
@@ -900,7 +1060,6 @@ class SegMedPro:
                     self.segmentation_loaded = False
                     self.segmentation_data = None
                     return f"Error loading segmentation: {str(e)}", None
-            
             @log_exception
             def direct_load_segmentation(seg_file):
                 """Direct method to load segmentation file with axis swapping for dimension mismatches"""
@@ -995,14 +1154,12 @@ class SegMedPro:
                         colormap=self.segmentation_colormap
                     )
                     
-                    fig = make_slice_figure(overlaid_img)
-                    
-                    # Check unique labels in segmentation
+                    fig = make_slice_figure(overlaid_img, dragmode=self.current_plot_tool)
+                      # Check unique labels in segmentation
                     unique_labels = np.unique(seg_data)
                     label_str = ", ".join(map(str, unique_labels))
                     
                     return f"Segmentation loaded with axis reorientation. Found labels: {label_str}", fig
-                
                 except Exception as e:
                     logger.error(f"Error in direct segmentation loading: {str(e)}")
                     import traceback
@@ -1010,7 +1167,7 @@ class SegMedPro:
                     self.segmentation_loaded = False
                     self.segmentation_data = None
                     return f"Error loading segmentation: {str(e)}", None
-            
+                    
             def load_segmentation_file(self, seg_file):
                 """Load segmentation file (NIfTI .nii.gz) and prepare for overlay on image"""
                 if self.current_data is None:
@@ -1067,7 +1224,7 @@ class SegMedPro:
                         colormap=self.segmentation_colormap
                     )
                     
-                    fig = make_slice_figure(overlaid_img)
+                    fig = make_slice_figure(overlaid_img, dragmode=self.current_plot_tool)
                     
                     # Check unique labels in segmentation
                     unique_labels = np.unique(seg_data)
@@ -1082,7 +1239,6 @@ class SegMedPro:
                     self.segmentation_loaded = False
                     self.segmentation_data = None
                     return f"Error loading segmentation: {str(e)}", None
-            
             @log_exception
             def update_segmentation_opacity(opacity):
                 """Update the opacity/transparency of the segmentation overlay"""
@@ -1116,7 +1272,7 @@ class SegMedPro:
                     colormap=self.segmentation_colormap
                 )
                 
-                fig = make_slice_figure(overlaid_img)
+                fig = make_slice_figure(overlaid_img, dragmode=self.current_plot_tool)
                 
                 return f"Segmentation opacity updated to {opacity:.1f}", fig
             
@@ -1128,8 +1284,7 @@ class SegMedPro:
                 
                 if self.current_data is None:
                     return "No data loaded", None
-                
-                # Re-display image without segmentation
+                  # Re-display image without segmentation
                 img = display_slice(
                     self.current_data, 
                     self.current_slice_idx, 
@@ -1137,7 +1292,7 @@ class SegMedPro:
                     crosshair=self.crosshair_position
                 )
                 
-                fig = make_slice_figure(img)
+                fig = make_slice_figure(img, dragmode=self.current_plot_tool)
                 
                 return "Segmentation cleared", fig
                 
