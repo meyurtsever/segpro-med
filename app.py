@@ -429,7 +429,7 @@ class SegMedPro:
             def update_slice(slider_value, view_type):
                 """Update the displayed slice based on slider value and view"""
                 if self.current_data is None:
-                    return None, "0/0", "x: 0, y: 0, z: 0", {}
+                    return None, "0/0", "x: 0, y: 0, z: 0", {}, None, None
                 
                 logger.info(f"Updating slice: value={slider_value}, view={view_type}")
                 
@@ -457,12 +457,57 @@ class SegMedPro:
                     x, _, z = self.crosshair_position
                     self.crosshair_position = (x, self.current_slice_idx, z)
                 
+                # Initialize window center and width values
+                window_center = None
+                window_width = None
+                
+                # Get per-slice metadata if available (for axial DICOM views)
+                metadata = self.current_metadata
+                if self.current_view == "axial" and self.current_data_type == "dicom" and self.file_list:
+                    if 0 <= self.current_slice_idx < len(self.file_list):
+                        try:
+                            # Update metadata to reflect the current slice
+                            current_file = self.file_list[self.current_slice_idx]
+                            logger.info(f"Loading metadata for file: {current_file}")
+                            
+                            # Get fresh metadata for the current slice
+                            metadata = get_dicom_metadata(current_file)
+                            
+                            # Add series information to metadata
+                            metadata['SeriesInfo'] = {
+                                'CurrentSlice': self.current_slice_idx + 1,
+                                'TotalSlices': len(self.file_list),
+                                'CurrentFile': os.path.basename(current_file)
+                            }
+                            # Update the current metadata
+                            self.current_metadata = metadata
+                            logger.info(f"Updated metadata for slice {self.current_slice_idx}")
+                        except Exception as e:
+                            logger.error(f"Error updating metadata: {str(e)}")
+                
+                # Extract WindowCenter and WindowWidth from metadata if available
+                if metadata and 'WindowCenter' in metadata:
+                    window_center = metadata['WindowCenter']
+                    # Handle list format if needed
+                    if isinstance(window_center, list):
+                        window_center = window_center[0]
+                    logger.info(f"Using WindowCenter from metadata: {window_center}")
+                
+                if metadata and 'WindowWidth' in metadata:
+                    window_width = metadata['WindowWidth']
+                    # Handle list format if needed
+                    if isinstance(window_width, list):
+                        window_width = window_width[0]
+                    logger.info(f"Using WindowWidth from metadata: {window_width}")
+                
                 # Generate the slice image
                 try:
                     img = display_slice(
                         self.current_data, 
                         self.current_slice_idx, 
                         self.current_view,
+                        window_level=window_center,
+                        window_width=window_width,
                         crosshair=self.crosshair_position
                     )
                     
@@ -496,43 +541,21 @@ class SegMedPro:
                     x, y, z = self.crosshair_position
                     crosshair_text = f"x: {x}, y: {y}, z: {z}"
                     
-                    # Initialize metadata with current metadata
-                    metadata = self.current_metadata
+                    # Default values for window center and width if not found
+                    if window_center is None:
+                        window_center = 500
+                    if window_width is None:
+                        window_width = 1000
                     
-                    # If we have a file list, update the file browser to show the current file
-                    if self.current_view == "axial" and self.current_data_type == "dicom" and self.file_list:
-                        # Only update metadata for axial view in DICOM series
-                        # This ensures we get per-slice metadata
-                        if 0 <= self.current_slice_idx < len(self.file_list):
-                            try:
-                                # Update metadata to reflect the current slice
-                                current_file = self.file_list[self.current_slice_idx]
-                                logger.info(f"Loading metadata for file: {current_file}")
-                                
-                                # Get fresh metadata for the current slice
-                                metadata = get_dicom_metadata(current_file)
-                                
-                                # Add series information to metadata
-                                metadata['SeriesInfo'] = {
-                                    'CurrentSlice': self.current_slice_idx + 1,
-                                    'TotalSlices': len(self.file_list),
-                                    'CurrentFile': os.path.basename(current_file)
-                                }
-                                # Update the current metadata
-                                self.current_metadata = metadata
-                                logger.info(f"Updated metadata for slice {self.current_slice_idx}")
-                            except Exception as e:
-                                logger.error(f"Error updating metadata: {str(e)}")
-                    
-                    return fig, f"{self.current_slice_idx}/{total_slices-1}", crosshair_text, metadata
+                    return fig, f"{self.current_slice_idx}/{total_slices-1}", crosshair_text, metadata, window_center, window_width
                 except Exception as e:
                     logger.error(f"Error generating slice image: {str(e)}")
-                    return None, f"Error: {str(e)}", "x: 0, y: 0, z: 0", {}
+                    return None, f"Error: {str(e)}", "x: 0, y: 0, z: 0", {}, None, None
             
             slice_slider.change(
                 fn=update_slice,
                 inputs=[slice_slider, view_selector],
-                outputs=[image_plot, slice_text, crosshair_info, metadata_display]
+                outputs=[image_plot, slice_text, crosshair_info, metadata_display, window_level, window_width]
             )
             
             def change_view(view):
@@ -599,7 +622,7 @@ class SegMedPro:
             def select_file_from_browser(selected_file):
                 """When a file is selected from the browser dropdown"""
                 if not selected_file or not self.file_list:
-                    return None, "0/0", "x: 0, y: 0, z: 0", {}, 0
+                    return None, "0/0", "x: 0, y: 0, z: 0", {}, 0, None, None
                 
                 try:
                     # Find the selected file in the file list
@@ -610,7 +633,7 @@ class SegMedPro:
                             break
                     
                     if not selected_path:
-                        return None, "0/0", "x: 0, y: 0, z: 0", {"error": "File not found"}, 0
+                        return None, "0/0", "x: 0, y: 0, z: 0", {"error": "File not found"}, 0, None, None
                     
                     # Load the selected DICOM file (no actual re-read of series data)
                     slice_idx = self.file_list.index(selected_path)
@@ -619,11 +642,34 @@ class SegMedPro:
                     x, y, _ = self.crosshair_position
                     self.crosshair_position = (x, y, slice_idx)
                     
-                    # Generate image at the new index
+                    # Get metadata for this slice
+                    metadata = get_dicom_metadata(selected_path)
+                    
+                    # Extract WindowCenter and WindowWidth from metadata if available
+                    window_center = None
+                    window_width = None
+                    
+                    if metadata and 'WindowCenter' in metadata:
+                        window_center = metadata['WindowCenter']
+                        # Handle list format if needed
+                        if isinstance(window_center, list):
+                            window_center = window_center[0]
+                        logger.info(f"Using WindowCenter from metadata: {window_center}")
+                    
+                    if metadata and 'WindowWidth' in metadata:
+                        window_width = metadata['WindowWidth']
+                        # Handle list format if needed
+                        if isinstance(window_width, list):
+                            window_width = window_width[0]
+                        logger.info(f"Using WindowWidth from metadata: {window_width}")
+                    
+                    # Generate image at the new index with the window/level values
                     img = display_slice(
                         self.current_data, 
                         slice_idx, 
                         "axial",
+                        window_level=window_center,
+                        window_width=window_width,
                         crosshair=self.crosshair_position
                     )
                     fig = make_slice_figure(img)
@@ -632,18 +678,15 @@ class SegMedPro:
                     x, y, z = self.crosshair_position
                     crosshair_text = f"x: {x}, y: {y}, z: {z}"
                     
-                    # Get metadata for this slice
-                    metadata = get_dicom_metadata(selected_path)
-                    
-                    # Return image, slice text, crosshair, metadata, and updated slider value
-                    return fig, f"{slice_idx}/{len(self.file_list)-1}", crosshair_text, metadata, slice_idx
+                    # Return image, slice text, crosshair, metadata, slider value, and window level/width values
+                    return fig, f"{slice_idx}/{len(self.file_list)-1}", crosshair_text, metadata, slice_idx, window_center, window_width
                 except Exception as e:
-                    return None, "0/0", "x: 0, y: 0, z: 0", {"error": str(e)}, 0
+                    return None, "0/0", "x: 0, y: 0, z: 0", {"error": str(e)}, 0, None, None
             
             file_browser.change(
                 fn=select_file_from_browser,
                 inputs=[file_browser],
-                outputs=[image_plot, slice_text, crosshair_info, metadata_display, slice_slider]
+                outputs=[image_plot, slice_text, crosshair_info, metadata_display, slice_slider, window_level, window_width]
             )
             
             # --- Plot tool selection logic ---
