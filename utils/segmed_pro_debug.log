@@ -16162,3 +16162,2514 @@ ValueError: No DICOM files found in directory: C:\Users\Yurtsever\Downloads\segp
 2025-05-19 00:17:17,693 - segmed_pro - INFO - Using WindowWidth from metadata: 1102.0
 2025-05-19 00:17:17,712 - segmed_pro - INFO - Applied segmentation overlay to slice 4
 2025-05-19 00:17:17,722 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:36:25,002 - segmed_pro - INFO - Starting SegMed-Pro application
+2025-05-19 00:36:25,002 - segmed_pro - INFO - Setting up DICOM pixel data handlers
+2025-05-19 00:36:25,003 - segmed_pro - INFO - Added GDCM handler
+2025-05-19 00:36:25,003 - segmed_pro - INFO - Added pylibjpeg handler
+2025-05-19 00:36:25,003 - segmed_pro - INFO - Added Pillow handler
+2025-05-19 00:36:25,003 - segmed_pro - INFO - Added NumPy handler
+2025-05-19 00:36:25,003 - segmed_pro - INFO - Configured DICOM handlers: gdcm, pylibjpeg, pillow, numpy
+2025-05-19 00:36:25,004 - segmed_pro - INFO - Initialized DICOM handlers: 4 handlers available
+2025-05-19 00:39:21,972 - segmed_pro - INFO - Starting SegMed-Pro application
+2025-05-19 00:39:21,973 - segmed_pro - INFO - Setting up DICOM pixel data handlers
+2025-05-19 00:39:21,973 - segmed_pro - INFO - Added GDCM handler
+2025-05-19 00:39:21,973 - segmed_pro - INFO - Added pylibjpeg handler
+2025-05-19 00:39:21,973 - segmed_pro - INFO - Added Pillow handler
+2025-05-19 00:39:21,973 - segmed_pro - INFO - Added NumPy handler
+2025-05-19 00:39:21,974 - segmed_pro - INFO - Configured DICOM handlers: gdcm, pylibjpeg, pillow, numpy
+2025-05-19 00:39:21,974 - segmed_pro - INFO - Initialized DICOM handlers: 4 handlers available
+2025-05-19 00:39:26,382 - segmed_pro - INFO - Loading data: file=None, directory=C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+
+2025-05-19 00:39:26,383 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+
+2025-05-19 00:39:26,384 - segmed_pro - ERROR - Exception in load_data: No DICOM files found in directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+
+2025-05-19 00:39:26,384 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "C:\Users\Yurtsever\Downloads\segpro-med\utils\debug_utils.py", line 42, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Yurtsever\Downloads\segpro-med\app.py", line 335, in load_data
+    self.current_data, self.current_metadata, self.file_list = load_dicom_series(path)
+                                                               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Yurtsever\Downloads\segpro-med\utils\dicom_utils.py", line 220, in load_dicom_series
+    raise ValueError(f"No DICOM files found in directory: {directory}")
+ValueError: No DICOM files found in directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+
+
+2025-05-19 00:39:29,551 - segmed_pro - INFO - Loading data: file=None, directory=C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+2025-05-19 00:39:29,551 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+2025-05-19 00:39:29,552 - segmed_pro - INFO - Found 20 DICOM files
+2025-05-19 00:39:29,552 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-05-19 00:39:29,582 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-05-19 00:39:29,605 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-05-19 00:39:29,627 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-05-19 00:39:29,650 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-05-19 00:39:29,672 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-05-19 00:39:29,694 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-05-19 00:39:29,716 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-05-19 00:39:29,739 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-05-19 00:39:29,760 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341775486333211_MR.dcm
+2025-05-19 00:39:29,782 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-05-19 00:39:29,803 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-05-19 00:39:29,825 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-05-19 00:39:29,847 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-05-19 00:39:29,869 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-05-19 00:39:29,892 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-05-19 00:39:29,914 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-05-19 00:39:29,936 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
+2025-05-19 00:39:29,957 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm
+2025-05-19 00:39:29,978 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm
+2025-05-19 00:39:29,999 - segmed_pro - INFO - Successfully read 20 DICOM files
+2025-05-19 00:39:29,999 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-19 00:39:30,127 - segmed_pro - INFO - Created 3D volume with shape (20, 512, 400)
+2025-05-19 00:39:30,151 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-19 00:39:30,152 - segmed_pro - INFO - Using WindowCenter from metadata: 649.0
+2025-05-19 00:39:30,153 - segmed_pro - INFO - Using WindowWidth from metadata: 1361.0
+2025-05-19 00:39:30,453 - segmed_pro - INFO - Using WindowCenter from metadata: 649.0
+2025-05-19 00:39:30,454 - segmed_pro - INFO - Using WindowWidth from metadata: 1361.0
+2025-05-19 00:39:38,774 - segmed_pro - INFO - Updating slice: value=1, view=Axial
+2025-05-19 00:39:38,774 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-05-19 00:39:38,799 - segmed_pro - INFO - Updated metadata for slice 1
+2025-05-19 00:39:38,800 - segmed_pro - INFO - Using WindowCenter from metadata: 614.0
+2025-05-19 00:39:38,800 - segmed_pro - INFO - Using WindowWidth from metadata: 1287.0
+2025-05-19 00:39:38,816 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:39:44,142 - segmed_pro - INFO - Direct loading segmentation file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\0e082623c0d16686258bde60a87faa2d6ee24a0afa97bec097d6635d350dc7cd\Untitled.nii
+2025-05-19 00:39:44,165 - segmed_pro - INFO - Original segmentation dimensions: (400, 512, 20)
+2025-05-19 00:39:44,166 - segmed_pro - INFO - DICOM data dimensions: (20, 512, 400)
+2025-05-19 00:39:44,166 - segmed_pro - INFO - Dimensions match but in different order, performing axis swapping
+2025-05-19 00:39:44,166 - segmed_pro - INFO - After swapping axes: segmentation shape (20, 512, 400)
+2025-05-19 00:39:47,176 - segmed_pro - INFO - Updating slice: value=2, view=Axial
+2025-05-19 00:39:47,177 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-05-19 00:39:47,201 - segmed_pro - INFO - Updated metadata for slice 2
+2025-05-19 00:39:47,201 - segmed_pro - INFO - Using WindowCenter from metadata: 549.0
+2025-05-19 00:39:47,202 - segmed_pro - INFO - Using WindowWidth from metadata: 1168.0
+2025-05-19 00:39:47,215 - segmed_pro - INFO - Applied segmentation overlay to slice 2
+2025-05-19 00:39:47,226 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:39:47,562 - segmed_pro - INFO - Updating slice: value=3, view=Axial
+2025-05-19 00:39:47,563 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-05-19 00:39:47,591 - segmed_pro - INFO - Updated metadata for slice 3
+2025-05-19 00:39:47,592 - segmed_pro - INFO - Using WindowCenter from metadata: 526.0
+2025-05-19 00:39:47,592 - segmed_pro - INFO - Using WindowWidth from metadata: 1128.0
+2025-05-19 00:39:47,606 - segmed_pro - INFO - Applied segmentation overlay to slice 3
+2025-05-19 00:39:47,616 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:39:47,966 - segmed_pro - INFO - Updating slice: value=4, view=Axial
+2025-05-19 00:39:47,967 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-05-19 00:39:47,996 - segmed_pro - INFO - Updated metadata for slice 4
+2025-05-19 00:39:47,996 - segmed_pro - INFO - Using WindowCenter from metadata: 507.0
+2025-05-19 00:39:47,997 - segmed_pro - INFO - Using WindowWidth from metadata: 1102.0
+2025-05-19 00:39:48,012 - segmed_pro - INFO - Applied segmentation overlay to slice 4
+2025-05-19 00:39:48,024 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:39:48,350 - segmed_pro - INFO - Updating slice: value=5, view=Axial
+2025-05-19 00:39:48,351 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-05-19 00:39:48,375 - segmed_pro - INFO - Updated metadata for slice 5
+2025-05-19 00:39:48,376 - segmed_pro - INFO - Using WindowCenter from metadata: 500.0
+2025-05-19 00:39:48,376 - segmed_pro - INFO - Using WindowWidth from metadata: 1086.0
+2025-05-19 00:39:48,392 - segmed_pro - INFO - Applied segmentation overlay to slice 5
+2025-05-19 00:39:48,402 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:39:48,805 - segmed_pro - INFO - Updating slice: value=6, view=Axial
+2025-05-19 00:39:48,806 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-05-19 00:39:48,832 - segmed_pro - INFO - Updated metadata for slice 6
+2025-05-19 00:39:48,832 - segmed_pro - INFO - Using WindowCenter from metadata: 495.0
+2025-05-19 00:39:48,832 - segmed_pro - INFO - Using WindowWidth from metadata: 1062.0
+2025-05-19 00:39:48,851 - segmed_pro - INFO - Applied segmentation overlay to slice 6
+2025-05-19 00:39:48,862 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:39:50,490 - segmed_pro - ERROR - Error converting segmentation to shapes: Invalid property specified for object of type plotly.graph_objs.layout.Shape: 'meta'
+
+Did you mean "path"?
+
+    Valid properties:
+        editable
+            Determines whether the shape could be activated for
+            edit or not. Has no effect when the older editable
+            shapes mode is enabled via `config.editable` or
+            `config.edits.shapePosition`.
+        fillcolor
+            Sets the color filling the shape's interior. Only
+            applies to closed shapes.
+        fillrule
+            Determines which regions of complex paths constitute
+            the interior. For more info please visit
+            https://developer.mozilla.org/en-
+            US/docs/Web/SVG/Attribute/fill-rule
+        label
+            :class:`plotly.graph_objects.layout.shape.Label`
+            instance or dict with compatible properties
+        layer
+            Specifies whether shapes are drawn below gridlines
+            ("below"), between gridlines and traces ("between") or
+            above traces ("above").
+        legend
+            Sets the reference to a legend to show this shape in.
+            References to these legends are "legend", "legend2",
+            "legend3", etc. Settings for these legends are set in
+            the layout, under `layout.legend`, `layout.legend2`,
+            etc.
+        legendgroup
+            Sets the legend group for this shape. Traces and shapes
+            part of the same legend group hide/show at the same
+            time when toggling legend items.
+        legendgrouptitle
+            :class:`plotly.graph_objects.layout.shape.Legendgroupti
+            tle` instance or dict with compatible properties
+        legendrank
+            Sets the legend rank for this shape. Items and groups
+            with smaller ranks are presented on top/left side while
+            with "reversed" `legend.traceorder` they are on
+            bottom/right side. The default legendrank is 1000, so
+            that you can use ranks less than 1000 to place certain
+            items before all unranked items, and ranks greater than
+            1000 to go after all unranked items. When having
+            unranked or equal rank items shapes would be displayed
+            after traces i.e. according to their order in data and
+            layout.
+        legendwidth
+            Sets the width (in px or fraction) of the legend for
+            this shape.
+        line
+            :class:`plotly.graph_objects.layout.shape.Line`
+            instance or dict with compatible properties
+        name
+            When used in a template, named items are created in the
+            output figure in addition to any items the figure
+            already has in this array. You can modify these items
+            in the output figure by making your own item with
+            `templateitemname` matching this `name` alongside your
+            modifications (including `visible: false` or `enabled:
+            false` to hide it). Has no effect outside of a
+            template.
+        opacity
+            Sets the opacity of the shape.
+        path
+            For `type` "path" - a valid SVG path with the pixel
+            values replaced by data values in
+            `xsizemode`/`ysizemode` being "scaled" and taken
+            unmodified as pixels relative to `xanchor` and
+            `yanchor` in case of "pixel" size mode. There are a few
+            restrictions / quirks only absolute instructions, not
+            relative. So the allowed segments are: M, L, H, V, Q,
+            C, T, S, and Z arcs (A) are not allowed because radius
+            rx and ry are relative. In the future we could consider
+            supporting relative commands, but we would have to
+            decide on how to handle date and log axes. Note that
+            even as is, Q and C Bezier paths that are smooth on
+            linear axes may not be smooth on log, and vice versa.
+            no chained "polybezier" commands - specify the segment
+            type for each one. On category axes, values are numbers
+            scaled to the serial numbers of categories because
+            using the categories themselves there would be no way
+            to describe fractional positions On data axes: because
+            space and T are both normal components of path strings,
+            we can't use either to separate date from time parts.
+            Therefore we'll use underscore for this purpose:
+            2015-02-21_13:45:56.789
+        showlegend
+            Determines whether or not this shape is shown in the
+            legend.
+        templateitemname
+            Used to refer to a named item in this array in the
+            template. Named items from the template will be created
+            even without a matching item in the input figure, but
+            you can modify one by making an item with
+            `templateitemname` matching its `name`, alongside your
+            modifications (including `visible: false` or `enabled:
+            false` to hide it). If there is no template or no
+            matching item, this item will be hidden unless you
+            explicitly show it with `visible: true`.
+        type
+            Specifies the shape type to be drawn. If "line", a line
+            is drawn from (`x0`,`y0`) to (`x1`,`y1`) with respect
+            to the axes' sizing mode. If "circle", a circle is
+            drawn from ((`x0`+`x1`)/2, (`y0`+`y1`)/2)) with radius
+            (|(`x0`+`x1`)/2 - `x0`|, |(`y0`+`y1`)/2 -`y0`)|) with
+            respect to the axes' sizing mode. If "rect", a
+            rectangle is drawn linking (`x0`,`y0`), (`x1`,`y0`),
+            (`x1`,`y1`), (`x0`,`y1`), (`x0`,`y0`) with respect to
+            the axes' sizing mode. If "path", draw a custom SVG
+            path using `path`. with respect to the axes' sizing
+            mode.
+        visible
+            Determines whether or not this shape is visible. If
+            "legendonly", the shape is not drawn, but can appear as
+            a legend item (provided that the legend itself is
+            visible).
+        x0
+            Sets the shape's starting x position. See `type` and
+            `xsizemode` for more info.
+        x0shift
+            Shifts `x0` away from the center of the category when
+            `xref` is a "category" or "multicategory" axis. -0.5
+            corresponds to the start of the category and 0.5
+            corresponds to the end of the category.
+        x1
+            Sets the shape's end x position. See `type` and
+            `xsizemode` for more info.
+        x1shift
+            Shifts `x1` away from the center of the category when
+            `xref` is a "category" or "multicategory" axis. -0.5
+            corresponds to the start of the category and 0.5
+            corresponds to the end of the category.
+        xanchor
+            Only relevant in conjunction with `xsizemode` set to
+            "pixel". Specifies the anchor point on the x axis to
+            which `x0`, `x1` and x coordinates within `path` are
+            relative to. E.g. useful to attach a pixel sized shape
+            to a certain data value. No effect when `xsizemode` not
+            set to "pixel".
+        xref
+            Sets the shape's x coordinate axis. If set to a x axis
+            id (e.g. "x" or "x2"), the `x` position refers to a x
+            coordinate. If set to "paper", the `x` position refers
+            to the distance from the left of the plotting area in
+            normalized coordinates where 0 (1) corresponds to the
+            left (right). If set to a x axis ID followed by
+            "domain" (separated by a space), the position behaves
+            like for "paper", but refers to the distance in
+            fractions of the domain length from the left of the
+            domain of that axis: e.g., *x2 domain* refers to the
+            domain of the second x  axis and a x position of 0.5
+            refers to the point between the left and the right of
+            the domain of the second x axis.
+        xsizemode
+            Sets the shapes's sizing mode along the x axis. If set
+            to "scaled", `x0`, `x1` and x coordinates within `path`
+            refer to data values on the x axis or a fraction of the
+            plot area's width (`xref` set to "paper"). If set to
+            "pixel", `xanchor` specifies the x position in terms of
+            data or plot fraction but `x0`, `x1` and x coordinates
+            within `path` are pixels relative to `xanchor`. This
+            way, the shape can have a fixed width while maintaining
+            a position relative to data or plot fraction.
+        y0
+            Sets the shape's starting y position. See `type` and
+            `ysizemode` for more info.
+        y0shift
+            Shifts `y0` away from the center of the category when
+            `yref` is a "category" or "multicategory" axis. -0.5
+            corresponds to the start of the category and 0.5
+            corresponds to the end of the category.
+        y1
+            Sets the shape's end y position. See `type` and
+            `ysizemode` for more info.
+        y1shift
+            Shifts `y1` away from the center of the category when
+            `yref` is a "category" or "multicategory" axis. -0.5
+            corresponds to the start of the category and 0.5
+            corresponds to the end of the category.
+        yanchor
+            Only relevant in conjunction with `ysizemode` set to
+            "pixel". Specifies the anchor point on the y axis to
+            which `y0`, `y1` and y coordinates within `path` are
+            relative to. E.g. useful to attach a pixel sized shape
+            to a certain data value. No effect when `ysizemode` not
+            set to "pixel".
+        yref
+            Sets the shape's y coordinate axis. If set to a y axis
+            id (e.g. "y" or "y2"), the `y` position refers to a y
+            coordinate. If set to "paper", the `y` position refers
+            to the distance from the bottom of the plotting area in
+            normalized coordinates where 0 (1) corresponds to the
+            bottom (top). If set to a y axis ID followed by
+            "domain" (separated by a space), the position behaves
+            like for "paper", but refers to the distance in
+            fractions of the domain length from the bottom of the
+            domain of that axis: e.g., *y2 domain* refers to the
+            domain of the second y  axis and a y position of 0.5
+            refers to the point between the bottom and the top of
+            the domain of the second y axis.
+        ysizemode
+            Sets the shapes's sizing mode along the y axis. If set
+            to "scaled", `y0`, `y1` and y coordinates within `path`
+            refer to data values on the y axis or a fraction of the
+            plot area's height (`yref` set to "paper"). If set to
+            "pixel", `yanchor` specifies the y position in terms of
+            data or plot fraction but `y0`, `y1` and y coordinates
+            within `path` are pixels relative to `yanchor`. This
+            way, the shape can have a fixed height while
+            maintaining a position relative to data or plot
+            fraction.
+        
+Did you mean "path"?
+
+Bad property path:
+meta
+^^^^
+2025-05-19 00:39:50,517 - segmed_pro - ERROR - Traceback (most recent call last):
+  File "C:\Users\Yurtsever\Downloads\segpro-med\app.py", line 1206, in convert_segmentation_to_shapes
+    fig.update_layout(shapes=shapes)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\graph_objs\_figure.py", line 787, in update_layout
+    return super(Figure, self).update_layout(dict1, overwrite, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 1392, in update_layout
+    self.layout.update(dict1, overwrite=overwrite, **kwargs)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 5123, in update
+    BaseFigure._perform_update(self, kwargs, overwrite=overwrite)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 3923, in _perform_update
+    plotly_obj[key] = val
+    ~~~~~~~~~~^^^^^
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 5898, in __setitem__
+    super(BaseLayoutHierarchyType, self).__setitem__(prop, value)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 4856, in __setitem__
+    self._set_array_prop(prop, value)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 5337, in _set_array_prop
+    val = validator.validate_coerce(val, skip_invalid=self._skip_invalid)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\_plotly_utils\basevalidators.py", line 2596, in validate_coerce
+    res.append(self.data_class(v_el, skip_invalid=skip_invalid))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\graph_objs\layout\_shape.py", line 1583, in __init__
+    self._process_kwargs(**dict(arg, **kwargs))
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 4378, in _process_kwargs
+    raise err
+ValueError: Invalid property specified for object of type plotly.graph_objs.layout.Shape: 'meta'
+
+Did you mean "path"?
+
+    Valid properties:
+        editable
+            Determines whether the shape could be activated for
+            edit or not. Has no effect when the older editable
+            shapes mode is enabled via `config.editable` or
+            `config.edits.shapePosition`.
+        fillcolor
+            Sets the color filling the shape's interior. Only
+            applies to closed shapes.
+        fillrule
+            Determines which regions of complex paths constitute
+            the interior. For more info please visit
+            https://developer.mozilla.org/en-
+            US/docs/Web/SVG/Attribute/fill-rule
+        label
+            :class:`plotly.graph_objects.layout.shape.Label`
+            instance or dict with compatible properties
+        layer
+            Specifies whether shapes are drawn below gridlines
+            ("below"), between gridlines and traces ("between") or
+            above traces ("above").
+        legend
+            Sets the reference to a legend to show this shape in.
+            References to these legends are "legend", "legend2",
+            "legend3", etc. Settings for these legends are set in
+            the layout, under `layout.legend`, `layout.legend2`,
+            etc.
+        legendgroup
+            Sets the legend group for this shape. Traces and shapes
+            part of the same legend group hide/show at the same
+            time when toggling legend items.
+        legendgrouptitle
+            :class:`plotly.graph_objects.layout.shape.Legendgroupti
+            tle` instance or dict with compatible properties
+        legendrank
+            Sets the legend rank for this shape. Items and groups
+            with smaller ranks are presented on top/left side while
+            with "reversed" `legend.traceorder` they are on
+            bottom/right side. The default legendrank is 1000, so
+            that you can use ranks less than 1000 to place certain
+            items before all unranked items, and ranks greater than
+            1000 to go after all unranked items. When having
+            unranked or equal rank items shapes would be displayed
+            after traces i.e. according to their order in data and
+            layout.
+        legendwidth
+            Sets the width (in px or fraction) of the legend for
+            this shape.
+        line
+            :class:`plotly.graph_objects.layout.shape.Line`
+            instance or dict with compatible properties
+        name
+            When used in a template, named items are created in the
+            output figure in addition to any items the figure
+            already has in this array. You can modify these items
+            in the output figure by making your own item with
+            `templateitemname` matching this `name` alongside your
+            modifications (including `visible: false` or `enabled:
+            false` to hide it). Has no effect outside of a
+            template.
+        opacity
+            Sets the opacity of the shape.
+        path
+            For `type` "path" - a valid SVG path with the pixel
+            values replaced by data values in
+            `xsizemode`/`ysizemode` being "scaled" and taken
+            unmodified as pixels relative to `xanchor` and
+            `yanchor` in case of "pixel" size mode. There are a few
+            restrictions / quirks only absolute instructions, not
+            relative. So the allowed segments are: M, L, H, V, Q,
+            C, T, S, and Z arcs (A) are not allowed because radius
+            rx and ry are relative. In the future we could consider
+            supporting relative commands, but we would have to
+            decide on how to handle date and log axes. Note that
+            even as is, Q and C Bezier paths that are smooth on
+            linear axes may not be smooth on log, and vice versa.
+            no chained "polybezier" commands - specify the segment
+            type for each one. On category axes, values are numbers
+            scaled to the serial numbers of categories because
+            using the categories themselves there would be no way
+            to describe fractional positions On data axes: because
+            space and T are both normal components of path strings,
+            we can't use either to separate date from time parts.
+            Therefore we'll use underscore for this purpose:
+            2015-02-21_13:45:56.789
+        showlegend
+            Determines whether or not this shape is shown in the
+            legend.
+        templateitemname
+            Used to refer to a named item in this array in the
+            template. Named items from the template will be created
+            even without a matching item in the input figure, but
+            you can modify one by making an item with
+            `templateitemname` matching its `name`, alongside your
+            modifications (including `visible: false` or `enabled:
+            false` to hide it). If there is no template or no
+            matching item, this item will be hidden unless you
+            explicitly show it with `visible: true`.
+        type
+            Specifies the shape type to be drawn. If "line", a line
+            is drawn from (`x0`,`y0`) to (`x1`,`y1`) with respect
+            to the axes' sizing mode. If "circle", a circle is
+            drawn from ((`x0`+`x1`)/2, (`y0`+`y1`)/2)) with radius
+            (|(`x0`+`x1`)/2 - `x0`|, |(`y0`+`y1`)/2 -`y0`)|) with
+            respect to the axes' sizing mode. If "rect", a
+            rectangle is drawn linking (`x0`,`y0`), (`x1`,`y0`),
+            (`x1`,`y1`), (`x0`,`y1`), (`x0`,`y0`) with respect to
+            the axes' sizing mode. If "path", draw a custom SVG
+            path using `path`. with respect to the axes' sizing
+            mode.
+        visible
+            Determines whether or not this shape is visible. If
+            "legendonly", the shape is not drawn, but can appear as
+            a legend item (provided that the legend itself is
+            visible).
+        x0
+            Sets the shape's starting x position. See `type` and
+            `xsizemode` for more info.
+        x0shift
+            Shifts `x0` away from the center of the category when
+            `xref` is a "category" or "multicategory" axis. -0.5
+            corresponds to the start of the category and 0.5
+            corresponds to the end of the category.
+        x1
+            Sets the shape's end x position. See `type` and
+            `xsizemode` for more info.
+        x1shift
+            Shifts `x1` away from the center of the category when
+            `xref` is a "category" or "multicategory" axis. -0.5
+            corresponds to the start of the category and 0.5
+            corresponds to the end of the category.
+        xanchor
+            Only relevant in conjunction with `xsizemode` set to
+            "pixel". Specifies the anchor point on the x axis to
+            which `x0`, `x1` and x coordinates within `path` are
+            relative to. E.g. useful to attach a pixel sized shape
+            to a certain data value. No effect when `xsizemode` not
+            set to "pixel".
+        xref
+            Sets the shape's x coordinate axis. If set to a x axis
+            id (e.g. "x" or "x2"), the `x` position refers to a x
+            coordinate. If set to "paper", the `x` position refers
+            to the distance from the left of the plotting area in
+            normalized coordinates where 0 (1) corresponds to the
+            left (right). If set to a x axis ID followed by
+            "domain" (separated by a space), the position behaves
+            like for "paper", but refers to the distance in
+            fractions of the domain length from the left of the
+            domain of that axis: e.g., *x2 domain* refers to the
+            domain of the second x  axis and a x position of 0.5
+            refers to the point between the left and the right of
+            the domain of the second x axis.
+        xsizemode
+            Sets the shapes's sizing mode along the x axis. If set
+            to "scaled", `x0`, `x1` and x coordinates within `path`
+            refer to data values on the x axis or a fraction of the
+            plot area's width (`xref` set to "paper"). If set to
+            "pixel", `xanchor` specifies the x position in terms of
+            data or plot fraction but `x0`, `x1` and x coordinates
+            within `path` are pixels relative to `xanchor`. This
+            way, the shape can have a fixed width while maintaining
+            a position relative to data or plot fraction.
+        y0
+            Sets the shape's starting y position. See `type` and
+            `ysizemode` for more info.
+        y0shift
+            Shifts `y0` away from the center of the category when
+            `yref` is a "category" or "multicategory" axis. -0.5
+            corresponds to the start of the category and 0.5
+            corresponds to the end of the category.
+        y1
+            Sets the shape's end y position. See `type` and
+            `ysizemode` for more info.
+        y1shift
+            Shifts `y1` away from the center of the category when
+            `yref` is a "category" or "multicategory" axis. -0.5
+            corresponds to the start of the category and 0.5
+            corresponds to the end of the category.
+        yanchor
+            Only relevant in conjunction with `ysizemode` set to
+            "pixel". Specifies the anchor point on the y axis to
+            which `y0`, `y1` and y coordinates within `path` are
+            relative to. E.g. useful to attach a pixel sized shape
+            to a certain data value. No effect when `ysizemode` not
+            set to "pixel".
+        yref
+            Sets the shape's y coordinate axis. If set to a y axis
+            id (e.g. "y" or "y2"), the `y` position refers to a y
+            coordinate. If set to "paper", the `y` position refers
+            to the distance from the bottom of the plotting area in
+            normalized coordinates where 0 (1) corresponds to the
+            bottom (top). If set to a y axis ID followed by
+            "domain" (separated by a space), the position behaves
+            like for "paper", but refers to the distance in
+            fractions of the domain length from the bottom of the
+            domain of that axis: e.g., *y2 domain* refers to the
+            domain of the second y  axis and a y position of 0.5
+            refers to the point between the bottom and the top of
+            the domain of the second y axis.
+        ysizemode
+            Sets the shapes's sizing mode along the y axis. If set
+            to "scaled", `y0`, `y1` and y coordinates within `path`
+            refer to data values on the y axis or a fraction of the
+            plot area's height (`yref` set to "paper"). If set to
+            "pixel", `yanchor` specifies the y position in terms of
+            data or plot fraction but `y0`, `y1` and y coordinates
+            within `path` are pixels relative to `yanchor`. This
+            way, the shape can have a fixed height while
+            maintaining a position relative to data or plot
+            fraction.
+        
+Did you mean "path"?
+
+Bad property path:
+meta
+^^^^
+
+2025-05-19 00:41:13,570 - segmed_pro - INFO - Starting SegMed-Pro application
+2025-05-19 00:41:13,571 - segmed_pro - INFO - Setting up DICOM pixel data handlers
+2025-05-19 00:41:13,571 - segmed_pro - INFO - Added GDCM handler
+2025-05-19 00:41:13,571 - segmed_pro - INFO - Added pylibjpeg handler
+2025-05-19 00:41:13,571 - segmed_pro - INFO - Added Pillow handler
+2025-05-19 00:41:13,572 - segmed_pro - INFO - Added NumPy handler
+2025-05-19 00:41:13,572 - segmed_pro - INFO - Configured DICOM handlers: gdcm, pylibjpeg, pillow, numpy
+2025-05-19 00:41:13,572 - segmed_pro - INFO - Initialized DICOM handlers: 4 handlers available
+2025-05-19 00:41:18,232 - segmed_pro - INFO - Loading data: file=None, directory=C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+2025-05-19 00:41:18,232 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+2025-05-19 00:41:18,233 - segmed_pro - INFO - Found 20 DICOM files
+2025-05-19 00:41:18,233 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-05-19 00:41:18,248 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-05-19 00:41:18,262 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-05-19 00:41:18,276 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-05-19 00:41:18,290 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-05-19 00:41:18,305 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-05-19 00:41:18,318 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-05-19 00:41:18,332 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-05-19 00:41:18,348 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-05-19 00:41:18,361 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341775486333211_MR.dcm
+2025-05-19 00:41:18,376 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-05-19 00:41:18,390 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-05-19 00:41:18,404 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-05-19 00:41:18,418 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-05-19 00:41:18,432 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-05-19 00:41:18,446 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-05-19 00:41:18,459 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-05-19 00:41:18,473 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
+2025-05-19 00:41:18,486 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm
+2025-05-19 00:41:18,500 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm
+2025-05-19 00:41:18,513 - segmed_pro - INFO - Successfully read 20 DICOM files
+2025-05-19 00:41:18,513 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-19 00:41:18,599 - segmed_pro - INFO - Created 3D volume with shape (20, 512, 400)
+2025-05-19 00:41:18,613 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-19 00:41:18,615 - segmed_pro - INFO - Using WindowCenter from metadata: 649.0
+2025-05-19 00:41:18,615 - segmed_pro - INFO - Using WindowWidth from metadata: 1361.0
+2025-05-19 00:41:18,832 - segmed_pro - INFO - Using WindowCenter from metadata: 649.0
+2025-05-19 00:41:18,832 - segmed_pro - INFO - Using WindowWidth from metadata: 1361.0
+2025-05-19 00:41:24,761 - segmed_pro - INFO - Direct loading segmentation file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\0e082623c0d16686258bde60a87faa2d6ee24a0afa97bec097d6635d350dc7cd\Untitled.nii
+2025-05-19 00:41:24,786 - segmed_pro - INFO - Original segmentation dimensions: (400, 512, 20)
+2025-05-19 00:41:24,787 - segmed_pro - INFO - DICOM data dimensions: (20, 512, 400)
+2025-05-19 00:41:24,787 - segmed_pro - INFO - Dimensions match but in different order, performing axis swapping
+2025-05-19 00:41:24,787 - segmed_pro - INFO - After swapping axes: segmentation shape (20, 512, 400)
+2025-05-19 00:41:26,786 - segmed_pro - INFO - Updating slice: value=1, view=Axial
+2025-05-19 00:41:26,786 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-05-19 00:41:26,818 - segmed_pro - INFO - Updated metadata for slice 1
+2025-05-19 00:41:26,818 - segmed_pro - INFO - Using WindowCenter from metadata: 614.0
+2025-05-19 00:41:26,819 - segmed_pro - INFO - Using WindowWidth from metadata: 1287.0
+2025-05-19 00:41:26,832 - segmed_pro - INFO - Applied segmentation overlay to slice 1
+2025-05-19 00:41:26,843 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:41:26,940 - segmed_pro - INFO - Updating slice: value=2, view=Axial
+2025-05-19 00:41:26,941 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-05-19 00:41:26,974 - segmed_pro - INFO - Updated metadata for slice 2
+2025-05-19 00:41:26,975 - segmed_pro - INFO - Using WindowCenter from metadata: 549.0
+2025-05-19 00:41:26,975 - segmed_pro - INFO - Using WindowWidth from metadata: 1168.0
+2025-05-19 00:41:26,989 - segmed_pro - INFO - Applied segmentation overlay to slice 2
+2025-05-19 00:41:26,999 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:41:27,467 - segmed_pro - INFO - Updating slice: value=3, view=Axial
+2025-05-19 00:41:27,468 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-05-19 00:41:27,491 - segmed_pro - INFO - Updated metadata for slice 3
+2025-05-19 00:41:27,491 - segmed_pro - INFO - Using WindowCenter from metadata: 526.0
+2025-05-19 00:41:27,491 - segmed_pro - INFO - Using WindowWidth from metadata: 1128.0
+2025-05-19 00:41:27,505 - segmed_pro - INFO - Applied segmentation overlay to slice 3
+2025-05-19 00:41:27,515 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:41:27,949 - segmed_pro - INFO - Updating slice: value=4, view=Axial
+2025-05-19 00:41:27,949 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-05-19 00:41:27,982 - segmed_pro - INFO - Updated metadata for slice 4
+2025-05-19 00:41:27,982 - segmed_pro - INFO - Using WindowCenter from metadata: 507.0
+2025-05-19 00:41:27,982 - segmed_pro - INFO - Using WindowWidth from metadata: 1102.0
+2025-05-19 00:41:27,998 - segmed_pro - INFO - Applied segmentation overlay to slice 4
+2025-05-19 00:41:28,009 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:41:28,274 - segmed_pro - INFO - Updating slice: value=5, view=Axial
+2025-05-19 00:41:28,274 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-05-19 00:41:28,296 - segmed_pro - INFO - Updated metadata for slice 5
+2025-05-19 00:41:28,296 - segmed_pro - INFO - Using WindowCenter from metadata: 500.0
+2025-05-19 00:41:28,296 - segmed_pro - INFO - Using WindowWidth from metadata: 1086.0
+2025-05-19 00:41:28,313 - segmed_pro - INFO - Applied segmentation overlay to slice 5
+2025-05-19 00:41:28,323 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:41:28,444 - segmed_pro - INFO - Updating slice: value=6, view=Axial
+2025-05-19 00:41:28,445 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-05-19 00:41:28,474 - segmed_pro - INFO - Updated metadata for slice 6
+2025-05-19 00:41:28,474 - segmed_pro - INFO - Using WindowCenter from metadata: 495.0
+2025-05-19 00:41:28,475 - segmed_pro - INFO - Using WindowWidth from metadata: 1062.0
+2025-05-19 00:41:28,492 - segmed_pro - INFO - Applied segmentation overlay to slice 6
+2025-05-19 00:41:28,502 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:41:50,252 - segmed_pro - INFO - Updating slice: value=7, view=Axial
+2025-05-19 00:41:50,252 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-05-19 00:41:50,275 - segmed_pro - INFO - Updated metadata for slice 7
+2025-05-19 00:41:50,275 - segmed_pro - INFO - Using WindowCenter from metadata: 494.0
+2025-05-19 00:41:50,275 - segmed_pro - INFO - Using WindowWidth from metadata: 1036.0
+2025-05-19 00:41:50,297 - segmed_pro - INFO - Applied segmentation overlay to slice 7
+2025-05-19 00:41:50,307 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:43:45,857 - segmed_pro - INFO - Updating slice: value=8, view=Axial
+2025-05-19 00:43:45,858 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-05-19 00:43:45,887 - segmed_pro - INFO - Updated metadata for slice 8
+2025-05-19 00:43:45,887 - segmed_pro - INFO - Using WindowCenter from metadata: 494.0
+2025-05-19 00:43:45,887 - segmed_pro - INFO - Using WindowWidth from metadata: 1028.0
+2025-05-19 00:43:45,905 - segmed_pro - INFO - Applied segmentation overlay to slice 8
+2025-05-19 00:43:45,915 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:43:46,786 - segmed_pro - INFO - Updating slice: value=9, view=Axial
+2025-05-19 00:43:46,786 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-05-19 00:43:46,813 - segmed_pro - INFO - Updated metadata for slice 9
+2025-05-19 00:43:46,814 - segmed_pro - INFO - Using WindowCenter from metadata: 487.0
+2025-05-19 00:43:46,814 - segmed_pro - INFO - Using WindowWidth from metadata: 1009.0
+2025-05-19 00:43:46,835 - segmed_pro - INFO - Applied segmentation overlay to slice 9
+2025-05-19 00:43:46,845 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:43:47,483 - segmed_pro - INFO - Updating slice: value=10, view=Axial
+2025-05-19 00:43:47,483 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-05-19 00:43:47,507 - segmed_pro - INFO - Updated metadata for slice 10
+2025-05-19 00:43:47,507 - segmed_pro - INFO - Using WindowCenter from metadata: 476.0
+2025-05-19 00:43:47,508 - segmed_pro - INFO - Using WindowWidth from metadata: 987.0
+2025-05-19 00:43:47,528 - segmed_pro - INFO - Applied segmentation overlay to slice 10
+2025-05-19 00:43:47,538 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:44:15,671 - segmed_pro - INFO - Updating slice: value=9, view=Axial
+2025-05-19 00:44:15,672 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-05-19 00:44:15,697 - segmed_pro - INFO - Updated metadata for slice 9
+2025-05-19 00:44:15,697 - segmed_pro - INFO - Using WindowCenter from metadata: 487.0
+2025-05-19 00:44:15,698 - segmed_pro - INFO - Using WindowWidth from metadata: 1009.0
+2025-05-19 00:44:15,718 - segmed_pro - INFO - Applied segmentation overlay to slice 9
+2025-05-19 00:44:15,731 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:44:15,840 - segmed_pro - INFO - Updating slice: value=8, view=Axial
+2025-05-19 00:44:15,840 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-05-19 00:44:15,872 - segmed_pro - INFO - Updated metadata for slice 8
+2025-05-19 00:44:15,873 - segmed_pro - INFO - Using WindowCenter from metadata: 494.0
+2025-05-19 00:44:15,873 - segmed_pro - INFO - Using WindowWidth from metadata: 1028.0
+2025-05-19 00:44:15,889 - segmed_pro - INFO - Applied segmentation overlay to slice 8
+2025-05-19 00:44:15,899 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:44:16,228 - segmed_pro - INFO - Updating slice: value=7, view=Axial
+2025-05-19 00:44:16,228 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-05-19 00:44:16,251 - segmed_pro - INFO - Updated metadata for slice 7
+2025-05-19 00:44:16,251 - segmed_pro - INFO - Using WindowCenter from metadata: 494.0
+2025-05-19 00:44:16,252 - segmed_pro - INFO - Using WindowWidth from metadata: 1036.0
+2025-05-19 00:44:16,272 - segmed_pro - INFO - Applied segmentation overlay to slice 7
+2025-05-19 00:44:16,282 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:47:35,064 - segmed_pro - INFO - Starting SegMed-Pro application
+2025-05-19 00:47:35,064 - segmed_pro - INFO - Setting up DICOM pixel data handlers
+2025-05-19 00:47:35,064 - segmed_pro - INFO - Added GDCM handler
+2025-05-19 00:47:35,065 - segmed_pro - INFO - Added pylibjpeg handler
+2025-05-19 00:47:35,065 - segmed_pro - INFO - Added Pillow handler
+2025-05-19 00:47:35,065 - segmed_pro - INFO - Added NumPy handler
+2025-05-19 00:47:35,065 - segmed_pro - INFO - Configured DICOM handlers: gdcm, pylibjpeg, pillow, numpy
+2025-05-19 00:47:35,066 - segmed_pro - INFO - Initialized DICOM handlers: 4 handlers available
+2025-05-19 00:47:38,124 - segmed_pro - INFO - Loading data: file=None, directory=C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+2025-05-19 00:47:38,124 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+2025-05-19 00:47:38,124 - segmed_pro - INFO - Found 20 DICOM files
+2025-05-19 00:47:38,124 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-05-19 00:47:38,138 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-05-19 00:47:38,150 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-05-19 00:47:38,165 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-05-19 00:47:38,178 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-05-19 00:47:38,192 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-05-19 00:47:38,205 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-05-19 00:47:38,220 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-05-19 00:47:38,232 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-05-19 00:47:38,245 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341775486333211_MR.dcm
+2025-05-19 00:47:38,259 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-05-19 00:47:38,273 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-05-19 00:47:38,287 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-05-19 00:47:38,302 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-05-19 00:47:38,317 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-05-19 00:47:38,333 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-05-19 00:47:38,347 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-05-19 00:47:38,361 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
+2025-05-19 00:47:38,375 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm
+2025-05-19 00:47:38,389 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm
+2025-05-19 00:47:38,403 - segmed_pro - INFO - Successfully read 20 DICOM files
+2025-05-19 00:47:38,403 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-19 00:47:38,483 - segmed_pro - INFO - Created 3D volume with shape (20, 512, 400)
+2025-05-19 00:47:38,497 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-19 00:47:38,498 - segmed_pro - INFO - Using WindowCenter from metadata: 649.0
+2025-05-19 00:47:38,498 - segmed_pro - INFO - Using WindowWidth from metadata: 1361.0
+2025-05-19 00:47:38,654 - segmed_pro - INFO - Using WindowCenter from metadata: 649.0
+2025-05-19 00:47:38,654 - segmed_pro - INFO - Using WindowWidth from metadata: 1361.0
+2025-05-19 00:47:40,231 - segmed_pro - INFO - Updating slice: value=1, view=Axial
+2025-05-19 00:47:40,231 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-05-19 00:47:40,245 - segmed_pro - INFO - Updated metadata for slice 1
+2025-05-19 00:47:40,245 - segmed_pro - INFO - Using WindowCenter from metadata: 614.0
+2025-05-19 00:47:40,246 - segmed_pro - INFO - Using WindowWidth from metadata: 1287.0
+2025-05-19 00:47:40,255 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:47:40,602 - segmed_pro - INFO - Updating slice: value=2, view=Axial
+2025-05-19 00:47:40,603 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-05-19 00:47:40,617 - segmed_pro - INFO - Updated metadata for slice 2
+2025-05-19 00:47:40,617 - segmed_pro - INFO - Using WindowCenter from metadata: 549.0
+2025-05-19 00:47:40,617 - segmed_pro - INFO - Using WindowWidth from metadata: 1168.0
+2025-05-19 00:47:40,627 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:47:41,020 - segmed_pro - INFO - Updating slice: value=3, view=Axial
+2025-05-19 00:47:41,020 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-05-19 00:47:41,034 - segmed_pro - INFO - Updated metadata for slice 3
+2025-05-19 00:47:41,034 - segmed_pro - INFO - Using WindowCenter from metadata: 526.0
+2025-05-19 00:47:41,034 - segmed_pro - INFO - Using WindowWidth from metadata: 1128.0
+2025-05-19 00:47:41,044 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:47:41,718 - segmed_pro - INFO - Updating slice: value=4, view=Axial
+2025-05-19 00:47:41,718 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-05-19 00:47:41,732 - segmed_pro - INFO - Updated metadata for slice 4
+2025-05-19 00:47:41,732 - segmed_pro - INFO - Using WindowCenter from metadata: 507.0
+2025-05-19 00:47:41,732 - segmed_pro - INFO - Using WindowWidth from metadata: 1102.0
+2025-05-19 00:47:41,741 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:47:46,955 - segmed_pro - INFO - Updating slice: value=3, view=Axial
+2025-05-19 00:47:46,955 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-05-19 00:47:46,975 - segmed_pro - INFO - Updated metadata for slice 3
+2025-05-19 00:47:46,975 - segmed_pro - INFO - Using WindowCenter from metadata: 526.0
+2025-05-19 00:47:46,975 - segmed_pro - INFO - Using WindowWidth from metadata: 1128.0
+2025-05-19 00:47:46,984 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:47:47,248 - segmed_pro - INFO - Updating slice: value=2, view=Axial
+2025-05-19 00:47:47,248 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-05-19 00:47:47,262 - segmed_pro - INFO - Updated metadata for slice 2
+2025-05-19 00:47:47,262 - segmed_pro - INFO - Using WindowCenter from metadata: 549.0
+2025-05-19 00:47:47,262 - segmed_pro - INFO - Using WindowWidth from metadata: 1168.0
+2025-05-19 00:47:47,273 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:47:47,713 - segmed_pro - INFO - Updating slice: value=1, view=Axial
+2025-05-19 00:47:47,713 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-05-19 00:47:47,727 - segmed_pro - INFO - Updated metadata for slice 1
+2025-05-19 00:47:47,727 - segmed_pro - INFO - Using WindowCenter from metadata: 614.0
+2025-05-19 00:47:47,727 - segmed_pro - INFO - Using WindowWidth from metadata: 1287.0
+2025-05-19 00:47:47,737 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:47:47,992 - segmed_pro - INFO - Updating slice: value=0, view=Axial
+2025-05-19 00:47:47,992 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-05-19 00:47:48,005 - segmed_pro - INFO - Updated metadata for slice 0
+2025-05-19 00:47:48,005 - segmed_pro - INFO - Using WindowCenter from metadata: 649.0
+2025-05-19 00:47:48,005 - segmed_pro - INFO - Using WindowWidth from metadata: 1361.0
+2025-05-19 00:47:48,063 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:47:49,416 - segmed_pro - INFO - Updating slice: value=1, view=Axial
+2025-05-19 00:47:49,417 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-05-19 00:47:49,431 - segmed_pro - INFO - Updated metadata for slice 1
+2025-05-19 00:47:49,431 - segmed_pro - INFO - Using WindowCenter from metadata: 614.0
+2025-05-19 00:47:49,431 - segmed_pro - INFO - Using WindowWidth from metadata: 1287.0
+2025-05-19 00:47:49,441 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:47:49,773 - segmed_pro - INFO - Updating slice: value=2, view=Axial
+2025-05-19 00:47:49,774 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-05-19 00:47:49,787 - segmed_pro - INFO - Updated metadata for slice 2
+2025-05-19 00:47:49,787 - segmed_pro - INFO - Using WindowCenter from metadata: 549.0
+2025-05-19 00:47:49,788 - segmed_pro - INFO - Using WindowWidth from metadata: 1168.0
+2025-05-19 00:47:49,797 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:47:50,160 - segmed_pro - INFO - Updating slice: value=3, view=Axial
+2025-05-19 00:47:50,161 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-05-19 00:47:50,174 - segmed_pro - INFO - Updated metadata for slice 3
+2025-05-19 00:47:50,174 - segmed_pro - INFO - Using WindowCenter from metadata: 526.0
+2025-05-19 00:47:50,174 - segmed_pro - INFO - Using WindowWidth from metadata: 1128.0
+2025-05-19 00:47:50,183 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:47:51,043 - segmed_pro - INFO - Updating slice: value=4, view=Axial
+2025-05-19 00:47:51,044 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-05-19 00:47:51,059 - segmed_pro - INFO - Updated metadata for slice 4
+2025-05-19 00:47:51,059 - segmed_pro - INFO - Using WindowCenter from metadata: 507.0
+2025-05-19 00:47:51,059 - segmed_pro - INFO - Using WindowWidth from metadata: 1102.0
+2025-05-19 00:47:51,068 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:47:51,152 - segmed_pro - INFO - Updating slice: value=11, view=Axial
+2025-05-19 00:47:51,153 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-05-19 00:47:51,171 - segmed_pro - INFO - Updated metadata for slice 11
+2025-05-19 00:47:51,171 - segmed_pro - INFO - Using WindowCenter from metadata: 468.0
+2025-05-19 00:47:51,171 - segmed_pro - INFO - Using WindowWidth from metadata: 968.0
+2025-05-19 00:47:51,181 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:47:51,822 - segmed_pro - INFO - Updating slice: value=12, view=Axial
+2025-05-19 00:47:51,822 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-05-19 00:47:51,837 - segmed_pro - INFO - Updated metadata for slice 12
+2025-05-19 00:47:51,837 - segmed_pro - INFO - Using WindowCenter from metadata: 458.0
+2025-05-19 00:47:51,837 - segmed_pro - INFO - Using WindowWidth from metadata: 946.0
+2025-05-19 00:47:51,847 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:47:52,113 - segmed_pro - INFO - Updating slice: value=13, view=Axial
+2025-05-19 00:47:52,113 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-05-19 00:47:52,127 - segmed_pro - INFO - Updated metadata for slice 13
+2025-05-19 00:47:52,127 - segmed_pro - INFO - Using WindowCenter from metadata: 453.0
+2025-05-19 00:47:52,127 - segmed_pro - INFO - Using WindowWidth from metadata: 925.0
+2025-05-19 00:47:52,137 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:47:52,840 - segmed_pro - INFO - Updating slice: value=12, view=Axial
+2025-05-19 00:47:52,841 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-05-19 00:47:52,855 - segmed_pro - INFO - Updated metadata for slice 12
+2025-05-19 00:47:52,855 - segmed_pro - INFO - Using WindowCenter from metadata: 458.0
+2025-05-19 00:47:52,856 - segmed_pro - INFO - Using WindowWidth from metadata: 946.0
+2025-05-19 00:47:52,865 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:47:56,560 - segmed_pro - INFO - Updating slice: value=13, view=Axial
+2025-05-19 00:47:56,560 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-05-19 00:47:56,576 - segmed_pro - INFO - Updated metadata for slice 13
+2025-05-19 00:47:56,576 - segmed_pro - INFO - Using WindowCenter from metadata: 453.0
+2025-05-19 00:47:56,576 - segmed_pro - INFO - Using WindowWidth from metadata: 925.0
+2025-05-19 00:47:56,585 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:47:56,963 - segmed_pro - INFO - Updating slice: value=14, view=Axial
+2025-05-19 00:47:56,963 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-05-19 00:47:56,978 - segmed_pro - INFO - Updated metadata for slice 14
+2025-05-19 00:47:56,978 - segmed_pro - INFO - Using WindowCenter from metadata: 443.0
+2025-05-19 00:47:56,978 - segmed_pro - INFO - Using WindowWidth from metadata: 909.0
+2025-05-19 00:47:56,989 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:47:57,351 - segmed_pro - INFO - Updating slice: value=15, view=Axial
+2025-05-19 00:47:57,351 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
+2025-05-19 00:47:57,367 - segmed_pro - INFO - Updated metadata for slice 15
+2025-05-19 00:47:57,367 - segmed_pro - INFO - Using WindowCenter from metadata: 424.0
+2025-05-19 00:47:57,367 - segmed_pro - INFO - Using WindowWidth from metadata: 880.0
+2025-05-19 00:47:57,377 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:48:01,228 - segmed_pro - INFO - Direct loading segmentation file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\0e082623c0d16686258bde60a87faa2d6ee24a0afa97bec097d6635d350dc7cd\Untitled.nii
+2025-05-19 00:48:01,247 - segmed_pro - INFO - Original segmentation dimensions: (400, 512, 20)
+2025-05-19 00:48:01,248 - segmed_pro - INFO - DICOM data dimensions: (20, 512, 400)
+2025-05-19 00:48:01,248 - segmed_pro - INFO - Dimensions match but in different order, performing axis swapping
+2025-05-19 00:48:01,248 - segmed_pro - INFO - After swapping axes: segmentation shape (20, 512, 400)
+2025-05-19 00:48:03,673 - segmed_pro - INFO - Updating slice: value=14, view=Axial
+2025-05-19 00:48:03,673 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-05-19 00:48:03,687 - segmed_pro - INFO - Updated metadata for slice 14
+2025-05-19 00:48:03,688 - segmed_pro - INFO - Using WindowCenter from metadata: 443.0
+2025-05-19 00:48:03,688 - segmed_pro - INFO - Using WindowWidth from metadata: 909.0
+2025-05-19 00:48:03,698 - segmed_pro - INFO - Applied segmentation overlay to slice 14
+2025-05-19 00:48:03,704 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:48:04,340 - segmed_pro - INFO - Updating slice: value=13, view=Axial
+2025-05-19 00:48:04,340 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-05-19 00:48:04,354 - segmed_pro - INFO - Updated metadata for slice 13
+2025-05-19 00:48:04,354 - segmed_pro - INFO - Using WindowCenter from metadata: 453.0
+2025-05-19 00:48:04,354 - segmed_pro - INFO - Using WindowWidth from metadata: 925.0
+2025-05-19 00:48:04,365 - segmed_pro - INFO - Applied segmentation overlay to slice 13
+2025-05-19 00:48:04,370 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:48:04,913 - segmed_pro - INFO - Updating slice: value=12, view=Axial
+2025-05-19 00:48:04,913 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-05-19 00:48:04,928 - segmed_pro - INFO - Updated metadata for slice 12
+2025-05-19 00:48:04,928 - segmed_pro - INFO - Using WindowCenter from metadata: 458.0
+2025-05-19 00:48:04,928 - segmed_pro - INFO - Using WindowWidth from metadata: 946.0
+2025-05-19 00:48:04,940 - segmed_pro - INFO - Applied segmentation overlay to slice 12
+2025-05-19 00:48:04,946 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:48:05,532 - segmed_pro - INFO - Updating slice: value=11, view=Axial
+2025-05-19 00:48:05,533 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-05-19 00:48:05,557 - segmed_pro - INFO - Updated metadata for slice 11
+2025-05-19 00:48:05,557 - segmed_pro - INFO - Using WindowCenter from metadata: 468.0
+2025-05-19 00:48:05,557 - segmed_pro - INFO - Using WindowWidth from metadata: 968.0
+2025-05-19 00:48:05,571 - segmed_pro - INFO - Applied segmentation overlay to slice 11
+2025-05-19 00:48:05,576 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:48:07,799 - segmed_pro - ERROR - Error converting segmentation to shapes: 
+    Invalid value of type 'builtins.str' received for the 'type' property of layout.shape
+        Received value: 'polygon'
+
+    The 'type' property is an enumeration that may be specified as:
+      - One of the following enumeration values:
+            ['circle', 'rect', 'path', 'line']
+2025-05-19 00:48:07,804 - segmed_pro - ERROR - Traceback (most recent call last):
+  File "C:\Users\Yurtsever\Downloads\segpro-med\app.py", line 1206, in convert_segmentation_to_shapes
+    fig.update_layout(shapes=shapes)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\graph_objs\_figure.py", line 787, in update_layout
+    return super(Figure, self).update_layout(dict1, overwrite, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 1392, in update_layout
+    self.layout.update(dict1, overwrite=overwrite, **kwargs)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 5123, in update
+    BaseFigure._perform_update(self, kwargs, overwrite=overwrite)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 3923, in _perform_update
+    plotly_obj[key] = val
+    ~~~~~~~~~~^^^^^
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 5898, in __setitem__
+    super(BaseLayoutHierarchyType, self).__setitem__(prop, value)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 4856, in __setitem__
+    self._set_array_prop(prop, value)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 5337, in _set_array_prop
+    val = validator.validate_coerce(val, skip_invalid=self._skip_invalid)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\_plotly_utils\basevalidators.py", line 2596, in validate_coerce
+    res.append(self.data_class(v_el, skip_invalid=skip_invalid))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\graph_objs\layout\_shape.py", line 1519, in __init__
+    self["type"] = _v
+    ~~~~^^^^^^^^
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 4860, in __setitem__
+    self._set_prop(prop, value)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 5204, in _set_prop
+    raise err
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 5199, in _set_prop
+    val = validator.validate_coerce(val)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\_plotly_utils\basevalidators.py", line 620, in validate_coerce
+    self.raise_invalid_val(v)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\_plotly_utils\basevalidators.py", line 299, in raise_invalid_val
+    raise ValueError(
+ValueError: 
+    Invalid value of type 'builtins.str' received for the 'type' property of layout.shape
+        Received value: 'polygon'
+
+    The 'type' property is an enumeration that may be specified as:
+      - One of the following enumeration values:
+            ['circle', 'rect', 'path', 'line']
+
+2025-05-19 00:50:25,183 - segmed_pro - INFO - Starting SegMed-Pro application
+2025-05-19 00:50:25,183 - segmed_pro - INFO - Setting up DICOM pixel data handlers
+2025-05-19 00:50:25,183 - segmed_pro - INFO - Added GDCM handler
+2025-05-19 00:50:25,183 - segmed_pro - INFO - Added pylibjpeg handler
+2025-05-19 00:50:25,184 - segmed_pro - INFO - Added Pillow handler
+2025-05-19 00:50:25,184 - segmed_pro - INFO - Added NumPy handler
+2025-05-19 00:50:25,184 - segmed_pro - INFO - Configured DICOM handlers: gdcm, pylibjpeg, pillow, numpy
+2025-05-19 00:50:25,184 - segmed_pro - INFO - Initialized DICOM handlers: 4 handlers available
+2025-05-19 00:50:28,307 - segmed_pro - INFO - Loading data: file=None, directory=C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+2025-05-19 00:50:28,308 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+2025-05-19 00:50:28,308 - segmed_pro - INFO - Found 20 DICOM files
+2025-05-19 00:50:28,308 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-05-19 00:50:28,322 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-05-19 00:50:28,336 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-05-19 00:50:28,350 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-05-19 00:50:28,364 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-05-19 00:50:28,377 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-05-19 00:50:28,391 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-05-19 00:50:28,406 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-05-19 00:50:28,421 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-05-19 00:50:28,436 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341775486333211_MR.dcm
+2025-05-19 00:50:28,450 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-05-19 00:50:28,467 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-05-19 00:50:28,480 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-05-19 00:50:28,494 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-05-19 00:50:28,507 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-05-19 00:50:28,523 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-05-19 00:50:28,536 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-05-19 00:50:28,549 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
+2025-05-19 00:50:28,563 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm
+2025-05-19 00:50:28,576 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm
+2025-05-19 00:50:28,589 - segmed_pro - INFO - Successfully read 20 DICOM files
+2025-05-19 00:50:28,589 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-19 00:50:28,666 - segmed_pro - INFO - Created 3D volume with shape (20, 512, 400)
+2025-05-19 00:50:28,680 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-19 00:50:28,681 - segmed_pro - INFO - Using WindowCenter from metadata: 649.0
+2025-05-19 00:50:28,681 - segmed_pro - INFO - Using WindowWidth from metadata: 1361.0
+2025-05-19 00:50:28,852 - segmed_pro - INFO - Using WindowCenter from metadata: 649.0
+2025-05-19 00:50:28,853 - segmed_pro - INFO - Using WindowWidth from metadata: 1361.0
+2025-05-19 00:50:31,823 - segmed_pro - INFO - Updating slice: value=1, view=Axial
+2025-05-19 00:50:31,823 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-05-19 00:50:31,837 - segmed_pro - INFO - Updated metadata for slice 1
+2025-05-19 00:50:31,838 - segmed_pro - INFO - Using WindowCenter from metadata: 614.0
+2025-05-19 00:50:31,838 - segmed_pro - INFO - Using WindowWidth from metadata: 1287.0
+2025-05-19 00:50:31,847 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:50:32,365 - segmed_pro - INFO - Updating slice: value=2, view=Axial
+2025-05-19 00:50:32,366 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-05-19 00:50:32,380 - segmed_pro - INFO - Updated metadata for slice 2
+2025-05-19 00:50:32,380 - segmed_pro - INFO - Using WindowCenter from metadata: 549.0
+2025-05-19 00:50:32,380 - segmed_pro - INFO - Using WindowWidth from metadata: 1168.0
+2025-05-19 00:50:32,390 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:50:32,799 - segmed_pro - INFO - Updating slice: value=3, view=Axial
+2025-05-19 00:50:32,799 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-05-19 00:50:32,818 - segmed_pro - INFO - Updated metadata for slice 3
+2025-05-19 00:50:32,818 - segmed_pro - INFO - Using WindowCenter from metadata: 526.0
+2025-05-19 00:50:32,819 - segmed_pro - INFO - Using WindowWidth from metadata: 1128.0
+2025-05-19 00:50:32,829 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:50:37,041 - segmed_pro - INFO - Direct loading segmentation file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\0e082623c0d16686258bde60a87faa2d6ee24a0afa97bec097d6635d350dc7cd\Untitled.nii
+2025-05-19 00:50:37,059 - segmed_pro - INFO - Original segmentation dimensions: (400, 512, 20)
+2025-05-19 00:50:37,059 - segmed_pro - INFO - DICOM data dimensions: (20, 512, 400)
+2025-05-19 00:50:37,059 - segmed_pro - INFO - Dimensions match but in different order, performing axis swapping
+2025-05-19 00:50:37,060 - segmed_pro - INFO - After swapping axes: segmentation shape (20, 512, 400)
+2025-05-19 00:51:48,440 - segmed_pro - INFO - Updating slice: value=2, view=Axial
+2025-05-19 00:51:48,440 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-05-19 00:51:48,453 - segmed_pro - INFO - Updated metadata for slice 2
+2025-05-19 00:51:48,454 - segmed_pro - INFO - Using WindowCenter from metadata: 549.0
+2025-05-19 00:51:48,454 - segmed_pro - INFO - Using WindowWidth from metadata: 1168.0
+2025-05-19 00:51:48,462 - segmed_pro - INFO - Applied segmentation overlay to slice 2
+2025-05-19 00:51:48,468 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:51:49,214 - segmed_pro - INFO - Updating slice: value=1, view=Axial
+2025-05-19 00:51:49,215 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-05-19 00:51:49,228 - segmed_pro - INFO - Updated metadata for slice 1
+2025-05-19 00:51:49,228 - segmed_pro - INFO - Using WindowCenter from metadata: 614.0
+2025-05-19 00:51:49,228 - segmed_pro - INFO - Using WindowWidth from metadata: 1287.0
+2025-05-19 00:51:49,236 - segmed_pro - INFO - Applied segmentation overlay to slice 1
+2025-05-19 00:51:49,242 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:51:49,819 - segmed_pro - INFO - Updating slice: value=0, view=Axial
+2025-05-19 00:51:49,819 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-05-19 00:51:49,832 - segmed_pro - INFO - Updated metadata for slice 0
+2025-05-19 00:51:49,832 - segmed_pro - INFO - Using WindowCenter from metadata: 649.0
+2025-05-19 00:51:49,832 - segmed_pro - INFO - Using WindowWidth from metadata: 1361.0
+2025-05-19 00:51:49,840 - segmed_pro - INFO - Applied segmentation overlay to slice 0
+2025-05-19 00:51:49,846 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:51:51,107 - segmed_pro - INFO - Updating slice: value=11, view=Axial
+2025-05-19 00:51:51,107 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-05-19 00:51:51,122 - segmed_pro - INFO - Updated metadata for slice 11
+2025-05-19 00:51:51,122 - segmed_pro - INFO - Using WindowCenter from metadata: 468.0
+2025-05-19 00:51:51,122 - segmed_pro - INFO - Using WindowWidth from metadata: 968.0
+2025-05-19 00:51:51,135 - segmed_pro - INFO - Applied segmentation overlay to slice 11
+2025-05-19 00:51:51,141 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:51:51,649 - segmed_pro - INFO - Updating slice: value=12, view=Axial
+2025-05-19 00:51:51,650 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-05-19 00:51:51,664 - segmed_pro - INFO - Updated metadata for slice 12
+2025-05-19 00:51:51,664 - segmed_pro - INFO - Using WindowCenter from metadata: 458.0
+2025-05-19 00:51:51,665 - segmed_pro - INFO - Using WindowWidth from metadata: 946.0
+2025-05-19 00:51:51,677 - segmed_pro - INFO - Applied segmentation overlay to slice 12
+2025-05-19 00:51:51,682 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:51:51,773 - segmed_pro - INFO - Updating slice: value=14, view=Axial
+2025-05-19 00:51:51,773 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-05-19 00:51:51,787 - segmed_pro - INFO - Updated metadata for slice 14
+2025-05-19 00:51:51,787 - segmed_pro - INFO - Using WindowCenter from metadata: 443.0
+2025-05-19 00:51:51,787 - segmed_pro - INFO - Using WindowWidth from metadata: 909.0
+2025-05-19 00:51:51,797 - segmed_pro - INFO - Applied segmentation overlay to slice 14
+2025-05-19 00:51:51,802 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:51:52,378 - segmed_pro - INFO - Updating slice: value=12, view=Axial
+2025-05-19 00:51:52,378 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-05-19 00:51:52,393 - segmed_pro - INFO - Updated metadata for slice 12
+2025-05-19 00:51:52,393 - segmed_pro - INFO - Using WindowCenter from metadata: 458.0
+2025-05-19 00:51:52,393 - segmed_pro - INFO - Using WindowWidth from metadata: 946.0
+2025-05-19 00:51:52,405 - segmed_pro - INFO - Applied segmentation overlay to slice 12
+2025-05-19 00:51:52,411 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:51:52,517 - segmed_pro - INFO - Updating slice: value=10, view=Axial
+2025-05-19 00:51:52,517 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-05-19 00:51:52,531 - segmed_pro - INFO - Updated metadata for slice 10
+2025-05-19 00:51:52,531 - segmed_pro - INFO - Using WindowCenter from metadata: 476.0
+2025-05-19 00:51:52,531 - segmed_pro - INFO - Using WindowWidth from metadata: 987.0
+2025-05-19 00:51:52,545 - segmed_pro - INFO - Applied segmentation overlay to slice 10
+2025-05-19 00:51:52,550 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 00:57:03,434 - segmed_pro - INFO - Direct loading segmentation file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\0e082623c0d16686258bde60a87faa2d6ee24a0afa97bec097d6635d350dc7cd\Untitled.nii
+2025-05-19 00:57:03,445 - segmed_pro - INFO - Original segmentation dimensions: (400, 512, 20)
+2025-05-19 00:57:03,445 - segmed_pro - INFO - DICOM data dimensions: (20, 512, 400)
+2025-05-19 00:57:03,446 - segmed_pro - INFO - Dimensions match but in different order, performing axis swapping
+2025-05-19 00:57:03,446 - segmed_pro - INFO - After swapping axes: segmentation shape (20, 512, 400)
+2025-05-19 22:14:20,096 - segmed_pro - INFO - Starting SegMed-Pro application
+2025-05-19 22:14:20,096 - segmed_pro - INFO - Setting up DICOM pixel data handlers
+2025-05-19 22:14:20,096 - segmed_pro - INFO - Added GDCM handler
+2025-05-19 22:14:20,097 - segmed_pro - INFO - Added pylibjpeg handler
+2025-05-19 22:14:20,097 - segmed_pro - INFO - Added Pillow handler
+2025-05-19 22:14:20,097 - segmed_pro - INFO - Added NumPy handler
+2025-05-19 22:14:20,097 - segmed_pro - INFO - Configured DICOM handlers: gdcm, pylibjpeg, pillow, numpy
+2025-05-19 22:14:20,097 - segmed_pro - INFO - Initialized DICOM handlers: 4 handlers available
+2025-05-19 22:14:29,757 - segmed_pro - INFO - Loading data: file=None, directory=C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+2025-05-19 22:14:29,757 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+2025-05-19 22:14:29,758 - segmed_pro - INFO - Found 20 DICOM files
+2025-05-19 22:14:29,758 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-05-19 22:14:29,792 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-05-19 22:14:29,828 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-05-19 22:14:29,858 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-05-19 22:14:29,885 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-05-19 22:14:29,911 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-05-19 22:14:29,938 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-05-19 22:14:29,968 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-05-19 22:14:29,995 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-05-19 22:14:30,023 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341775486333211_MR.dcm
+2025-05-19 22:14:30,055 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-05-19 22:14:30,084 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-05-19 22:14:30,115 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-05-19 22:14:30,144 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-05-19 22:14:30,173 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-05-19 22:14:30,200 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-05-19 22:14:30,260 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-05-19 22:14:30,293 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
+2025-05-19 22:14:30,323 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm
+2025-05-19 22:14:30,350 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm
+2025-05-19 22:14:30,378 - segmed_pro - INFO - Successfully read 20 DICOM files
+2025-05-19 22:14:30,378 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-19 22:14:30,536 - segmed_pro - INFO - Created 3D volume with shape (20, 512, 400)
+2025-05-19 22:14:30,561 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-19 22:14:30,563 - segmed_pro - INFO - Using WindowCenter from metadata: 649.0
+2025-05-19 22:14:30,563 - segmed_pro - INFO - Using WindowWidth from metadata: 1361.0
+2025-05-19 22:14:30,922 - segmed_pro - INFO - Using WindowCenter from metadata: 649.0
+2025-05-19 22:14:30,922 - segmed_pro - INFO - Using WindowWidth from metadata: 1361.0
+2025-05-19 22:14:32,605 - segmed_pro - INFO - Updating slice: value=1, view=Axial
+2025-05-19 22:14:32,606 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-05-19 22:14:32,631 - segmed_pro - INFO - Updated metadata for slice 1
+2025-05-19 22:14:32,631 - segmed_pro - INFO - Using WindowCenter from metadata: 614.0
+2025-05-19 22:14:32,632 - segmed_pro - INFO - Using WindowWidth from metadata: 1287.0
+2025-05-19 22:14:32,651 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 22:14:33,347 - segmed_pro - INFO - Updating slice: value=2, view=Axial
+2025-05-19 22:14:33,347 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-05-19 22:14:33,371 - segmed_pro - INFO - Updated metadata for slice 2
+2025-05-19 22:14:33,372 - segmed_pro - INFO - Using WindowCenter from metadata: 549.0
+2025-05-19 22:14:33,372 - segmed_pro - INFO - Using WindowWidth from metadata: 1168.0
+2025-05-19 22:14:33,389 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 22:14:33,922 - segmed_pro - INFO - Updating slice: value=3, view=Axial
+2025-05-19 22:14:33,922 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-05-19 22:14:33,953 - segmed_pro - INFO - Updated metadata for slice 3
+2025-05-19 22:14:33,954 - segmed_pro - INFO - Using WindowCenter from metadata: 526.0
+2025-05-19 22:14:33,954 - segmed_pro - INFO - Using WindowWidth from metadata: 1128.0
+2025-05-19 22:14:33,972 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 22:14:37,129 - segmed_pro - INFO - Updating slice: value=5, view=Axial
+2025-05-19 22:14:37,130 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-05-19 22:14:37,158 - segmed_pro - INFO - Updated metadata for slice 5
+2025-05-19 22:14:37,158 - segmed_pro - INFO - Using WindowCenter from metadata: 500.0
+2025-05-19 22:14:37,159 - segmed_pro - INFO - Using WindowWidth from metadata: 1086.0
+2025-05-19 22:14:37,177 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 22:14:37,268 - segmed_pro - INFO - Updating slice: value=6, view=Axial
+2025-05-19 22:14:37,270 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-05-19 22:14:37,299 - segmed_pro - INFO - Updated metadata for slice 6
+2025-05-19 22:14:37,299 - segmed_pro - INFO - Using WindowCenter from metadata: 495.0
+2025-05-19 22:14:37,300 - segmed_pro - INFO - Using WindowWidth from metadata: 1062.0
+2025-05-19 22:14:37,329 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 22:14:37,503 - segmed_pro - INFO - Updating slice: value=7, view=Axial
+2025-05-19 22:14:37,503 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-05-19 22:14:37,562 - segmed_pro - INFO - Updated metadata for slice 7
+2025-05-19 22:14:37,562 - segmed_pro - INFO - Using WindowCenter from metadata: 494.0
+2025-05-19 22:14:37,562 - segmed_pro - INFO - Using WindowWidth from metadata: 1036.0
+2025-05-19 22:14:37,581 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 22:14:37,720 - segmed_pro - INFO - Updating slice: value=8, view=Axial
+2025-05-19 22:14:37,720 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-05-19 22:14:37,744 - segmed_pro - INFO - Updated metadata for slice 8
+2025-05-19 22:14:37,744 - segmed_pro - INFO - Using WindowCenter from metadata: 494.0
+2025-05-19 22:14:37,744 - segmed_pro - INFO - Using WindowWidth from metadata: 1028.0
+2025-05-19 22:14:37,761 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 22:14:46,278 - segmed_pro - INFO - Direct loading segmentation file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\0e082623c0d16686258bde60a87faa2d6ee24a0afa97bec097d6635d350dc7cd\Untitled.nii
+2025-05-19 22:14:46,307 - segmed_pro - INFO - Original segmentation dimensions: (400, 512, 20)
+2025-05-19 22:14:46,307 - segmed_pro - INFO - DICOM data dimensions: (20, 512, 400)
+2025-05-19 22:14:46,308 - segmed_pro - INFO - Dimensions match but in different order, performing axis swapping
+2025-05-19 22:14:46,308 - segmed_pro - INFO - After swapping axes: segmentation shape (20, 512, 400)
+2025-05-19 22:15:34,327 - segmed_pro - INFO - Updating slice: value=9, view=Axial
+2025-05-19 22:15:34,327 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-05-19 22:15:34,354 - segmed_pro - INFO - Updated metadata for slice 9
+2025-05-19 22:15:34,354 - segmed_pro - INFO - Using WindowCenter from metadata: 487.0
+2025-05-19 22:15:34,354 - segmed_pro - INFO - Using WindowWidth from metadata: 1009.0
+2025-05-19 22:15:34,376 - segmed_pro - INFO - Applied segmentation overlay to slice 9
+2025-05-19 22:15:34,386 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 22:15:35,194 - segmed_pro - INFO - Updating slice: value=10, view=Axial
+2025-05-19 22:15:35,194 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-05-19 22:15:35,225 - segmed_pro - INFO - Updated metadata for slice 10
+2025-05-19 22:15:35,225 - segmed_pro - INFO - Using WindowCenter from metadata: 476.0
+2025-05-19 22:15:35,226 - segmed_pro - INFO - Using WindowWidth from metadata: 987.0
+2025-05-19 22:15:35,253 - segmed_pro - INFO - Applied segmentation overlay to slice 10
+2025-05-19 22:15:35,263 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 22:16:27,329 - segmed_pro - INFO - Direct loading segmentation file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\0e082623c0d16686258bde60a87faa2d6ee24a0afa97bec097d6635d350dc7cd\Untitled.nii
+2025-05-19 22:16:27,350 - segmed_pro - INFO - Original segmentation dimensions: (400, 512, 20)
+2025-05-19 22:16:27,351 - segmed_pro - INFO - DICOM data dimensions: (20, 512, 400)
+2025-05-19 22:16:27,351 - segmed_pro - INFO - Dimensions match but in different order, performing axis swapping
+2025-05-19 22:16:27,351 - segmed_pro - INFO - After swapping axes: segmentation shape (20, 512, 400)
+2025-05-19 22:19:47,222 - segmed_pro - INFO - Starting SegMed-Pro application
+2025-05-19 22:19:47,223 - segmed_pro - INFO - Setting up DICOM pixel data handlers
+2025-05-19 22:19:47,223 - segmed_pro - INFO - Added GDCM handler
+2025-05-19 22:19:47,223 - segmed_pro - INFO - Added pylibjpeg handler
+2025-05-19 22:19:47,223 - segmed_pro - INFO - Added Pillow handler
+2025-05-19 22:19:47,223 - segmed_pro - INFO - Added NumPy handler
+2025-05-19 22:19:47,224 - segmed_pro - INFO - Configured DICOM handlers: gdcm, pylibjpeg, pillow, numpy
+2025-05-19 22:19:47,224 - segmed_pro - INFO - Initialized DICOM handlers: 4 handlers available
+2025-05-19 22:19:52,731 - segmed_pro - INFO - Loading data: file=None, directory=C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+2025-05-19 22:19:52,731 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+2025-05-19 22:19:52,732 - segmed_pro - INFO - Found 20 DICOM files
+2025-05-19 22:19:52,732 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-05-19 22:19:52,747 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-05-19 22:19:52,761 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-05-19 22:19:52,774 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-05-19 22:19:52,787 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-05-19 22:19:52,802 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-05-19 22:19:52,815 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-05-19 22:19:52,828 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-05-19 22:19:52,841 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-05-19 22:19:52,854 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341775486333211_MR.dcm
+2025-05-19 22:19:52,867 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-05-19 22:19:52,880 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-05-19 22:19:52,893 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-05-19 22:19:52,906 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-05-19 22:19:52,919 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-05-19 22:19:52,933 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-05-19 22:19:52,945 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-05-19 22:19:52,958 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
+2025-05-19 22:19:52,971 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm
+2025-05-19 22:19:52,984 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm
+2025-05-19 22:19:52,997 - segmed_pro - INFO - Successfully read 20 DICOM files
+2025-05-19 22:19:52,997 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-19 22:19:53,078 - segmed_pro - INFO - Created 3D volume with shape (20, 512, 400)
+2025-05-19 22:19:53,092 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-19 22:19:53,094 - segmed_pro - INFO - Using WindowCenter from metadata: 649.0
+2025-05-19 22:19:53,094 - segmed_pro - INFO - Using WindowWidth from metadata: 1361.0
+2025-05-19 22:19:53,353 - segmed_pro - INFO - Using WindowCenter from metadata: 649.0
+2025-05-19 22:19:53,353 - segmed_pro - INFO - Using WindowWidth from metadata: 1361.0
+2025-05-19 22:19:58,940 - segmed_pro - INFO - Direct loading segmentation file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\0e082623c0d16686258bde60a87faa2d6ee24a0afa97bec097d6635d350dc7cd\Untitled.nii
+2025-05-19 22:19:58,956 - segmed_pro - INFO - Original segmentation dimensions: (400, 512, 20)
+2025-05-19 22:19:58,956 - segmed_pro - INFO - DICOM data dimensions: (20, 512, 400)
+2025-05-19 22:19:58,956 - segmed_pro - INFO - Dimensions match but in different order, performing axis swapping
+2025-05-19 22:19:58,957 - segmed_pro - INFO - After swapping axes: segmentation shape (20, 512, 400)
+2025-05-19 22:20:00,913 - segmed_pro - INFO - Updating slice: value=10, view=Axial
+2025-05-19 22:20:00,913 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-05-19 22:20:00,926 - segmed_pro - INFO - Updated metadata for slice 10
+2025-05-19 22:20:00,926 - segmed_pro - INFO - Using WindowCenter from metadata: 476.0
+2025-05-19 22:20:00,926 - segmed_pro - INFO - Using WindowWidth from metadata: 987.0
+2025-05-19 22:20:00,940 - segmed_pro - INFO - Applied segmentation overlay to slice 10
+2025-05-19 22:20:00,945 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 22:20:01,703 - segmed_pro - INFO - Updating slice: value=12, view=Axial
+2025-05-19 22:20:01,703 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-05-19 22:20:01,718 - segmed_pro - INFO - Updated metadata for slice 12
+2025-05-19 22:20:01,719 - segmed_pro - INFO - Using WindowCenter from metadata: 458.0
+2025-05-19 22:20:01,719 - segmed_pro - INFO - Using WindowWidth from metadata: 946.0
+2025-05-19 22:20:01,731 - segmed_pro - INFO - Applied segmentation overlay to slice 12
+2025-05-19 22:20:01,737 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 22:20:02,307 - segmed_pro - INFO - Updating slice: value=11, view=Axial
+2025-05-19 22:20:02,307 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-05-19 22:20:02,320 - segmed_pro - INFO - Updated metadata for slice 11
+2025-05-19 22:20:02,321 - segmed_pro - INFO - Using WindowCenter from metadata: 468.0
+2025-05-19 22:20:02,321 - segmed_pro - INFO - Using WindowWidth from metadata: 968.0
+2025-05-19 22:20:02,333 - segmed_pro - INFO - Applied segmentation overlay to slice 11
+2025-05-19 22:20:02,339 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 22:20:05,070 - segmed_pro - ERROR - Error converting segmentation to shapes: Invalid property specified for object of type plotly.graph_objs.Layout: 'editable'
+
+Did you mean "title"?
+
+    Valid properties:
+        activeselection
+            :class:`plotly.graph_objects.layout.Activeselection`
+            instance or dict with compatible properties
+        activeshape
+            :class:`plotly.graph_objects.layout.Activeshape`
+            instance or dict with compatible properties
+        annotations
+            A tuple of
+            :class:`plotly.graph_objects.layout.Annotation`
+            instances or dicts with compatible properties
+        annotationdefaults
+            When used in a template (as
+            layout.template.layout.annotationdefaults), sets the
+            default property values to use for elements of
+            layout.annotations
+        autosize
+            Determines whether or not a layout width or height that
+            has been left undefined by the user is initialized on
+            each relayout. Note that, regardless of this attribute,
+            an undefined layout width or height is always
+            initialized on the first call to plot.
+        autotypenumbers
+            Using "strict" a numeric string in trace data is not
+            converted to a number. Using *convert types* a numeric
+            string in trace data may be treated as a number during
+            automatic axis `type` detection. This is the default
+            value; however it could be overridden for individual
+            axes.
+        barcornerradius
+            Sets the rounding of bar corners. May be an integer
+            number of pixels, or a percentage of bar width (as a
+            string ending in %).
+        bargap
+            Sets the gap (in plot fraction) between bars of
+            adjacent location coordinates.
+        bargroupgap
+            Sets the gap (in plot fraction) between bars of the
+            same location coordinate.
+        barmode
+            Determines how bars at the same location coordinate are
+            displayed on the graph. With "stack", the bars are
+            stacked on top of one another With "relative", the bars
+            are stacked on top of one another, with negative values
+            below the axis, positive values above With "group", the
+            bars are plotted next to one another centered around
+            the shared location. With "overlay", the bars are
+            plotted over one another, you might need to reduce
+            "opacity" to see multiple bars.
+        barnorm
+            Sets the normalization for bar traces on the graph.
+            With "fraction", the value of each bar is divided by
+            the sum of all values at that location coordinate.
+            "percent" is the same but multiplied by 100 to show
+            percentages.
+        boxgap
+            Sets the gap (in plot fraction) between boxes of
+            adjacent location coordinates. Has no effect on traces
+            that have "width" set.
+        boxgroupgap
+            Sets the gap (in plot fraction) between boxes of the
+            same location coordinate. Has no effect on traces that
+            have "width" set.
+        boxmode
+            Determines how boxes at the same location coordinate
+            are displayed on the graph. If "group", the boxes are
+            plotted next to one another centered around the shared
+            location. If "overlay", the boxes are plotted over one
+            another, you might need to set "opacity" to see them
+            multiple boxes. Has no effect on traces that have
+            "width" set.
+        calendar
+            Sets the default calendar system to use for
+            interpreting and displaying dates throughout the plot.
+        clickmode
+            Determines the mode of single click interactions.
+            "event" is the default value and emits the
+            `plotly_click` event. In addition this mode emits the
+            `plotly_selected` event in drag modes "lasso" and
+            "select", but with no event data attached (kept for
+            compatibility reasons). The "select" flag enables
+            selecting single data points via click. This mode also
+            supports persistent selections, meaning that pressing
+            Shift while clicking, adds to / subtracts from an
+            existing selection. "select" with `hovermode`: "x" can
+            be confusing, consider explicitly setting `hovermode`:
+            "closest" when using this feature. Selection events are
+            sent accordingly as long as "event" flag is set as
+            well. When the "event" flag is missing, `plotly_click`
+            and `plotly_selected` events are not fired.
+        coloraxis
+            :class:`plotly.graph_objects.layout.Coloraxis` instance
+            or dict with compatible properties
+        colorscale
+            :class:`plotly.graph_objects.layout.Colorscale`
+            instance or dict with compatible properties
+        colorway
+            Sets the default trace colors.
+        computed
+            Placeholder for exporting automargin-impacting values
+            namely `margin.t`, `margin.b`, `margin.l` and
+            `margin.r` in "full-json" mode.
+        datarevision
+            If provided, a changed value tells `Plotly.react` that
+            one or more data arrays has changed. This way you can
+            modify arrays in-place rather than making a complete
+            new copy for an incremental change. If NOT provided,
+            `Plotly.react` assumes that data arrays are being
+            treated as immutable, thus any data array with a
+            different identity from its predecessor contains new
+            data.
+        dragmode
+            Determines the mode of drag interactions. "select" and
+            "lasso" apply only to scatter traces with markers or
+            text. "orbit" and "turntable" apply only to 3D scenes.
+        editrevision
+            Controls persistence of user-driven changes in
+            `editable: true` configuration, other than trace names
+            and axis titles. Defaults to `layout.uirevision`.
+        extendfunnelareacolors
+            If `true`, the funnelarea slice colors (whether given
+            by `funnelareacolorway` or inherited from `colorway`)
+            will be extended to three times its original length by
+            first repeating every color 20% lighter then each color
+            20% darker. This is intended to reduce the likelihood
+            of reusing the same color when you have many slices,
+            but you can set `false` to disable. Colors provided in
+            the trace, using `marker.colors`, are never extended.
+        extendiciclecolors
+            If `true`, the icicle slice colors (whether given by
+            `iciclecolorway` or inherited from `colorway`) will be
+            extended to three times its original length by first
+            repeating every color 20% lighter then each color 20%
+            darker. This is intended to reduce the likelihood of
+            reusing the same color when you have many slices, but
+            you can set `false` to disable. Colors provided in the
+            trace, using `marker.colors`, are never extended.
+        extendpiecolors
+            If `true`, the pie slice colors (whether given by
+            `piecolorway` or inherited from `colorway`) will be
+            extended to three times its original length by first
+            repeating every color 20% lighter then each color 20%
+            darker. This is intended to reduce the likelihood of
+            reusing the same color when you have many slices, but
+            you can set `false` to disable. Colors provided in the
+            trace, using `marker.colors`, are never extended.
+        extendsunburstcolors
+            If `true`, the sunburst slice colors (whether given by
+            `sunburstcolorway` or inherited from `colorway`) will
+            be extended to three times its original length by first
+            repeating every color 20% lighter then each color 20%
+            darker. This is intended to reduce the likelihood of
+            reusing the same color when you have many slices, but
+            you can set `false` to disable. Colors provided in the
+            trace, using `marker.colors`, are never extended.
+        extendtreemapcolors
+            If `true`, the treemap slice colors (whether given by
+            `treemapcolorway` or inherited from `colorway`) will be
+            extended to three times its original length by first
+            repeating every color 20% lighter then each color 20%
+            darker. This is intended to reduce the likelihood of
+            reusing the same color when you have many slices, but
+            you can set `false` to disable. Colors provided in the
+            trace, using `marker.colors`, are never extended.
+        font
+            Sets the global font. Note that fonts used in traces
+            and other layout components inherit from the global
+            font.
+        funnelareacolorway
+            Sets the default funnelarea slice colors. Defaults to
+            the main `colorway` used for trace colors. If you
+            specify a new list here it can still be extended with
+            lighter and darker colors, see
+            `extendfunnelareacolors`.
+        funnelgap
+            Sets the gap (in plot fraction) between bars of
+            adjacent location coordinates.
+        funnelgroupgap
+            Sets the gap (in plot fraction) between bars of the
+            same location coordinate.
+        funnelmode
+            Determines how bars at the same location coordinate are
+            displayed on the graph. With "stack", the bars are
+            stacked on top of one another With "group", the bars
+            are plotted next to one another centered around the
+            shared location. With "overlay", the bars are plotted
+            over one another, you might need to reduce "opacity" to
+            see multiple bars.
+        geo
+            :class:`plotly.graph_objects.layout.Geo` instance or
+            dict with compatible properties
+        grid
+            :class:`plotly.graph_objects.layout.Grid` instance or
+            dict with compatible properties
+        height
+            Sets the plot's height (in px).
+        hiddenlabels
+            hiddenlabels is the funnelarea & pie chart analog of
+            visible:'legendonly' but it can contain many labels,
+            and can simultaneously hide slices from several
+            pies/funnelarea charts
+        hiddenlabelssrc
+            Sets the source reference on Chart Studio Cloud for
+            `hiddenlabels`.
+        hidesources
+            Determines whether or not a text link citing the data
+            source is placed at the bottom-right cored of the
+            figure. Has only an effect only on graphs that have
+            been generated via forked graphs from the Chart Studio
+            Cloud (at https://chart-studio.plotly.com or on-
+            premise).
+        hoverdistance
+            Sets the default distance (in pixels) to look for data
+            to add hover labels (-1 means no cutoff, 0 means no
+            looking for data). This is only a real distance for
+            hovering on point-like objects, like scatter points.
+            For area-like objects (bars, scatter fills, etc)
+            hovering is on inside the area and off outside, but
+            these objects will not supersede hover on point-like
+            objects in case of conflict.
+        hoverlabel
+            :class:`plotly.graph_objects.layout.Hoverlabel`
+            instance or dict with compatible properties
+        hovermode
+            Determines the mode of hover interactions. If
+            "closest", a single hoverlabel will appear for the
+            "closest" point within the `hoverdistance`. If "x" (or
+            "y"), multiple hoverlabels will appear for multiple
+            points at the "closest" x- (or y-) coordinate within
+            the `hoverdistance`, with the caveat that no more than
+            one hoverlabel will appear per trace. If *x unified*
+            (or *y unified*), a single hoverlabel will appear
+            multiple points at the closest x- (or y-) coordinate
+            within the `hoverdistance` with the caveat that no more
+            than one hoverlabel will appear per trace. In this
+            mode, spikelines are enabled by default perpendicular
+            to the specified axis. If false, hover interactions are
+            disabled.
+        hoversubplots
+            Determines expansion of hover effects to other subplots
+            If "single" just the axis pair of the primary point is
+            included without overlaying subplots. If "overlaying"
+            all subplots using the main axis and occupying the same
+            space are included. If "axis", also include stacked
+            subplots using the same axis when `hovermode` is set to
+            "x", *x unified*, "y" or *y unified*.
+        iciclecolorway
+            Sets the default icicle slice colors. Defaults to the
+            main `colorway` used for trace colors. If you specify a
+            new list here it can still be extended with lighter and
+            darker colors, see `extendiciclecolors`.
+        images
+            A tuple of :class:`plotly.graph_objects.layout.Image`
+            instances or dicts with compatible properties
+        imagedefaults
+            When used in a template (as
+            layout.template.layout.imagedefaults), sets the default
+            property values to use for elements of layout.images
+        legend
+            :class:`plotly.graph_objects.layout.Legend` instance or
+            dict with compatible properties
+        map
+            :class:`plotly.graph_objects.layout.Map` instance or
+            dict with compatible properties
+        mapbox
+            :class:`plotly.graph_objects.layout.Mapbox` instance or
+            dict with compatible properties
+        margin
+            :class:`plotly.graph_objects.layout.Margin` instance or
+            dict with compatible properties
+        meta
+            Assigns extra meta information that can be used in
+            various `text` attributes. Attributes such as the
+            graph, axis and colorbar `title.text`, annotation
+            `text` `trace.name` in legend items, `rangeselector`,
+            `updatemenus` and `sliders` `label` text all support
+            `meta`. One can access `meta` fields using template
+            strings: `%{meta[i]}` where `i` is the index of the
+            `meta` item in question. `meta` can also be an object
+            for example `{key: value}` which can be accessed
+            %{meta[key]}.
+        metasrc
+            Sets the source reference on Chart Studio Cloud for
+            `meta`.
+        minreducedheight
+            Minimum height of the plot with margin.automargin
+            applied (in px)
+        minreducedwidth
+            Minimum width of the plot with margin.automargin
+            applied (in px)
+        modebar
+            :class:`plotly.graph_objects.layout.Modebar` instance
+            or dict with compatible properties
+        newselection
+            :class:`plotly.graph_objects.layout.Newselection`
+            instance or dict with compatible properties
+        newshape
+            :class:`plotly.graph_objects.layout.Newshape` instance
+            or dict with compatible properties
+        paper_bgcolor
+            Sets the background color of the paper where the graph
+            is drawn.
+        piecolorway
+            Sets the default pie slice colors. Defaults to the main
+            `colorway` used for trace colors. If you specify a new
+            list here it can still be extended with lighter and
+            darker colors, see `extendpiecolors`.
+        plot_bgcolor
+            Sets the background color of the plotting area in-
+            between x and y axes.
+        polar
+            :class:`plotly.graph_objects.layout.Polar` instance or
+            dict with compatible properties
+        scattergap
+            Sets the gap (in plot fraction) between scatter points
+            of adjacent location coordinates. Defaults to `bargap`.
+        scattermode
+            Determines how scatter points at the same location
+            coordinate are displayed on the graph. With "group",
+            the scatter points are plotted next to one another
+            centered around the shared location. With "overlay",
+            the scatter points are plotted over one another, you
+            might need to reduce "opacity" to see multiple scatter
+            points.
+        scene
+            :class:`plotly.graph_objects.layout.Scene` instance or
+            dict with compatible properties
+        selectdirection
+            When `dragmode` is set to "select", this limits the
+            selection of the drag to horizontal, vertical or
+            diagonal. "h" only allows horizontal selection, "v"
+            only vertical, "d" only diagonal and "any" sets no
+            limit.
+        selectionrevision
+            Controls persistence of user-driven changes in selected
+            points from all traces.
+        selections
+            A tuple of
+            :class:`plotly.graph_objects.layout.Selection`
+            instances or dicts with compatible properties
+        selectiondefaults
+            When used in a template (as
+            layout.template.layout.selectiondefaults), sets the
+            default property values to use for elements of
+            layout.selections
+        separators
+            Sets the decimal and thousand separators. For example,
+            *. * puts a '.' before decimals and a space between
+            thousands. In English locales, dflt is ".," but other
+            locales may alter this default.
+        shapes
+            A tuple of :class:`plotly.graph_objects.layout.Shape`
+            instances or dicts with compatible properties
+        shapedefaults
+            When used in a template (as
+            layout.template.layout.shapedefaults), sets the default
+            property values to use for elements of layout.shapes
+        showlegend
+            Determines whether or not a legend is drawn. Default is
+            `true` if there is a trace to show and any of these: a)
+            Two or more traces would by default be shown in the
+            legend. b) One pie trace is shown in the legend. c) One
+            trace is explicitly given with `showlegend: true`.
+        sliders
+            A tuple of :class:`plotly.graph_objects.layout.Slider`
+            instances or dicts with compatible properties
+        sliderdefaults
+            When used in a template (as
+            layout.template.layout.sliderdefaults), sets the
+            default property values to use for elements of
+            layout.sliders
+        smith
+            :class:`plotly.graph_objects.layout.Smith` instance or
+            dict with compatible properties
+        spikedistance
+            Sets the default distance (in pixels) to look for data
+            to draw spikelines to (-1 means no cutoff, 0 means no
+            looking for data). As with hoverdistance, distance does
+            not apply to area-like objects. In addition, some
+            objects can be hovered on but will not generate
+            spikelines, such as scatter fills.
+        sunburstcolorway
+            Sets the default sunburst slice colors. Defaults to the
+            main `colorway` used for trace colors. If you specify a
+            new list here it can still be extended with lighter and
+            darker colors, see `extendsunburstcolors`.
+        template
+            Default attributes to be applied to the plot. This
+            should be a dict with format: `{'layout':
+            layoutTemplate, 'data': {trace_type: [traceTemplate,
+            ...], ...}}` where `layoutTemplate` is a dict matching
+            the structure of `figure.layout` and `traceTemplate` is
+            a dict matching the structure of the trace with type
+            `trace_type` (e.g. 'scatter'). Alternatively, this may
+            be specified as an instance of
+            plotly.graph_objs.layout.Template.  Trace templates are
+            applied cyclically to traces of each type. Container
+            arrays (eg `annotations`) have special handling: An
+            object ending in `defaults` (eg `annotationdefaults`)
+            is applied to each array item. But if an item has a
+            `templateitemname` key we look in the template array
+            for an item with matching `name` and apply that
+            instead. If no matching `name` is found we mark the
+            item invisible. Any named template item not referenced
+            is appended to the end of the array, so this can be
+            used to add a watermark annotation or a logo image, for
+            example. To omit one of these items on the plot, make
+            an item with matching `templateitemname` and `visible:
+            false`.
+        ternary
+            :class:`plotly.graph_objects.layout.Ternary` instance
+            or dict with compatible properties
+        title
+            :class:`plotly.graph_objects.layout.Title` instance or
+            dict with compatible properties
+        transition
+            Sets transition options used during Plotly.react
+            updates.
+        treemapcolorway
+            Sets the default treemap slice colors. Defaults to the
+            main `colorway` used for trace colors. If you specify a
+            new list here it can still be extended with lighter and
+            darker colors, see `extendtreemapcolors`.
+        uirevision
+            Used to allow user interactions with the plot to
+            persist after `Plotly.react` calls that are unaware of
+            these interactions. If `uirevision` is omitted, or if
+            it is given and it changed from the previous
+            `Plotly.react` call, the exact new figure is used. If
+            `uirevision` is truthy and did NOT change, any
+            attribute that has been affected by user interactions
+            and did not receive a different value in the new figure
+            will keep the interaction value. `layout.uirevision`
+            attribute serves as the default for `uirevision`
+            attributes in various sub-containers. For finer control
+            you can set these sub-attributes directly. For example,
+            if your app separately controls the data on the x and y
+            axes you might set `xaxis.uirevision=*time*` and
+            `yaxis.uirevision=*cost*`. Then if only the y data is
+            changed, you can update `yaxis.uirevision=*quantity*`
+            and the y axis range will reset but the x axis range
+            will retain any user-driven zoom.
+        uniformtext
+            :class:`plotly.graph_objects.layout.Uniformtext`
+            instance or dict with compatible properties
+        updatemenus
+            A tuple of
+            :class:`plotly.graph_objects.layout.Updatemenu`
+            instances or dicts with compatible properties
+        updatemenudefaults
+            When used in a template (as
+            layout.template.layout.updatemenudefaults), sets the
+            default property values to use for elements of
+            layout.updatemenus
+        violingap
+            Sets the gap (in plot fraction) between violins of
+            adjacent location coordinates. Has no effect on traces
+            that have "width" set.
+        violingroupgap
+            Sets the gap (in plot fraction) between violins of the
+            same location coordinate. Has no effect on traces that
+            have "width" set.
+        violinmode
+            Determines how violins at the same location coordinate
+            are displayed on the graph. If "group", the violins are
+            plotted next to one another centered around the shared
+            location. If "overlay", the violins are plotted over
+            one another, you might need to set "opacity" to see
+            them multiple violins. Has no effect on traces that
+            have "width" set.
+        waterfallgap
+            Sets the gap (in plot fraction) between bars of
+            adjacent location coordinates.
+        waterfallgroupgap
+            Sets the gap (in plot fraction) between bars of the
+            same location coordinate.
+        waterfallmode
+            Determines how bars at the same location coordinate are
+            displayed on the graph. With "group", the bars are
+            plotted next to one another centered around the shared
+            location. With "overlay", the bars are plotted over one
+            another, you might need to reduce "opacity" to see
+            multiple bars.
+        width
+            Sets the plot's width (in px).
+        xaxis
+            :class:`plotly.graph_objects.layout.XAxis` instance or
+            dict with compatible properties
+        yaxis
+            :class:`plotly.graph_objects.layout.YAxis` instance or
+            dict with compatible properties
+        
+Did you mean "title"?
+
+Bad property path:
+editable
+^^^^^^^^
+2025-05-19 22:20:05,154 - segmed_pro - ERROR - Traceback (most recent call last):
+  File "C:\Users\Yurtsever\Downloads\segpro-med\app.py", line 1205, in convert_segmentation_to_shapes
+    fig.update_layout(
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\graph_objs\_figure.py", line 787, in update_layout
+    return super(Figure, self).update_layout(dict1, overwrite, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 1392, in update_layout
+    self.layout.update(dict1, overwrite=overwrite, **kwargs)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 5123, in update
+    BaseFigure._perform_update(self, kwargs, overwrite=overwrite)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 3882, in _perform_update
+    raise err
+ValueError: Invalid property specified for object of type plotly.graph_objs.Layout: 'editable'
+
+Did you mean "title"?
+
+    Valid properties:
+        activeselection
+            :class:`plotly.graph_objects.layout.Activeselection`
+            instance or dict with compatible properties
+        activeshape
+            :class:`plotly.graph_objects.layout.Activeshape`
+            instance or dict with compatible properties
+        annotations
+            A tuple of
+            :class:`plotly.graph_objects.layout.Annotation`
+            instances or dicts with compatible properties
+        annotationdefaults
+            When used in a template (as
+            layout.template.layout.annotationdefaults), sets the
+            default property values to use for elements of
+            layout.annotations
+        autosize
+            Determines whether or not a layout width or height that
+            has been left undefined by the user is initialized on
+            each relayout. Note that, regardless of this attribute,
+            an undefined layout width or height is always
+            initialized on the first call to plot.
+        autotypenumbers
+            Using "strict" a numeric string in trace data is not
+            converted to a number. Using *convert types* a numeric
+            string in trace data may be treated as a number during
+            automatic axis `type` detection. This is the default
+            value; however it could be overridden for individual
+            axes.
+        barcornerradius
+            Sets the rounding of bar corners. May be an integer
+            number of pixels, or a percentage of bar width (as a
+            string ending in %).
+        bargap
+            Sets the gap (in plot fraction) between bars of
+            adjacent location coordinates.
+        bargroupgap
+            Sets the gap (in plot fraction) between bars of the
+            same location coordinate.
+        barmode
+            Determines how bars at the same location coordinate are
+            displayed on the graph. With "stack", the bars are
+            stacked on top of one another With "relative", the bars
+            are stacked on top of one another, with negative values
+            below the axis, positive values above With "group", the
+            bars are plotted next to one another centered around
+            the shared location. With "overlay", the bars are
+            plotted over one another, you might need to reduce
+            "opacity" to see multiple bars.
+        barnorm
+            Sets the normalization for bar traces on the graph.
+            With "fraction", the value of each bar is divided by
+            the sum of all values at that location coordinate.
+            "percent" is the same but multiplied by 100 to show
+            percentages.
+        boxgap
+            Sets the gap (in plot fraction) between boxes of
+            adjacent location coordinates. Has no effect on traces
+            that have "width" set.
+        boxgroupgap
+            Sets the gap (in plot fraction) between boxes of the
+            same location coordinate. Has no effect on traces that
+            have "width" set.
+        boxmode
+            Determines how boxes at the same location coordinate
+            are displayed on the graph. If "group", the boxes are
+            plotted next to one another centered around the shared
+            location. If "overlay", the boxes are plotted over one
+            another, you might need to set "opacity" to see them
+            multiple boxes. Has no effect on traces that have
+            "width" set.
+        calendar
+            Sets the default calendar system to use for
+            interpreting and displaying dates throughout the plot.
+        clickmode
+            Determines the mode of single click interactions.
+            "event" is the default value and emits the
+            `plotly_click` event. In addition this mode emits the
+            `plotly_selected` event in drag modes "lasso" and
+            "select", but with no event data attached (kept for
+            compatibility reasons). The "select" flag enables
+            selecting single data points via click. This mode also
+            supports persistent selections, meaning that pressing
+            Shift while clicking, adds to / subtracts from an
+            existing selection. "select" with `hovermode`: "x" can
+            be confusing, consider explicitly setting `hovermode`:
+            "closest" when using this feature. Selection events are
+            sent accordingly as long as "event" flag is set as
+            well. When the "event" flag is missing, `plotly_click`
+            and `plotly_selected` events are not fired.
+        coloraxis
+            :class:`plotly.graph_objects.layout.Coloraxis` instance
+            or dict with compatible properties
+        colorscale
+            :class:`plotly.graph_objects.layout.Colorscale`
+            instance or dict with compatible properties
+        colorway
+            Sets the default trace colors.
+        computed
+            Placeholder for exporting automargin-impacting values
+            namely `margin.t`, `margin.b`, `margin.l` and
+            `margin.r` in "full-json" mode.
+        datarevision
+            If provided, a changed value tells `Plotly.react` that
+            one or more data arrays has changed. This way you can
+            modify arrays in-place rather than making a complete
+            new copy for an incremental change. If NOT provided,
+            `Plotly.react` assumes that data arrays are being
+            treated as immutable, thus any data array with a
+            different identity from its predecessor contains new
+            data.
+        dragmode
+            Determines the mode of drag interactions. "select" and
+            "lasso" apply only to scatter traces with markers or
+            text. "orbit" and "turntable" apply only to 3D scenes.
+        editrevision
+            Controls persistence of user-driven changes in
+            `editable: true` configuration, other than trace names
+            and axis titles. Defaults to `layout.uirevision`.
+        extendfunnelareacolors
+            If `true`, the funnelarea slice colors (whether given
+            by `funnelareacolorway` or inherited from `colorway`)
+            will be extended to three times its original length by
+            first repeating every color 20% lighter then each color
+            20% darker. This is intended to reduce the likelihood
+            of reusing the same color when you have many slices,
+            but you can set `false` to disable. Colors provided in
+            the trace, using `marker.colors`, are never extended.
+        extendiciclecolors
+            If `true`, the icicle slice colors (whether given by
+            `iciclecolorway` or inherited from `colorway`) will be
+            extended to three times its original length by first
+            repeating every color 20% lighter then each color 20%
+            darker. This is intended to reduce the likelihood of
+            reusing the same color when you have many slices, but
+            you can set `false` to disable. Colors provided in the
+            trace, using `marker.colors`, are never extended.
+        extendpiecolors
+            If `true`, the pie slice colors (whether given by
+            `piecolorway` or inherited from `colorway`) will be
+            extended to three times its original length by first
+            repeating every color 20% lighter then each color 20%
+            darker. This is intended to reduce the likelihood of
+            reusing the same color when you have many slices, but
+            you can set `false` to disable. Colors provided in the
+            trace, using `marker.colors`, are never extended.
+        extendsunburstcolors
+            If `true`, the sunburst slice colors (whether given by
+            `sunburstcolorway` or inherited from `colorway`) will
+            be extended to three times its original length by first
+            repeating every color 20% lighter then each color 20%
+            darker. This is intended to reduce the likelihood of
+            reusing the same color when you have many slices, but
+            you can set `false` to disable. Colors provided in the
+            trace, using `marker.colors`, are never extended.
+        extendtreemapcolors
+            If `true`, the treemap slice colors (whether given by
+            `treemapcolorway` or inherited from `colorway`) will be
+            extended to three times its original length by first
+            repeating every color 20% lighter then each color 20%
+            darker. This is intended to reduce the likelihood of
+            reusing the same color when you have many slices, but
+            you can set `false` to disable. Colors provided in the
+            trace, using `marker.colors`, are never extended.
+        font
+            Sets the global font. Note that fonts used in traces
+            and other layout components inherit from the global
+            font.
+        funnelareacolorway
+            Sets the default funnelarea slice colors. Defaults to
+            the main `colorway` used for trace colors. If you
+            specify a new list here it can still be extended with
+            lighter and darker colors, see
+            `extendfunnelareacolors`.
+        funnelgap
+            Sets the gap (in plot fraction) between bars of
+            adjacent location coordinates.
+        funnelgroupgap
+            Sets the gap (in plot fraction) between bars of the
+            same location coordinate.
+        funnelmode
+            Determines how bars at the same location coordinate are
+            displayed on the graph. With "stack", the bars are
+            stacked on top of one another With "group", the bars
+            are plotted next to one another centered around the
+            shared location. With "overlay", the bars are plotted
+            over one another, you might need to reduce "opacity" to
+            see multiple bars.
+        geo
+            :class:`plotly.graph_objects.layout.Geo` instance or
+            dict with compatible properties
+        grid
+            :class:`plotly.graph_objects.layout.Grid` instance or
+            dict with compatible properties
+        height
+            Sets the plot's height (in px).
+        hiddenlabels
+            hiddenlabels is the funnelarea & pie chart analog of
+            visible:'legendonly' but it can contain many labels,
+            and can simultaneously hide slices from several
+            pies/funnelarea charts
+        hiddenlabelssrc
+            Sets the source reference on Chart Studio Cloud for
+            `hiddenlabels`.
+        hidesources
+            Determines whether or not a text link citing the data
+            source is placed at the bottom-right cored of the
+            figure. Has only an effect only on graphs that have
+            been generated via forked graphs from the Chart Studio
+            Cloud (at https://chart-studio.plotly.com or on-
+            premise).
+        hoverdistance
+            Sets the default distance (in pixels) to look for data
+            to add hover labels (-1 means no cutoff, 0 means no
+            looking for data). This is only a real distance for
+            hovering on point-like objects, like scatter points.
+            For area-like objects (bars, scatter fills, etc)
+            hovering is on inside the area and off outside, but
+            these objects will not supersede hover on point-like
+            objects in case of conflict.
+        hoverlabel
+            :class:`plotly.graph_objects.layout.Hoverlabel`
+            instance or dict with compatible properties
+        hovermode
+            Determines the mode of hover interactions. If
+            "closest", a single hoverlabel will appear for the
+            "closest" point within the `hoverdistance`. If "x" (or
+            "y"), multiple hoverlabels will appear for multiple
+            points at the "closest" x- (or y-) coordinate within
+            the `hoverdistance`, with the caveat that no more than
+            one hoverlabel will appear per trace. If *x unified*
+            (or *y unified*), a single hoverlabel will appear
+            multiple points at the closest x- (or y-) coordinate
+            within the `hoverdistance` with the caveat that no more
+            than one hoverlabel will appear per trace. In this
+            mode, spikelines are enabled by default perpendicular
+            to the specified axis. If false, hover interactions are
+            disabled.
+        hoversubplots
+            Determines expansion of hover effects to other subplots
+            If "single" just the axis pair of the primary point is
+            included without overlaying subplots. If "overlaying"
+            all subplots using the main axis and occupying the same
+            space are included. If "axis", also include stacked
+            subplots using the same axis when `hovermode` is set to
+            "x", *x unified*, "y" or *y unified*.
+        iciclecolorway
+            Sets the default icicle slice colors. Defaults to the
+            main `colorway` used for trace colors. If you specify a
+            new list here it can still be extended with lighter and
+            darker colors, see `extendiciclecolors`.
+        images
+            A tuple of :class:`plotly.graph_objects.layout.Image`
+            instances or dicts with compatible properties
+        imagedefaults
+            When used in a template (as
+            layout.template.layout.imagedefaults), sets the default
+            property values to use for elements of layout.images
+        legend
+            :class:`plotly.graph_objects.layout.Legend` instance or
+            dict with compatible properties
+        map
+            :class:`plotly.graph_objects.layout.Map` instance or
+            dict with compatible properties
+        mapbox
+            :class:`plotly.graph_objects.layout.Mapbox` instance or
+            dict with compatible properties
+        margin
+            :class:`plotly.graph_objects.layout.Margin` instance or
+            dict with compatible properties
+        meta
+            Assigns extra meta information that can be used in
+            various `text` attributes. Attributes such as the
+            graph, axis and colorbar `title.text`, annotation
+            `text` `trace.name` in legend items, `rangeselector`,
+            `updatemenus` and `sliders` `label` text all support
+            `meta`. One can access `meta` fields using template
+            strings: `%{meta[i]}` where `i` is the index of the
+            `meta` item in question. `meta` can also be an object
+            for example `{key: value}` which can be accessed
+            %{meta[key]}.
+        metasrc
+            Sets the source reference on Chart Studio Cloud for
+            `meta`.
+        minreducedheight
+            Minimum height of the plot with margin.automargin
+            applied (in px)
+        minreducedwidth
+            Minimum width of the plot with margin.automargin
+            applied (in px)
+        modebar
+            :class:`plotly.graph_objects.layout.Modebar` instance
+            or dict with compatible properties
+        newselection
+            :class:`plotly.graph_objects.layout.Newselection`
+            instance or dict with compatible properties
+        newshape
+            :class:`plotly.graph_objects.layout.Newshape` instance
+            or dict with compatible properties
+        paper_bgcolor
+            Sets the background color of the paper where the graph
+            is drawn.
+        piecolorway
+            Sets the default pie slice colors. Defaults to the main
+            `colorway` used for trace colors. If you specify a new
+            list here it can still be extended with lighter and
+            darker colors, see `extendpiecolors`.
+        plot_bgcolor
+            Sets the background color of the plotting area in-
+            between x and y axes.
+        polar
+            :class:`plotly.graph_objects.layout.Polar` instance or
+            dict with compatible properties
+        scattergap
+            Sets the gap (in plot fraction) between scatter points
+            of adjacent location coordinates. Defaults to `bargap`.
+        scattermode
+            Determines how scatter points at the same location
+            coordinate are displayed on the graph. With "group",
+            the scatter points are plotted next to one another
+            centered around the shared location. With "overlay",
+            the scatter points are plotted over one another, you
+            might need to reduce "opacity" to see multiple scatter
+            points.
+        scene
+            :class:`plotly.graph_objects.layout.Scene` instance or
+            dict with compatible properties
+        selectdirection
+            When `dragmode` is set to "select", this limits the
+            selection of the drag to horizontal, vertical or
+            diagonal. "h" only allows horizontal selection, "v"
+            only vertical, "d" only diagonal and "any" sets no
+            limit.
+        selectionrevision
+            Controls persistence of user-driven changes in selected
+            points from all traces.
+        selections
+            A tuple of
+            :class:`plotly.graph_objects.layout.Selection`
+            instances or dicts with compatible properties
+        selectiondefaults
+            When used in a template (as
+            layout.template.layout.selectiondefaults), sets the
+            default property values to use for elements of
+            layout.selections
+        separators
+            Sets the decimal and thousand separators. For example,
+            *. * puts a '.' before decimals and a space between
+            thousands. In English locales, dflt is ".," but other
+            locales may alter this default.
+        shapes
+            A tuple of :class:`plotly.graph_objects.layout.Shape`
+            instances or dicts with compatible properties
+        shapedefaults
+            When used in a template (as
+            layout.template.layout.shapedefaults), sets the default
+            property values to use for elements of layout.shapes
+        showlegend
+            Determines whether or not a legend is drawn. Default is
+            `true` if there is a trace to show and any of these: a)
+            Two or more traces would by default be shown in the
+            legend. b) One pie trace is shown in the legend. c) One
+            trace is explicitly given with `showlegend: true`.
+        sliders
+            A tuple of :class:`plotly.graph_objects.layout.Slider`
+            instances or dicts with compatible properties
+        sliderdefaults
+            When used in a template (as
+            layout.template.layout.sliderdefaults), sets the
+            default property values to use for elements of
+            layout.sliders
+        smith
+            :class:`plotly.graph_objects.layout.Smith` instance or
+            dict with compatible properties
+        spikedistance
+            Sets the default distance (in pixels) to look for data
+            to draw spikelines to (-1 means no cutoff, 0 means no
+            looking for data). As with hoverdistance, distance does
+            not apply to area-like objects. In addition, some
+            objects can be hovered on but will not generate
+            spikelines, such as scatter fills.
+        sunburstcolorway
+            Sets the default sunburst slice colors. Defaults to the
+            main `colorway` used for trace colors. If you specify a
+            new list here it can still be extended with lighter and
+            darker colors, see `extendsunburstcolors`.
+        template
+            Default attributes to be applied to the plot. This
+            should be a dict with format: `{'layout':
+            layoutTemplate, 'data': {trace_type: [traceTemplate,
+            ...], ...}}` where `layoutTemplate` is a dict matching
+            the structure of `figure.layout` and `traceTemplate` is
+            a dict matching the structure of the trace with type
+            `trace_type` (e.g. 'scatter'). Alternatively, this may
+            be specified as an instance of
+            plotly.graph_objs.layout.Template.  Trace templates are
+            applied cyclically to traces of each type. Container
+            arrays (eg `annotations`) have special handling: An
+            object ending in `defaults` (eg `annotationdefaults`)
+            is applied to each array item. But if an item has a
+            `templateitemname` key we look in the template array
+            for an item with matching `name` and apply that
+            instead. If no matching `name` is found we mark the
+            item invisible. Any named template item not referenced
+            is appended to the end of the array, so this can be
+            used to add a watermark annotation or a logo image, for
+            example. To omit one of these items on the plot, make
+            an item with matching `templateitemname` and `visible:
+            false`.
+        ternary
+            :class:`plotly.graph_objects.layout.Ternary` instance
+            or dict with compatible properties
+        title
+            :class:`plotly.graph_objects.layout.Title` instance or
+            dict with compatible properties
+        transition
+            Sets transition options used during Plotly.react
+            updates.
+        treemapcolorway
+            Sets the default treemap slice colors. Defaults to the
+            main `colorway` used for trace colors. If you specify a
+            new list here it can still be extended with lighter and
+            darker colors, see `extendtreemapcolors`.
+        uirevision
+            Used to allow user interactions with the plot to
+            persist after `Plotly.react` calls that are unaware of
+            these interactions. If `uirevision` is omitted, or if
+            it is given and it changed from the previous
+            `Plotly.react` call, the exact new figure is used. If
+            `uirevision` is truthy and did NOT change, any
+            attribute that has been affected by user interactions
+            and did not receive a different value in the new figure
+            will keep the interaction value. `layout.uirevision`
+            attribute serves as the default for `uirevision`
+            attributes in various sub-containers. For finer control
+            you can set these sub-attributes directly. For example,
+            if your app separately controls the data on the x and y
+            axes you might set `xaxis.uirevision=*time*` and
+            `yaxis.uirevision=*cost*`. Then if only the y data is
+            changed, you can update `yaxis.uirevision=*quantity*`
+            and the y axis range will reset but the x axis range
+            will retain any user-driven zoom.
+        uniformtext
+            :class:`plotly.graph_objects.layout.Uniformtext`
+            instance or dict with compatible properties
+        updatemenus
+            A tuple of
+            :class:`plotly.graph_objects.layout.Updatemenu`
+            instances or dicts with compatible properties
+        updatemenudefaults
+            When used in a template (as
+            layout.template.layout.updatemenudefaults), sets the
+            default property values to use for elements of
+            layout.updatemenus
+        violingap
+            Sets the gap (in plot fraction) between violins of
+            adjacent location coordinates. Has no effect on traces
+            that have "width" set.
+        violingroupgap
+            Sets the gap (in plot fraction) between violins of the
+            same location coordinate. Has no effect on traces that
+            have "width" set.
+        violinmode
+            Determines how violins at the same location coordinate
+            are displayed on the graph. If "group", the violins are
+            plotted next to one another centered around the shared
+            location. If "overlay", the violins are plotted over
+            one another, you might need to set "opacity" to see
+            them multiple violins. Has no effect on traces that
+            have "width" set.
+        waterfallgap
+            Sets the gap (in plot fraction) between bars of
+            adjacent location coordinates.
+        waterfallgroupgap
+            Sets the gap (in plot fraction) between bars of the
+            same location coordinate.
+        waterfallmode
+            Determines how bars at the same location coordinate are
+            displayed on the graph. With "group", the bars are
+            plotted next to one another centered around the shared
+            location. With "overlay", the bars are plotted over one
+            another, you might need to reduce "opacity" to see
+            multiple bars.
+        width
+            Sets the plot's width (in px).
+        xaxis
+            :class:`plotly.graph_objects.layout.XAxis` instance or
+            dict with compatible properties
+        yaxis
+            :class:`plotly.graph_objects.layout.YAxis` instance or
+            dict with compatible properties
+        
+Did you mean "title"?
+
+Bad property path:
+editable
+^^^^^^^^
+
+2025-05-19 22:21:36,849 - segmed_pro - INFO - Starting SegMed-Pro application
+2025-05-19 22:21:36,849 - segmed_pro - INFO - Setting up DICOM pixel data handlers
+2025-05-19 22:21:36,849 - segmed_pro - INFO - Added GDCM handler
+2025-05-19 22:21:36,849 - segmed_pro - INFO - Added pylibjpeg handler
+2025-05-19 22:21:36,850 - segmed_pro - INFO - Added Pillow handler
+2025-05-19 22:21:36,850 - segmed_pro - INFO - Added NumPy handler
+2025-05-19 22:21:36,850 - segmed_pro - INFO - Configured DICOM handlers: gdcm, pylibjpeg, pillow, numpy
+2025-05-19 22:21:36,851 - segmed_pro - INFO - Initialized DICOM handlers: 4 handlers available
+2025-05-19 22:21:41,402 - segmed_pro - INFO - Loading data: file=None, directory=C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+2025-05-19 22:21:41,402 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+2025-05-19 22:21:41,403 - segmed_pro - INFO - Found 20 DICOM files
+2025-05-19 22:21:41,403 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-05-19 22:21:41,416 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-05-19 22:21:41,430 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-05-19 22:21:41,443 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-05-19 22:21:41,455 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-05-19 22:21:41,469 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-05-19 22:21:41,483 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-05-19 22:21:41,497 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-05-19 22:21:41,513 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-05-19 22:21:41,527 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341775486333211_MR.dcm
+2025-05-19 22:21:41,541 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-05-19 22:21:41,555 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-05-19 22:21:41,570 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-05-19 22:21:41,584 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-05-19 22:21:41,597 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-05-19 22:21:41,610 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-05-19 22:21:41,630 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-05-19 22:21:41,646 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
+2025-05-19 22:21:41,659 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm
+2025-05-19 22:21:41,673 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm
+2025-05-19 22:21:41,686 - segmed_pro - INFO - Successfully read 20 DICOM files
+2025-05-19 22:21:41,686 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-19 22:21:41,767 - segmed_pro - INFO - Created 3D volume with shape (20, 512, 400)
+2025-05-19 22:21:41,781 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-19 22:21:41,782 - segmed_pro - INFO - Using WindowCenter from metadata: 649.0
+2025-05-19 22:21:41,782 - segmed_pro - INFO - Using WindowWidth from metadata: 1361.0
+2025-05-19 22:21:41,992 - segmed_pro - INFO - Using WindowCenter from metadata: 649.0
+2025-05-19 22:21:41,992 - segmed_pro - INFO - Using WindowWidth from metadata: 1361.0
+2025-05-19 22:21:46,007 - segmed_pro - INFO - Loading data: file=None, directory=C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+2025-05-19 22:21:46,008 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+2025-05-19 22:21:46,008 - segmed_pro - INFO - Found 20 DICOM files
+2025-05-19 22:21:46,008 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-05-19 22:21:46,023 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-05-19 22:21:46,038 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-05-19 22:21:46,053 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-05-19 22:21:46,068 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-05-19 22:21:46,084 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-05-19 22:21:46,099 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-05-19 22:21:46,113 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-05-19 22:21:46,128 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-05-19 22:21:46,143 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341775486333211_MR.dcm
+2025-05-19 22:21:46,158 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-05-19 22:21:46,172 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-05-19 22:21:46,187 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-05-19 22:21:46,202 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-05-19 22:21:46,216 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-05-19 22:21:46,230 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-05-19 22:21:46,245 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-05-19 22:21:46,258 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
+2025-05-19 22:21:46,273 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm
+2025-05-19 22:21:46,287 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm
+2025-05-19 22:21:46,302 - segmed_pro - INFO - Successfully read 20 DICOM files
+2025-05-19 22:21:46,302 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-19 22:21:46,382 - segmed_pro - INFO - Created 3D volume with shape (20, 512, 400)
+2025-05-19 22:21:46,397 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-19 22:21:46,399 - segmed_pro - INFO - Using WindowCenter from metadata: 649.0
+2025-05-19 22:21:46,400 - segmed_pro - INFO - Using WindowWidth from metadata: 1361.0
+2025-05-19 22:21:49,831 - segmed_pro - INFO - Direct loading segmentation file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\0e082623c0d16686258bde60a87faa2d6ee24a0afa97bec097d6635d350dc7cd\Untitled.nii
+2025-05-19 22:21:49,849 - segmed_pro - INFO - Original segmentation dimensions: (400, 512, 20)
+2025-05-19 22:21:49,850 - segmed_pro - INFO - DICOM data dimensions: (20, 512, 400)
+2025-05-19 22:21:49,850 - segmed_pro - INFO - Dimensions match but in different order, performing axis swapping
+2025-05-19 22:21:49,850 - segmed_pro - INFO - After swapping axes: segmentation shape (20, 512, 400)
+2025-05-19 22:21:51,787 - segmed_pro - INFO - Updating slice: value=12, view=Axial
+2025-05-19 22:21:51,787 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-05-19 22:21:51,802 - segmed_pro - INFO - Updated metadata for slice 12
+2025-05-19 22:21:51,802 - segmed_pro - INFO - Using WindowCenter from metadata: 458.0
+2025-05-19 22:21:51,802 - segmed_pro - INFO - Using WindowWidth from metadata: 946.0
+2025-05-19 22:21:51,815 - segmed_pro - INFO - Applied segmentation overlay to slice 12
+2025-05-19 22:21:51,821 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 22:24:43,318 - segmed_pro - INFO - Updating slice: value=13, view=Axial
+2025-05-19 22:24:43,318 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-05-19 22:24:43,332 - segmed_pro - INFO - Updated metadata for slice 13
+2025-05-19 22:24:43,332 - segmed_pro - INFO - Using WindowCenter from metadata: 453.0
+2025-05-19 22:24:43,333 - segmed_pro - INFO - Using WindowWidth from metadata: 925.0
+2025-05-19 22:24:43,344 - segmed_pro - INFO - Applied segmentation overlay to slice 13
+2025-05-19 22:24:43,349 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 22:25:39,684 - segmed_pro - INFO - Updating slice: value=12, view=Axial
+2025-05-19 22:25:39,684 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-05-19 22:25:39,706 - segmed_pro - INFO - Updated metadata for slice 12
+2025-05-19 22:25:39,707 - segmed_pro - INFO - Using WindowCenter from metadata: 458.0
+2025-05-19 22:25:39,707 - segmed_pro - INFO - Using WindowWidth from metadata: 946.0
+2025-05-19 22:25:39,726 - segmed_pro - INFO - Applied segmentation overlay to slice 12
+2025-05-19 22:25:39,736 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 22:25:40,398 - segmed_pro - INFO - Updating slice: value=13, view=Axial
+2025-05-19 22:25:40,398 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-05-19 22:25:40,420 - segmed_pro - INFO - Updated metadata for slice 13
+2025-05-19 22:25:40,420 - segmed_pro - INFO - Using WindowCenter from metadata: 453.0
+2025-05-19 22:25:40,421 - segmed_pro - INFO - Using WindowWidth from metadata: 925.0
+2025-05-19 22:25:40,437 - segmed_pro - INFO - Applied segmentation overlay to slice 13
+2025-05-19 22:25:40,447 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 22:25:41,764 - segmed_pro - INFO - Updating slice: value=12, view=Axial
+2025-05-19 22:25:41,765 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-05-19 22:25:41,793 - segmed_pro - INFO - Updated metadata for slice 12
+2025-05-19 22:25:41,794 - segmed_pro - INFO - Using WindowCenter from metadata: 458.0
+2025-05-19 22:25:41,794 - segmed_pro - INFO - Using WindowWidth from metadata: 946.0
+2025-05-19 22:25:41,813 - segmed_pro - INFO - Applied segmentation overlay to slice 12
+2025-05-19 22:25:41,822 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 22:25:42,695 - segmed_pro - INFO - Updating slice: value=11, view=Axial
+2025-05-19 22:25:42,696 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-05-19 22:25:42,726 - segmed_pro - INFO - Updated metadata for slice 11
+2025-05-19 22:25:42,726 - segmed_pro - INFO - Using WindowCenter from metadata: 468.0
+2025-05-19 22:25:42,726 - segmed_pro - INFO - Using WindowWidth from metadata: 968.0
+2025-05-19 22:25:42,745 - segmed_pro - INFO - Applied segmentation overlay to slice 11
+2025-05-19 22:25:42,755 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 22:25:43,547 - segmed_pro - INFO - Updating slice: value=10, view=Axial
+2025-05-19 22:25:43,547 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-05-19 22:25:43,570 - segmed_pro - INFO - Updated metadata for slice 10
+2025-05-19 22:25:43,570 - segmed_pro - INFO - Using WindowCenter from metadata: 476.0
+2025-05-19 22:25:43,570 - segmed_pro - INFO - Using WindowWidth from metadata: 987.0
+2025-05-19 22:25:43,592 - segmed_pro - INFO - Applied segmentation overlay to slice 10
+2025-05-19 22:25:43,602 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 22:28:01,741 - segmed_pro - INFO - Starting SegMed-Pro application
+2025-05-19 22:28:01,741 - segmed_pro - INFO - Setting up DICOM pixel data handlers
+2025-05-19 22:28:01,742 - segmed_pro - INFO - Added GDCM handler
+2025-05-19 22:28:01,742 - segmed_pro - INFO - Added pylibjpeg handler
+2025-05-19 22:28:01,742 - segmed_pro - INFO - Added Pillow handler
+2025-05-19 22:28:01,742 - segmed_pro - INFO - Added NumPy handler
+2025-05-19 22:28:01,743 - segmed_pro - INFO - Configured DICOM handlers: gdcm, pylibjpeg, pillow, numpy
+2025-05-19 22:28:01,743 - segmed_pro - INFO - Initialized DICOM handlers: 4 handlers available
+2025-05-19 22:28:14,367 - segmed_pro - INFO - Loading data: file=None, directory=C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+2025-05-19 22:28:14,368 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+2025-05-19 22:28:14,370 - segmed_pro - INFO - Found 20 DICOM files
+2025-05-19 22:28:14,370 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-05-19 22:28:14,393 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-05-19 22:28:14,417 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-05-19 22:28:14,440 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-05-19 22:28:14,463 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-05-19 22:28:14,484 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-05-19 22:28:14,507 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-05-19 22:28:14,529 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-05-19 22:28:14,551 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-05-19 22:28:14,574 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341775486333211_MR.dcm
+2025-05-19 22:28:14,595 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-05-19 22:28:14,617 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-05-19 22:28:14,640 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-05-19 22:28:14,662 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-05-19 22:28:14,684 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-05-19 22:28:14,705 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-05-19 22:28:14,727 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-05-19 22:28:14,748 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
+2025-05-19 22:28:14,776 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm
+2025-05-19 22:28:14,797 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm
+2025-05-19 22:28:14,817 - segmed_pro - INFO - Successfully read 20 DICOM files
+2025-05-19 22:28:14,818 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-19 22:28:14,942 - segmed_pro - INFO - Created 3D volume with shape (20, 512, 400)
+2025-05-19 22:28:14,964 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-19 22:28:14,966 - segmed_pro - INFO - Using WindowCenter from metadata: 649.0
+2025-05-19 22:28:14,967 - segmed_pro - INFO - Using WindowWidth from metadata: 1361.0
+2025-05-19 22:28:15,257 - segmed_pro - INFO - Using WindowCenter from metadata: 649.0
+2025-05-19 22:28:15,257 - segmed_pro - INFO - Using WindowWidth from metadata: 1361.0
+2025-05-19 22:28:25,658 - segmed_pro - INFO - Using WindowCenter from metadata: 476.0
+2025-05-19 22:28:25,659 - segmed_pro - INFO - Using WindowWidth from metadata: 987.0
+2025-05-19 22:28:25,926 - segmed_pro - INFO - Updating slice: value=10, view=Axial
+2025-05-19 22:28:25,927 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-05-19 22:28:25,953 - segmed_pro - INFO - Updated metadata for slice 10
+2025-05-19 22:28:25,953 - segmed_pro - INFO - Using WindowCenter from metadata: 476.0
+2025-05-19 22:28:25,953 - segmed_pro - INFO - Using WindowWidth from metadata: 987.0
+2025-05-19 22:28:25,971 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 22:28:33,665 - segmed_pro - INFO - Direct loading segmentation file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\0e082623c0d16686258bde60a87faa2d6ee24a0afa97bec097d6635d350dc7cd\Untitled.nii
+2025-05-19 22:28:33,691 - segmed_pro - INFO - Original segmentation dimensions: (400, 512, 20)
+2025-05-19 22:28:33,691 - segmed_pro - INFO - DICOM data dimensions: (20, 512, 400)
+2025-05-19 22:28:33,692 - segmed_pro - INFO - Dimensions match but in different order, performing axis swapping
+2025-05-19 22:28:33,692 - segmed_pro - INFO - After swapping axes: segmentation shape (20, 512, 400)
+2025-05-19 22:28:47,540 - segmed_pro - INFO - Direct loading segmentation file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\0e082623c0d16686258bde60a87faa2d6ee24a0afa97bec097d6635d350dc7cd\Untitled.nii
+2025-05-19 22:28:47,559 - segmed_pro - INFO - Original segmentation dimensions: (400, 512, 20)
+2025-05-19 22:28:47,560 - segmed_pro - INFO - DICOM data dimensions: (20, 512, 400)
+2025-05-19 22:28:47,560 - segmed_pro - INFO - Dimensions match but in different order, performing axis swapping
+2025-05-19 22:28:47,560 - segmed_pro - INFO - After swapping axes: segmentation shape (20, 512, 400)
+2025-05-19 22:29:10,196 - segmed_pro - INFO - Updating slice: value=9, view=Axial
+2025-05-19 22:29:10,196 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-05-19 22:29:10,223 - segmed_pro - INFO - Updated metadata for slice 9
+2025-05-19 22:29:10,224 - segmed_pro - INFO - Using WindowCenter from metadata: 487.0
+2025-05-19 22:29:10,224 - segmed_pro - INFO - Using WindowWidth from metadata: 1009.0
+2025-05-19 22:29:10,246 - segmed_pro - INFO - Applied segmentation overlay to slice 9
+2025-05-19 22:29:10,258 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 22:29:10,892 - segmed_pro - INFO - Updating slice: value=8, view=Axial
+2025-05-19 22:29:10,893 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-05-19 22:29:10,923 - segmed_pro - INFO - Updated metadata for slice 8
+2025-05-19 22:29:10,923 - segmed_pro - INFO - Using WindowCenter from metadata: 494.0
+2025-05-19 22:29:10,923 - segmed_pro - INFO - Using WindowWidth from metadata: 1028.0
+2025-05-19 22:29:10,944 - segmed_pro - INFO - Applied segmentation overlay to slice 8
+2025-05-19 22:29:10,954 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 22:29:12,378 - segmed_pro - INFO - Updating slice: value=9, view=Axial
+2025-05-19 22:29:12,378 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-05-19 22:29:12,403 - segmed_pro - INFO - Updated metadata for slice 9
+2025-05-19 22:29:12,403 - segmed_pro - INFO - Using WindowCenter from metadata: 487.0
+2025-05-19 22:29:12,403 - segmed_pro - INFO - Using WindowWidth from metadata: 1009.0
+2025-05-19 22:29:12,426 - segmed_pro - INFO - Applied segmentation overlay to slice 9
+2025-05-19 22:29:12,437 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 22:34:47,974 - segmed_pro - INFO - Starting SegMed-Pro application
+2025-05-19 22:34:47,974 - segmed_pro - INFO - Setting up DICOM pixel data handlers
+2025-05-19 22:34:47,974 - segmed_pro - INFO - Added GDCM handler
+2025-05-19 22:34:47,975 - segmed_pro - INFO - Added pylibjpeg handler
+2025-05-19 22:34:47,975 - segmed_pro - INFO - Added Pillow handler
+2025-05-19 22:34:47,975 - segmed_pro - INFO - Added NumPy handler
+2025-05-19 22:34:47,975 - segmed_pro - INFO - Configured DICOM handlers: gdcm, pylibjpeg, pillow, numpy
+2025-05-19 22:34:47,975 - segmed_pro - INFO - Initialized DICOM handlers: 4 handlers available
+2025-05-19 22:34:53,849 - segmed_pro - INFO - Loading data: file=None, directory=C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+2025-05-19 22:34:53,850 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+2025-05-19 22:34:53,851 - segmed_pro - INFO - Found 20 DICOM files
+2025-05-19 22:34:53,851 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-05-19 22:34:53,863 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-05-19 22:34:53,875 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-05-19 22:34:53,895 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-05-19 22:34:53,909 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-05-19 22:34:53,922 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-05-19 22:34:53,934 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-05-19 22:34:53,946 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-05-19 22:34:53,958 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-05-19 22:34:53,971 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341775486333211_MR.dcm
+2025-05-19 22:34:53,983 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-05-19 22:34:53,995 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-05-19 22:34:54,008 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-05-19 22:34:54,021 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-05-19 22:34:54,034 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-05-19 22:34:54,047 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-05-19 22:34:54,059 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-05-19 22:34:54,072 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
+2025-05-19 22:34:54,084 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm
+2025-05-19 22:34:54,097 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm
+2025-05-19 22:34:54,110 - segmed_pro - INFO - Successfully read 20 DICOM files
+2025-05-19 22:34:54,110 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-19 22:34:54,188 - segmed_pro - INFO - Created 3D volume with shape (20, 512, 400)
+2025-05-19 22:34:54,202 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-19 22:34:54,203 - segmed_pro - INFO - Using WindowCenter from metadata: 649.0
+2025-05-19 22:34:54,203 - segmed_pro - INFO - Using WindowWidth from metadata: 1361.0
+2025-05-19 22:34:54,470 - segmed_pro - INFO - Using WindowCenter from metadata: 649.0
+2025-05-19 22:34:54,470 - segmed_pro - INFO - Using WindowWidth from metadata: 1361.0
+2025-05-19 22:34:56,736 - segmed_pro - INFO - Updating slice: value=11, view=Axial
+2025-05-19 22:34:56,736 - segmed_pro - INFO - Loading metadata for file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-05-19 22:34:56,749 - segmed_pro - INFO - Updated metadata for slice 11
+2025-05-19 22:34:56,749 - segmed_pro - INFO - Using WindowCenter from metadata: 468.0
+2025-05-19 22:34:56,749 - segmed_pro - INFO - Using WindowWidth from metadata: 968.0
+2025-05-19 22:34:56,759 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-19 22:35:00,518 - segmed_pro - INFO - Direct loading segmentation file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\0e082623c0d16686258bde60a87faa2d6ee24a0afa97bec097d6635d350dc7cd\Untitled.nii
+2025-05-19 22:35:00,535 - segmed_pro - INFO - Original segmentation dimensions: (400, 512, 20)
+2025-05-19 22:35:00,536 - segmed_pro - INFO - DICOM data dimensions: (20, 512, 400)
+2025-05-19 22:35:00,536 - segmed_pro - INFO - Dimensions match but in different order, performing axis swapping
+2025-05-19 22:35:00,536 - segmed_pro - INFO - After swapping axes: segmentation shape (20, 512, 400)

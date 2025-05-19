@@ -74,11 +74,14 @@ def make_slice_figure(slice_array, dragmode='pan'):
         hoverinfo='none',
         colormodel='rgb'
     ))
-    
-    # Configure layout for high-quality display
+      # Configure layout for high-quality display
     fig.update_layout(
         dragmode=dragmode,
         newshape_line_color='cyan',
+        # Important for shape selection
+        hovermode='closest',
+        clickmode='event+select',
+        selectdirection='any',
         # Define custom buttons for drawing tools
         updatemenus=[
             dict(
@@ -1143,7 +1146,6 @@ class SegMedPro:
                 fig = make_slice_figure(overlaid_img, dragmode=self.current_plot_tool)
                 
                 return f"Segmentation opacity updated to {opacity:.1f}", fig
-            
             @log_exception
             def clear_segmentation():
                 """Clear the current segmentation overlay"""
@@ -1152,7 +1154,8 @@ class SegMedPro:
                 
                 if self.current_data is None:
                     return "No data loaded", None
-                  # Re-display image without segmentation
+                
+                # Re-display image without segmentation
                 img = display_slice(
                     self.current_data, 
                     self.current_slice_idx, 
@@ -1161,10 +1164,84 @@ class SegMedPro:
                 )
                 
                 fig = make_slice_figure(img, dragmode=self.current_plot_tool)
-                
                 return "Segmentation cleared", fig
+            
+            @log_exception
+            def convert_segmentation_to_shapes():
+                """Convert the current segmentation slice to editable Plotly shapes"""
+                if not self.segmentation_loaded or self.segmentation_data is None:
+                    return "No segmentation loaded", None
                 
-            # Connect segmentation buttons to functions
+                # Get the current slice of the segmentation
+                if self.current_view == 'axial':
+                    seg_slice = self.segmentation_data[self.current_slice_idx, :, :]
+                elif self.current_view == 'sagittal':
+                    seg_slice = self.segmentation_data[:, :, self.current_slice_idx]
+                elif self.current_view == 'coronal':
+                    seg_slice = self.segmentation_data[:, self.current_slice_idx, :]
+                else:
+                    return "Invalid view orientation", None
+                
+                try:                    # Import required libraries for contour finding
+                    try:
+                        from skimage import measure
+                    except ImportError:
+                        return "Error: scikit-image is required for contour detection. Please install with 'pip install scikit-image'", None
+                    
+                    # Display the current slice without segmentation overlay
+                    img = display_slice(
+                        self.current_data, 
+                        self.current_slice_idx, 
+                        self.current_view,
+                        crosshair=self.crosshair_position
+                    )
+                    
+                    # Create a figure with the current image, specifically set to editing mode
+                    fig = make_slice_figure(img, dragmode='drawclosedpath')
+                    
+                    # Convert segmentation to shapes
+                    from utils.visualization import segmentation_to_shapes
+                    shapes = segmentation_to_shapes(seg_slice)                    # Add shapes to the figure
+                    if shapes:
+                        fig.update_layout(
+                            shapes=shapes,
+                            # Ensure shape editing is enabled with the modebar
+                            modebar=dict(
+                                add=['drawclosedpath', 'eraseshape'],
+                                remove=[]
+                            ),
+                            # Set the dragmode to modify for shape editing
+                            dragmode='drawclosedpath',
+                            # Enable selection of shapes including from inside
+                            clickmode='event+select',
+                            # Make sure all shapes can be selected
+                            selectdirection='any'
+                        )
+                        # Directly configure JavaScript event handling through Plotly config
+                        fig.update_layout(hovermode='closest')
+                        
+                        # Update the config to make shapes easier to select
+                        for i, shape in enumerate(shapes):
+                            if 'path' in shape:
+                                # Ensure all path shapes have the properties needed for inside selection
+                                shape['fillrule'] = 'evenodd'
+                                shape['layer'] = 'above'
+                                
+                        return f"Converted {len(shapes)} shapes from segmentation. Click anywhere inside or on the edge of a shape to edit it.", fig
+                    else:
+                        return "No shapes found in segmentation", fig
+                
+                except ImportError:
+                    return "Error: scikit-image is required for contour detection. Please install with 'pip install scikit-image'", None
+                except Exception as e:
+                    import traceback
+                    logger.error(f"Error converting segmentation to shapes: {str(e)}")
+                    logger.error(traceback.format_exc())
+                    return f"Error converting segmentation to shapes: {str(e)}", None
+                
+            # Add button for converting segmentation to editable shapes
+            convert_to_shapes_btn = gr.Button("Convert Segmentation to Editable Shapes")
+              # Connect segmentation buttons to functions
             load_seg_btn.click(
                 fn=direct_load_segmentation,
                 inputs=[segmentation_file],
@@ -1183,8 +1260,14 @@ class SegMedPro:
                 outputs=[seg_status, image_plot]
             )
             
-        return app
-
+            convert_to_shapes_btn.click(
+                fn=convert_segmentation_to_shapes,
+                inputs=[],
+                outputs=[seg_status, image_plot]
+            )
+            
+            return app
+                  
 # Initialize and launch the application
 if __name__ == "__main__":
     logger.info("Starting SegMed-Pro application")

@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image, ImageDraw, ImageFont
 import io
+import plotly.graph_objects as go
+from skimage import measure
 
 def normalize_array(array, percentile_low=0, percentile_high=100, window_level=None, window_width=None):
     """
@@ -356,3 +358,87 @@ def intensity_projection(volume, axis=0, mode='max', thickness=10):
     rgb_projection = np.stack((projection,) * 3, axis=-1)
     
     return rgb_projection
+
+def segmentation_to_shapes(seg_slice, label=None):
+    """
+    Convert a segmentation slice to Plotly shapes for interactive editing.
+    
+    Args:
+        seg_slice (numpy.ndarray): 2D segmentation mask
+        label (int, optional): Specific label to convert, if None convert all labels
+        
+    Returns:
+        list: List of dictionaries defining Plotly shapes
+    """
+    # Before using this function, make sure skimage is installed: pip install scikit-image
+    try:
+        from skimage import measure
+    except ImportError:
+        raise ImportError("scikit-image is required for contour detection. Please install with 'pip install scikit-image'")
+    
+    shapes = []
+    
+    # Get unique labels
+    unique_labels = np.unique(seg_slice)
+    if 0 in unique_labels:  # Remove background
+        unique_labels = unique_labels[unique_labels != 0]
+    
+    # If specific label is requested, filter to just that label
+    if label is not None and label in unique_labels:
+        unique_labels = [label]
+    
+    # Process each label
+    for label_val in unique_labels:
+        # Create binary mask for this label
+        binary_mask = (seg_slice == label_val)
+        
+        # Find contours using skimage
+        contours = measure.find_contours(binary_mask, 0.5)
+        
+        for contour in contours:
+            # Skip very small contours (likely noise)
+            if len(contour) < 5:
+                continue
+            
+            # Reduce the number of points for better performance and editing
+            # but keep enough to maintain shape fidelity
+            max_points = 15  # Target maximum number of points - reduced for better performance
+            if len(contour) > max_points:
+                # Simplify by taking every nth point
+                step = len(contour) // max_points + 1
+                contour = contour[::step]
+            
+            # Format points for Plotly - swap x and y coordinates as skimage returns (row, column)
+            y_coords, x_coords = contour[:, 0], contour[:, 1]
+            
+            # Generate a color based on the label value
+            color = f'rgba({label_val * 50 % 255}, {(label_val * 100) % 255}, {(label_val * 70) % 255}, 1)'
+            fill_color = f'rgba({label_val * 50 % 255}, {(label_val * 100) % 255}, {(label_val * 70) % 255}, 0.3)'
+            
+            # Create a proper path that supports blending in Plotly's native format
+            # This uses the SVG path format that Plotly understands
+            path_str = f'M {x_coords[0]},{y_coords[0]} '
+            for i in range(1, len(x_coords)):
+                path_str += f'L {x_coords[i]},{y_coords[i]} '
+            path_str += 'Z'  # Close the path
+              # Create a single, editable path shape with the contour
+            # This will work more like Plotly's native "Draw Area" tool
+            shape = {
+                'type': 'path',
+                'path': path_str,
+                'line': {
+                    'color': color,
+                    'width': 2,
+                },
+                'fillcolor': fill_color,
+                'editable': True,  # This is key to allow editing the shape
+                'name': f'Label {label_val}',
+                # Setting fillrule and layer to make the shape selectable from inside
+                'fillrule': 'evenodd',
+                'layer': 'above',
+                # Adding opacity to make sure it's visible and clickable
+                'opacity': 1.0
+            }
+            shapes.append(shape)
+    
+    return shapes
