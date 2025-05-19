@@ -254,15 +254,18 @@ class SegMedPro:
                             debug_btn = gr.Button("Debug Selected File")
                             
                             # Segmentation tools
+                            '''
                             with gr.Accordion("Segmentation Tools", open=True):
-                                segmentation_file = gr.File(label="Load Segmentation (NIfTI .nii.gz)", file_types=[".nii", ".nii.gz"])
+                                with gr.Row():
+                                    segmentation_file = gr.File(label="Load Segmentation (NIfTI .nii.gz)", file_types=[".nii", ".nii.gz"])
+                                    label_file = gr.File(label="Load Label File (.label)", file_types=[".label"])
                                 load_seg_btn = gr.Button("Load Segmentation")
                                 seg_opacity = gr.Slider(minimum=0.0, maximum=1.0, value=0.5, step=0.1, label="Segmentation Opacity")
                                 clear_seg_btn = gr.Button("Clear Segmentation")
                                 seg_status = gr.Textbox(label="Segmentation Status", value="No segmentation loaded")
-                        
+                            '''
+                        # Main Visualization Area (middle column)
                         with gr.Column(scale=4):
-                            # Main Visualization Area (middle column)
                             with gr.Row():
                                 view_selector = gr.Radio(
                                     choices=["Axial", "Sagittal", "Coronal"], 
@@ -272,6 +275,7 @@ class SegMedPro:
                             
                             with gr.Row():
                                 image_plot = gr.Plot(label="Image Plot", show_label=True)
+                            
                             with gr.Row():
                                 prev_btn = gr.Button("Previous")
                                 slice_slider = gr.Slider(minimum=0, maximum=0, value=0, step=1, label="Slice Navigation", visible=True)
@@ -279,6 +283,22 @@ class SegMedPro:
                             with gr.Row():
                                 slice_text = gr.Textbox(label="Slice", interactive=False)
                                 crosshair_info = gr.Textbox(label="Crosshair", interactive=False)
+                            
+                            # Segmentation Tools in the middle column
+                            gr.Markdown("### Segmentation Tools")
+                            with gr.Row():
+                                with gr.Column(scale=1):
+                                    segmentation_file = gr.File(label="Load Segmentation (NIfTI .nii.gz)", file_types=[".nii", ".nii.gz"])
+                                    load_seg_btn = gr.Button("Load Segmentation")
+                                    seg_opacity = gr.Slider(minimum=0.0, maximum=1.0, value=0.5, step=0.1, label="Segmentation Opacity")
+                                with gr.Column(scale=1):
+                                    label_file = gr.File(label="Load Label File (.label)", file_types=[".label"])
+                                    clear_seg_btn = gr.Button("Clear Segmentation")
+                            with gr.Row():
+                                convert_to_shapes_btn = gr.Button("Convert to Editable Shapes")
+                                
+                            with gr.Row():
+                                seg_status = gr.Textbox(label="Segmentation Status", value="No segmentation loaded")
                         
                         with gr.Column(scale=1):
                             # Third column: Plot tool buttons (vertical stack)
@@ -1001,9 +1021,8 @@ class SegMedPro:
                 fn=next_slice,
                 inputs=[slice_slider],
                 outputs=[slice_slider]
-            )            # Segmentation loading and overlay functions
-            @log_exception
-            def direct_load_segmentation(seg_file):
+            )            # Segmentation loading and overlay functions            @log_exception
+            def direct_load_segmentation(seg_file, label_file=None):
                 """Direct method to load segmentation file with axis swapping for dimension mismatches"""
                 if self.current_data is None:
                     return "Please load a DICOM dataset first", None
@@ -1014,10 +1033,22 @@ class SegMedPro:
                 try:
                     import nibabel as nib
                     import numpy as np
+                    from utils.visualization import load_itk_snap_labels
                     
                     # Get file path from the uploaded file object
                     seg_path = seg_file.name
                     logger.info(f"Direct loading segmentation file: {seg_path}")
+                    
+                    # Load label file if provided
+                    if label_file is not None:
+                        label_path = label_file.name
+                        logger.info(f"Loading label file: {label_path}")
+                        custom_colormap = load_itk_snap_labels(label_path)
+                        
+                        if custom_colormap:
+                            # Update the segmentation colormap with loaded values
+                            self.segmentation_colormap = custom_colormap
+                            logger.info(f"Loaded custom colormap with {len(custom_colormap)} entries")
                     
                     # Load the NIfTI file directly with nibabel
                     nii_img = nib.load(seg_path)
@@ -1238,13 +1269,10 @@ class SegMedPro:
                     logger.error(f"Error converting segmentation to shapes: {str(e)}")
                     logger.error(traceback.format_exc())
                     return f"Error converting segmentation to shapes: {str(e)}", None
-                
-            # Add button for converting segmentation to editable shapes
-            convert_to_shapes_btn = gr.Button("Convert Segmentation to Editable Shapes")
-              # Connect segmentation buttons to functions
+                  # Connect segmentation buttons to functions
             load_seg_btn.click(
                 fn=direct_load_segmentation,
-                inputs=[segmentation_file],
+                inputs=[segmentation_file, label_file],
                 outputs=[seg_status, image_plot]
             )
             
@@ -1253,7 +1281,6 @@ class SegMedPro:
                 inputs=[seg_opacity],
                 outputs=[seg_status, image_plot]
             )
-            
             clear_seg_btn.click(
                 fn=clear_segmentation,
                 inputs=[],

@@ -5,6 +5,43 @@ import io
 import plotly.graph_objects as go
 from skimage import measure
 
+def load_itk_snap_labels(label_file_path):
+    """
+    Load ITK-SnAP Label Description File and create a colormap.
+    
+    Args:
+        label_file_path (str): Path to the .label file
+        
+    Returns:
+        dict: Colormap where keys are label indices and values are [R,G,B] lists
+    """
+    colormap = {}
+    
+    try:
+        with open(label_file_path, 'r') as f:
+            lines = f.readlines()
+            
+        # Skip header lines
+        data_lines = [line.strip() for line in lines if line.strip() and not line.startswith('#')]
+        
+        for line in data_lines:
+            parts = line.split()
+            if len(parts) >= 7:  # Make sure we have at least [idx, R, G, B, A, vis, mesh, "label"]
+                try:
+                    idx = int(parts[0])
+                    r = int(parts[1])
+                    g = int(parts[2])
+                    b = int(parts[3])
+                    colormap[idx] = [r, g, b]
+                except (ValueError, IndexError):
+                    continue
+    except Exception as e:
+        print(f"Error loading label file: {e}")
+        # Return empty colormap on error
+        pass
+        
+    return colormap
+
 def normalize_array(array, percentile_low=0, percentile_high=100, window_level=None, window_width=None):
     """
     Normalize array values to 0-255 range with optional window/level adjustment.
