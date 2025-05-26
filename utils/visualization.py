@@ -479,3 +479,108 @@ def segmentation_to_shapes(seg_slice, label=None):
             shapes.append(shape)
     
     return shapes
+
+def make_slice_figure(slice_array, dragmode='pan'):
+    """Create a Plotly figure from a slice array, preserving original resolution"""
+    # Ensure we're using high-quality image rendering
+    fig = go.Figure(go.Image(
+        z=slice_array,
+        # Use 'none' interpolation to avoid blurring pixels
+        hoverinfo='none',
+        colormodel='rgb'
+    ))
+    
+    # Configure layout for high-quality display
+    fig.update_layout(
+        dragmode=dragmode,
+        newshape_line_color='cyan',
+        # Important for shape selection
+        hovermode='closest',
+        clickmode='event+select',
+        selectdirection='any',
+        # Define custom buttons for drawing tools
+        updatemenus=[
+            dict(
+                type="buttons",
+                direction="right",
+                buttons=[
+                    dict(
+                        args=[{"dragmode": "drawclosedpath", "newshape.line.color": "cyan"}],
+                        label="Draw Area",
+                        method="relayout"
+                    ),
+                    dict(
+                        args=[{"dragmode": "drawopenpath", "newshape.line.color": "cyan"}],
+                        label="Draw Open Path",
+                        method="relayout"
+                    ),
+                    dict(
+                        args=[{"dragmode": "drawrect", "newshape.line.color": "cyan"}],
+                        label="Draw Rectangle",
+                        method="relayout"
+                    ),
+                    dict(
+                        args=[{"dragmode": "drawcircle", "newshape.line.color": "cyan"}],
+                        label="Draw Circle",
+                        method="relayout"
+                    ),
+                    dict(
+                        args=[{"dragmode": "drawline", "newshape.line.color": "cyan"}],
+                        label="Draw Line",
+                        method="relayout"
+                    ),
+                    dict(
+                        args=[{"dragmode": "pan"}],
+                        label="Pan",
+                        method="relayout"
+                    ),
+                    dict(
+                        args=[{"dragmode": "zoom"}],
+                        label="Zoom",
+                        method="relayout"
+                    ),
+                    dict(
+                        args=[{"shapes": []}],
+                        label="Clear Shapes",
+                        method="relayout"
+                    ),
+                ],
+                pad={"r": 10, "t": 10},
+                showactive=True,
+                x=0.11,
+                xanchor="left",
+                y=1.1,
+                yanchor="top"
+            ),
+        ],
+        # Preserve aspect ratio with exact 1:1 scaling
+        yaxis=dict(
+            scaleanchor="x",
+            scaleratio=1,
+            constrain="domain",
+            showgrid=False,
+            zeroline=False,
+            showticklabels=False
+        ),
+        xaxis=dict(
+            constrain="domain",
+            showgrid=False,
+            zeroline=False,
+            showticklabels=False
+        ),
+        # Maximize image size by eliminating all margins
+        margin=dict(l=0, r=0, t=10, b=0, pad=0),
+        # Set plot background to black for medical imaging
+        plot_bgcolor='black',
+        paper_bgcolor='black',
+        # Disable autoscaling which can reduce quality
+        autosize=False
+    )
+    
+    # Set the config to use high-quality image rendering
+    fig.update_traces(
+        hovertemplate=None,
+        hoverinfo='none'
+    )
+    
+    return fig

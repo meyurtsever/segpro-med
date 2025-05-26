@@ -19540,3 +19540,476 @@ editable
 2025-05-19 23:54:30,825 - segmed_pro - INFO - Using WindowWidth from metadata: 987.0
 2025-05-19 23:54:30,847 - segmed_pro - INFO - Applied segmentation overlay to slice 10
 2025-05-19 23:54:30,857 - segmed_pro - INFO - Generated slice image with shape (512, 400, 3)
+2025-05-26 22:22:30,302 - segmed_pro - INFO - Starting SegMed-Pro application
+2025-05-26 22:22:30,302 - segmed_pro - INFO - Setting up DICOM pixel data handlers
+2025-05-26 22:22:30,302 - segmed_pro - INFO - Added GDCM handler
+2025-05-26 22:22:30,302 - segmed_pro - INFO - Added pylibjpeg handler
+2025-05-26 22:22:30,303 - segmed_pro - INFO - Added Pillow handler
+2025-05-26 22:22:30,303 - segmed_pro - INFO - Added NumPy handler
+2025-05-26 22:22:30,303 - segmed_pro - INFO - Configured DICOM handlers: gdcm, pylibjpeg, pillow, numpy
+2025-05-26 22:22:30,303 - segmed_pro - INFO - Initialized DICOM handlers: 4 handlers available
+2025-05-26 22:46:25,384 - segmed_pro - INFO - Configured DICOM handlers: gdcm, pylibjpeg, pillow, numpy
+2025-05-26 22:47:22,891 - segmed_pro - INFO - Configured DICOM handlers: gdcm, pylibjpeg, pillow, numpy
+2025-05-26 22:49:07,796 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+2025-05-26 22:49:07,797 - segmed_pro - INFO - Found 20 DICOM files
+2025-05-26 22:49:07,797 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-05-26 22:49:07,833 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-05-26 22:49:07,864 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-05-26 22:49:07,900 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-05-26 22:49:07,932 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-05-26 22:49:07,962 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-05-26 22:49:07,991 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-05-26 22:49:08,021 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-05-26 22:49:08,050 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-05-26 22:49:08,079 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341775486333211_MR.dcm
+2025-05-26 22:49:08,108 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-05-26 22:49:08,143 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-05-26 22:49:08,180 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-05-26 22:49:08,232 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-05-26 22:49:08,271 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-05-26 22:49:08,309 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-05-26 22:49:08,351 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-05-26 22:49:08,401 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
+2025-05-26 22:49:08,490 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm
+2025-05-26 22:49:08,528 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm
+2025-05-26 22:49:08,567 - segmed_pro - INFO - Successfully read 20 DICOM files
+2025-05-26 22:49:08,567 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-26 22:49:08,696 - segmed_pro - INFO - Created 3D volume with shape (20, 512, 400)
+2025-05-26 22:49:08,732 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-26 22:50:50,673 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\AppData\Local\Temp\gradio\970d1d44e1371617c931f40f7aa4010718259bfe4adc21a373a9ad6708204acd\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-05-26 22:50:50,674 - segmed_pro - INFO - Found 1 DICOM files
+2025-05-26 22:50:50,674 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\970d1d44e1371617c931f40f7aa4010718259bfe4adc21a373a9ad6708204acd\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-05-26 22:50:50,723 - segmed_pro - INFO - Successfully read 1 DICOM files
+2025-05-26 22:50:50,723 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-26 22:50:50,730 - segmed_pro - INFO - Created 3D volume with shape (1, 512, 400)
+2025-05-26 22:50:50,766 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-26 22:50:50,786 - segmed_pro - ERROR - Exception in load_data: 
+    Invalid value of type 'builtins.str' received for the 'dragmode' property of layout
+        Received value: 'eraseshape'
+
+    The 'dragmode' property is an enumeration that may be specified as:
+      - One of the following enumeration values:
+            ['zoom', 'pan', 'select', 'lasso', 'drawclosedpath',
+            'drawopenpath', 'drawline', 'drawrect', 'drawcircle',
+            'orbit', 'turntable', False]
+2025-05-26 22:50:50,787 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "C:\Users\Yurtsever\Downloads\segpro-med\utils\debug_utils.py", line 42, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Yurtsever\Downloads\segpro-med\ui\handlers.py", line 111, in load_data
+    fig = make_slice_figure(img, dragmode=self.state.current_plot_tool)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Yurtsever\Downloads\segpro-med\utils\visualization.py", line 494, in make_slice_figure
+    fig.update_layout(
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\graph_objs\_figure.py", line 787, in update_layout
+    return super(Figure, self).update_layout(dict1, overwrite, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 1392, in update_layout
+    self.layout.update(dict1, overwrite=overwrite, **kwargs)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 5123, in update
+    BaseFigure._perform_update(self, kwargs, overwrite=overwrite)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 3926, in _perform_update
+    plotly_obj[key] = val
+    ~~~~~~~~~~^^^^^
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 5898, in __setitem__
+    super(BaseLayoutHierarchyType, self).__setitem__(prop, value)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 4860, in __setitem__
+    self._set_prop(prop, value)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 5204, in _set_prop
+    raise err
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 5199, in _set_prop
+    val = validator.validate_coerce(val)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\_plotly_utils\basevalidators.py", line 620, in validate_coerce
+    self.raise_invalid_val(v)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\_plotly_utils\basevalidators.py", line 299, in raise_invalid_val
+    raise ValueError(
+ValueError: 
+    Invalid value of type 'builtins.str' received for the 'dragmode' property of layout
+        Received value: 'eraseshape'
+
+    The 'dragmode' property is an enumeration that may be specified as:
+      - One of the following enumeration values:
+            ['zoom', 'pan', 'select', 'lasso', 'drawclosedpath',
+            'drawopenpath', 'drawline', 'drawrect', 'drawcircle',
+            'orbit', 'turntable', False]
+
+2025-05-26 22:50:54,487 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\AppData\Local\Temp\gradio\970d1d44e1371617c931f40f7aa4010718259bfe4adc21a373a9ad6708204acd\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-05-26 22:50:54,487 - segmed_pro - INFO - Found 1 DICOM files
+2025-05-26 22:50:54,488 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\970d1d44e1371617c931f40f7aa4010718259bfe4adc21a373a9ad6708204acd\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-05-26 22:50:54,529 - segmed_pro - INFO - Successfully read 1 DICOM files
+2025-05-26 22:50:54,529 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-26 22:50:54,536 - segmed_pro - INFO - Created 3D volume with shape (1, 512, 400)
+2025-05-26 22:50:54,570 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-26 22:50:54,581 - segmed_pro - ERROR - Exception in load_data: 
+    Invalid value of type 'builtins.str' received for the 'dragmode' property of layout
+        Received value: 'eraseshape'
+
+    The 'dragmode' property is an enumeration that may be specified as:
+      - One of the following enumeration values:
+            ['zoom', 'pan', 'select', 'lasso', 'drawclosedpath',
+            'drawopenpath', 'drawline', 'drawrect', 'drawcircle',
+            'orbit', 'turntable', False]
+2025-05-26 22:50:54,582 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "C:\Users\Yurtsever\Downloads\segpro-med\utils\debug_utils.py", line 42, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Yurtsever\Downloads\segpro-med\ui\handlers.py", line 111, in load_data
+    fig = make_slice_figure(img, dragmode=self.state.current_plot_tool)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Yurtsever\Downloads\segpro-med\utils\visualization.py", line 494, in make_slice_figure
+    fig.update_layout(
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\graph_objs\_figure.py", line 787, in update_layout
+    return super(Figure, self).update_layout(dict1, overwrite, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 1392, in update_layout
+    self.layout.update(dict1, overwrite=overwrite, **kwargs)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 5123, in update
+    BaseFigure._perform_update(self, kwargs, overwrite=overwrite)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 3926, in _perform_update
+    plotly_obj[key] = val
+    ~~~~~~~~~~^^^^^
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 5898, in __setitem__
+    super(BaseLayoutHierarchyType, self).__setitem__(prop, value)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 4860, in __setitem__
+    self._set_prop(prop, value)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 5204, in _set_prop
+    raise err
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 5199, in _set_prop
+    val = validator.validate_coerce(val)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\_plotly_utils\basevalidators.py", line 620, in validate_coerce
+    self.raise_invalid_val(v)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\_plotly_utils\basevalidators.py", line 299, in raise_invalid_val
+    raise ValueError(
+ValueError: 
+    Invalid value of type 'builtins.str' received for the 'dragmode' property of layout
+        Received value: 'eraseshape'
+
+    The 'dragmode' property is an enumeration that may be specified as:
+      - One of the following enumeration values:
+            ['zoom', 'pan', 'select', 'lasso', 'drawclosedpath',
+            'drawopenpath', 'drawline', 'drawrect', 'drawcircle',
+            'orbit', 'turntable', False]
+
+2025-05-26 22:50:56,980 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\AppData\Local\Temp\gradio\1d1a160a6d14e044cc5ab837c5441b705758e8aea734a717904b7b4ace4b5c61\1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-05-26 22:50:56,980 - segmed_pro - INFO - Found 1 DICOM files
+2025-05-26 22:50:56,981 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\1d1a160a6d14e044cc5ab837c5441b705758e8aea734a717904b7b4ace4b5c61\1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-05-26 22:50:57,025 - segmed_pro - INFO - Successfully read 1 DICOM files
+2025-05-26 22:50:57,026 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-26 22:50:57,033 - segmed_pro - INFO - Created 3D volume with shape (1, 512, 400)
+2025-05-26 22:50:57,068 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-26 22:50:57,080 - segmed_pro - ERROR - Exception in load_data: 
+    Invalid value of type 'builtins.str' received for the 'dragmode' property of layout
+        Received value: 'eraseshape'
+
+    The 'dragmode' property is an enumeration that may be specified as:
+      - One of the following enumeration values:
+            ['zoom', 'pan', 'select', 'lasso', 'drawclosedpath',
+            'drawopenpath', 'drawline', 'drawrect', 'drawcircle',
+            'orbit', 'turntable', False]
+2025-05-26 22:50:57,081 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "C:\Users\Yurtsever\Downloads\segpro-med\utils\debug_utils.py", line 42, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Yurtsever\Downloads\segpro-med\ui\handlers.py", line 111, in load_data
+    fig = make_slice_figure(img, dragmode=self.state.current_plot_tool)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Yurtsever\Downloads\segpro-med\utils\visualization.py", line 494, in make_slice_figure
+    fig.update_layout(
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\graph_objs\_figure.py", line 787, in update_layout
+    return super(Figure, self).update_layout(dict1, overwrite, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 1392, in update_layout
+    self.layout.update(dict1, overwrite=overwrite, **kwargs)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 5123, in update
+    BaseFigure._perform_update(self, kwargs, overwrite=overwrite)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 3926, in _perform_update
+    plotly_obj[key] = val
+    ~~~~~~~~~~^^^^^
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 5898, in __setitem__
+    super(BaseLayoutHierarchyType, self).__setitem__(prop, value)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 4860, in __setitem__
+    self._set_prop(prop, value)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 5204, in _set_prop
+    raise err
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 5199, in _set_prop
+    val = validator.validate_coerce(val)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\_plotly_utils\basevalidators.py", line 620, in validate_coerce
+    self.raise_invalid_val(v)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\_plotly_utils\basevalidators.py", line 299, in raise_invalid_val
+    raise ValueError(
+ValueError: 
+    Invalid value of type 'builtins.str' received for the 'dragmode' property of layout
+        Received value: 'eraseshape'
+
+    The 'dragmode' property is an enumeration that may be specified as:
+      - One of the following enumeration values:
+            ['zoom', 'pan', 'select', 'lasso', 'drawclosedpath',
+            'drawopenpath', 'drawline', 'drawrect', 'drawcircle',
+            'orbit', 'turntable', False]
+
+2025-05-26 22:50:57,731 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\AppData\Local\Temp\gradio\1d1a160a6d14e044cc5ab837c5441b705758e8aea734a717904b7b4ace4b5c61\1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-05-26 22:50:57,732 - segmed_pro - INFO - Found 1 DICOM files
+2025-05-26 22:50:57,732 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\1d1a160a6d14e044cc5ab837c5441b705758e8aea734a717904b7b4ace4b5c61\1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-05-26 22:50:57,767 - segmed_pro - INFO - Successfully read 1 DICOM files
+2025-05-26 22:50:57,768 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-26 22:50:57,775 - segmed_pro - INFO - Created 3D volume with shape (1, 512, 400)
+2025-05-26 22:50:57,811 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-26 22:50:57,822 - segmed_pro - ERROR - Exception in load_data: 
+    Invalid value of type 'builtins.str' received for the 'dragmode' property of layout
+        Received value: 'eraseshape'
+
+    The 'dragmode' property is an enumeration that may be specified as:
+      - One of the following enumeration values:
+            ['zoom', 'pan', 'select', 'lasso', 'drawclosedpath',
+            'drawopenpath', 'drawline', 'drawrect', 'drawcircle',
+            'orbit', 'turntable', False]
+2025-05-26 22:50:57,823 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "C:\Users\Yurtsever\Downloads\segpro-med\utils\debug_utils.py", line 42, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Yurtsever\Downloads\segpro-med\ui\handlers.py", line 111, in load_data
+    fig = make_slice_figure(img, dragmode=self.state.current_plot_tool)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Yurtsever\Downloads\segpro-med\utils\visualization.py", line 494, in make_slice_figure
+    fig.update_layout(
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\graph_objs\_figure.py", line 787, in update_layout
+    return super(Figure, self).update_layout(dict1, overwrite, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 1392, in update_layout
+    self.layout.update(dict1, overwrite=overwrite, **kwargs)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 5123, in update
+    BaseFigure._perform_update(self, kwargs, overwrite=overwrite)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 3926, in _perform_update
+    plotly_obj[key] = val
+    ~~~~~~~~~~^^^^^
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 5898, in __setitem__
+    super(BaseLayoutHierarchyType, self).__setitem__(prop, value)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 4860, in __setitem__
+    self._set_prop(prop, value)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 5204, in _set_prop
+    raise err
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 5199, in _set_prop
+    val = validator.validate_coerce(val)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\_plotly_utils\basevalidators.py", line 620, in validate_coerce
+    self.raise_invalid_val(v)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\_plotly_utils\basevalidators.py", line 299, in raise_invalid_val
+    raise ValueError(
+ValueError: 
+    Invalid value of type 'builtins.str' received for the 'dragmode' property of layout
+        Received value: 'eraseshape'
+
+    The 'dragmode' property is an enumeration that may be specified as:
+      - One of the following enumeration values:
+            ['zoom', 'pan', 'select', 'lasso', 'drawclosedpath',
+            'drawopenpath', 'drawline', 'drawrect', 'drawcircle',
+            'orbit', 'turntable', False]
+
+2025-05-26 22:51:39,395 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\AppData\Local\Temp\gradio\1cf1238497cc4d45d9c64433f18ae809481ac67b94b20268bd677c59a0bcde40\1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-05-26 22:51:39,396 - segmed_pro - INFO - Found 1 DICOM files
+2025-05-26 22:51:39,397 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\1cf1238497cc4d45d9c64433f18ae809481ac67b94b20268bd677c59a0bcde40\1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-05-26 22:51:39,442 - segmed_pro - INFO - Successfully read 1 DICOM files
+2025-05-26 22:51:39,442 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-26 22:51:39,448 - segmed_pro - INFO - Created 3D volume with shape (1, 512, 400)
+2025-05-26 22:51:39,482 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-26 22:51:39,494 - segmed_pro - ERROR - Exception in load_data: 
+    Invalid value of type 'builtins.str' received for the 'dragmode' property of layout
+        Received value: 'eraseshape'
+
+    The 'dragmode' property is an enumeration that may be specified as:
+      - One of the following enumeration values:
+            ['zoom', 'pan', 'select', 'lasso', 'drawclosedpath',
+            'drawopenpath', 'drawline', 'drawrect', 'drawcircle',
+            'orbit', 'turntable', False]
+2025-05-26 22:51:39,494 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "C:\Users\Yurtsever\Downloads\segpro-med\utils\debug_utils.py", line 42, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Yurtsever\Downloads\segpro-med\ui\handlers.py", line 111, in load_data
+    fig = make_slice_figure(img, dragmode=self.state.current_plot_tool)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Yurtsever\Downloads\segpro-med\utils\visualization.py", line 494, in make_slice_figure
+    fig.update_layout(
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\graph_objs\_figure.py", line 787, in update_layout
+    return super(Figure, self).update_layout(dict1, overwrite, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 1392, in update_layout
+    self.layout.update(dict1, overwrite=overwrite, **kwargs)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 5123, in update
+    BaseFigure._perform_update(self, kwargs, overwrite=overwrite)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 3926, in _perform_update
+    plotly_obj[key] = val
+    ~~~~~~~~~~^^^^^
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 5898, in __setitem__
+    super(BaseLayoutHierarchyType, self).__setitem__(prop, value)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 4860, in __setitem__
+    self._set_prop(prop, value)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 5204, in _set_prop
+    raise err
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 5199, in _set_prop
+    val = validator.validate_coerce(val)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\_plotly_utils\basevalidators.py", line 620, in validate_coerce
+    self.raise_invalid_val(v)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\_plotly_utils\basevalidators.py", line 299, in raise_invalid_val
+    raise ValueError(
+ValueError: 
+    Invalid value of type 'builtins.str' received for the 'dragmode' property of layout
+        Received value: 'eraseshape'
+
+    The 'dragmode' property is an enumeration that may be specified as:
+      - One of the following enumeration values:
+            ['zoom', 'pan', 'select', 'lasso', 'drawclosedpath',
+            'drawopenpath', 'drawline', 'drawrect', 'drawcircle',
+            'orbit', 'turntable', False]
+
+2025-05-26 22:51:51,071 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-26 22:51:51,072 - segmed_pro - INFO - Found 1 DICOM files
+2025-05-26 22:51:51,072 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-26 22:51:51,117 - segmed_pro - INFO - Successfully read 1 DICOM files
+2025-05-26 22:51:51,118 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-26 22:51:51,119 - segmed_pro - INFO - Created 3D volume with shape (1, 320, 280)
+2025-05-26 22:51:51,153 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-26 22:51:51,162 - segmed_pro - ERROR - Exception in load_data: 
+    Invalid value of type 'builtins.str' received for the 'dragmode' property of layout
+        Received value: 'eraseshape'
+
+    The 'dragmode' property is an enumeration that may be specified as:
+      - One of the following enumeration values:
+            ['zoom', 'pan', 'select', 'lasso', 'drawclosedpath',
+            'drawopenpath', 'drawline', 'drawrect', 'drawcircle',
+            'orbit', 'turntable', False]
+2025-05-26 22:51:51,162 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "C:\Users\Yurtsever\Downloads\segpro-med\utils\debug_utils.py", line 42, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Yurtsever\Downloads\segpro-med\ui\handlers.py", line 111, in load_data
+    fig = make_slice_figure(img, dragmode=self.state.current_plot_tool)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Yurtsever\Downloads\segpro-med\utils\visualization.py", line 494, in make_slice_figure
+    fig.update_layout(
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\graph_objs\_figure.py", line 787, in update_layout
+    return super(Figure, self).update_layout(dict1, overwrite, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 1392, in update_layout
+    self.layout.update(dict1, overwrite=overwrite, **kwargs)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 5123, in update
+    BaseFigure._perform_update(self, kwargs, overwrite=overwrite)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 3926, in _perform_update
+    plotly_obj[key] = val
+    ~~~~~~~~~~^^^^^
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 5898, in __setitem__
+    super(BaseLayoutHierarchyType, self).__setitem__(prop, value)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 4860, in __setitem__
+    self._set_prop(prop, value)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 5204, in _set_prop
+    raise err
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\plotly\basedatatypes.py", line 5199, in _set_prop
+    val = validator.validate_coerce(val)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\_plotly_utils\basevalidators.py", line 620, in validate_coerce
+    self.raise_invalid_val(v)
+  File "c:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\_plotly_utils\basevalidators.py", line 299, in raise_invalid_val
+    raise ValueError(
+ValueError: 
+    Invalid value of type 'builtins.str' received for the 'dragmode' property of layout
+        Received value: 'eraseshape'
+
+    The 'dragmode' property is an enumeration that may be specified as:
+      - One of the following enumeration values:
+            ['zoom', 'pan', 'select', 'lasso', 'drawclosedpath',
+            'drawopenpath', 'drawline', 'drawrect', 'drawcircle',
+            'orbit', 'turntable', False]
+
+2025-05-26 22:52:41,713 - segmed_pro - INFO - Configured DICOM handlers: gdcm, pylibjpeg, pillow, numpy
+2025-05-26 22:53:01,105 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-26 22:53:01,106 - segmed_pro - INFO - Found 1 DICOM files
+2025-05-26 22:53:01,106 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-26 22:53:01,138 - segmed_pro - INFO - Successfully read 1 DICOM files
+2025-05-26 22:53:01,139 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-26 22:53:01,140 - segmed_pro - INFO - Created 3D volume with shape (1, 320, 280)
+2025-05-26 22:53:01,166 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-26 22:57:24,236 - segmed_pro - INFO - Configured DICOM handlers: gdcm, pylibjpeg, pillow, numpy
+2025-05-26 22:57:35,598 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-26 22:57:35,599 - segmed_pro - INFO - Found 1 DICOM files
+2025-05-26 22:57:35,599 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-26 22:57:35,638 - segmed_pro - INFO - Successfully read 1 DICOM files
+2025-05-26 22:57:35,639 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-26 22:57:35,640 - segmed_pro - INFO - Created 3D volume with shape (1, 320, 280)
+2025-05-26 22:57:35,665 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-26 22:57:47,630 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-26 22:57:47,630 - segmed_pro - INFO - Found 1 DICOM files
+2025-05-26 22:57:47,630 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-26 22:57:47,662 - segmed_pro - INFO - Successfully read 1 DICOM files
+2025-05-26 22:57:47,662 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-26 22:57:47,663 - segmed_pro - INFO - Created 3D volume with shape (1, 320, 280)
+2025-05-26 22:57:47,688 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-26 22:57:55,365 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+2025-05-26 22:57:55,366 - segmed_pro - INFO - Found 20 DICOM files
+2025-05-26 22:57:55,366 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-05-26 22:57:55,387 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-05-26 22:57:55,410 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-05-26 22:57:55,434 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-05-26 22:57:55,458 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-05-26 22:57:55,484 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-05-26 22:57:55,508 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-05-26 22:57:55,532 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-05-26 22:57:55,555 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-05-26 22:57:55,579 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341775486333211_MR.dcm
+2025-05-26 22:57:55,603 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-05-26 22:57:55,627 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-05-26 22:57:55,650 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-05-26 22:57:55,671 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-05-26 22:57:55,692 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-05-26 22:57:55,713 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-05-26 22:57:55,734 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-05-26 22:57:55,755 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
+2025-05-26 22:57:55,776 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm
+2025-05-26 22:57:55,796 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm
+2025-05-26 22:57:55,817 - segmed_pro - INFO - Successfully read 20 DICOM files
+2025-05-26 22:57:55,817 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-26 22:57:55,897 - segmed_pro - INFO - Created 3D volume with shape (20, 512, 400)
+2025-05-26 22:57:55,919 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-26 22:59:29,489 - segmed_pro - INFO - Configured DICOM handlers: gdcm, pylibjpeg, pillow, numpy
+2025-05-26 22:59:42,289 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-26 22:59:42,290 - segmed_pro - INFO - Found 1 DICOM files
+2025-05-26 22:59:42,291 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-26 22:59:42,343 - segmed_pro - INFO - Successfully read 1 DICOM files
+2025-05-26 22:59:42,344 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-26 22:59:42,346 - segmed_pro - INFO - Created 3D volume with shape (1, 320, 280)
+2025-05-26 22:59:42,382 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-26 22:59:50,557 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+2025-05-26 22:59:50,558 - segmed_pro - INFO - Found 20 DICOM files
+2025-05-26 22:59:50,559 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-05-26 22:59:50,656 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-05-26 22:59:50,690 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-05-26 22:59:50,724 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-05-26 22:59:50,757 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-05-26 22:59:50,794 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-05-26 22:59:50,830 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-05-26 22:59:50,864 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-05-26 22:59:50,899 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-05-26 22:59:50,933 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341775486333211_MR.dcm
+2025-05-26 22:59:50,965 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-05-26 22:59:50,999 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-05-26 22:59:51,032 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-05-26 22:59:51,067 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-05-26 22:59:51,100 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-05-26 22:59:51,133 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-05-26 22:59:51,167 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-05-26 22:59:51,202 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
+2025-05-26 22:59:51,233 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm
+2025-05-26 22:59:51,266 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm
+2025-05-26 22:59:51,299 - segmed_pro - INFO - Successfully read 20 DICOM files
+2025-05-26 22:59:51,300 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-26 22:59:51,434 - segmed_pro - INFO - Created 3D volume with shape (20, 512, 400)
+2025-05-26 22:59:51,467 - segmed_pro - INFO - Extracted metadata from first slice
