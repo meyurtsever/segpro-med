@@ -30,45 +30,87 @@ def create_label_manager_tab():
             with gr.Column(scale=2):
                 gr.Markdown("### Current Labels")
                 label_table = gr.Dataframe(
-                    #headers=["ID", "Name", "Color Preview", "R", "G", "B"],
                     headers=["ID", "Name", "Color Preview"],
-                    #datatype=["number", "str", "html", "number", "number", "number"]
-                    datatype=["number", "str", "html"],  # Enable HTML rendering for color preview
-                    column_widths=[60, 120, 80],  # Set width for columns
-                    interactive=True,  # Allow editing
+                    datatype=["number", "str", "html"],
+                    column_widths=[60, 120, 80],
+                    interactive=True,  # Allow editing and row delete
                     wrap=True
                 )
-            
-            # Third column: Add new label and operations
+                gr.Markdown(
+                    "**Tip:** To delete a label, select the row and use the trash icon in the table toolbar above."
+                )
+              # Third column: Add new label and operations
             with gr.Column(scale=1):
                 # First row: Add new label section
                 gr.Markdown("### ➕ Add New Label")
-                new_label_name = gr.Textbox(
-                    label="Label Name",
-                    placeholder="Enter new label name...",
-                    value="New Label"
-                )
-                new_label_color = gr.ColorPicker(
-                    label="Label Color",
-                    value="#FF0000"
-                )
+                with gr.Row():
+                    new_label_name = gr.Textbox(
+                        label="Label Name",
+                        placeholder="Enter new label name...",
+                        value="New Label",
+                        scale=1
+                    )
+                    new_label_color = gr.ColorPicker(
+                        label="Label Color",
+                        value="#FF0000",
+                        scale=2
+                    )
                 add_label_btn = gr.Button("➕ Add Label", variant="primary")
-                
-                # Second row: Label operations
+                  # Second row: Label operations
                 gr.Markdown("### 🔧 Label Operations")
-                selected_label_idx = gr.Number(
-                    label="Label ID to Delete",
-                    precision=0,
-                    value=1,
-                    minimum=0
+                selected_label_name = gr.Dropdown(
+                    label="Label Name to Delete",
+                    choices=[],  # Will be populated dynamically
+                    value=None,  # Ensure initial value is None
+                    interactive=True,
+                    allow_custom_value=False  # Prevent custom values
                 )
                 delete_label_btn = gr.Button("🗑️ Delete Label", variant="stop")
-        
+
         # Status display spanning all columns at the bottom
         status_box = gr.Textbox(label="📋 Status", interactive=False, lines=2)
-        
+
+        # --- DYNAMIC DROPDOWN POPULATION ---
+        def update_label_dropdown(table_data):
+            import pandas as pd
+            if isinstance(table_data, pd.DataFrame):
+                names = table_data.iloc[:, 1].tolist() if table_data.shape[1] > 1 else []
+            elif table_data and isinstance(table_data, list):
+                names = [row[1] for row in table_data if len(row) > 1]
+            else:
+                names = []
+
+            # Return Gradio update with choices and value=None to avoid the warning
+            return gr.update(choices=names, value=None)
+
+        def delete_label_from_table(table_data, label_name):
+            import pandas as pd
+            if isinstance(table_data, pd.DataFrame):
+                table_data = table_data.values.tolist()
+            # Filter out the row with the selected label name
+            updated_table = [row for row in table_data if row[1] != label_name]
+            return updated_table, f"[OK] Deleted label '{label_name}'" if len(updated_table) < len(table_data) else (table_data, f"[ERROR] Label '{label_name}' not found")
+
+        label_table.change(
+            fn=update_label_dropdown,
+            inputs=[label_table],
+            outputs=[selected_label_name]
+        )
+
+        delete_label_btn.click(
+            fn=delete_label_from_table,
+            inputs=[label_table, selected_label_name],
+            outputs=[label_table, status_box]
+        ).then(
+            fn=update_label_dropdown,
+            inputs=[label_table],
+            outputs=[selected_label_name]
+        )
+
+        # Expose update_label_dropdown for use in app.py
         return (
             label_file_input, load_btn, save_btn, label_table, 
             new_label_name, new_label_color, add_label_btn,
-            selected_label_idx, delete_label_btn, status_box
+            selected_label_name, delete_label_btn, status_box,
+            update_label_dropdown  # <-- add this to the return tuple
         )

@@ -262,7 +262,8 @@ class SegMedPro:
         """Connect event handlers for the label manager tab"""
         (label_file_input, load_btn, save_btn, label_table, 
          new_label_name, new_label_color, add_label_btn,
-         selected_label_idx, delete_label_btn, status_box) = components
+         selected_label_name, delete_label_btn, status_box,
+         update_label_dropdown) = components  # updated to receive update_label_dropdown
         
         handlers = self.label_manager_handlers
 
@@ -271,8 +272,12 @@ class SegMedPro:
             fn=handlers.load_label_set,
             inputs=[label_file_input],
             outputs=[label_table, status_box]
+        ).then(
+            fn=update_label_dropdown,
+            inputs=[label_table],
+            outputs=[selected_label_name]
         )
-          # Save label set
+        # Save label set
         save_btn.click(
             fn=lambda table_data: handlers.save_label_set(table_data)[1],  # Return only status message
             inputs=[label_table],
@@ -284,13 +289,21 @@ class SegMedPro:
             fn=handlers.add_new_label,
             inputs=[label_table, new_label_name, new_label_color],
             outputs=[label_table, status_box]
+        ).then(
+            fn=update_label_dropdown,
+            inputs=[label_table],
+            outputs=[selected_label_name]
         )
         
-        # Delete selected label
+        # Delete selected label (by name)
         delete_label_btn.click(
-            fn=handlers.delete_label,
-            inputs=[label_table, selected_label_idx],
+            fn=handlers.delete_label_by_name,
+            inputs=[label_table, selected_label_name],
             outputs=[label_table, status_box]
+        ).then(
+            fn=update_label_dropdown,
+            inputs=[label_table],
+            outputs=[selected_label_name]
         )
 
 
