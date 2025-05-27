@@ -584,3 +584,28 @@ def make_slice_figure(slice_array, dragmode='pan'):
     )
     
     return fig
+
+def save_itk_snap_labels(label_list, file_path):
+    """
+    Save a list of labels to ITK-SNAP label file format.
+    Args:
+        label_list (list of dict or list): Each item should have [Index, Name, R, G, B]
+        file_path (str): Path to save the .label file
+    """
+    try:
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write("# ITK-SNAP Label Description File\n")
+            f.write("#\n")
+            f.write("# Format: <Label> <R> <G> <B> <A> <Vis> <Mesh> <Name>\n")
+            for row in label_list:
+                idx = int(row[0])
+                name = str(row[1])
+                r = int(row[2])
+                g = int(row[3])
+                b = int(row[4])
+                # Default: alpha=255, vis=1, mesh=0
+                f.write(f"{idx} {r} {g} {b} 255 1 0 {name}\n")
+        return True
+    except Exception as e:
+        print(f"Error saving label file: {e}")
+        return False

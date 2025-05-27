@@ -17,6 +17,8 @@ from .viewer_tab import create_viewer_tab
 from .conversion_tab import create_conversion_tab
 from .handlers import DataLoadingHandlers, ViewerHandlers, PlotToolHandlers, ConversionHandlers
 from .segmentation_handlers import SegmentationHandlers
+from .label_manager_tab_new import create_label_manager_tab
+from .label_manager_handlers import LabelManagerHandlers
 
 __all__ = [
     'AppState',
@@ -26,5 +28,7 @@ __all__ = [
     'ViewerHandlers',
     'PlotToolHandlers',
     'ConversionHandlers',
-    'SegmentationHandlers'
+    'SegmentationHandlers',
+    'create_label_manager_tab',
+    'LabelManagerHandlers'
 ]

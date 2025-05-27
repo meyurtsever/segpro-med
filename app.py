@@ -23,8 +23,10 @@ if current_dir not in sys.path:
 from ui.state import AppState
 from ui.viewer_tab import create_viewer_tab
 from ui.conversion_tab import create_conversion_tab
+from ui.label_manager_tab_new import create_label_manager_tab
 from ui.handlers import DataLoadingHandlers, ViewerHandlers, PlotToolHandlers, ConversionHandlers
 from ui.segmentation_handlers import SegmentationHandlers
+from ui.label_manager_handlers import LabelManagerHandlers
 
 
 class SegMedPro:
@@ -34,13 +36,13 @@ class SegMedPro:
         """Initialize the application"""
         # Initialize application state
         self.state = AppState()
-        
-        # Initialize event handlers
+          # Initialize event handlers
         self.data_handlers = DataLoadingHandlers(self.state)
         self.viewer_handlers = ViewerHandlers(self.state)
         self.plot_handlers = PlotToolHandlers(self.state)
         self.conversion_handlers = ConversionHandlers(self.state)
         self.segmentation_handlers = SegmentationHandlers(self.state)
+        self.label_manager_handlers = LabelManagerHandlers(self.state)
         
         logger.info("SegMed-Pro application initialized")
     
@@ -48,22 +50,22 @@ class SegMedPro:
         """Build the complete Gradio interface"""
         with gr.Blocks(title="SegMed-Pro") as app:
             gr.Markdown("# SegMed-Pro: Medical Imaging Annotation Tool")
-            
             with gr.Tabs() as tabs:
                 # Create viewer tab
                 viewer_components = create_viewer_tab()
-                
                 # Create conversion tab
                 conversion_components = create_conversion_tab()
-            
+                # Create label manager tab
+                label_manager_components = create_label_manager_tab()
+
             # Connect event handlers for viewer tab
             self._connect_viewer_handlers(viewer_components)
-            
             # Connect event handlers for conversion tab
             self._connect_conversion_handlers(conversion_components)
-            
+            # Connect event handlers for label manager tab
+            self._connect_label_manager_handlers(label_manager_components)
             return app
-    
+
     def _connect_viewer_handlers(self, components):
         """Connect all event handlers for the viewer tab"""
         # Unpack components
@@ -255,6 +257,40 @@ class SegMedPro:
             fn=self.conversion_handlers.convert_files,
             inputs=[conversion_input, conversion_dir, conversion_type, output_dir],
             outputs=[conversion_status, conversion_output]
+        )
+    def _connect_label_manager_handlers(self, components):
+        """Connect event handlers for the label manager tab"""
+        (label_file_input, load_btn, save_btn, label_table, 
+         new_label_name, new_label_color, add_label_btn,
+         selected_label_idx, delete_label_btn, status_box) = components
+        
+        handlers = self.label_manager_handlers
+
+        # Load label set
+        load_btn.click(
+            fn=handlers.load_label_set,
+            inputs=[label_file_input],
+            outputs=[label_table, status_box]
+        )
+          # Save label set
+        save_btn.click(
+            fn=lambda table_data: handlers.save_label_set(table_data)[1],  # Return only status message
+            inputs=[label_table],
+            outputs=[status_box]
+        )
+        
+        # Add new label
+        add_label_btn.click(
+            fn=handlers.add_new_label,
+            inputs=[label_table, new_label_name, new_label_color],
+            outputs=[label_table, status_box]
+        )
+        
+        # Delete selected label
+        delete_label_btn.click(
+            fn=handlers.delete_label,
+            inputs=[label_table, selected_label_idx],
+            outputs=[label_table, status_box]
         )
 
 

@@ -1,8 +1,8 @@
 """
 SegMed-Pro Application State Management
 
-This module handles the centralized state for the SegMed-Pro application,
-including data storage, segmentation state, and current view parameters.
+This module provides a central application state that can be accessed by different
+components of the application.
 """
 
 import os
@@ -20,12 +20,11 @@ from utils.dicom_utils import configure_dicom_handlers
 
 logger = logging.getLogger(__name__)
 
-
 class AppState:
-    """Centralized state management for SegMed-Pro application"""
+    """Central application state for the SegMed-Pro application"""
     
     def __init__(self):
-        """Initialize the application state"""
+        """Initialize app state with default values"""
         # Set up DICOM handlers
         self.dicom_handlers = configure_dicom_handlers()
         logger.info(f"Initialized DICOM handlers: {len(self.dicom_handlers)} handlers available")
@@ -59,7 +58,8 @@ class AppState:
             7: [255, 165, 0],  # Label 7 (Orange)
             8: [128, 0, 128]   # Label 8 (Purple)
         }
-          # Custom components state
+        
+        # Custom components state
         self.custom_components_path = os.path.join(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 
             "custom_components"
@@ -159,3 +159,13 @@ class AppState:
             return None
         
         return None
+
+# Singleton instance
+_app_state = None
+
+def get_app_state():
+    """Get the singleton app state instance"""
+    global _app_state
+    if _app_state is None:
+        _app_state = AppState()
+    return _app_state
