@@ -36,24 +36,27 @@ class LabelManagerHandlers:
                         idx, r, g, b, name = match.groups()
                         idx, r, g, b = int(idx), int(r), int(g), int(b)
                         
-                        # Create color preview as hex color
-                        color_preview = f"#{r:02x}{g:02x}{b:02x}"
+                        # Create accurate color preview with HTML
+                        hex_color = f"#{r:02x}{g:02x}{b:02x}"
+                        color_preview = f"<div style='width: 20px; height: 20px; background-color: {hex_color}; border: 1px solid #000;'></div>"
                         
-                        labels.append([idx, name, color_preview, r, g, b])
+                        # labels.append([idx, name, color_preview, r, g, b])
+                        # let's ignore r, g, b for now
+                        labels.append([idx, name, color_preview])
             
             # Sort by index
             labels.sort(key=lambda x: x[0])
             self.current_labels = labels
             
-            return labels, f"✅ Loaded {len(labels)} labels successfully."
+            return labels, f"[OK] Loaded {len(labels)} labels successfully."
             
         except Exception as e:
-            return [], f"❌ Error loading file: {str(e)}"
+            return [], f"[ERROR] Error loading file: {str(e)}"
 
     def save_label_set(self, table_data, file_name="label_set_edited.label"):
         """Save label data to ITK-SNAP format"""
         if not table_data or not isinstance(table_data, list):
-            return None, "❌ No label data to save."
+            return None, "[ERROR] No label data to save."
         
         try:
             save_path = os.path.join(os.getcwd(), file_name)
@@ -87,20 +90,20 @@ class LabelManagerHandlers:
                     f.write(f"    {idx:2d}   {r:3d}  {g:3d}  {b:3d}        1  1  1    \"{name}\"\n")
             
             self.current_labels = table_data
-            return save_path, f"✅ Saved to {save_path}"
+            return save_path, f"[OK] Saved to {save_path}"
             
         except Exception as e:
-            return None, f"❌ Error saving: {str(e)}"
+            return None, f"[ERROR] Error saving: {str(e)}"
 
     def add_new_label(self, table_data, new_name, color_hex):
         """Add a new label with specified name and color"""
         if not new_name or not new_name.strip():
-            return table_data, "❌ Please enter a label name."
+            return table_data, "[ERROR] Please enter a label name."
         
         try:
             # Parse hex color
             if not color_hex.startswith('#') or len(color_hex) != 7:
-                return table_data, "❌ Invalid color format."
+                return table_data, "[ERROR] Invalid color format."
             
             r = int(color_hex[1:3], 16)
             g = int(color_hex[3:5], 16)
@@ -109,21 +112,26 @@ class LabelManagerHandlers:
             # Find next available index
             existing_indices = [int(row[0]) for row in table_data] if table_data else []
             next_idx = max(existing_indices) + 1 if existing_indices else 1
-              # Add new label
-            new_label = [next_idx, new_name.strip(), color_hex, r, g, b]
+            
+            # Create accurate color preview with hex value
+            hex_color = f"#{r:02x}{g:02x}{b:02x}"
+            color_preview = f"[*] {hex_color}"
+            
+            # Add new label
+            new_label = [next_idx, new_name.strip(), color_preview, r, g, b]
             updated_table = table_data + [new_label] if table_data else [new_label]
             
             self.current_labels = updated_table
-            return updated_table, f"✅ Added label '{new_name}' with ID {next_idx}."
+            return updated_table, f"[OK] Added label '{new_name}' with ID {next_idx}."
             
         except Exception as e:
-            return table_data, f"❌ Error adding label: {str(e)}"
+            return table_data, f"[ERROR] Error adding label: {str(e)}"
 
     def delete_label(self, table_data, label_idx):
         """Delete label by index"""
         # Handle empty table data
         if table_data is None or (hasattr(table_data, 'empty') and table_data.empty) or (isinstance(table_data, list) and len(table_data) == 0):
-            return table_data, "❌ No labels to delete."
+            return table_data, "[ERROR] No labels to delete."
         
         try:
             label_idx = int(label_idx)
@@ -140,10 +148,17 @@ class LabelManagerHandlers:
             updated_table = [row for row in data_list if int(row[0]) != label_idx]
             
             if len(updated_table) == original_count:
-                return table_data, f"❌ Label with ID {label_idx} not found."
+                return table_data, f"[ERROR] Label with ID {label_idx} not found."
             
             self.current_labels = updated_table
-            return updated_table, f"✅ Deleted label with ID {label_idx}."
+            return updated_table, f"[OK] Deleted label with ID {label_idx}."
             
         except Exception as e:
-            return table_data, f"❌ Error deleting label: {str(e)}"
+            return table_data, f"[ERROR] Error deleting label: {str(e)}"
+
+# Ensure Gradio table is configured to render HTML for the color_preview column
+# Example Gradio table setup:
+# import gradio as gr
+# table = gr.DataFrame(headers=["Index", "Name", "Color Preview", "R", "G", "B"],
+#                      datatype=["number", "str", "html", "number", "number", "number"],
+#                      interactive=True)

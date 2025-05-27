@@ -12,57 +12,59 @@ def create_label_manager_tab():
     with gr.TabItem("Label Manager"):
         gr.Markdown("## Label Manager: Edit and Manage Label Sets")
         
-        # File operations section
+        # Main 3-column layout
         with gr.Row():
-            with gr.Column(scale=2):
+            # First column: File operations
+            with gr.Column(scale=1):
+                # First row: Data load                
                 label_file_input = gr.File(
                     label="📁 Load ITK-SNAP Label Set (.label)", 
                     file_types=[".label"]
                 )
-            with gr.Column(scale=1):
+                
+                # Second and third rows: Load and Save buttons
                 load_btn = gr.Button("🔄 Load Labels", variant="primary")
                 save_btn = gr.Button("💾 Save Labels", variant="secondary")
-          # Current labels display - editable table (only name column can be edited)
-        gr.Markdown("### Current Labels")
-        label_table = gr.Dataframe(
-            headers=["ID", "Name", "Color Preview", "R", "G", "B"],
-            datatype=["number", "str", "str", "number", "number", "number"],
-            interactive=True,  # Allow editing
-            label="Label Set",
-            wrap=True
-        )
-        
-        # Add new label section
-        gr.Markdown("### ➕ Add New Label")
-        with gr.Row():
+                
+            # Second column: Current labels table
             with gr.Column(scale=2):
+                gr.Markdown("### Current Labels")
+                label_table = gr.Dataframe(
+                    #headers=["ID", "Name", "Color Preview", "R", "G", "B"],
+                    headers=["ID", "Name", "Color Preview"],
+                    #datatype=["number", "str", "html", "number", "number", "number"]
+                    datatype=["number", "str", "html"],  # Enable HTML rendering for color preview
+                    column_widths=[60, 120, 80],  # Set width for columns
+                    interactive=True,  # Allow editing
+                    wrap=True
+                )
+            
+            # Third column: Add new label and operations
+            with gr.Column(scale=1):
+                # First row: Add new label section
+                gr.Markdown("### ➕ Add New Label")
                 new_label_name = gr.Textbox(
                     label="Label Name",
                     placeholder="Enter new label name...",
                     value="New Label"
                 )
-            with gr.Column(scale=1):
                 new_label_color = gr.ColorPicker(
                     label="Label Color",
                     value="#FF0000"
                 )
-            with gr.Column(scale=1):
                 add_label_btn = gr.Button("➕ Add Label", variant="primary")
-        
-        # Label operations section
-        gr.Markdown("### 🔧 Label Operations")
-        with gr.Row():
-            with gr.Column():
+                
+                # Second row: Label operations
+                gr.Markdown("### 🔧 Label Operations")
                 selected_label_idx = gr.Number(
                     label="Label ID to Delete",
                     precision=0,
                     value=1,
                     minimum=0
                 )
-            with gr.Column():
                 delete_label_btn = gr.Button("🗑️ Delete Label", variant="stop")
         
-        # Status display
+        # Status display spanning all columns at the bottom
         status_box = gr.Textbox(label="📋 Status", interactive=False, lines=2)
         
         return (
