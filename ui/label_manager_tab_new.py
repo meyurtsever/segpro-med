@@ -21,11 +21,30 @@ def create_label_manager_tab():
                     label="📁 Load ITK-SNAP Label Set (.label)", 
                     file_types=[".label"]
                 )
-                
-                # Second and third rows: Load and Save buttons
+                  # Second and third rows: Load and Save buttons
                 load_btn = gr.Button("🔄 Load Labels", variant="primary")
-                save_btn = gr.Button("💾 Save Labels", variant="secondary")
                 
+                # Save section with filename input
+                gr.Markdown("### 💾 Save Options")
+                save_filename = gr.Textbox(
+                    label="Save As (filename)",
+                    placeholder="my_labels.label",
+                    value="label_set_edited.label",                    info="Enter filename with .label extension"
+                )
+                with gr.Row():
+                    save_btn = gr.Button("💾 Save Labels", variant="secondary", scale=2)
+                    save_quick_btn = gr.Button("⚡ Quick Save", variant="primary", scale=1)
+                
+                # Save button tips
+                with gr.Row():
+                    gr.Markdown(
+                        "💡 **Save Labels**: Creates a new file with your custom filename",
+                        elem_classes=["tip-text"]
+                    )
+                    gr.Markdown(
+                        "💡 **Quick Save**: Overwrites the default 'label_set_edited.label'",
+                        elem_classes=["tip-text"]
+                    )
             # Second column: Current labels table
             with gr.Column(scale=2):
                 gr.Markdown("### Current Labels")
@@ -37,7 +56,11 @@ def create_label_manager_tab():
                     wrap=True
                 )
                 gr.Markdown(
-                    "**Tip:** To delete a label, select the row and use the trash icon in the table toolbar above."
+                    """
+                    **Tips**
+                    - **Edit names:** Click on any label name in the table to edit it directly  
+                    - **Delete labels:** Select the label from **Label Operations** and use the button to delete the label
+                    """
                 )
               # Third column: Add new label and operations
             with gr.Column(scale=1):
@@ -105,11 +128,9 @@ def create_label_manager_tab():
             fn=update_label_dropdown,
             inputs=[label_table],
             outputs=[selected_label_name]
-        )
-
-        # Expose update_label_dropdown for use in app.py
+        )        # Expose update_label_dropdown for use in app.py
         return (
-            label_file_input, load_btn, save_btn, label_table, 
+            label_file_input, load_btn, save_btn, save_quick_btn, save_filename, label_table, 
             new_label_name, new_label_color, add_label_btn,
             selected_label_name, delete_label_btn, status_box,
             update_label_dropdown  # <-- add this to the return tuple

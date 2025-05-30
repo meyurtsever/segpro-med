@@ -229,7 +229,6 @@ class SegMedPro:
             inputs=None,
             outputs=image_plot
         )
-        
         pan_btn.click(
             fn=lambda: self.plot_handlers.update_plot_tool("pan"),
             inputs=None,
@@ -258,16 +257,15 @@ class SegMedPro:
             inputs=[conversion_input, conversion_dir, conversion_type, output_dir],
             outputs=[conversion_status, conversion_output]
         )
+
     def _connect_label_manager_handlers(self, components):
         """Connect event handlers for the label manager tab"""
-        (label_file_input, load_btn, save_btn, label_table, 
+        (label_file_input, load_btn, save_btn, save_quick_btn, save_filename, label_table, 
          new_label_name, new_label_color, add_label_btn,
          selected_label_name, delete_label_btn, status_box,
          update_label_dropdown) = components  # updated to receive update_label_dropdown
         
-        handlers = self.label_manager_handlers
-
-        # Load label set
+        handlers = self.label_manager_handlers        # Load label set
         load_btn.click(
             fn=handlers.load_label_set,
             inputs=[label_file_input],
@@ -277,8 +275,22 @@ class SegMedPro:
             inputs=[label_table],
             outputs=[selected_label_name]
         )
-        # Save label set
+        
+        # Sync table edits back to internal storage when user edits table directly
+        label_table.change(
+            fn=handlers.sync_table_to_internal,
+            inputs=[label_table],
+            outputs=[]
+        )
+        
+        # Save label set with custom filename
         save_btn.click(
+            fn=lambda table_data, filename: handlers.save_label_set_with_filename(table_data, filename)[1],
+            inputs=[label_table, save_filename],
+            outputs=[status_box]
+        )
+          # Quick save with default filename
+        save_quick_btn.click(
             fn=lambda table_data: handlers.save_label_set(table_data)[1],  # Return only status message
             inputs=[label_table],
             outputs=[status_box]
@@ -293,6 +305,13 @@ class SegMedPro:
             fn=update_label_dropdown,
             inputs=[label_table],
             outputs=[selected_label_name]
+        )
+        
+        # Sync table changes to internal storage when user edits the table
+        label_table.change(
+            fn=handlers.sync_table_to_internal,
+            inputs=[label_table],
+            outputs=[]
         )
         
         # Delete selected label (by name)
