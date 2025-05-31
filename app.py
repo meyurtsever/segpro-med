@@ -24,6 +24,7 @@ from ui.state import AppState
 from ui.viewer_tab import create_viewer_tab
 from ui.conversion_tab import create_conversion_tab
 from ui.label_manager_tab_new import create_label_manager_tab
+from ui.editor_tab import create_editor_tab
 from ui.handlers import DataLoadingHandlers, ViewerHandlers, PlotToolHandlers, ConversionHandlers
 from ui.segmentation_handlers import SegmentationHandlers
 from ui.label_manager_handlers import LabelManagerHandlers
@@ -53,6 +54,8 @@ class SegMedPro:
             with gr.Tabs() as tabs:
                 # Create viewer tab
                 viewer_components = create_viewer_tab()
+                # Create editor tab
+                editor_components = create_editor_tab()
                 # Create conversion tab
                 conversion_components = create_conversion_tab()
                 # Create label manager tab
@@ -60,6 +63,8 @@ class SegMedPro:
 
             # Connect event handlers for viewer tab
             self._connect_viewer_handlers(viewer_components)
+            # Connect event handlers for editor tab
+            self._connect_editor_handlers(editor_components)
             # Connect event handlers for conversion tab
             self._connect_conversion_handlers(conversion_components)
             # Connect event handlers for label manager tab
@@ -324,6 +329,79 @@ class SegMedPro:
             inputs=[label_table],
             outputs=[selected_label_name]
         )
+
+    def _connect_editor_handlers(self, components):
+        """Connect all event handlers for the editor tab (mirroring viewer tab, minus segmentation/plot tools)"""
+        data_loading = components['data_loading']
+        visualization = components['visualization']
+        # ai_tools = components['ai_tools']  # No-op for now
+
+        (file_input, dir_input, load_btn, reset_dir_btn, file_browser, 
+         metadata_display_dl, error_display_dl, window_level, window_width, apply_window_btn, debug_btn) = data_loading
+
+        (error_display, metadata_display, view_selector, image_plot, prev_btn, slice_slider, next_btn, slice_text, crosshair_info) = visualization
+
+        # Data loading handlers
+        load_btn.click(
+            fn=self.data_handlers.load_data,
+            inputs=[file_input, dir_input],
+            outputs=[
+                image_plot, file_browser, metadata_display,
+                slice_slider, slice_text, crosshair_info, error_display,
+                window_level, window_width
+            ]
+        )
+        reset_dir_btn.click(
+            fn=self.data_handlers.reset_directory,
+            inputs=[],
+            outputs=[dir_input]
+        )
+        file_input.change(
+            fn=self.data_handlers.load_data,
+            inputs=[file_input, dir_input],
+            outputs=[
+                image_plot, file_browser, metadata_display,
+                slice_slider, slice_text, crosshair_info, error_display,
+                window_level, window_width
+            ]
+        )
+        debug_btn.click(
+            fn=self.data_handlers.debug_selected_file,
+            inputs=[file_input, dir_input],
+            outputs=[error_display]
+        )
+        # Viewer handlers
+        slice_slider.change(
+            fn=self.viewer_handlers.update_slice,
+            inputs=[slice_slider, view_selector],
+            outputs=[image_plot, slice_text, crosshair_info, metadata_display, window_level, window_width]
+        )
+        view_selector.change(
+            fn=self.viewer_handlers.change_view,
+            inputs=[view_selector],
+            outputs=[slice_slider, slice_text, image_plot]
+        )
+        apply_window_btn.click(
+            fn=self.viewer_handlers.update_window_level,
+            inputs=[window_level, window_width],
+            outputs=[image_plot]
+        )
+        file_browser.change(
+            fn=self.viewer_handlers.select_file_from_browser,
+            inputs=[file_browser],
+            outputs=[image_plot, slice_text, crosshair_info, metadata_display, slice_slider, window_level, window_width]
+        )
+        prev_btn.click(
+            fn=self.viewer_handlers.prev_slice,
+            inputs=[slice_slider],
+            outputs=[slice_slider]
+        )
+        next_btn.click(
+            fn=self.viewer_handlers.next_slice,
+            inputs=[slice_slider],
+            outputs=[slice_slider]
+        )
+        # AI tools are dummy/no-op for now
 
 
 # Initialize and launch the application
