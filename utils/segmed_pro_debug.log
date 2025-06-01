@@ -20370,3 +20370,193 @@ ValueError: No DICOM files found in directory: C:\Users\Yurtsever\Downloads\segp
 2025-05-31 15:55:43,498 - segmed_pro - INFO - Sorting by Instance Number
 2025-05-31 15:55:43,504 - segmed_pro - INFO - Created 3D volume with shape (1, 512, 400)
 2025-05-31 15:55:43,538 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-31 23:02:13,316 - segmed_pro - INFO - Configured DICOM handlers: gdcm, pylibjpeg, pillow, numpy
+2025-05-31 23:02:22,456 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-31 23:02:22,456 - segmed_pro - INFO - Found 1 DICOM files
+2025-05-31 23:02:22,456 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-31 23:02:22,490 - segmed_pro - INFO - Successfully read 1 DICOM files
+2025-05-31 23:02:22,490 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-31 23:02:22,492 - segmed_pro - INFO - Created 3D volume with shape (1, 320, 280)
+2025-05-31 23:02:22,518 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-31 23:02:50,283 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-31 23:02:50,283 - segmed_pro - INFO - Found 1 DICOM files
+2025-05-31 23:02:50,283 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-31 23:02:50,315 - segmed_pro - INFO - Successfully read 1 DICOM files
+2025-05-31 23:02:50,315 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-31 23:02:50,316 - segmed_pro - INFO - Created 3D volume with shape (1, 320, 280)
+2025-05-31 23:02:50,341 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-31 23:03:53,248 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-31 23:03:53,249 - segmed_pro - INFO - Found 1 DICOM files
+2025-05-31 23:03:53,249 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-31 23:03:53,289 - segmed_pro - INFO - Successfully read 1 DICOM files
+2025-05-31 23:03:53,289 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-31 23:03:53,291 - segmed_pro - INFO - Created 3D volume with shape (1, 320, 280)
+2025-05-31 23:03:53,325 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-31 23:04:01,889 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-31 23:04:01,889 - segmed_pro - INFO - Found 1 DICOM files
+2025-05-31 23:04:01,889 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-31 23:04:01,933 - segmed_pro - INFO - Successfully read 1 DICOM files
+2025-05-31 23:04:01,933 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-31 23:04:01,935 - segmed_pro - INFO - Created 3D volume with shape (1, 320, 280)
+2025-05-31 23:04:01,970 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-31 23:13:27,871 - segmed_pro - INFO - Configured DICOM handlers: gdcm, pylibjpeg, pillow, numpy
+2025-05-31 23:14:43,487 - segmed_pro - INFO - Configured DICOM handlers: gdcm, pylibjpeg, pillow, numpy
+2025-05-31 23:14:57,597 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-31 23:14:57,598 - segmed_pro - INFO - Found 1 DICOM files
+2025-05-31 23:14:57,598 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-31 23:14:57,627 - segmed_pro - INFO - Successfully read 1 DICOM files
+2025-05-31 23:14:57,627 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-31 23:14:57,629 - segmed_pro - INFO - Created 3D volume with shape (1, 320, 280)
+2025-05-31 23:14:57,654 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-31 23:15:39,143 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-31 23:15:39,144 - segmed_pro - INFO - Found 1 DICOM files
+2025-05-31 23:15:39,144 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-31 23:15:39,193 - segmed_pro - INFO - Successfully read 1 DICOM files
+2025-05-31 23:15:39,193 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-31 23:15:39,195 - segmed_pro - INFO - Created 3D volume with shape (1, 320, 280)
+2025-05-31 23:15:39,236 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-31 23:30:31,449 - segmed_pro - INFO - Configured DICOM handlers: gdcm, pylibjpeg, pillow, numpy
+2025-05-31 23:30:38,417 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-31 23:30:38,417 - segmed_pro - INFO - Found 1 DICOM files
+2025-05-31 23:30:38,418 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-31 23:30:38,446 - segmed_pro - INFO - Successfully read 1 DICOM files
+2025-05-31 23:30:38,446 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-31 23:30:38,447 - segmed_pro - INFO - Created 3D volume with shape (1, 320, 280)
+2025-05-31 23:30:38,471 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-31 23:30:56,161 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-31 23:30:56,162 - segmed_pro - INFO - Found 1 DICOM files
+2025-05-31 23:30:56,162 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-31 23:30:56,212 - segmed_pro - INFO - Successfully read 1 DICOM files
+2025-05-31 23:30:56,212 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-31 23:30:56,214 - segmed_pro - INFO - Created 3D volume with shape (1, 320, 280)
+2025-05-31 23:30:56,252 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-31 23:31:48,970 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-31 23:31:48,970 - segmed_pro - INFO - Found 1 DICOM files
+2025-05-31 23:31:48,971 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-31 23:31:49,015 - segmed_pro - INFO - Successfully read 1 DICOM files
+2025-05-31 23:31:49,016 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-31 23:31:49,018 - segmed_pro - INFO - Created 3D volume with shape (1, 320, 280)
+2025-05-31 23:31:49,058 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-31 23:32:48,685 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-31 23:32:48,686 - segmed_pro - INFO - Found 1 DICOM files
+2025-05-31 23:32:48,686 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-31 23:32:48,730 - segmed_pro - INFO - Successfully read 1 DICOM files
+2025-05-31 23:32:48,730 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-31 23:32:48,732 - segmed_pro - INFO - Created 3D volume with shape (1, 320, 280)
+2025-05-31 23:32:48,770 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-31 23:33:06,554 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-31 23:33:06,555 - segmed_pro - INFO - Found 1 DICOM files
+2025-05-31 23:33:06,555 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-31 23:33:06,595 - segmed_pro - INFO - Successfully read 1 DICOM files
+2025-05-31 23:33:06,596 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-31 23:33:06,598 - segmed_pro - INFO - Created 3D volume with shape (1, 320, 280)
+2025-05-31 23:33:06,632 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-31 23:37:21,515 - segmed_pro - INFO - Configured DICOM handlers: gdcm, pylibjpeg, pillow, numpy
+2025-05-31 23:37:27,987 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-31 23:37:27,989 - segmed_pro - INFO - Found 1 DICOM files
+2025-05-31 23:37:27,989 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-31 23:37:28,019 - segmed_pro - INFO - Successfully read 1 DICOM files
+2025-05-31 23:37:28,019 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-31 23:37:28,020 - segmed_pro - INFO - Created 3D volume with shape (1, 320, 280)
+2025-05-31 23:37:28,043 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-31 23:37:54,788 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-31 23:37:54,789 - segmed_pro - INFO - Found 1 DICOM files
+2025-05-31 23:37:54,789 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-31 23:37:54,839 - segmed_pro - INFO - Successfully read 1 DICOM files
+2025-05-31 23:37:54,839 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-31 23:37:54,840 - segmed_pro - INFO - Created 3D volume with shape (1, 320, 280)
+2025-05-31 23:37:54,879 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-31 23:38:23,310 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-31 23:38:23,312 - segmed_pro - INFO - Found 1 DICOM files
+2025-05-31 23:38:23,312 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-31 23:38:23,354 - segmed_pro - INFO - Successfully read 1 DICOM files
+2025-05-31 23:38:23,354 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-31 23:38:23,356 - segmed_pro - INFO - Created 3D volume with shape (1, 320, 280)
+2025-05-31 23:38:23,390 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-31 23:38:30,181 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-31 23:38:30,182 - segmed_pro - INFO - Found 1 DICOM files
+2025-05-31 23:38:30,182 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-31 23:38:30,228 - segmed_pro - INFO - Successfully read 1 DICOM files
+2025-05-31 23:38:30,229 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-31 23:38:30,230 - segmed_pro - INFO - Created 3D volume with shape (1, 320, 280)
+2025-05-31 23:38:30,267 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-31 23:43:57,502 - segmed_pro - INFO - Configured DICOM handlers: gdcm, pylibjpeg, pillow, numpy
+2025-05-31 23:45:27,380 - segmed_pro - INFO - Configured DICOM handlers: gdcm, pylibjpeg, pillow, numpy
+2025-05-31 23:45:32,920 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-31 23:45:32,921 - segmed_pro - INFO - Found 1 DICOM files
+2025-05-31 23:45:32,921 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-31 23:45:32,951 - segmed_pro - INFO - Successfully read 1 DICOM files
+2025-05-31 23:45:32,951 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-31 23:45:32,952 - segmed_pro - INFO - Created 3D volume with shape (1, 320, 280)
+2025-05-31 23:45:32,976 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-31 23:46:11,454 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-31 23:46:11,455 - segmed_pro - INFO - Found 1 DICOM files
+2025-05-31 23:46:11,455 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-31 23:46:11,500 - segmed_pro - INFO - Successfully read 1 DICOM files
+2025-05-31 23:46:11,501 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-31 23:46:11,502 - segmed_pro - INFO - Created 3D volume with shape (1, 320, 280)
+2025-05-31 23:46:11,538 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-31 23:49:38,355 - segmed_pro - INFO - Configured DICOM handlers: gdcm, pylibjpeg, pillow, numpy
+2025-05-31 23:49:45,440 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-31 23:49:45,440 - segmed_pro - INFO - Found 1 DICOM files
+2025-05-31 23:49:45,441 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-31 23:49:45,468 - segmed_pro - INFO - Successfully read 1 DICOM files
+2025-05-31 23:49:45,468 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-31 23:49:45,470 - segmed_pro - INFO - Created 3D volume with shape (1, 320, 280)
+2025-05-31 23:49:45,493 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-31 23:57:23,098 - segmed_pro - INFO - Configured DICOM handlers: gdcm, pylibjpeg, pillow, numpy
+2025-05-31 23:58:21,804 - segmed_pro - INFO - Configured DICOM handlers: gdcm, pylibjpeg, pillow, numpy
+2025-05-31 23:58:36,065 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-31 23:58:36,066 - segmed_pro - INFO - Found 1 DICOM files
+2025-05-31 23:58:36,066 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-31 23:58:36,098 - segmed_pro - INFO - Successfully read 1 DICOM files
+2025-05-31 23:58:36,098 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-31 23:58:36,100 - segmed_pro - INFO - Created 3D volume with shape (1, 320, 280)
+2025-05-31 23:58:36,123 - segmed_pro - INFO - Extracted metadata from first slice
+2025-05-31 23:58:57,164 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-31 23:58:57,166 - segmed_pro - INFO - Found 1 DICOM files
+2025-05-31 23:58:57,166 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-05-31 23:58:57,214 - segmed_pro - INFO - Successfully read 1 DICOM files
+2025-05-31 23:58:57,215 - segmed_pro - INFO - Sorting by Instance Number
+2025-05-31 23:58:57,216 - segmed_pro - INFO - Created 3D volume with shape (1, 320, 280)
+2025-05-31 23:58:57,252 - segmed_pro - INFO - Extracted metadata from first slice
+2025-06-01 00:00:10,819 - segmed_pro - INFO - Configured DICOM handlers: gdcm, pylibjpeg, pillow, numpy
+2025-06-01 00:00:31,457 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-06-01 00:00:31,458 - segmed_pro - INFO - Found 1 DICOM files
+2025-06-01 00:00:31,459 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-06-01 00:00:31,488 - segmed_pro - INFO - Successfully read 1 DICOM files
+2025-06-01 00:00:31,488 - segmed_pro - INFO - Sorting by Instance Number
+2025-06-01 00:00:31,489 - segmed_pro - INFO - Created 3D volume with shape (1, 320, 280)
+2025-06-01 00:00:31,512 - segmed_pro - INFO - Extracted metadata from first slice
+2025-06-01 00:04:08,009 - segmed_pro - INFO - Configured DICOM handlers: gdcm, pylibjpeg, pillow, numpy
+2025-06-01 00:05:15,446 - segmed_pro - INFO - Configured DICOM handlers: gdcm, pylibjpeg, pillow, numpy
+2025-06-01 00:05:21,469 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-06-01 00:05:21,469 - segmed_pro - INFO - Found 1 DICOM files
+2025-06-01 00:05:21,469 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-06-01 00:05:21,499 - segmed_pro - INFO - Successfully read 1 DICOM files
+2025-06-01 00:05:21,500 - segmed_pro - INFO - Sorting by Instance Number
+2025-06-01 00:05:21,501 - segmed_pro - INFO - Created 3D volume with shape (1, 320, 280)
+2025-06-01 00:05:21,525 - segmed_pro - INFO - Extracted metadata from first slice
+2025-06-01 00:06:30,358 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-06-01 00:06:30,359 - segmed_pro - INFO - Found 1 DICOM files
+2025-06-01 00:06:30,359 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-06-01 00:06:30,411 - segmed_pro - INFO - Successfully read 1 DICOM files
+2025-06-01 00:06:30,411 - segmed_pro - INFO - Sorting by Instance Number
+2025-06-01 00:06:30,413 - segmed_pro - INFO - Created 3D volume with shape (1, 320, 280)
+2025-06-01 00:06:30,448 - segmed_pro - INFO - Extracted metadata from first slice
+2025-06-01 00:11:52,421 - segmed_pro - INFO - Configured DICOM handlers: gdcm, pylibjpeg, pillow, numpy
+2025-06-01 00:12:08,534 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-06-01 00:12:08,534 - segmed_pro - INFO - Found 1 DICOM files
+2025-06-01 00:12:08,535 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-06-01 00:12:08,576 - segmed_pro - INFO - Successfully read 1 DICOM files
+2025-06-01 00:12:08,577 - segmed_pro - INFO - Sorting by Instance Number
+2025-06-01 00:12:08,578 - segmed_pro - INFO - Created 3D volume with shape (1, 320, 280)
+2025-06-01 00:12:08,614 - segmed_pro - INFO - Extracted metadata from first slice
+2025-06-01 00:25:11,704 - segmed_pro - INFO - Configured DICOM handlers: gdcm, pylibjpeg, pillow, numpy
+2025-06-01 00:25:31,090 - segmed_pro - INFO - Loading DICOM series from directory: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-06-01 00:25:31,092 - segmed_pro - INFO - Found 1 DICOM files
+2025-06-01 00:25:31,093 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\d176373351d7e3197899a37ee108b104ff7ab81a288fed607e50ca611d09586b\1.3.12.2.1107.5.2.18.42451.2020030102323073834300459_MR.dcm
+2025-06-01 00:25:31,134 - segmed_pro - INFO - Successfully read 1 DICOM files
+2025-06-01 00:25:31,134 - segmed_pro - INFO - Sorting by Instance Number
+2025-06-01 00:25:31,136 - segmed_pro - INFO - Created 3D volume with shape (1, 320, 280)
+2025-06-01 00:25:31,169 - segmed_pro - INFO - Extracted metadata from first slice
