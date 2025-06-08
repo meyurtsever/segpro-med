@@ -22,8 +22,8 @@ import logging
 from build_sam import build_sam2
 from sam2_image_predictor import SAM2ImagePredictor
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
+# Set up logging - default to WARNING level for better performance
+logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
 def setup_args():
@@ -105,7 +105,6 @@ def setup_args():
         action='store_true',
         help='Process only the slices specified in prompt files (faster for single slice annotation)'
     )
-    
     parser.add_argument(
         '--auto_prompts', 
         action='store_true',
@@ -116,6 +115,12 @@ def setup_args():
         '--save_visualizations', 
         action='store_true',
         help='Save visualization images'
+    )
+    
+    parser.add_argument(
+        '--quiet', 
+        action='store_true',
+        help='Reduce logging output for better performance'
     )
     
     return parser.parse_args()
@@ -236,8 +241,13 @@ class DICOMProcessor:
         self.use_dicom_windowing = use_dicom_windowing
         self.windowing_metadata = {}  # Store windowing info for each file
     
-    def load_dicom_series(self, dicom_folder: str) -> Tuple[np.ndarray, List[pydicom.Dataset], dict]:
-        """Load a series of DICOM files with windowing metadata"""
+    def load_dicom_series(self, dicom_folder: str, slice_indices: Optional[List[int]] = None) -> Tuple[np.ndarray, List[pydicom.Dataset], dict]:
+        """Load a series of DICOM files with windowing metadata
+        
+        Args:
+            dicom_folder: Path to folder containing DICOM files
+            slice_indices: Optional list of specific slice indices to load (0-based)
+        """
         dicom_files = glob.glob(os.path.join(dicom_folder, "*.dcm"))
         
         if not dicom_files:
@@ -274,6 +284,18 @@ class DICOMProcessor:
         # Get the ordered file paths
         dicom_files = [s.filename for s in slices]
         
+        # If specific slice indices are provided, only process those slices
+        if slice_indices is not None:
+            logger.info(f"Single slice mode: Only loading slices {slice_indices}")
+            selected_slices = []
+            for idx in slice_indices:
+                if 0 <= idx < len(slices):
+                    selected_slices.append(slices[idx])
+                else:
+                    logger.warning(f"Slice index {idx} out of range (0-{len(slices)-1})")
+            slices = selected_slices
+            logger.info(f"Reduced from {len(dicom_files)} to {len(slices)} slices")
+        
         dicom_datasets = []
         pixel_arrays = []
         windowing_metadata = {}
@@ -285,8 +307,15 @@ class DICOMProcessor:
                 # Extract windowing parameters for this slice
                 window_center, window_width, rescale_slope, rescale_intercept = extract_dicom_windowing(ds)
                 
-                # Store windowing metadata with 1-based index for consistency with mask file naming
-                windowing_metadata[i+1] = {
+                # If we're loading specific slices, use the original slice index for metadata
+                # Otherwise use sequential indexing
+                if slice_indices is not None and i < len(slice_indices):
+                    metadata_index = slice_indices[i] + 1  # 1-based for consistency with mask file naming
+                else:
+                    metadata_index = i + 1  # 1-based for consistency with mask file naming
+                
+                # Store windowing metadata
+                windowing_metadata[metadata_index] = {
                     'window_center': window_center,
                     'window_width': window_width,
                     'rescale_slope': rescale_slope,
@@ -423,19 +452,41 @@ class BrainMRISegmenter:
             point_coords=points,
             point_labels=labels,
             box=boxes,
-            multimask_output=True
-        )
+            multimask_output=True        )
         
         return masks, scores, logits
-    
+        
     def process_volume(self,
                       volume: np.ndarray,
                       dicom_processor: DICOMProcessor,
                       windowing_metadata: dict,
                       slice_range: Optional[str] = None,
                       prompts_data: Optional[dict] = None,
-                      auto_prompts: bool = False) -> List[dict]:
-        """Process entire MRI volume with per-slice windowing metadata"""
+                      auto_prompts: bool = False,
+                      original_slice_mapping: Optional[dict] = None,
+                      quiet: bool = False) -> List[dict]:
+        """Process entire MRI volume with per-slice windowing metadata
+        
+        Args:
+            volume: 3D numpy array of the MRI volume
+            dicom_processor: DICOMProcessor instance
+            windowing_metadata: Dict containing windowing metadata for slices
+            slice_range: String indicating slice range to process
+            prompts_data: Dict containing prompt data for slices
+            auto_prompts: Boolean indicating whether to use auto prompts
+            original_slice_mapping: Dict mapping volume indices to original slice indices
+        """
+        """Process entire MRI volume with per-slice windowing metadata
+        
+        Args:
+            volume: 3D numpy array of the MRI volume
+            dicom_processor: DICOMProcessor instance
+            windowing_metadata: Dict containing windowing metadata for slices
+            slice_range: String indicating slice range to process
+            prompts_data: Dict containing prompt data for slices
+            auto_prompts: Boolean indicating whether to use auto prompts
+            original_slice_mapping: Dict mapping volume indices to original slice indices
+        """
         
         results = []
         
@@ -448,26 +499,34 @@ class BrainMRISegmenter:
         
         logger.info(f"Processing slices {start_slice} to {end_slice}")
         
-        for slice_idx in range(start_slice, end_slice):
-            logger.info(f"Processing slice {slice_idx}/{volume.shape[0]}")
+        for volume_idx in range(start_slice, end_slice):
+            # Map volume index to original slice index if mapping is provided
+            if original_slice_mapping and volume_idx in original_slice_mapping:
+                original_slice_idx = original_slice_mapping[volume_idx]
+                metadata_key = original_slice_idx + 1  # 1-based for metadata
+            else:
+                original_slice_idx = volume_idx
+                metadata_key = volume_idx + 1  # 1-based for metadata
+                logger.info(f"Processing volume slice {volume_idx} (original slice {original_slice_idx})")
             
             # Get slice data
-            slice_data = volume[slice_idx]
-            
-            # Get windowing metadata for this slice
-            windowing_info = dicom_processor.get_windowing_info(slice_idx)
-            logger.info(f"Slice {slice_idx}: Using window center={windowing_info['window_center']}, width={windowing_info['window_width']}")
+            slice_data = volume[volume_idx]
+              # Get windowing metadata for this slice
+            windowing_info = dicom_processor.get_windowing_info(metadata_key)
+            # Only log windowing info if not in quiet mode
+            if not quiet:
+                logger.info(f"Slice {original_slice_idx}: Using window center={windowing_info['window_center']}, width={windowing_info['window_width']}")
             
             # Normalize for SAM2 using slice-specific windowing
-            rgb_image = dicom_processor.normalize_for_display_with_metadata(slice_data, slice_idx)
+            rgb_image = dicom_processor.normalize_for_display_with_metadata(slice_data, metadata_key)
             
             # Get prompts for this slice
             points = None
             labels = None
             boxes = None
             
-            if prompts_data and str(slice_idx) in prompts_data:
-                slice_prompts = prompts_data[str(slice_idx)]
+            if prompts_data and str(original_slice_idx + 1) in prompts_data:  # Use 1-based original slice index
+                slice_prompts = prompts_data[str(original_slice_idx + 1)]
                 if 'points' in slice_prompts:
                     points = np.array(slice_prompts['points'])
                     labels = np.array(slice_prompts['labels'])
@@ -481,7 +540,7 @@ class BrainMRISegmenter:
             
             # Store results with windowing metadata
             slice_result = {
-                'slice_idx': slice_idx,
+                'slice_idx': original_slice_idx,  # Use original slice index
                 'masks': masks,
                 'scores': scores,
                 'logits': logits,
@@ -642,6 +701,11 @@ def load_prompts(prompts_file: str) -> dict:
 def main():
     args = setup_args()
     
+    # Set logging level based on quiet flag
+    if args.quiet:
+        logging.getLogger().setLevel(logging.ERROR)  # Only show errors
+        logger.setLevel(logging.ERROR)
+    
     # Check if CUDA is available
     if args.device == "cuda" and not torch.cuda.is_available():
         logger.warning("CUDA not available, switching to CPU")
@@ -658,17 +722,7 @@ def main():
     
     segmenter = BrainMRISegmenter(args.checkpoint, args.config, args.device)
     
-    # Load DICOM data with windowing metadata
-    logger.info(f"Loading DICOM data from {args.dicom_folder}")
-    logger.info(f"Using DICOM metadata windowing: {use_dicom_windowing}")
-    volume, dicom_datasets, windowing_metadata = dicom_processor.load_dicom_series(args.dicom_folder)
-    
-    # Log windowing information
-    logger.info("Windowing information summary:")
-    for slice_idx, metadata in windowing_metadata.items():
-        logger.info(f"  Slice {slice_idx}: Center={metadata['window_center']}, Width={metadata['window_width']}, File={metadata['file_name']}")
-    
-    # Load prompts
+    # Load prompts first to determine which slices to load
     prompts_data = {}
     if args.prompt_points:
         prompts_data.update(load_prompts(args.prompt_points))
@@ -679,36 +733,83 @@ def main():
                 prompts_data[slice_idx] = {}
             prompts_data[slice_idx]['boxes'] = box_data['boxes']
     
-    # Determine slice range - if single_slice option is used, only process slices with prompts
-    slice_range = args.slice_range
+    # Determine which slice indices to load for single slice mode
+    slice_indices_to_load = None
     if args.single_slice and prompts_data:
-        # Get all slice indices that have prompts
+        # Get all slice indices that have prompts (convert to 0-based indexing)
+        prompt_slice_keys = list(prompts_data.keys())
+        if prompt_slice_keys:
+            slice_indices_to_load = [int(s) - 1 for s in prompt_slice_keys]  # Convert to 0-based
+            logger.info(f"Single slice mode: Will load only slices {[i+1 for i in slice_indices_to_load]} (1-based)")
+    
+    # Load DICOM data with optional selective loading
+    logger.info(f"Loading DICOM data from {args.dicom_folder}")
+    logger.info(f"Using DICOM metadata windowing: {use_dicom_windowing}")
+    volume, dicom_datasets, windowing_metadata = dicom_processor.load_dicom_series(
+        args.dicom_folder, 
+        slice_indices_to_load
+    )
+    
+    # Create slice mapping for selective loading
+    original_slice_mapping = None
+    if slice_indices_to_load is not None:
+        # Map volume indices to original slice indices
+        original_slice_mapping = {i: slice_indices_to_load[i] for i in range(len(slice_indices_to_load))}
+        logger.info(f"Created slice mapping: {original_slice_mapping}")
+    
+    # Log windowing information
+    logger.info("Windowing information summary:")
+    for slice_idx, metadata in windowing_metadata.items():
+        logger.info(f"  Slice {slice_idx}: Center={metadata['window_center']}, Width={metadata['window_width']}, File={metadata['file_name']}")
+    
+    # Determine slice range for processing
+    slice_range = args.slice_range
+    if args.single_slice and slice_indices_to_load:
+        # For single slice mode, process all loaded slices (they're already filtered)
+        slice_range = f"0:{volume.shape[0]}"  # Process all loaded slices
+        logger.info(f"Single slice mode: Processing all {volume.shape[0]} loaded slices")
+    elif args.single_slice and prompts_data:
+        # Fallback for when slice_indices_to_load wasn't set
         prompt_slices = list(prompts_data.keys())
         if prompt_slices:
-            # Convert to integers and get min/max range
             slice_indices = [int(s) for s in prompt_slices]
             min_slice = min(slice_indices)
-            max_slice = max(slice_indices) + 1  # +1 because range is exclusive
+            max_slice = max(slice_indices) + 1
             slice_range = f"{min_slice}:{max_slice}"
-            logger.info(f"Single slice mode: Processing only slices with prompts: {prompt_slices}")
+            logger.info(f"Single slice mode fallback: Processing slices {prompt_slices}")
     
-    # Process volume with windowing metadata
-    logger.info("Starting segmentation with per-slice windowing...")
+    # Load prompts again (redundant but keeping for compatibility)
+    # This section can be removed in future optimization
+    if not prompts_data:  # Only load if not already loaded
+        if args.prompt_points:
+            prompts_data.update(load_prompts(args.prompt_points))
+        if args.prompt_boxes:
+            box_prompts = load_prompts(args.prompt_boxes)
+            for slice_idx, box_data in box_prompts.items():
+                if slice_idx not in prompts_data:
+                    prompts_data[slice_idx] = {}
+                prompts_data[slice_idx]['boxes'] = box_data['boxes']
+      # Process volume with windowing metadata
+    if not args.quiet:
+        logger.info("Starting segmentation with per-slice windowing...")
     results = segmenter.process_volume(
         volume, 
         dicom_processor,
         windowing_metadata,
         slice_range,  # Use the determined slice range
         prompts_data, 
-        args.auto_prompts
+        args.auto_prompts,
+        original_slice_mapping,  # Pass the slice mapping
+        args.quiet  # Pass quiet flag
     )
-    
-    # Save results with windowing metadata
-    logger.info("Saving results...")
+      # Save results with windowing metadata
+    if not args.quiet:
+        logger.info("Saving results...")
     save_results(results, args.output_dir, windowing_metadata, args.save_visualizations)
     
-    logger.info("Brain MRI DICOM inference completed successfully!")
-    logger.info(f"Windowing metadata saved for {len(windowing_metadata)} slices")
+    if not args.quiet:
+        logger.info("Brain MRI DICOM inference completed successfully!")
+        logger.info(f"Windowing metadata saved for {len(windowing_metadata)} slices")
 
 if __name__ == "__main__":
     main()

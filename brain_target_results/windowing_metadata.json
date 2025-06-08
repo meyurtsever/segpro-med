@@ -1,10 +1,10 @@
 {
-  "12": {
-    "window_center": 468.0,
-    "window_width": 968.0,
+  "8": {
+    "window_center": 494.0,
+    "window_width": 1028.0,
     "rescale_slope": 1.0,
     "rescale_intercept": 0.0,
-    "file_path": "C:\\Users\\Yurtsever\\Downloads\\segpro-med\\cvm_48_t1\\1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm",
-    "file_name": "1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm"
+    "file_path": "C:\\Users\\Yurtsever\\Downloads\\segpro-med\\cvm_48_t1\\1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm",
+    "file_name": "1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm"
   }
 }

@@ -142,7 +142,6 @@ class MEDSAM2Handlers:
                 return f"Error: Checkpoint not found at {checkpoint_path}"
             if not os.path.exists(config_path):
                 return f"Error: Config not found at {config_path}"
-            
             cmd = [
                 "python", script_path,
                 "--dicom_folder", dicom_folder,
@@ -151,7 +150,8 @@ class MEDSAM2Handlers:
                 "--checkpoint", checkpoint_path,
                 "--config", config_path,
                 "--device", device,
-                "--single_slice"  # Only process the slice with prompts
+                "--single_slice",  # Only process the slice with prompts
+                "--quiet"  # Reduce logging for better performance
             ]
             
             if save_visualizations:
