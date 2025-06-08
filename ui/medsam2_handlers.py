@@ -8,8 +8,8 @@ IMPORTANT NOTE ON INDEXING:
 - UI slices are 1-based (starting from 1)
 - MEDSAM2 expects prompt keys as strings but converts them to 0-based indices by subtracting 1
 - We send prompt keys as (UI slice + 1) to compensate for MEDSAM2's internal subtraction
-- MEDSAM2 outputs mask files with 0-based indices (e.g., slice_0009_mask.npy for UI slice 10)
-- When loading masks, we need to use: mask index = UI slice - 1
+- MEDSAM2 outputs mask files with the same indexing as UI slices (slice_0010_mask.npy for UI slice 10)
+- When loading masks, we use the same index as the UI slice
 """
 
 import os
@@ -651,33 +651,34 @@ class MEDSAM2Handlers:
             
             logger.info(f"Valid slices (score >= {score_threshold}): {len(valid_slices)}")
             logger.info(f"Filtered slices (score < {score_threshold}): {len(filtered_slices)}")
-            
             return f"Processed {len(slice_indices)} slices. {len(valid_slices)} passed threshold (>= {score_threshold}), {len(filtered_slices)} filtered out."
             
         except Exception as e:
             logger.error(f"Error filtering results by score: {str(e)}")
-            return f"Error filtering results: {str(e)}"    @log_exception
+            return f"Error filtering results: {str(e)}"
+            
+    @log_exception
     def store_slice_overlay(self, output_dir: str, slice_idx: int) -> bool:
         """Store overlay data for a specific slice"""
         try:
-            # slice_idx is 0-based, used for the mask filename
-            # UI slice is 1-based, used as the key in annotation_overlays
+            # slice_idx is the UI slice number (1-based)
+            # After our +1 adjustment to the prompt key, MEDSAM2 uses the same UI slice number for the output file
             slice_num_padded = str(slice_idx).zfill(4)
             mask_path = os.path.join(output_dir, "masks", f"slice_{slice_num_padded}_mask.npy")
             
             if os.path.exists(mask_path):
                 mask_array = np.load(mask_path)
-                # Store in our overlay cache using 1-based indexing to match UI
-                ui_slice_number = slice_idx + 1
+                # Use the same UI slice number for both the mask file and the DICOM indexing
+                ui_slice_number = slice_idx
                 self.annotation_overlays[ui_slice_number] = {
                     'mask': mask_array,
                     'output_dir': output_dir,
-                    'slice_idx': slice_idx  # Keep 0-based for file operations
+                    'slice_idx': slice_idx  # Use UI slice directly with our +1 adjustment
                 }
-                logger.info(f"Stored overlay for UI slice {ui_slice_number} (file slice {slice_idx})")
+                logger.info(f"Stored overlay for UI slice {ui_slice_number} using same index for mask file")
                 return True
             else:
-                logger.warning(f"Mask file not found for UI slice {slice_idx + 1} (file slice {slice_idx}): {mask_path}")
+                logger.warning(f"Mask file not found for UI slice {slice_idx}: {mask_path}")
                 return False
                 
         except Exception as e:
