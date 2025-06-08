@@ -14,6 +14,14 @@ import sys
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Suppress excessive pydicom debug logs
+pydicom_logger = logging.getLogger('pydicom')
+pydicom_logger.setLevel(logging.WARNING)
+
+# Also suppress pydicom.pixel_data_handlers debug logs
+pixel_handlers_logger = logging.getLogger('pydicom.pixel_data_handlers')
+pixel_handlers_logger.setLevel(logging.WARNING)
+
 # Add current directory to path for relative imports
 current_dir = os.path.dirname(os.path.abspath(__file__))
 if current_dir not in sys.path:
@@ -51,6 +59,9 @@ class SegMedPro:
         self.segmentation_handlers = SegmentationHandlers(self.state)
         self.label_manager_handlers = LabelManagerHandlers(self.state)
         self.medsam2_handlers = MEDSAM2Handlers(self.state)
+        
+        # Update image viewer handlers with medsam2 reference for overlay support
+        self.image_viewer_handlers.medsam2_handlers = self.medsam2_handlers
         
         logger.info("SegMed-Pro application initialized")
     
@@ -381,8 +392,7 @@ class SegMedPro:
         delete_label_btn.click(
             fn=handlers.delete_label_by_name,
             inputs=[label_table, selected_label_name],
-            outputs=[label_table, status_box]
-        ).then(
+            outputs=[label_table, status_box]        ).then(
             fn=update_label_dropdown,
             inputs=[label_table],
             outputs=[selected_label_name]
@@ -393,15 +403,18 @@ class SegMedPro:
         data_loading = components['data_loading']
         visualization = components['visualization']
         ai_tools = components['ai_tools']  # Now we have AI tools including MEDSAM2
-
+        
         (file_input, dir_input, load_btn, reset_dir_btn, file_browser, 
          metadata_display_dl, error_display_dl, window_level, window_width, apply_window_btn, debug_btn) = data_loading
-
+        
         (error_display, metadata_display, view_selector, image_display, prev_btn, slice_slider, next_btn, slice_text, crosshair_info) = visualization
         
-        (coordinates_text, clear_coords_btn, ai_model_selector, 
+        (coordinates_text, clear_coords_btn, clear_overlays_btn, ai_model_selector, 
+         processing_mode, score_threshold,
          output_dir, save_visualizations, device_selector, 
-         annotate_btn, annotation_status) = ai_tools        # Data loading handlers
+         annotate_btn, annotation_status) = ai_tools
+        
+        # Data loading handlers
         load_btn.click(
             fn=self.data_handlers.load_data,
             inputs=[file_input, dir_input],
@@ -425,11 +438,14 @@ class SegMedPro:
                 window_level, window_width
             ]
         )
+        
         debug_btn.click(
             fn=self.data_handlers.debug_selected_file,
             inputs=[file_input, dir_input],
             outputs=[error_display]
-        )        # Viewer handlers
+        )
+        
+        # Viewer handlers
         slice_slider.change(
             fn=self.image_viewer_handlers.update_slice,
             inputs=[slice_slider, view_selector],
@@ -455,10 +471,18 @@ class SegMedPro:
             inputs=[slice_slider],
             outputs=[slice_slider]
         )
+        
         next_btn.click(
             fn=self.image_viewer_handlers.next_slice,
             inputs=[slice_slider],
             outputs=[slice_slider]
+        )
+        
+        # Connect processing mode change event
+        processing_mode.change(
+            fn=lambda mode: gr.Slider(visible=(mode == "All Records")),
+            inputs=[processing_mode],
+            outputs=[score_threshold]       
         )
         
         # Connect MEDSAM2 handlers
@@ -473,10 +497,24 @@ class SegMedPro:
             inputs=[],
             outputs=[coordinates_text]
         )
-        annotate_btn.click(
-            fn=self.medsam2_handlers.run_full_annotation_workflow,
-            inputs=[output_dir, save_visualizations, device_selector],
+        
+        clear_overlays_btn.click(
+            fn=self.medsam2_handlers.clear_annotation_overlays,
+            inputs=[],
             outputs=[annotation_status, image_display]
+        )
+        
+        # Custom wrapper function to handle the 3-tuple return and button visibility
+        def handle_annotation_workflow(output_dir, save_visualizations, device_selector, processing_mode, score_threshold):
+            status, image, success = self.medsam2_handlers.run_full_annotation_workflow(
+                output_dir, save_visualizations, device_selector, processing_mode, score_threshold
+            )
+            return status, image, gr.update(visible=success)
+        
+        annotate_btn.click(
+            fn=handle_annotation_workflow,
+            inputs=[output_dir, save_visualizations, device_selector, processing_mode, score_threshold],
+            outputs=[annotation_status, image_display, clear_overlays_btn]
         )
 
 

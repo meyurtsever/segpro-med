@@ -33,6 +33,15 @@ console_handler.setLevel(logging.INFO)
 console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 
+# Suppress excessive pydicom debug logs
+# Configure pydicom logger to only show warnings and errors
+pydicom_logger = logging.getLogger('pydicom')
+pydicom_logger.setLevel(logging.WARNING)
+
+# Also suppress pydicom.pixel_data_handlers debug logs
+pixel_handlers_logger = logging.getLogger('pydicom.pixel_data_handlers')
+pixel_handlers_logger.setLevel(logging.WARNING)
+
 def log_exception(func):
     """
     Decorator to log exceptions from functions
@@ -155,9 +164,13 @@ def configure_dicom_handlers_for_debug():
         logger.info("Added NumPy handler for debugging")
     except Exception as e:
         logger.error(f"Error setting up NumPy handler: {str(e)}")
-    
-    # Enable pydicom debugging
+      # Enable pydicom debugging for debug operations
     pydicom.config.debug(True)
+    
+    # Even in debug mode, suppress excessive pydicom logger output
+    # We still want the debug functionality but not the verbose logging
+    pydicom_logger = logging.getLogger('pydicom')
+    pydicom_logger.setLevel(logging.WARNING)
     
     return handlers_added
 

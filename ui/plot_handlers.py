@@ -85,8 +85,7 @@ class PlotViewerHandlers:
                 window_center = window_center[0]
             if isinstance(window_width, list):
                 window_width = window_width[0]
-            
-            return (fig, f"{self.state.current_slice_idx}/{self.state.get_max_slice_for_view(self.state.current_view)}", 
+            return (fig, f"{self.state.current_slice_idx -1}/{self.state.get_max_slice_for_view(self.state.current_view) - 1}", 
                    crosshair_text, metadata, window_center, window_width)
         
         except Exception as e:

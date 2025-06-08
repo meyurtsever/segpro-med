@@ -349,7 +349,7 @@ class ViewerHandlers:
             if window_width is None:
                 window_width = 1000
             
-            return pil_image, f"{self.state.current_slice_idx}/{total_slices-1}", crosshair_text, metadata, window_center, window_width
+            return pil_image, f"{self.state.current_slice_idx + 1}/{total_slices}", crosshair_text, metadata, window_center, window_width
         except Exception as e:
             logger.error(f"Error generating slice image: {str(e)}")
             return None, f"Error: {str(e)}", "x: 0, y: 0, z: 0", {}, None, None
@@ -591,8 +591,7 @@ class ViewerHandlers:
                 window_center = window_center[0]
             if isinstance(window_width, list):
                 window_width = window_width[0]
-            
-            return (fig, f"{self.state.current_slice_idx}/{self.state.get_max_slice_for_view(self.state.current_view)}", 
+            return (fig, f"{self.state.current_slice_idx -1}/{self.state.get_max_slice_for_view(self.state.current_view) -1}", 
                    crosshair_text, metadata, window_center, window_width)
         
         except Exception as e:

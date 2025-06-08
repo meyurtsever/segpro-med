@@ -22,8 +22,9 @@ logger = logging.getLogger(__name__)
 class ImageViewerHandlers:
     """Handlers for viewer operations using gr.Image component"""
     
-    def __init__(self, state: AppState):
+    def __init__(self, state: AppState, medsam2_handlers=None):
         self.state = state
+        self.medsam2_handlers = medsam2_handlers
     
     @log_exception
     def update_slice(self, slider_value, view_type):
@@ -90,8 +91,7 @@ class ImageViewerHandlers:
                 window_level=window_center,
                 window_width=window_width,
                 crosshair=self.state.crosshair_position
-            )
-              # Apply segmentation overlay if segmentation is loaded AND editor tab should show it
+            )            # Apply segmentation overlay if segmentation is loaded AND editor tab should show it
             if (self.state.segmentation_loaded and self.state.segmentation_data is not None
                 and self.state.show_segmentation_in_editor):
                 try:
@@ -111,6 +111,24 @@ class ImageViewerHandlers:
                 except Exception as e:
                     logger.error(f"Error applying segmentation overlay: {str(e)}")
             
+            # Apply MEDSAM2 annotation overlay if available for current slice
+            if (self.medsam2_handlers and 
+                hasattr(self.medsam2_handlers, 'annotation_overlays') and
+                self.state.current_slice_idx in self.medsam2_handlers.annotation_overlays):
+                try:
+                    overlay_data = self.medsam2_handlers.annotation_overlays[self.state.current_slice_idx]
+                    mask_array = overlay_data['mask']
+                    
+                    img = overlay_segmentation(
+                        img,
+                        mask_array,
+                        alpha=0.4,
+                        colormap={1: [255, 0, 0]}  # Red overlay for MEDSAM2 annotations
+                    )
+                    logger.info(f"Applied MEDSAM2 annotation overlay to slice {self.state.current_slice_idx}")
+                except Exception as e:
+                    logger.error(f"Error applying MEDSAM2 annotation overlay: {str(e)}")
+            
             # Convert to PIL Image for gr.Image
             pil_image = make_image_for_gradio(img)
             logger.info(f"Generated slice image with shape {img.shape}")
@@ -125,7 +143,7 @@ class ImageViewerHandlers:
             if window_width is None:
                 window_width = 1000
             
-            return pil_image, f"{self.state.current_slice_idx}/{total_slices-1}", crosshair_text, metadata, window_center, window_width
+            return pil_image, f"{self.state.current_slice_idx + 1}/{total_slices}", crosshair_text, metadata, window_center, window_width
         except Exception as e:
             logger.error(f"Error generating slice image: {str(e)}")
             return None, f"Error: {str(e)}", "x: 0, y: 0, z: 0", {}, None, None

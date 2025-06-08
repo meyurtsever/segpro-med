@@ -148,9 +148,9 @@ def configure_dicom_handlers():
         handlers_added.append("numpy")
     except Exception as e:
         logger.error(f"Error setting up NumPy handler: {str(e)}")
-    
-    # Enable pydicom debugging
-    pydicom.config.debug(True)
+      # Disable pydicom debugging for normal operations to reduce log noise
+    # Only enable debug mode when specifically needed for troubleshooting
+    pydicom.config.debug(False)
     
     logger.info(f"Configured DICOM handlers: {', '.join(handlers_added)}")
     return handlers_added

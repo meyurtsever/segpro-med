@@ -67,9 +67,10 @@ def create_editor_tab() -> dict:
                     crosshair_info = gr.Textbox(label="Crosshair", interactive=True)
                 # Status/Errors and Metadata (bottom)
                 error_display = gr.Textbox(label="Status/Errors", interactive=False)
-                with gr.Accordion("Metadata", open=False):
-                    metadata_display = gr.JSON(label=None, visible=True)
-                col2 = (error_display, metadata_display, view_selector, image_display, prev_btn, slice_slider, next_btn, slice_text, crosshair_info)            # Column 3: Annotate with AI Models
+                with gr.Accordion("Metadata", open=False):                metadata_display = gr.JSON(label=None, visible=True)
+                col2 = (error_display, metadata_display, view_selector, image_display, prev_btn, slice_slider, next_btn, slice_text, crosshair_info)
+            
+            # Column 3: Annotate with AI Models
             with gr.Column(scale=1):
                 # Coordinate Selection for MEDSAM2
                 gr.Markdown("### Point Selection")
@@ -80,7 +81,11 @@ def create_editor_tab() -> dict:
                     info="Click on the image to select coordinates"
                 )
                 clear_coords_btn = gr.Button("Clear Coordinates")
-                
+                clear_overlays_btn = gr.Button(
+                    "Clear Annotation Overlays", 
+                    variant="stop",  # Makes the button red
+                    visible=False    # Hidden by default, shown after successful annotation
+                )
                 gr.Markdown("## Annotate with AI Models")
                 ai_model_selector = gr.Dropdown(
                     label="Select AI Model",
@@ -88,26 +93,40 @@ def create_editor_tab() -> dict:
                     value="MEDSAM2"
                 )
                 
-                # MEDSAM2 specific controls
-                with gr.Group(visible=True) as medsam2_controls:
-                    gr.Markdown("#### MEDSAM2 Settings")
-                    output_dir = gr.Textbox(
-                        label="Output Directory",
-                        value="brain_target_results",
-                        info="Directory to save annotation results"
-                    )
-                    save_visualizations = gr.Checkbox(
-                        label="Save Visualizations",
-                        value=True,
-                        info="Save visualization images along with segmentation"
-                    )
-                    device_selector = gr.Dropdown(
-                        label="Device",
-                        choices=["cpu", "cuda"],
-                        value="cpu",
-                        info="Processing device for MEDSAM2"
-                    )
+                # Processing Mode Selection
+                processing_mode = gr.Radio(
+                    choices=["Single Slice", "All Records"],
+                    value="Single Slice",
+                    label="Processing Mode",
+                    info="Single Slice: Process only current slice. All Records: Process entire volume with quality thresholding."
+                )
                 
+                # Score Threshold for All Records mode
+                score_threshold = gr.Slider(
+                    minimum=0.0, maximum=1.0, value=0.3, step=0.05,
+                    label="Score Threshold (All Records mode)",
+                    info="Minimum average score required to display annotations. Lower scores may indicate poor quality segmentations.",
+                    visible=False  # Initially hidden, shown when "All Records" is selected
+                )
+                  # MEDSAM2 specific controls
+                with gr.Group(visible=True) as medsam2_controls:
+                    with gr.Accordion("Annotation Settings", open=False):
+                        output_dir = gr.Textbox(
+                            label="Output Directory",
+                            value="brain_target_results",
+                            info="Directory to save annotation results"
+                        )
+                        save_visualizations = gr.Checkbox(
+                            label="Save Visualizations",
+                            value=True,
+                            info="Save visualization images along with segmentation"
+                        )
+                        device_selector = gr.Dropdown(
+                            label="Device",
+                            choices=["cpu", "cuda"],
+                            value="cpu",
+                            info="Processing device for MEDSAM2"
+                        )
                 annotate_btn = gr.Button("Run MEDSAM2 Annotation")
                 annotation_status = gr.Textbox(
                     label="Annotation Status", 
@@ -115,7 +134,8 @@ def create_editor_tab() -> dict:
                     value="Ready to annotate"
                 )
                 
-                col3 = (coordinates_text, clear_coords_btn, ai_model_selector, 
+                col3 = (coordinates_text, clear_coords_btn, clear_overlays_btn, ai_model_selector, 
+                       processing_mode, score_threshold,
                        output_dir, save_visualizations, device_selector, 
                        annotate_btn, annotation_status)
 
