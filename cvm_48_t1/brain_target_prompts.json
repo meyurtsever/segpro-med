@@ -1,0 +1,17 @@
+{
+  "prompts": [
+    {
+      "slice_index": 11,
+      "point_coords": [
+        [
+          266,
+          311
+        ]
+      ],
+      "point_labels": [
+        1
+      ],
+      "prompt_id": "point_0"
+    }
+  ]
+}

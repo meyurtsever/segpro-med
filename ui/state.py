@@ -42,8 +42,7 @@ class AppState:
         
         # Plot tool state
         self.current_plot_tool: str = "drawclosedpath"
-        
-        # Segmentation state
+          # Segmentation state
         self.segmentation_data: Optional[np.ndarray] = None
         self.segmentation_loaded: bool = False
         self.segmentation_alpha: float = 0.5  # Default transparency
@@ -58,6 +57,10 @@ class AppState:
             7: [255, 165, 0],  # Label 7 (Orange)
             8: [128, 0, 128]   # Label 8 (Purple)
         }
+        
+        # Tab-specific segmentation display flags (default false for editor tab)
+        self.show_segmentation_in_viewer: bool = True   # Default true for viewer tab
+        self.show_segmentation_in_editor: bool = False  # Default false for editor tab as requested
         
         # Custom components state
         self.custom_components_path = os.path.join(
@@ -87,12 +90,14 @@ class AppState:
         self.current_slice_idx = 0
         self.crosshair_position = None
         self.current_shape = (0, 0, 0)
-    
     def reset_segmentation(self) -> None:
         """Reset segmentation-related state"""
         self.segmentation_data = None
         self.segmentation_loaded = False
         self.segmentation_alpha = 0.5
+        # Reset display flags to defaults
+        self.show_segmentation_in_viewer = True
+        self.show_segmentation_in_editor = False
     
     def set_data(self, data: np.ndarray, data_type: str, metadata: Dict[str, Any], 
                  file_list: List[str]) -> None:

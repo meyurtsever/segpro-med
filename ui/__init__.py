@@ -15,7 +15,9 @@ Modules:
 from .state import AppState
 from .viewer_tab import create_viewer_tab
 from .conversion_tab import create_conversion_tab
-from .handlers import DataLoadingHandlers, ViewerHandlers, PlotToolHandlers, ConversionHandlers
+from .handlers import DataLoadingHandlers, ConversionHandlers
+from .plot_handlers import PlotViewerHandlers, PlotToolHandlers
+from .image_handlers import ImageViewerHandlers, ImagePlotToolHandlers
 from .segmentation_handlers import SegmentationHandlers
 from .label_manager_tab_new import create_label_manager_tab
 from .label_manager_handlers import LabelManagerHandlers
@@ -25,8 +27,10 @@ __all__ = [
     'create_viewer_tab',
     'create_conversion_tab', 
     'DataLoadingHandlers',
-    'ViewerHandlers',
+    'PlotViewerHandlers',
+    'ImageViewerHandlers',
     'PlotToolHandlers',
+    'ImagePlotToolHandlers',
     'ConversionHandlers',
     'SegmentationHandlers',
     'create_label_manager_tab',

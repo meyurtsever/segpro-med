@@ -609,3 +609,83 @@ def save_itk_snap_labels(label_list, file_path):
     except Exception as e:
         print(f"Error saving label file: {e}")
         return False
+
+def make_image_for_gradio(slice_array):
+    """
+    Convert a numpy array to a PIL Image for use with gr.Image components.
+    
+    Args:
+        slice_array (numpy.ndarray): 2D or 3D array representing an image slice
+        
+    Returns:
+        PIL.Image: Image ready for display in gr.Image
+    """
+    # Handle different input formats
+    if slice_array.ndim == 2:
+        # Grayscale image - convert to RGB
+        if slice_array.dtype != np.uint8:
+            # Normalize to 0-255 if not already uint8
+            slice_array = normalize_array(slice_array)
+        # Convert to 3-channel RGB
+        rgb_array = np.stack((slice_array,) * 3, axis=-1)
+    elif slice_array.ndim == 3:
+        # Already RGB/RGBA
+        rgb_array = slice_array
+        if rgb_array.dtype != np.uint8:
+            # Normalize if needed
+            rgb_array = (rgb_array * 255).astype(np.uint8)
+    else:
+        raise ValueError(f"Unsupported array dimensions: {slice_array.ndim}")
+    
+    # Convert to PIL Image
+    pil_image = Image.fromarray(rgb_array)
+    
+    return pil_image
+
+def add_coordinate_overlay(image, coordinates, view='axial'):
+    """
+    Add coordinate markers to an image for MEDSAM2 point selection.
+    
+    Args:
+        image (PIL.Image or numpy.ndarray): Input image
+        coordinates (list): List of (x, y) coordinate tuples
+        view (str): View orientation for proper coordinate mapping
+        
+    Returns:
+        PIL.Image: Image with coordinate overlay
+    """
+    # Convert numpy array to PIL if needed
+    if isinstance(image, np.ndarray):
+        if image.ndim == 2:
+            # Convert grayscale to RGB
+            image = np.stack((image,) * 3, axis=-1)
+        pil_image = Image.fromarray(image.astype(np.uint8))
+    else:
+        pil_image = image.copy()
+    
+    draw = ImageDraw.Draw(pil_image)
+    
+    # Draw coordinate markers
+    for i, (x, y) in enumerate(coordinates):
+        # Draw a circle marker
+        radius = 5
+        color = (255, 0, 0)  # Red markers
+        
+        # Draw filled circle
+        draw.ellipse(
+            (x - radius, y - radius, x + radius, y + radius),
+            fill=color,
+            outline=(255, 255, 255),  # White outline
+            width=2
+        )
+        
+        # Add coordinate number
+        try:
+            font = ImageFont.truetype("arial.ttf", 12)
+        except IOError:
+            font = ImageFont.load_default()
+        
+        # Draw number next to the marker
+        draw.text((x + radius + 2, y - radius), str(i + 1), fill=(255, 255, 0), font=font)
+    
+    return pil_image

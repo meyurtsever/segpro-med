@@ -1,0 +1,13 @@
+{
+  "total_slices": 1,
+  "slice_indices": [
+    12
+  ],
+  "average_scores": [
+    0.7020701766014099
+  ],
+  "processing_info": {
+    "timestamp": "C:\\Users\\Yurtsever\\Downloads\\segpro-med",
+    "description": "Brain MRI DICOM segmentation using slice-specific windowing parameters"
+  }
+}

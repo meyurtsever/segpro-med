@@ -122,8 +122,7 @@ class SegmentationHandlers:
                 self.state.current_slice_idx
             )
             
-            if seg_slice is not None:
-                # Overlay segmentation on the image
+            if seg_slice is not None:                # Overlay segmentation on the image
                 overlaid_img = overlay_segmentation(
                     img, 
                     seg_slice, 
@@ -131,7 +130,21 @@ class SegmentationHandlers:
                     colormap=self.state.segmentation_colormap
                 )
                 
-                fig = make_slice_figure(overlaid_img, dragmode=self.state.current_plot_tool)
+                # Map tool names to plotly dragmode
+                tool_mapping = {
+                    "draw_circle": "drawcircle",
+                    "draw_rect": "drawrect", 
+                    "draw_line": "drawline",
+                    "draw_openpath": "drawopenpath",
+                    "draw_closedpath": "drawclosedpath",
+                    "erase_shape": "eraseshape",
+                    "pan": "pan",
+                    "zoom": "zoom",
+                    "reset": "pan"  # Reset just goes back to pan mode
+                }
+                
+                dragmode = tool_mapping.get(self.state.current_plot_tool, "pan")
+                fig = make_slice_figure(overlaid_img, dragmode=dragmode)
                 
                 # Check unique labels in segmentation
                 unique_labels = np.unique(seg_data)
@@ -164,8 +177,7 @@ class SegmentationHandlers:
             self.state.current_view,
             crosshair=self.state.crosshair_position
         )
-        
-        # Get the corresponding segmentation slice
+          # Get the corresponding segmentation slice
         seg_slice = self.state.get_segmentation_slice(
             self.state.current_view, 
             self.state.current_slice_idx
@@ -180,7 +192,21 @@ class SegmentationHandlers:
                 colormap=self.state.segmentation_colormap
             )
             
-            fig = make_slice_figure(overlaid_img, dragmode=self.state.current_plot_tool)
+            # Map tool names to plotly dragmode
+            tool_mapping = {
+                "draw_circle": "drawcircle",
+                "draw_rect": "drawrect", 
+                "draw_line": "drawline",
+                "draw_openpath": "drawopenpath",
+                "draw_closedpath": "drawclosedpath",
+                "erase_shape": "eraseshape",
+                "pan": "pan",
+                "zoom": "zoom",
+                "reset": "pan"  # Reset just goes back to pan mode
+            }
+            
+            dragmode = tool_mapping.get(self.state.current_plot_tool, "pan")
+            fig = make_slice_figure(overlaid_img, dragmode=dragmode)
             
             return f"Segmentation opacity updated to {opacity:.1f}", fig
         else:
@@ -201,8 +227,21 @@ class SegmentationHandlers:
             self.state.current_view,
             crosshair=self.state.crosshair_position
         )
+          # Map tool names to plotly dragmode
+        tool_mapping = {
+            "draw_circle": "drawcircle",
+            "draw_rect": "drawrect", 
+            "draw_line": "drawline",
+            "draw_openpath": "drawopenpath",
+            "draw_closedpath": "drawclosedpath",
+            "erase_shape": "eraseshape",
+            "pan": "pan",
+            "zoom": "zoom",
+            "reset": "pan"  # Reset just goes back to pan mode
+        }
         
-        fig = make_slice_figure(img, dragmode=self.state.current_plot_tool)
+        dragmode = tool_mapping.get(self.state.current_plot_tool, "pan")
+        fig = make_slice_figure(img, dragmode=dragmode)
         return "Segmentation cleared", fig
     
     @log_exception

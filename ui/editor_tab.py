@@ -47,9 +47,13 @@ def create_editor_tab() -> dict:
                         choices=["Axial", "Sagittal", "Coronal"],
                         value="Axial",
                         label="View Orientation"
-                    )
+                    )                
                 with gr.Row():
-                    image_plot = gr.Plot(label="Image Plot", show_label=True)
+                    image_display = gr.Image(
+                        label="Medical Image", 
+                        interactive=True,
+                        show_label=True
+                    )
                 # Navigation controls (middle)
                 with gr.Row():
                     prev_btn = gr.Button("Previous")
@@ -65,17 +69,55 @@ def create_editor_tab() -> dict:
                 error_display = gr.Textbox(label="Status/Errors", interactive=False)
                 with gr.Accordion("Metadata", open=False):
                     metadata_display = gr.JSON(label=None, visible=True)
-                col2 = (error_display, metadata_display, view_selector, image_plot, prev_btn, slice_slider, next_btn, slice_text, crosshair_info)
-
-            # Column 3: Annotate with AI Models
+                col2 = (error_display, metadata_display, view_selector, image_display, prev_btn, slice_slider, next_btn, slice_text, crosshair_info)            # Column 3: Annotate with AI Models
             with gr.Column(scale=1):
+                # Coordinate Selection for MEDSAM2
+                gr.Markdown("### Point Selection")
+                coordinates_text = gr.Textbox(
+                    label="Selected Coordinates (x,y)",
+                    value="",
+                    interactive=False,
+                    info="Click on the image to select coordinates"
+                )
+                clear_coords_btn = gr.Button("Clear Coordinates")
+                
                 gr.Markdown("## Annotate with AI Models")
                 ai_model_selector = gr.Dropdown(
                     label="Select AI Model",
-                    choices=["UNet (dummy)", "DeepLabV3 (dummy)", "SAM (dummy)", "Other (dummy)"]
+                    choices=["MEDSAM2", "UNet (dummy)", "DeepLabV3 (dummy)", "SAM (dummy)", "Other (dummy)"],
+                    value="MEDSAM2"
                 )
-                annotate_btn = gr.Button("Run Annotation (dummy)")
-                col3 = (ai_model_selector, annotate_btn)
+                
+                # MEDSAM2 specific controls
+                with gr.Group(visible=True) as medsam2_controls:
+                    gr.Markdown("#### MEDSAM2 Settings")
+                    output_dir = gr.Textbox(
+                        label="Output Directory",
+                        value="brain_target_results",
+                        info="Directory to save annotation results"
+                    )
+                    save_visualizations = gr.Checkbox(
+                        label="Save Visualizations",
+                        value=True,
+                        info="Save visualization images along with segmentation"
+                    )
+                    device_selector = gr.Dropdown(
+                        label="Device",
+                        choices=["cpu", "cuda"],
+                        value="cpu",
+                        info="Processing device for MEDSAM2"
+                    )
+                
+                annotate_btn = gr.Button("Run MEDSAM2 Annotation")
+                annotation_status = gr.Textbox(
+                    label="Annotation Status", 
+                    interactive=False,
+                    value="Ready to annotate"
+                )
+                
+                col3 = (coordinates_text, clear_coords_btn, ai_model_selector, 
+                       output_dir, save_visualizations, device_selector, 
+                       annotate_btn, annotation_status)
 
     # Return all components in a structured way
     return {
