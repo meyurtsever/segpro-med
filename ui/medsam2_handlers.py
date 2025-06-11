@@ -41,16 +41,40 @@ class MEDSAM2Handlers:
         """Handle click events on the image to capture coordinates"""
         try:
             logger.info(f"Image click event received: {type(evt)}, data: {evt}")
+            logger.info(f"Event attributes: {dir(evt) if evt else 'None'}")
             
             if evt is None:
                 logger.warning("Event is None")
                 return "No click data received (None event)"
-                
-            if not hasattr(evt, 'index'):
-                logger.warning(f"Event missing index attribute. Available attributes: {dir(evt)}")
-                return "No click data received (missing index)"
-                
-            x, y = evt.index
+            
+            # Check for different possible coordinate attributes
+            coordinates = None
+            if hasattr(evt, 'index') and evt.index is not None:
+                coordinates = evt.index
+                logger.info(f"Using evt.index: {coordinates}")
+            elif hasattr(evt, 'value') and evt.value is not None:
+                # For image_annotator, coordinates might be in value
+                logger.info(f"Event value: {evt.value}")
+                if isinstance(evt.value, (list, tuple)) and len(evt.value) >= 2:
+                    coordinates = evt.value[:2]  # Take first two elements as x, y
+                    logger.info(f"Using evt.value as coordinates: {coordinates}")
+            elif hasattr(evt, 'target') and evt.target is not None:
+                logger.info(f"Event target: {evt.target}")
+                # Try to extract coordinates from target
+                if hasattr(evt.target, 'value') and isinstance(evt.target.value, (list, tuple)):
+                    coordinates = evt.target.value[:2]
+                    logger.info(f"Using evt.target.value: {coordinates}")
+            
+            if coordinates is None:
+                logger.warning(f"No coordinates found. Event details: index={getattr(evt, 'index', None)}, value={getattr(evt, 'value', None)}")
+                return "No click coordinates received. Please try clicking directly on the image."
+            
+            # Ensure we have exactly 2 coordinates
+            if not isinstance(coordinates, (list, tuple)) or len(coordinates) < 2:
+                logger.warning(f"Invalid coordinates format: {coordinates}")
+                return f"Invalid coordinates format: {coordinates}"
+            
+            x, y = int(coordinates[0]), int(coordinates[1])
             self.selected_coordinates.append((x, y))
             
             # Format coordinates for display
@@ -71,9 +95,8 @@ class MEDSAM2Handlers:
         self.annotated_slice = None  # Reset annotated slice when clearing coordinates
         logger.info("Cleared all coordinates and reset annotated slice")
         return ""    
-    
     @log_exception
-    def clear_annotation_overlays(self) -> Tuple[str, Optional[np.ndarray]]:
+    def clear_annotation_overlays(self) -> Tuple[str, Optional[Dict]]:
         """Clear all annotation overlays from memory and refresh current image"""
         self.annotation_overlays = {}
         logger.info("Cleared all annotation overlays")
@@ -88,11 +111,23 @@ class MEDSAM2Handlers:
                 crosshair=self.state.crosshair_position
             )
             
-            # Convert to PIL Image for gradio
-            from utils.visualization import make_image_for_gradio
-            result_image = make_image_for_gradio(original_slice_img)
+            # Convert to format expected by image_annotator
+            if len(original_slice_img.shape) == 2:
+                img_rgb = np.stack([original_slice_img] * 3, axis=-1)
+            else:
+                img_rgb = original_slice_img
             
-            return "Annotation overlays cleared", result_image
+            if img_rgb.dtype != np.uint8:
+                img_rgb = (img_rgb * 255).astype(np.uint8)
+            
+            # Create AnnotatedImageValue format
+            annotated_value = {
+                "image": img_rgb,
+                "boxes": [],  # Clear all boxes/annotations
+                "orientation": 0
+            }
+            
+            return "Annotation overlays cleared", annotated_value
         else:
             return "Annotation overlays cleared", None
     @log_exception
@@ -436,10 +471,31 @@ class MEDSAM2Handlers:
         if "successfully" in annotation_result.lower():
             # Try to load results
             load_result, result_image = self.load_annotation_results(output_dir, processing_mode)
+            
+            # Convert result_image to annotated format if it exists
+            if result_image is not None:
+                # Ensure the image is in RGB format and uint8
+                if len(result_image.shape) == 2:
+                    img_rgb = np.stack([result_image] * 3, axis=-1)
+                else:
+                    img_rgb = result_image
+                
+                if img_rgb.dtype != np.uint8:
+                    img_rgb = (img_rgb * 255).astype(np.uint8)
+                
+                # Create AnnotatedImageValue format
+                annotated_result = {
+                    "image": img_rgb,
+                    "boxes": [],  # Keep any existing annotations
+                    "orientation": 0
+                }
+            else:
+                annotated_result = None
+            
             # Clear coordinates after successful annotation
             self.clear_coordinates()
             # Return tuple indicating success for UI updates
-            return f"{annotation_result}\n{load_result}", result_image, True
+            return f"{annotation_result}\n{load_result}", annotated_result, True
         else:
             return annotation_result, None, False
 

@@ -2,11 +2,12 @@
 SegMed-Pro Editor Tab UI Components
 
 This module contains the UI layout for the Editor tab,
-including data loading, visualization (without segmentation tools),
-and AI annotation tools.
+including data loading, visualization with advanced annotation capabilities,
+and AI annotation tools using gradio_image_annotation.
 """
 
 import gradio as gr
+from gradio_image_annotation import image_annotator
 from .viewer_tab import create_data_loading_section
 
 def create_editor_tab() -> dict:
@@ -39,7 +40,7 @@ def create_editor_tab() -> dict:
                 # They will be created in col2 below
                 col1 = (file_input, dir_input, load_btn, reset_dir_btn, file_browser, None, None, window_level, window_width, apply_window_btn, debug_btn)
 
-            # Column 2: View orientation and plotly on top, then navigation controls, then Status/Errors and Metadata below
+            # Column 2: View orientation and image annotator on top, then navigation controls, then Status/Errors and Metadata below
             with gr.Column(scale=4):
                 # Main Visualization Area (top)
                 with gr.Row():
@@ -47,12 +48,31 @@ def create_editor_tab() -> dict:
                         choices=["Axial", "Sagittal", "Coronal"],
                         value="Axial",
                         label="View Orientation"
-                    )                
-                with gr.Row():
-                    image_display = gr.Image(
+                    )
+                with gr.Row():                    
+                    image_display = image_annotator(
+                        value=None,
                         label="Medical Image", 
+                        label_list=["Normal Tissue", "Tumor", "Organ", "Lesion", "ROI", "Other"],
+                        label_colors=[(0, 255, 0), (255, 0, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255)],
+                        box_min_size=10,
+                        handle_size=8,
+                        box_thickness=2,
+                        box_selected_thickness=3,
+                        boxes_alpha=0.7,
+                        height=600,
+                        width=800,
                         interactive=True,
-                        show_label=True
+                        show_label=True,
+                        show_download_button=True,
+                        show_clear_button=True,
+                        show_remove_button=True,
+                        use_default_label=False, # Do not use default label, opens modal for custom labels
+                        handles_cursor=True,  # Enable cursor handling for drag mode
+                        image_type="numpy",  # Important for medical images
+                        single_box=False,  # Allow multiple boxes
+                        disable_edit_boxes=False,  # Allow editing boxes
+                        shape_creation_mode="drag",
                     )
                 # Navigation controls (middle)
                 with gr.Row():
@@ -67,7 +87,8 @@ def create_editor_tab() -> dict:
                     crosshair_info = gr.Textbox(label="Crosshair", interactive=True)
                 # Status/Errors and Metadata (bottom)
                 error_display = gr.Textbox(label="Status/Errors", interactive=False)
-                with gr.Accordion("Metadata", open=False):                metadata_display = gr.JSON(label=None, visible=True)
+                with gr.Accordion("Metadata", open=False):
+                    metadata_display = gr.JSON(label=None, visible=True)
                 col2 = (error_display, metadata_display, view_selector, image_display, prev_btn, slice_slider, next_btn, slice_text, crosshair_info)
             
             # Column 3: Annotate with AI Models
@@ -108,7 +129,8 @@ def create_editor_tab() -> dict:
                     info="Minimum average score required to display annotations. Lower scores may indicate poor quality segmentations.",
                     visible=False  # Initially hidden, shown when "All Records" is selected
                 )
-                  # MEDSAM2 specific controls
+                
+                # MEDSAM2 specific controls
                 with gr.Group(visible=True) as medsam2_controls:
                     with gr.Accordion("Annotation Settings", open=False):
                         output_dir = gr.Textbox(

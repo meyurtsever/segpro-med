@@ -60,9 +60,10 @@ class SegMedPro:
         self.segmentation_handlers = SegmentationHandlers(self.state)
         self.label_manager_handlers = LabelManagerHandlers(self.state)
         self.medsam2_handlers = MEDSAM2Handlers(self.state)
-        self.custom_annotator_handlers = CustomAnnotatorHandlers(self.state)
-          # Update image viewer handlers with medsam2 reference for overlay support
+        self.custom_annotator_handlers = CustomAnnotatorHandlers(self.state)          # Update image viewer handlers with medsam2 reference for overlay support
         self.image_viewer_handlers.medsam2_handlers = self.medsam2_handlers
+        # Update image plot tool handlers with medsam2 reference for overlay support (for Editor tab)
+        self.image_plot_tool_handlers.medsam2_handlers = self.medsam2_handlers
         
         logger.info("SegMed-Pro application initialized")
     
@@ -385,14 +386,14 @@ class SegMedPro:
             inputs=[label_table],
             outputs=[selected_label_name]
         )
-        
-        # Sync table changes to internal storage when user edits the table
+          # Sync table changes to internal storage when user edits the table
         label_table.change(
             fn=handlers.sync_table_to_internal,
             inputs=[label_table],
             outputs=[]
         )
-          # Delete selected label (by name)
+        
+        # Delete selected label (by name)
         delete_label_btn.click(
             fn=handlers.delete_label_by_name,
             inputs=[label_table, selected_label_name],
@@ -402,12 +403,13 @@ class SegMedPro:
             inputs=[label_table],
             outputs=[selected_label_name]
         )
-
+    
     def _connect_custom_annotator_handlers(self, components):
         """Connect event handlers for the custom annotator tab"""
         # Unpack components following the new structure
         data_loading = components['data_loading']
         visualization = components['visualization']
+        point_selection = components['point_selection']
         annotator_components = components['annotator']
         
         # Unpack data loading components
@@ -417,6 +419,9 @@ class SegMedPro:
         
         # Unpack visualization components
         (view_selector, prev_btn, slice_slider, next_btn, slice_text) = visualization
+        
+        # Unpack point selection components
+        (coordinates_text, clear_coords_btn, clear_overlays_btn) = point_selection
         
         # Unpack annotator components
         annotator = annotator_components['main']
@@ -546,12 +551,36 @@ class SegMedPro:
             inputs=[annotator, export_format],
             outputs=[export_output, error_display]
         )
-        
-        # Batch processing
+          # Batch processing
         batch_process_btn.click(
             fn=self.custom_annotator_handlers.process_batch_images,
             inputs=[],
             outputs=[batch_status]
+        )          # Connect Point Selection (Custom Annotator) handlers
+        # The image_annotator now supports Events.select after we added it to EVENTS list
+        annotator.select(
+            fn=self.custom_annotator_handlers.handle_image_select,
+            inputs=[],
+            outputs=[coordinates_text]
+        )
+        
+        # Also keep change event for annotation updates
+        annotator.change(
+            fn=self.custom_annotator_handlers.handle_annotation_change,
+            inputs=[annotator],
+            outputs=[]
+        )
+        
+        clear_coords_btn.click(
+            fn=self.custom_annotator_handlers.clear_selected_coordinates,
+            inputs=[],
+            outputs=[coordinates_text]
+        )
+        
+        clear_overlays_btn.click(
+            fn=self.medsam2_handlers.clear_annotation_overlays,
+            inputs=[],
+            outputs=[error_display, annotator]
         )
 
     def _connect_editor_handlers(self, components):
@@ -569,10 +598,9 @@ class SegMedPro:
          processing_mode, score_threshold,
          output_dir, save_visualizations, device_selector, 
          annotate_btn, annotation_status) = ai_tools
-        
-        # Data loading handlers
+          # Data loading handlers (updated for annotator compatibility)
         load_btn.click(
-            fn=self.data_handlers.load_data,
+            fn=self.data_handlers.load_data_for_annotator,
             inputs=[file_input, dir_input],
             outputs=[
                 image_display, file_browser, metadata_display,
@@ -586,7 +614,7 @@ class SegMedPro:
             outputs=[dir_input]
         )
         file_input.change(
-            fn=self.data_handlers.load_data,
+            fn=self.data_handlers.load_data_for_annotator,
             inputs=[file_input, dir_input],
             outputs=[
                 image_display, file_browser, metadata_display,
@@ -600,36 +628,34 @@ class SegMedPro:
             inputs=[file_input, dir_input],
             outputs=[error_display]
         )
-        
-        # Viewer handlers
+          # Viewer handlers (using annotator-specific methods)
         slice_slider.change(
-            fn=self.image_viewer_handlers.update_slice,
+            fn=self.image_plot_tool_handlers.update_slice_for_annotator,
             inputs=[slice_slider, view_selector],
             outputs=[image_display, slice_text, crosshair_info, metadata_display, window_level, window_width]
         )
         view_selector.change(
-            fn=self.image_viewer_handlers.change_view,
+            fn=self.image_plot_tool_handlers.change_view_for_annotator,
             inputs=[view_selector],
             outputs=[slice_slider, slice_text, image_display]
         )
         apply_window_btn.click(
-            fn=self.image_viewer_handlers.update_window_level,
+            fn=self.image_plot_tool_handlers.update_window_level_for_annotator,
             inputs=[window_level, window_width],
             outputs=[image_display]
         )
         file_browser.change(
-            fn=self.image_viewer_handlers.select_file_from_browser,
+            fn=self.image_plot_tool_handlers.select_file_from_browser_for_annotator,
             inputs=[file_browser],
-            outputs=[image_display, slice_text, crosshair_info, metadata_display, slice_slider, window_level, window_width]
-        )
+            outputs=[image_display, slice_text, crosshair_info, metadata_display, slice_slider, window_level, window_width]        )
         prev_btn.click(
-            fn=self.image_viewer_handlers.prev_slice,
+            fn=self.image_plot_tool_handlers.prev_slice,
             inputs=[slice_slider],
             outputs=[slice_slider]
         )
         
         next_btn.click(
-            fn=self.image_viewer_handlers.next_slice,
+            fn=self.image_plot_tool_handlers.next_slice,
             inputs=[slice_slider],
             outputs=[slice_slider]
         )

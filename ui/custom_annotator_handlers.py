@@ -247,8 +247,7 @@ class CustomAnnotatorHandlers:
                         "image_id": 1,
                         "category_id": category_id,
                         "bbox": [box['xmin'], box['ymin'], width, height],
-                        "area": width * height,
-                        "iscrowd": 0
+                        "area": width * height,                        "iscrowd": 0
                     }
                     coco_data["annotations"].append(annotation)
                 
@@ -276,6 +275,38 @@ class CustomAnnotatorHandlers:
         except Exception as e:
             logger.error(f"Error in batch processing: {e}")
             return f"Batch processing failed: {str(e)}"
+    
+    def handle_annotation_change(self, annotation_data: Dict[str, Any]) -> None:
+        """Handle changes to annotations from the image_annotator component and track coordinates"""
+        try:
+            if annotation_data and 'boxes' in annotation_data:
+                boxes = annotation_data['boxes']
+                logger.info(f"Annotation changed: {len(boxes)} boxes present")
+                
+                # Check if a new box was added (simple heuristic)
+                if hasattr(self, '_last_box_count'):
+                    if len(boxes) > self._last_box_count:
+                        # New box added, extract center coordinates
+                        new_box = boxes[-1]  # Get the last (newest) box
+                        center_x = int((new_box['xmin'] + new_box['xmax']) / 2)
+                        center_y = int((new_box['ymin'] + new_box['ymax']) / 2)
+                        
+                        # Store coordinates using the same structure as MEDSAM2
+                        if not hasattr(self, 'selected_coordinates'):
+                            self.selected_coordinates = []
+                        
+                        self.selected_coordinates.append((center_x, center_y))
+                        
+                        logger.info(f"New annotation box created, center coordinates: ({center_x}, {center_y})")
+                
+                self._last_box_count = len(boxes)
+            else:
+                logger.info("Annotation data cleared or empty")
+                if hasattr(self, '_last_box_count'):
+                    self._last_box_count = 0
+                    
+        except Exception as e:
+            logger.error(f"Error handling annotation change: {e}")
     
     def load_data_for_annotator(self, file_obj, dir_path):        
         """Load data for the custom annotator tab, matching Editor tab output order"""
@@ -415,72 +446,140 @@ class CustomAnnotatorHandlers:
             # 4. Window level/width
             window_level = getattr(self.state, 'window_level', 500)
             window_width = getattr(self.state, 'window_width', 1000)
-            
-            # 5. Slice slider value and text
+              # 5. Slice slider value and text
             slice_idx = getattr(self.state, 'current_slice', 0)
-            # Get max slice number safely
+            # Get max slice number safely - use correct axis based on current view
+            max_slice = 0
             if hasattr(self.state, 'current_data') and self.state.current_data is not None:
                 data_shape = self.state.current_data.shape
                 if len(data_shape) >= 3:
-                    max_slice = data_shape[2] - 1
-                else:
-                    max_slice = 0
-            else:
-                max_slice = 0
-                
+                    current_view = getattr(self.state, 'current_view', 'axial').lower()
+                    if current_view == 'axial':
+                        max_slice = data_shape[0] - 1  # Slices along axis 0
+                    elif current_view == 'sagittal':
+                        max_slice = data_shape[2] - 1  # Slices along axis 2
+                    elif current_view == 'coronal':
+                        max_slice = data_shape[1] - 1  # Slices along axis 1
+                    else:
+                        max_slice = data_shape[0] - 1  # Default to axial
+                        
             slice_text = f"{slice_idx}/{max_slice}"
-            
-            # 6. Create dropdown update with choices and default value
+              # 6. Create dropdown update with choices and default value
             if file_list:
                 # Set the first file as the default selected value
                 dropdown_update = gr.Dropdown(choices=file_list, value=file_list[0])
             else:
                 dropdown_update = gr.Dropdown(choices=[], value=None)
             
-            logger.info(f"Loaded data for annotator with slice: {slice_idx}, files: {len(file_list)}")
-            return annotation_value, error, metadata, window_level, window_width, slice_idx, slice_text, dropdown_update
+            # 7. Also return slider update to set proper maximum
+            if hasattr(self.state, 'current_data') and self.state.current_data is not None:
+                data_shape = self.state.current_data.shape
+                if len(data_shape) >= 3:
+                    current_view = getattr(self.state, 'current_view', 'axial').lower()
+                    if current_view == 'axial':
+                        slider_max = data_shape[0] - 1
+                    elif current_view == 'sagittal':
+                        slider_max = data_shape[2] - 1  
+                    elif current_view == 'coronal':
+                        slider_max = data_shape[1] - 1
+                    else:
+                        slider_max = data_shape[0] - 1
+                else:
+                    slider_max = 0
+                slice_slider_update = gr.Slider(minimum=0, maximum=slider_max, value=slice_idx, step=1)
+            else:
+                slice_slider_update = gr.Slider(minimum=0, maximum=0, value=0, step=1)
+            
+            logger.info(f"Loaded data for annotator with slice: {slice_idx}, files: {len(file_list)}, slider_max: {slider_max}")
+            return annotation_value, error, metadata, window_level, window_width, slice_slider_update, slice_text, dropdown_update
         except Exception as e:
-            logger.error(f"Error loading data for annotator: {e}")
-            # Return default values with error message
+            logger.error(f"Error loading data for annotator: {e}")            # Return default values with error message
             # Create a placeholder image to prevent JSON decoding errors
             image = np.zeros((100, 100, 3), dtype=np.uint8)
             placeholder = {"image": image, "boxes": []}
-            return placeholder, f"Error: {str(e)}", {}, 500, 1000, 0, "0/0", gr.Dropdown(choices=[], value=None)
+            return placeholder, f"Error: {str(e)}", {}, 500, 1000, gr.Slider(minimum=0, maximum=0, value=0, step=1), "0/0", gr.Dropdown(choices=[], value=None)
 
     def reset_directory(self):
         """Reset the directory input field"""
         logger.info("Resetting directory")
         return ""
-
+    
     def select_file_from_browser(self, selected_file):
         """Handle file selection from browser"""
         try:
             logger.info(f"Selected file from browser: {selected_file}")
-            # Here you would load the selected file
-            # This is a placeholder implementation
             
-            # Create a placeholder image and annotation value to prevent JSON errors
+            if not selected_file or not hasattr(self.state, 'current_directory'):
+                # No file selected or no directory loaded
+                image = np.zeros((100, 100, 3), dtype=np.uint8)
+                annotation_value = {"image": image, "boxes": []}
+                return annotation_value, "No file selected or directory not loaded", {}, 500, 1000, gr.Slider(minimum=0, maximum=0, value=0, step=1), "0/0"
+            
+            # Construct full path
+            selected_path = os.path.join(self.state.current_directory, selected_file)
+            
+            # Load the selected DICOM file
+            if not os.path.exists(selected_path):
+                image = np.zeros((100, 100, 3), dtype=np.uint8)
+                annotation_value = {"image": image, "boxes": []}
+                return annotation_value, f"File not found: {selected_path}", {}, 500, 1000, gr.Slider(minimum=0, maximum=0, value=0, step=1), "0/0"
+            
+            # Find index of selected file in file list
+            if hasattr(self.state, 'current_file_list') and self.state.current_file_list:
+                try:
+                    slice_idx = self.state.current_file_list.index(selected_file)
+                    self.state.current_slice = slice_idx
+                    logger.info(f"Set current slice to: {slice_idx}")
+                except ValueError:
+                    slice_idx = 0
+                    self.state.current_slice = 0
+            else:
+                slice_idx = 0
+                self.state.current_slice = 0
+            
+            # Load the new slice using existing method
             annotation_value = self.load_medical_slice_to_annotator()
             if annotation_value is None:
                 image = np.zeros((100, 100, 3), dtype=np.uint8)
                 annotation_value = {"image": image, "boxes": []}
                 error = "Could not load selected file. Using placeholder."
             else:
-                error = ""
+                error = f"Loaded file: {selected_file}"
                 
+            # Get metadata and window settings
             metadata = getattr(self.state, 'current_metadata', {})
             window_level = getattr(self.state, 'window_level', 500)
             window_width = getattr(self.state, 'window_width', 1000)
-            slice_idx = getattr(self.state, 'current_slice', 0)
-            slice_text = f"{slice_idx}/0"
             
-            return annotation_value, error, metadata, window_level, window_width, slice_idx, slice_text
+            # Calculate max slice for current view and create slice text
+            max_slice = 0
+            if hasattr(self.state, 'current_data') and self.state.current_data is not None:
+                data_shape = self.state.current_data.shape
+                if len(data_shape) >= 3:
+                    current_view = getattr(self.state, 'current_view', 'axial').lower()
+                    if current_view == 'axial':
+                        max_slice = data_shape[0] - 1
+                    elif current_view == 'sagittal':
+                        max_slice = data_shape[2] - 1
+                    elif current_view == 'coronal':
+                        max_slice = data_shape[1] - 1
+                    else:
+                        max_slice = data_shape[0] - 1
+            
+            slice_text = f"{slice_idx}/{max_slice}"
+            
+            # Create slider update with correct maximum
+            slice_slider_update = gr.Slider(minimum=0, maximum=max_slice, value=slice_idx, step=1)
+            
+            logger.info(f"File browser selection complete: {selected_file}, slice: {slice_idx}/{max_slice}")
+            return annotation_value, error, metadata, window_level, window_width, slice_slider_update, slice_text
+            
         except Exception as e:
             logger.error(f"Error selecting file from browser: {e}")
             # Return default values with error message
             image = np.zeros((100, 100, 3), dtype=np.uint8)
             placeholder = {"image": image, "boxes": []}
-            return placeholder, f"Error: {str(e)}", {}, 500, 1000, 0, "0/0"
+            return placeholder, f"Error: {str(e)}", {}, 500, 1000, gr.Slider(minimum=0, maximum=0, value=0, step=1), "0/0"
 
     def prev_slice(self, slider_value):
         """Navigate to previous slice"""
@@ -564,8 +663,7 @@ class CustomAnnotatorHandlers:
             logger.info(f"Updated slice to {slider_value} with view {view_type}")
             return annotation_value, slice_text
         except Exception as e:
-            logger.error(f"Error updating slice: {e}")
-            # Create a placeholder value to prevent JSON decoding errors
+            logger.error(f"Error updating slice: {e}")            # Create a placeholder value to prevent JSON decoding errors
             image = np.zeros((100, 100, 3), dtype=np.uint8)
             placeholder = {"image": image, "boxes": []}
             return placeholder, "0/0"
@@ -577,8 +675,8 @@ class CustomAnnotatorHandlers:
             self.state.current_view = view.lower()
             # Reset slice to 0
             self.state.current_slice = 0
-            slice_slider = 0
-              # Calculate slice text - use correct max slice calculation based on view
+            
+            # Calculate slice text - use correct max slice calculation based on view
             max_slice = 0
             if hasattr(self.state, 'current_data') and self.state.current_data is not None:
                 data_shape = self.state.current_data.shape
@@ -590,6 +688,7 @@ class CustomAnnotatorHandlers:
                     elif view.lower() == 'coronal':
                         max_slice = data_shape[1] - 1  # Slices along axis 1
             
+            slice_slider_update = gr.Slider(minimum=0, maximum=max_slice, value=0, step=1)
             slice_text = f"0/{max_slice}"
             
             # Get annotation value for new view
@@ -600,13 +699,13 @@ class CustomAnnotatorHandlers:
                 annotation_value = {"image": image, "boxes": []}
             
             logger.info(f"Changed view to {view}")
-            return slice_slider, slice_text, annotation_value
+            return slice_slider_update, slice_text, annotation_value
         except Exception as e:
             logger.error(f"Error changing view: {e}")
             # Create a placeholder value to prevent JSON decoding errors
             image = np.zeros((100, 100, 3), dtype=np.uint8)
             placeholder = {"image": image, "boxes": []}
-            return 0, "0/0", placeholder
+            return gr.Slider(minimum=0, maximum=0, value=0, step=1), "0/0", placeholder
 
     def update_window_level(self, level, width):
         """Update window level/width for image display"""
@@ -669,3 +768,48 @@ class CustomAnnotatorHandlers:
         except Exception as e:
             logger.error(f"Error in debug_selected_file: {e}")
             return f"Error generating debug info: {str(e)}"
+        
+    def handle_image_select(self, evt: gr.SelectData) -> str:
+        """Handle select events on the image_annotator to capture coordinates"""
+        try:
+            logger.info(f"Image select event received: {type(evt)}, data: {evt}")
+            
+            if evt is None:
+                logger.warning("Select event is None")
+                return "No click data received (None event)"
+                
+            # Check if event has index attribute (coordinates)
+            if not hasattr(evt, 'index'):
+                logger.warning(f"Select event missing index attribute. Available attributes: {dir(evt)}")
+                return "No click data received (missing index)"
+                
+            x, y = evt.index
+            
+            # Use the same coordinate tracking as MEDSAM2
+            if not hasattr(self, 'selected_coordinates'):
+                self.selected_coordinates = []
+                
+            self.selected_coordinates.append((x, y))
+            
+            # Format coordinates for display
+            coords_str = "; ".join([f"({x},{y})" for x, y in self.selected_coordinates])
+            
+            logger.info(f"Added coordinate from image_annotator: ({x}, {y}). Total points: {len(self.selected_coordinates)}")
+            return coords_str
+            
+        except Exception as e:
+            logger.error(f"Error handling image select: {str(e)}")
+            import traceback
+            logger.error(f"Full traceback: {traceback.format_exc()}")
+            return f"Error: {str(e)}"
+
+    def clear_selected_coordinates(self) -> str:
+        """Clear selected coordinates for custom annotator"""
+        try:
+            if hasattr(self, 'selected_coordinates'):
+                self.selected_coordinates = []
+            logger.info("Cleared selected coordinates in custom annotator")
+            return ""
+        except Exception as e:
+            logger.error(f"Error clearing coordinates: {str(e)}")
+            return f"Error: {str(e)}"

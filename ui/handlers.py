@@ -242,6 +242,114 @@ class DataLoadingHandlers:
             window_level_value,
             window_width_value
         )
+    
+    @log_exception
+    def load_data_for_annotator(self, file_obj, directory):
+        """Load DICOM data from file or directory and return AnnotatedImageValue format for image_annotator"""
+        logger.info(f"Loading data for annotator: file={file_obj}, directory={directory}")
+        
+        # Reset current data
+        self.state.reset_data()
+        
+        # Determine input source
+        if directory:
+            path = directory
+            self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path)
+        else:
+            # Load single file by extension
+            path = file_obj.name if file_obj else None
+            if not path or not os.path.exists(path):
+                return None, gr.Dropdown(choices=[]), {}, gr.Slider(visible=False), "0/0", "x: 0, y: 0, z: 0", "No data loaded", 500, 1000
+            
+            ext = os.path.splitext(path)[1].lower()
+            if ext in ['.dcm']:
+                self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path)
+            elif ext in ['.nii', '.gz']:
+                img3d, meta = load_nifti_file(path)
+                self.state.current_data = img3d
+                self.state.current_metadata = meta
+                self.state.file_list = [path]
+            elif ext == '.mat':
+                # Placeholder for MAT loading
+                self.state.current_data = None
+                self.state.current_metadata = {}
+                self.state.file_list = [path]
+            else:
+                return None, gr.Dropdown(choices=[]), {}, gr.Slider(visible=False), "0/0", "x: 0, y: 0, z: 0", f"Unsupported file type: {ext}", 500, 1000
+
+        self.state.current_data_type = "dicom"
+        shape = self.state.current_data.shape
+        self.state.current_shape = shape
+        # Center crosshair
+        self.state.crosshair_position = (shape[2]//2, shape[1]//2, shape[0]//2)
+        
+        # Prepare file names
+        file_names = [os.path.basename(f) for f in self.state.file_list]
+        
+        # Slider range and visibility
+        slider_min, slider_max = 0, shape[0] - 1
+        self.state.current_slice_idx = 0
+        visible_flag = slider_max > 0
+        
+        # Extract window values from metadata
+        window_center = None
+        window_width = None
+        
+        if self.state.current_metadata and 'WindowCenter' in self.state.current_metadata:
+            window_center = self.state.current_metadata['WindowCenter']
+            if isinstance(window_center, list):
+                window_center = window_center[0]
+            logger.info(f"Using WindowCenter from metadata: {window_center}")
+        
+        if self.state.current_metadata and 'WindowWidth' in self.state.current_metadata:
+            window_width = self.state.current_metadata['WindowWidth']
+            if isinstance(window_width, list):
+                window_width = window_width[0]
+            logger.info(f"Using WindowWidth from metadata: {window_width}")
+        
+        # Initial image
+        img = display_slice(
+            self.state.current_data, 
+            0, 
+            self.state.current_view.lower(), 
+            window_level=window_center, 
+            window_width=window_width,
+            crosshair=self.state.crosshair_position
+        )
+        
+        # Convert to format expected by image_annotator
+        if len(img.shape) == 2:
+            img_rgb = np.stack([img] * 3, axis=-1)
+        else:
+            img_rgb = img
+        
+        if img_rgb.dtype != np.uint8:
+            img_rgb = (img_rgb * 255).astype(np.uint8)
+        
+        # Create AnnotatedImageValue format
+        annotated_value = {
+            "image": img_rgb,
+            "boxes": [],  # Start with empty boxes
+            "orientation": 0
+        }
+        
+        crosshair_text = f"x: {self.state.crosshair_position[0]}, y: {self.state.crosshair_position[1]}, z: {self.state.crosshair_position[2]}"
+        
+        # Default window values
+        window_level_value = window_center if window_center is not None else 500
+        window_width_value = window_width if window_width is not None else 1000
+        
+        return (
+            annotated_value,
+            gr.Dropdown(choices=file_names, value=file_names[0] if file_names else None),
+            self.state.current_metadata,
+            gr.Slider(minimum=slider_min, maximum=slider_max, value=0, step=1, label="Slice Navigation", visible=visible_flag),
+            f"0/{slider_max}",
+            crosshair_text,
+            f"DICOM data loaded: {len(self.state.file_list)} slice(s)",
+            window_level_value,
+            window_width_value
+        )
 
 
 class ViewerHandlers:
@@ -381,6 +489,252 @@ class ViewerHandlers:
             crosshair=self.state.crosshair_position
         )
           # Apply segmentation overlay if loaded
+        if self.state.segmentation_loaded and self.state.segmentation_data is not None:
+            try:
+                seg_slice = self.state.get_segmentation_slice(
+                    self.state.current_view, 
+                    self.state.current_slice_idx
+                )
+                
+                if seg_slice is not None:
+                    img = overlay_segmentation(
+                        img, 
+                        seg_slice, 
+                        alpha=self.state.segmentation_alpha,
+                        colormap=self.state.segmentation_colormap
+                    )
+            except Exception as e:
+                logger.error(f"Error applying segmentation overlay: {str(e)}")
+        
+        # Convert to PIL Image for gr.Image
+        pil_image = make_image_for_gradio(img)
+        
+        return (
+            gr.Slider(minimum=slider_min, maximum=slider_max, value=self.state.current_slice_idx), 
+            f"{self.state.current_slice_idx}/{slider_max}", 
+            pil_image
+        )
+    
+    def update_window_level(self, level, width):
+        """Apply window/level adjustments to the current image"""
+        if self.state.current_data is None:
+            return None
+        
+        # Generate the slice image with window/level adjustments
+        img = display_slice(
+            self.state.current_data, 
+            self.state.current_slice_idx, 
+            self.state.current_view,
+            window_level=level,
+            window_width=width,
+            crosshair=self.state.crosshair_position
+        )
+          # Apply segmentation overlay if loaded
+        if self.state.segmentation_loaded and self.state.segmentation_data is not None:
+            try:
+                seg_slice = self.state.get_segmentation_slice(
+                    self.state.current_view, 
+                    self.state.current_slice_idx
+                )
+                
+                if seg_slice is not None:
+                    img = overlay_segmentation(
+                        img, 
+                        seg_slice, 
+                        alpha=self.state.segmentation_alpha,
+                        colormap=self.state.segmentation_colormap
+                    )
+            except Exception as e:
+                logger.error(f"Error applying segmentation overlay: {str(e)}")
+        
+        # Convert to PIL Image for gr.Image
+        pil_image = make_image_for_gradio(img)
+        return pil_image
+    
+    def select_file_from_browser(self, selected_file):
+        """When a file is selected from the browser dropdown"""
+        if not selected_file or not self.state.file_list:
+            return None, "0/0", "x: 0, y: 0, z: 0", {}, 0, None, None
+        
+        try:
+            # Find the selected file in the file list
+            selected_path = None
+            for file_path in self.state.file_list:
+                if os.path.basename(file_path) == selected_file:
+                    selected_path = file_path
+                    break
+            
+            if not selected_path:
+                return None, "0/0", "x: 0, y: 0, z: 0", {"error": "File not found"}, 0, None, None
+            
+            # Load the selected DICOM file
+            slice_idx = self.state.file_list.index(selected_path)
+            self.state.current_slice_idx = slice_idx
+            
+            # Update crosshair z position
+            x, y, _ = self.state.crosshair_position
+            self.state.crosshair_position = (x, y, slice_idx)
+            
+            # Get metadata for this slice
+            metadata = get_dicom_metadata(selected_path)
+            
+            # Extract window values
+            window_center = None
+            window_width = None
+            
+            if metadata and 'WindowCenter' in metadata:
+                window_center = metadata['WindowCenter']
+                if isinstance(window_center, list):
+                    window_center = window_center[0]
+            
+            if metadata and 'WindowWidth' in metadata:
+                window_width = metadata['WindowWidth']
+                if isinstance(window_width, list):
+                    window_width = window_width[0]
+            
+            # Generate image at the new index
+            img = display_slice(
+                self.state.current_data, 
+                slice_idx, 
+                "axial",
+                window_level=window_center,
+                window_width=window_width,
+                crosshair=self.state.crosshair_position
+            )
+              # Apply segmentation overlay if loaded
+            if self.state.segmentation_loaded and self.state.segmentation_data is not None:
+                try:
+                    seg_slice = self.state.segmentation_data[slice_idx, :, :]
+                    img = overlay_segmentation(
+                        img, 
+                        seg_slice, 
+                        alpha=self.state.segmentation_alpha,
+                        colormap=self.state.segmentation_colormap
+                    )
+                except Exception as e:
+                    logger.error(f"Error applying segmentation overlay: {str(e)}")
+            
+            # Convert to PIL Image for gr.Image
+            pil_image = make_image_for_gradio(img)
+            
+            # Update crosshair info
+            x, y, z = self.state.crosshair_position
+            crosshair_text = f"x: {x}, y: {y}, z: {z}"
+            
+            return (pil_image, f"{slice_idx}/{len(self.state.file_list)-1}", crosshair_text, 
+                   metadata, slice_idx, window_center, window_width)
+        except Exception as e:
+            return None, "0/0", "x: 0, y: 0, z: 0", {"error": str(e)}, 0, None, None
+    
+    def prev_slice(self, slider_value):
+        """Go to previous slice by decrementing slider value"""
+        current_value = int(slider_value)
+        return max(0, current_value - 1)
+    def next_slice(self, slider_value):
+        """Go to next slice by incrementing slider value"""
+        if self.state.current_data is None:
+            return slider_value
+        
+        current_value = int(slider_value)
+        max_value = self.state.get_max_slice_for_view(self.state.current_view)
+        return min(current_value + 1, max_value)
+
+    @log_exception
+    def update_slice_for_plot(self, slider_value, view_type):
+        """Update the displayed slice for gr.Plot component (returns plotly figure)"""
+        if self.state.current_data is None:
+            return make_slice_figure(np.zeros((100, 100, 3), dtype=np.uint8)), "0/0", "x: 0, y: 0, z: 0", {}, None, None
+        
+        # Update slice and view based on input
+        self.state.current_slice_idx = int(slider_value)
+        self.state.current_view = view_type.lower()
+        
+        # Generate the slice image
+        try:
+            img = display_slice(
+                self.state.current_data, 
+                self.state.current_slice_idx, 
+                self.state.current_view,
+                crosshair=self.state.crosshair_position
+            )
+            
+            # Apply segmentation overlay if segmentation is loaded
+            if self.state.segmentation_loaded and self.state.segmentation_data is not None:
+                try:
+                    seg_slice = self.state.get_segmentation_slice(
+                        self.state.current_view, 
+                        self.state.current_slice_idx
+                    )
+                    
+                    if seg_slice is not None:
+                        img = overlay_segmentation(
+                            img, 
+                            seg_slice, 
+                            alpha=self.state.segmentation_alpha,
+                            colormap=self.state.segmentation_colormap
+                        )
+                except Exception as e:
+                    logger.error(f"Error applying segmentation overlay: {str(e)}")
+            
+            # Create plotly figure for gr.Plot
+            fig = make_slice_figure(img, dragmode='pan')
+            
+            # Update crosshair info
+            x, y, z = self.state.crosshair_position
+            crosshair_text = f"x: {x}, y: {y}, z: {z}"
+            
+            # Update metadata
+            metadata = {}
+            if self.state.current_metadata:
+                metadata.update(self.state.current_metadata)
+                metadata.update({
+                    'CurrentSlice': self.state.current_slice_idx + 1,
+                    'TotalSlices': len(self.state.file_list) if self.state.file_list else 1,
+                    'CurrentView': self.state.current_view
+                })
+            
+            window_center = metadata.get('WindowCenter', 500)
+            window_width = metadata.get('WindowWidth', 1000)
+            if isinstance(window_center, list):
+                window_center = window_center[0]
+            if isinstance(window_width, list):
+                window_width = window_width[0]
+            return (fig, f"{self.state.current_slice_idx -1}/{self.state.get_max_slice_for_view(self.state.current_view) -1}", 
+                   crosshair_text, metadata, window_center, window_width)
+        
+        except Exception as e:
+            logger.error(f"Error in update_slice_for_plot: {str(e)}")
+            return make_slice_figure(np.zeros((100, 100, 3), dtype=np.uint8)), "Error", f"Error: {str(e)}", {}, 500, 1000
+
+    @log_exception  
+    def change_view_for_plot(self, view):
+        """Change the viewing orientation for gr.Plot component (returns plotly figure)"""
+        if self.state.current_data is None:
+            return gr.Slider(), "0/0", make_slice_figure(np.zeros((100, 100, 3), dtype=np.uint8))
+        
+        # Update current view
+        self.state.current_view = view.lower()
+        
+        # Determine slice count and range based on view
+        slider_min = 0
+        slider_max = self.state.get_max_slice_for_view(self.state.current_view)
+        
+        if self.state.current_view == "axial":
+            self.state.current_slice_idx = self.state.crosshair_position[2]
+        elif self.state.current_view == "sagittal":
+            self.state.current_slice_idx = self.state.crosshair_position[0]
+        elif self.state.current_view == "coronal":
+            self.state.current_slice_idx = self.state.crosshair_position[1]
+        
+        # Generate the slice image
+        img = display_slice(
+            self.state.current_data, 
+            self.state.current_slice_idx, 
+            self.state.current_view,
+            crosshair=self.state.crosshair_position
+        )
+        
+        # Apply segmentation overlay if loaded
         if self.state.segmentation_loaded and self.state.segmentation_data is not None:
             try:
                 seg_slice = self.state.get_segmentation_slice(

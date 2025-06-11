@@ -12,8 +12,25 @@ from gradio_image_annotation import image_annotator
 
 def create_custom_annotator_tab():
     """Create the Custom Annotator tab with gradio-image-annotation plugin and medical image support"""
-    
     with gr.Tab("Custom Annotator"):
+        # Inject JavaScript for select event functionality
+        gr.HTML("""
+        <script src="/file=static/image_annotator_patch.js"></script>
+        <style>
+        /* Ensure the image annotator is clickable in cursor mode */
+        .image-annotator img, .image_annotator img, 
+        .gradio-image-annotation img, .gradio-image-annotation canvas {
+            cursor: crosshair !important;
+            pointer-events: auto !important;
+        }
+        
+        /* Make sure click events work in drag mode */
+        .image-annotator, .gradio-image-annotation {
+            user-select: none;
+        }
+        </style>
+        """)
+        
         gr.Markdown("## Custom Image Annotator")
         gr.Markdown("Advanced image annotation tool with bounding boxes, labels, and medical image support.")
         
@@ -55,8 +72,7 @@ def create_custom_annotator_tab():
                     value="Axial",
                     label="View Orientation"
                 )
-                
-                # Main annotator component
+                  # Main annotator component
                 annotator = image_annotator(
                     value=None,
                     label="Medical Image Annotator",
@@ -75,6 +91,7 @@ def create_custom_annotator_tab():
                     show_clear_button=True,
                     show_remove_button=True,
                     use_default_label=True,
+                    handles_cursor=True,  # Enable cursor handling for drag mode
                     image_type="numpy"  # Important for medical images
                 )
                 
@@ -89,9 +106,23 @@ def create_custom_annotator_tab():
                     next_btn = gr.Button("Next")
                 
                 slice_text = gr.Textbox(label="Slice", interactive=False)
-            
-            # Column 3: Annotation Controls and Management
+              # Column 3: Annotation Controls and Management
             with gr.Column(scale=1):
+                # Point Selection Section (from Editor tab)
+                gr.Markdown("### Point Selection")
+                coordinates_text = gr.Textbox(
+                    label="Selected Coordinates (x,y)",
+                    value="",
+                    interactive=False,
+                    info="Click on the image to select coordinates"
+                )
+                clear_coords_btn = gr.Button("Clear Coordinates")
+                clear_overlays_btn = gr.Button(
+                    "Clear Annotation Overlays", 
+                    variant="stop",  # Makes the button red
+                    visible=False    # Hidden by default, shown after successful annotation
+                )
+                
                 # Control panel
                 with gr.Group():
                     gr.Markdown("### Annotation Controls")
@@ -151,12 +182,13 @@ def create_custom_annotator_tab():
         with gr.Row():
             with gr.Accordion("Batch Operations", open=False):
                 batch_process_btn = gr.Button("Process Multiple Images")
-                batch_status = gr.Textbox(label="Batch Status", interactive=False)      # Component dictionary for easy access - structured like Editor tab
+                batch_status = gr.Textbox(label="Batch Status", interactive=False)    # Component dictionary for easy access - structured like Editor tab
     components = {
         'data_loading': (file_input, dir_input, load_btn, reset_dir_btn, file_browser, 
                         metadata_display, error_display, window_level, window_width, 
                         apply_window_btn, debug_btn),
         'visualization': (view_selector, prev_btn, slice_slider, next_btn, slice_text),
+        'point_selection': (coordinates_text, clear_coords_btn, clear_overlays_btn),
         'annotator': {
             'main': annotator,
             'opacity_slider': opacity_slider,
