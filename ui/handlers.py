@@ -316,8 +316,7 @@ class DataLoadingHandlers:
             window_width=window_width,
             crosshair=self.state.crosshair_position
         )
-        
-        # Convert to format expected by image_annotator
+          # Convert to format expected by image_annotator
         if len(img.shape) == 2:
             img_rgb = np.stack([img] * 3, axis=-1)
         else:
@@ -327,6 +326,7 @@ class DataLoadingHandlers:
             img_rgb = (img_rgb * 255).astype(np.uint8)
         
         # Create AnnotatedImageValue format
+        # Don't resize the image, display at full size for better annotation quality
         annotated_value = {
             "image": img_rgb,
             "boxes": [],  # Start with empty boxes

@@ -9,3 +9,5 @@ scipy>=1.10.0
 gdcm>=3.0.10
 pylibjpeg>=2.0.0
 pylibjpeg-libjpeg>=2.1.0
+opencv-python>=4.7.0
+scikit-image>=0.20.0

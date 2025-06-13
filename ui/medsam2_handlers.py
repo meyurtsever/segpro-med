@@ -471,22 +471,46 @@ class MEDSAM2Handlers:
         if "successfully" in annotation_result.lower():
             # Try to load results
             load_result, result_image = self.load_annotation_results(output_dir, processing_mode)
-            
-            # Convert result_image to annotated format if it exists
+              # Convert result_image to annotated format if it exists
             if result_image is not None:
-                # Ensure the image is in RGB format and uint8
-                if len(result_image.shape) == 2:
-                    img_rgb = np.stack([result_image] * 3, axis=-1)
-                else:
-                    img_rgb = result_image
+                # Get the original image without overlay for clean display
+                from utils.visualization import display_slice, create_annotation_boxes_from_mask
                 
+                # Get clean image
+                clean_img = display_slice(
+                    self.state.current_data,
+                    self.state.current_slice_idx,
+                    self.state.current_view,
+                    crosshair=self.state.crosshair_position
+                )
+                
+                # Ensure it's RGB and uint8
+                if len(clean_img.shape) == 2:
+                    img_rgb = np.stack([clean_img] * 3, axis=-1)
+                else:
+                    img_rgb = clean_img
                 if img_rgb.dtype != np.uint8:
                     img_rgb = (img_rgb * 255).astype(np.uint8)
                 
-                # Create AnnotatedImageValue format
+                # Convert MEDSAM2 masks to polygon shapes
+                annotation_shapes = []
+                if (hasattr(self, 'annotation_overlays') and 
+                    self.state.current_slice_idx in self.annotation_overlays):
+                    
+                    overlay_data = self.annotation_overlays[self.state.current_slice_idx]
+                    mask_array = overlay_data['mask']
+                      # Convert mask to polygon shapes for interactive editing
+                    annotation_shapes = create_annotation_boxes_from_mask(
+                        mask_array, 
+                        label="MEDSAM2 Annotation",
+                        label_index=1
+                    )
+                    logger.info(f"Converted MEDSAM2 mask to {len(annotation_shapes)} polygon shapes")
+                
+                # Create AnnotatedImageValue format with polygon shapes
                 annotated_result = {
                     "image": img_rgb,
-                    "boxes": [],  # Keep any existing annotations
+                    "boxes": annotation_shapes,  # Now contains actual polygon shapes
                     "orientation": 0
                 }
             else:

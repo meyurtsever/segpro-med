@@ -689,3 +689,133 @@ def add_coordinate_overlay(image, coordinates, view='axial'):
         draw.text((x + radius + 2, y - radius), str(i + 1), fill=(255, 255, 0), font=font)
     
     return pil_image
+
+def mask_to_polygons(mask, min_area=50, simplify_tolerance=2.0):
+    """
+    Convert a binary mask to polygon coordinates for image_annotator.
+    
+    Args:
+        mask (numpy.ndarray): Binary mask (2D array with 0s and 1s)
+        min_area (float): Minimum area for a contour to be considered
+        simplify_tolerance (float): Tolerance for polygon simplification
+        
+    Returns:
+        list: List of polygon coordinates in format expected by image_annotator
+    """
+    import numpy as np
+    
+    polygons = []
+    
+    try:
+        # Try using OpenCV first (preferred method)
+        try:
+            import cv2
+            
+            # Ensure mask is binary and uint8
+            if mask.dtype != np.uint8:
+                mask = (mask > 0).astype(np.uint8)
+            
+            # Find contours using OpenCV
+            contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            
+            for contour in contours:
+                # Filter out small contours
+                area = cv2.contourArea(contour)
+                if area < min_area:
+                    continue
+                
+                # Simplify contour to reduce number of points
+                epsilon = simplify_tolerance
+                simplified_contour = cv2.approxPolyDP(contour, epsilon, True)
+                
+                # Convert to the format expected by image_annotator
+                # Format: [[x1, y1], [x2, y2], ...]
+                if len(simplified_contour) >= 3:  # Need at least 3 points for a polygon
+                    polygon_points = []
+                    for point in simplified_contour:
+                        x, y = point[0]
+                        polygon_points.append([int(x), int(y)])
+                    
+                    polygons.append(polygon_points)
+        
+        except ImportError:
+            # Fallback to scikit-image if OpenCV is not available
+            try:
+                from skimage import measure
+                
+                # Ensure mask is binary
+                binary_mask = (mask > 0).astype(np.uint8)
+                
+                # Find contours using scikit-image
+                contours = measure.find_contours(binary_mask, 0.5)
+                
+                for contour in contours:
+                    # Filter out small contours (approximate area)
+                    if len(contour) < min_area / 10:  # Rough area estimate
+                        continue
+                    
+                    # Convert coordinates (scikit-image returns (row, col) format)
+                    polygon_points = []
+                    for point in contour[::max(1, len(contour) // 50)]:  # Subsample to reduce points
+                        y, x = point  # Note: scikit-image returns (row, col)
+                        polygon_points.append([int(x), int(y)])
+                    
+                    if len(polygon_points) >= 3:
+                        polygons.append(polygon_points)
+            
+            except ImportError:
+                print("Warning: Neither OpenCV nor scikit-image available for polygon extraction")
+                return []
+    
+    except Exception as e:
+        print(f"Error converting mask to polygons: {e}")
+        return []
+    
+    return polygons
+    
+    return polygons
+
+def create_annotation_boxes_from_mask(mask, label="MEDSAM2 Annotation", label_index=1):
+    """
+    Create polygon annotation shapes from a binary mask for image_annotator component.
+    
+    Args:
+        mask (numpy.ndarray): Binary mask
+        label (str): Label for the annotation
+        label_index (int): Index of the label
+        
+    Returns:
+        list: List of polygon annotation shapes in image_annotator format
+    """
+    polygons = mask_to_polygons(mask)
+    annotation_shapes = []
+    
+    for i, polygon in enumerate(polygons):
+        if len(polygon) >= 3:  # Valid polygon (need at least 3 points)
+            # Convert polygon coordinates to the format expected by image_annotator
+            # Format: [{"x": x1, "y": y1}, {"x": x2, "y": y2}, ...]
+            points = []
+            x_coords = []
+            y_coords = []
+            
+            for point in polygon:
+                x, y = point[0], point[1]
+                points.append({"x": int(x), "y": int(y)})
+                x_coords.append(x)
+                y_coords.append(y)
+            
+            # Create polygon shape in image_annotator format
+            polygon_shape = {
+                "type": "polygon",
+                "points": points,  # List of {"x": x, "y": y} objects
+                "label": f"{label}_{i+1}" if len(polygons) > 1 else label,
+                "color": (255, 0, 0),  # Red color for MEDSAM2 annotations
+                # Include bounding box for performance optimization
+                "xmin": int(min(x_coords)),
+                "ymin": int(min(y_coords)),
+                "xmax": int(max(x_coords)),
+                "ymax": int(max(y_coords))
+            }
+            annotation_shapes.append(polygon_shape)
+    
+    return annotation_shapes

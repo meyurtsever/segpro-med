@@ -450,27 +450,7 @@ class ImagePlotToolHandlers:
                         )
                         logger.info(f"Applied segmentation overlay to slice {self.state.current_slice_idx}")
                 except Exception as e:
-                    logger.error(f"Error applying segmentation overlay: {str(e)}")
-            
-            # Apply MEDSAM2 annotation overlay if available for current slice
-            if (self.medsam2_handlers and 
-                hasattr(self.medsam2_handlers, 'annotation_overlays') and
-                self.state.current_slice_idx in self.medsam2_handlers.annotation_overlays):
-                try:
-                    overlay_data = self.medsam2_handlers.annotation_overlays[self.state.current_slice_idx]
-                    mask_array = overlay_data['mask']
-                    
-                    img = overlay_segmentation(
-                        img,
-                        mask_array,
-                        alpha=0.4,
-                        colormap={1: [255, 0, 0]}  # Red overlay for MEDSAM2 annotations
-                    )
-                    logger.info(f"Applied MEDSAM2 annotation overlay to slice {self.state.current_slice_idx}")
-                except Exception as e:
-                    logger.error(f"Error applying MEDSAM2 annotation overlay: {str(e)}")
-            
-            # Convert to format expected by image_annotator
+                    logger.error(f"Error applying segmentation overlay: {str(e)}")            # Convert to format expected by image_annotator
             # Ensure it's RGB and uint8
             if len(img.shape) == 2:
                 # Grayscale to RGB
@@ -479,12 +459,30 @@ class ImagePlotToolHandlers:
                 img_rgb = img
             
             if img_rgb.dtype != np.uint8:
-                img_rgb = (img_rgb * 255).astype(np.uint8)
+                img_rgb = (img_rgb * 255).astype(np.uint8)            # Check for MEDSAM2 annotation overlays and convert to polygon shapes
+            annotation_shapes = []
+            if (self.medsam2_handlers and 
+                hasattr(self.medsam2_handlers, 'annotation_overlays') and
+                self.state.current_slice_idx in self.medsam2_handlers.annotation_overlays):
+                try:
+                    from utils.visualization import create_annotation_boxes_from_mask
+                    overlay_data = self.medsam2_handlers.annotation_overlays[self.state.current_slice_idx]
+                    mask_array = overlay_data['mask']
+                    
+                    # Convert mask to polygon shapes for interactive editing
+                    annotation_shapes = create_annotation_boxes_from_mask(
+                        mask_array, 
+                        label="MEDSAM2 Annotation",
+                        label_index=1
+                    )
+                    logger.info(f"Converted MEDSAM2 mask to {len(annotation_shapes)} polygon shapes for display")
+                except Exception as e:
+                    logger.error(f"Error converting MEDSAM2 annotation to polygon shapes: {str(e)}")
             
-            # Create AnnotatedImageValue format
+            # Create AnnotatedImageValue format - display at full size
             annotated_value = {
                 "image": img_rgb,
-                "boxes": [],  # Start with empty boxes, will be populated by annotations
+                "boxes": annotation_shapes,  # Include MEDSAM2 polygon shapes for interactive editing
                 "orientation": 0
             }
             
@@ -691,8 +689,8 @@ class ImagePlotToolHandlers:
     def prev_slice(self, slider_value):
         """Go to previous slice by decrementing slider value"""
         current_value = int(slider_value)
-        return max(0, current_value - 1)
-
+        return max(0, current_value - 1)    
+    
     def next_slice(self, slider_value):
         """Go to next slice by incrementing slider value"""
         if self.state.current_data is None:
@@ -701,3 +699,22 @@ class ImagePlotToolHandlers:
         current_value = int(slider_value)
         max_value = self.state.get_max_slice_for_view(self.state.current_view)
         return min(current_value + 1, max_value)
+    
+    def handle_image_remove(self):
+        """Handle image removal event from the image_annotator component.
+        This is called when the X button (Remove Image) is clicked."""
+        # Reset the current image but keep the data in state
+        # Return an empty AnnotatedImageValue with a blank image
+        logger.info("Image removal requested via X button")
+        
+        # Create a small blank/transparent image instead of None
+        import numpy as np
+        blank_image = np.zeros((100, 100, 3), dtype=np.uint8)  # Small blank RGB image
+        
+        empty_annotated_value = {
+            "image": blank_image,
+            "boxes": [],
+            "orientation": 0
+        }
+        
+        return empty_annotated_value

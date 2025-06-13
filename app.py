@@ -692,11 +692,16 @@ class SegMedPro:
                 output_dir, save_visualizations, device_selector, processing_mode, score_threshold
             )
             return status, image, gr.update(visible=success)
-        
         annotate_btn.click(
             fn=handle_annotation_workflow,
             inputs=[output_dir, save_visualizations, device_selector, processing_mode, score_threshold],
             outputs=[annotation_status, image_display, clear_overlays_btn]
+        )
+          # Handle image removal from image_annotator (X button / clear button)
+        image_display.clear(
+            fn=self.image_plot_tool_handlers.handle_image_remove,
+            inputs=[],
+            outputs=[image_display]
         )
 
 
