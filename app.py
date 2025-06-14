@@ -671,8 +671,7 @@ class SegMedPro:
             outputs=[image_display, slice_text, crosshair_info, metadata_display, window_level, window_width, slice_slider]
         )
         
-        next_btn.click(
-            fn=handle_next_navigation,
+        next_btn.click(            fn=handle_next_navigation,
             inputs=[slice_slider, image_display],
             outputs=[image_display, slice_text, crosshair_info, metadata_display, window_level, window_width, slice_slider]
         )
@@ -680,7 +679,8 @@ class SegMedPro:
         processing_mode.change(
             fn=lambda mode: gr.Slider(visible=(mode == "All Records")),
             inputs=[processing_mode],
-            outputs=[score_threshold]         )
+            outputs=[score_threshold]
+        )
         
         # Connect checkbox handlers for prompt type selection
         def handle_point_prompt_change(point_checked, box_checked):
@@ -689,70 +689,120 @@ class SegMedPro:
                 # If point is checked, uncheck box and show coordinates
                 self.medsam2_handlers.enable_point_mode()
                 return True, False, gr.update(visible=True)
-            else:
-                # If point is unchecked, hide coordinates and clear them
+            else:                # If point is unchecked, hide coordinates and clear them
                 self.medsam2_handlers.disable_point_mode()
                 self.medsam2_handlers.selected_coordinates = []  # Clear coordinates from handler state
                 return False, box_checked, gr.update(visible=False)
         
         def handle_box_prompt_change(box_checked, point_checked):
-            """Handle box prompt checkbox change - ensure mutual exclusivity and clear coords"""
+            """Handle box prompt checkbox change - ensure mutual exclusivity and enable box mode"""
             if box_checked:
-                # If box is checked, uncheck point and hide coordinates
+                # If box is checked, uncheck point, hide coordinates, and enable box mode
                 self.medsam2_handlers.disable_point_mode()
+                self.medsam2_handlers.enable_box_mode()
                 self.medsam2_handlers.selected_coordinates = []  # Clear coordinates from handler state
-                return True, False, gr.update(visible=False)
+                self.medsam2_handlers.prompt_boxes = []  # Clear any existing box prompts                # Show instructions for box mode
+                return (True, False, 
+                       gr.update(visible=True, 
+                               label="Box Prompt Status", 
+                               value="📦 Box mode enabled. Ready to capture box coordinates.\n\nSteps:\n1. Use the box tool in the image editor above\n2. Draw rectangles around regions to segment\n3. Box coordinates are automatically captured\n4. Click 'Run MEDSAM2 Annotation' when ready",
+                               info="Draw boxes on the image. Coordinates are automatically captured for MEDSAM2."))
             else:
-                # If box is unchecked, keep point state and show coordinates if point is checked
+                # If box is unchecked, disable box mode and keep point state
+                self.medsam2_handlers.disable_box_mode()
                 if point_checked:
                     self.medsam2_handlers.enable_point_mode()
+                    return (False, True, 
+                           gr.update(visible=True, 
+                                   label="Selected Coordinates (x,y)", 
+                                   value="",
+                                   info="Click on the image to select coordinates"))
                 else:
                     self.medsam2_handlers.disable_point_mode()
-                return False, point_checked, gr.update(visible=point_checked)
+                    return (False, False, 
+                           gr.update(visible=True, 
+                                   label="Mode Status", 
+                                   value="📝 Box mode disabled. Box prompts cleared. Use the clear button to remove any remaining shapes if needed.",
+                                   info="No prompt mode selected. Check Point-based or Box-based prompt to continue."))
         
         point_prompt_checkbox.change(
             fn=handle_point_prompt_change,
             inputs=[point_prompt_checkbox, box_prompt_checkbox],
-            outputs=[point_prompt_checkbox, box_prompt_checkbox, coordinates_text]
-        )
+            outputs=[point_prompt_checkbox, box_prompt_checkbox, coordinates_text]        )
         
         box_prompt_checkbox.change(
             fn=handle_box_prompt_change,
             inputs=[box_prompt_checkbox, point_prompt_checkbox],
             outputs=[box_prompt_checkbox, point_prompt_checkbox, coordinates_text]
         )
-          # Connect MEDSAM2 handlers - back to basics
+        
+        def handle_image_select_conditionally(evt: gr.SelectData):
+            """Handle image select events only when point mode is enabled, ignore in box mode"""
+            # Check if point mode is enabled
+            if (hasattr(self.medsam2_handlers, 'point_mode_enabled') and 
+                self.medsam2_handlers.point_mode_enabled and 
+                not getattr(self.medsam2_handlers, 'box_mode_enabled', False)):
+                return self.medsam2_handlers.handle_image_click(evt)
+            else:
+                # In box mode or when point mode is disabled, don't process select events at all
+                return ""
+        
+        # Connect MEDSAM2 handlers - conditional based on mode
         image_display.select(
-            fn=self.medsam2_handlers.handle_image_click,
+            fn=handle_image_select_conditionally,
             inputs=[],
             outputs=[coordinates_text]
         )
+        
+        def handle_image_annotation_change(annotated_image_value):
+            """Handle both normal annotation changes and box prompt extraction"""
+            try:
+                # First, let the normal annotation handler process the change
+                self.image_plot_tool_handlers.on_annotation_change(annotated_image_value)
+                
+                # If box mode is enabled, also extract box prompts for MEDSAM2
+                if hasattr(self.medsam2_handlers, 'box_mode_enabled') and self.medsam2_handlers.box_mode_enabled:
+                    status_msg = self.medsam2_handlers.handle_box_annotation(annotated_image_value)
+                    logger.info(f"Box annotation handled: {status_msg}")
+                
+                return None  # No outputs to avoid circular dependency
+            except Exception as e:
+                logger.error(f"Error handling image annotation change: {str(e)}")
+                return None
           # Save annotations immediately when they change (edits, deletions, additions)
         image_display.change(
-            fn=self.image_plot_tool_handlers.on_annotation_change,
+            fn=handle_image_annotation_change,
             inputs=[image_display],
             outputs=[]  # No outputs to avoid circular dependency
         )
         
+        def clear_all_prompts_and_overlays():
+            """Clear all prompts, coordinates, and annotation overlays"""
+            self.medsam2_handlers.clear_coordinates()
+            self.medsam2_handlers.prompt_boxes = []
+            status, image = self.medsam2_handlers.clear_annotation_overlays()
+            return "", status, image, gr.update(visible=False)  # Clear coordinates, update status, clear overlays, hide clear button
+        
         clear_coords_btn.click(
-            fn=self.medsam2_handlers.clear_coordinates,
+            fn=clear_all_prompts_and_overlays,
             inputs=[],
-            outputs=[coordinates_text]
+            outputs=[coordinates_text, annotation_status, image_display, clear_overlays_btn]
         )
         
         clear_overlays_btn.click(
             fn=self.medsam2_handlers.clear_annotation_overlays,
             inputs=[],
             outputs=[annotation_status, image_display]
-        )
-          # Custom wrapper function to handle the 3-tuple return and button visibility
-        def handle_annotation_workflow(output_dir, save_visualizations, device_selector, processing_mode, score_threshold):
+        )          # Custom wrapper function to handle the 3-tuple return and button visibility
+        def handle_annotation_workflow(output_dir, save_visualizations, device_selector, processing_mode, score_threshold, image_display_data):
             status, image, success = self.medsam2_handlers.run_full_annotation_workflow(
-                output_dir, save_visualizations, device_selector, processing_mode, score_threshold
+                output_dir, save_visualizations, device_selector, processing_mode, score_threshold, image_display_data
             )
             return status, image, gr.update(visible=success)
         
-        annotate_btn.click(            fn=handle_annotation_workflow,            inputs=[output_dir, save_visualizations, device_selector, processing_mode, score_threshold],
+        annotate_btn.click(
+            fn=handle_annotation_workflow,
+            inputs=[output_dir, save_visualizations, device_selector, processing_mode, score_threshold, image_display],
             outputs=[annotation_status, image_display, clear_overlays_btn]
         )
         
@@ -795,6 +845,36 @@ class SegMedPro:
             inputs=[],
             outputs=[image_display]
         )
+        
+        def update_box_instructions(prompt_type):
+            """Update instructions based on prompt type selection"""
+            if prompt_type == "Box-based Prompt":
+                return gr.update(
+                    value="📦 **BOX PROMPT MODE**: \n"
+                    "1. Draw a rectangle around the region you want to segment\n"
+                    "2. You may see a label dialog - you can ignore it or use any label\n" 
+                    "3. Click 'Run MEDSAM2 Annotation (Manual Prompts)' to segment the boxed region\n"
+                    "4. MEDSAM2 will create precise masks based on your box prompt",
+                    visible=True
+                )
+            elif prompt_type == "Point-based Prompt":
+                return gr.update(
+                    value="📍 **POINT PROMPT MODE**: \n"
+                    "1. Click points on the image to guide segmentation\n"
+                    "2. Use multiple points for better accuracy\n"
+                    "3. Click 'Run MEDSAM2 Annotation (Manual Prompts)' to segment",
+                    visible=True
+                )
+            else:  # Automatic Brain Detection
+                return gr.update(
+                    value="🧠 **AUTOMATIC MODE**: Click 'Auto-Annotate Brain Structures' for automatic brain region detection",
+                    visible=True
+                )
+
+        # Add instruction text component
+        instruction_text = gr.Markdown(
+            value="🧠 **AUTOMATIC MODE**: Click 'Auto-Annotate Brain Structures' for automatic brain region detection",
+            visible=True        )
 
 
 # Initialize and launch the application

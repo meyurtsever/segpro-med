@@ -31,7 +31,7 @@ class BrainROIDetector:
         self.eye_detection_enabled = True
         self.min_brain_area = 1000  # Minimum area for brain region
         self.min_eye_area = 100     # Minimum area for eye region
-        self.max_detected_regions = 4  # Generate exactly 4 boxes per slice
+        self.max_detected_regions = 12  # Increase to 12 boxes per slice for better coverage
         self.padding_percentage = 0.02  # Reduce padding to 2% to keep boxes tighter
         
         # Dynamic box sizing parameters based on slice position
@@ -486,9 +486,10 @@ class BrainROIDetector:
             y1 = max(0, minr + h//2 - padding)  # Adjust for lower region offset
             x2 = min(w, maxc + padding)
             y2 = min(h, maxr + h//2 + padding)
-            eyes.append((x1, y1, x2, y2))        
+            eyes.append((x1, y1, x2, y2))
+        
         return eyes
-    
+
     def generate_prompt_boxes(
         self, 
         image: np.ndarray, 
@@ -497,166 +498,106 @@ class BrainROIDetector:
         slice_index: Optional[int] = None
     ) -> List[Tuple[int, int, int, int]]:
         """
-        Generate 4 bounding box prompts inside detected brain boundaries for each slice
-        
-        Process:
-        1. Detect brain boundaries for this specific slice
-        2. Generate 4 boxes positioned inside the detected brain area
-        3. Brain detection is dynamic - coordinates change per slice
+        Generate bounding box prompts for brain structures with brain-constrained positioning
+        Enhanced version that detects brain boundary and places all boxes within brain tissue
         
         Args:
             image: Input medical image (grayscale or RGB)
             dicom_dataset: Optional DICOM dataset with metadata
-            include_eyes: Whether to include eye detection (not used in current implementation)
-            slice_index: Optional slice index for logging
+            include_eyes: Whether to include eye detection
+            slice_index: Optional slice index for caching slice characteristics
             
         Returns:
-            List of 4 bounding boxes as (x1, y1, x2, y2) tuples positioned inside brain boundaries
+            List of 12 bounding boxes as (x1, y1, x2, y2) tuples, all positioned within brain
         """
         try:
-            logger.info(f"Generating 4 brain-bounded prompts for slice {slice_index}")
-            
-            # Convert to grayscale if needed
+            # Convert to grayscale if needed for brain boundary detection
             if len(image.shape) == 3:
                 gray_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
             else:
                 gray_image = image.copy()
             
-            h, w = gray_image.shape
+            # Step 1: Detect actual brain boundary (excluding skull and background)
+            logger.info(f"Detecting brain boundary for slice {slice_index if slice_index else 'unknown'}")
+            brain_boundary = self.detect_brain_boundary(gray_image)
             
-            # STEP 1: Detect brain boundaries for this specific slice
-            brain_boundary = self.detect_brain_boundary_optimized(gray_image)
-            brain_bbox = brain_boundary['brain_bbox']  # (min_row, min_col, max_row, max_col)
+            # Step 2: Generate 12 boxes positioned ONLY inside the brain boundary
+            logger.info("Generating brain-constrained boxes")
+            brain_boxes = self.generate_brain_constrained_boxes(
+                gray_image, 
+                brain_boundary, 
+                target_boxes=12
+            )
             
-            # Extract brain region coordinates
-            brain_top = brain_bbox[0]      # min_row
-            brain_left = brain_bbox[1]     # min_col  
-            brain_bottom = brain_bbox[2]   # max_row
-            brain_right = brain_bbox[3]    # max_col
-            
-            # Calculate brain dimensions
-            brain_width = brain_right - brain_left
-            brain_height = brain_bottom - brain_top
-            brain_center_x = brain_left + brain_width // 2
-            brain_center_y = brain_top + brain_height // 2
-            
-            logger.info(f"  Brain detected at: ({brain_left}, {brain_top}) to ({brain_right}, {brain_bottom})")
-            logger.info(f"  Brain dimensions: {brain_width}x{brain_height}, center: ({brain_center_x}, {brain_center_y})")            # STEP 2: Generate 4 LARGER boxes INSIDE the detected brain area
-            # Box size should provide equivalent coverage to what 12 smaller boxes would give
-            
-            # Calculate proportional box sizes - larger to match 12-box coverage with just 4 boxes
-            target_coverage = 0.5  # Each box should cover about 50% of brain dimension (increased from 40%)
-            
-            # Base box sizes - more generous for better coverage
-            base_box_width = int(brain_width * target_coverage)
-            base_box_height = int(brain_height * target_coverage)
-            
-            # Set reasonable size limits - increased for better coverage
-            min_box_size = 80     # Increased minimum size (was 60)
-            max_box_size = 180    # Increased maximum to allow larger boxes (was 150)
-            
-            # Apply size constraints
-            box_width = max(min_box_size, min(base_box_width, max_box_size))
-            box_height = max(min_box_size, min(base_box_height, max_box_size))
-            
-            # Special handling for different brain sizes
-            if brain_width < 150 or brain_height < 150:
-                # Small brains: use even larger proportion (up to 70%) to ensure adequate coverage
-                box_width = max(min_box_size, int(brain_width * 0.7))
-                box_height = max(min_box_size, int(brain_height * 0.7))
-                logger.info(f"  Small brain detected ({brain_width}x{brain_height}), using enhanced coverage: {box_width}x{box_height}")
-            elif brain_width > 300 or brain_height > 300:
-                # Large brains: allow much bigger boxes to maintain good coverage
-                max_box_size_large = 250  # Allow much larger boxes for big brains (was 200)
-                box_width = min(base_box_width, max_box_size_large)
-                box_height = min(base_box_height, max_box_size_large)
-                logger.info(f"  Large brain detected ({brain_width}x{brain_height}), using larger boxes: {box_width}x{box_height}")
-            
-            logger.info(f"  Final box size: {box_width}x{box_height} for brain {brain_width}x{brain_height} (targeting 4 large boxes instead of 12 small ones)")
-            
-            # Calculate spacing between boxes (adaptive to brain size and box size)
-            # Use spacing that provides good coverage without too much overlap
-            spacing_x = max(brain_width // 6, box_width // 2)    # At least half-box spacing
-            spacing_y = max(brain_height // 6, box_height // 2)  # At least half-box spacing
-            
-            # Generate 4 boxes in a 2x2 grid pattern inside brain boundaries
-            brain_boxes = []
-            
-            # Top-left quadrant
-            center_1_x = brain_center_x - spacing_x // 2
-            center_1_y = brain_center_y - spacing_y // 2
-            brain_boxes.append((
-                max(brain_left, center_1_x - box_width // 2),
-                max(brain_top, center_1_y - box_height // 2),
-                min(brain_right, center_1_x + box_width // 2),
-                min(brain_bottom, center_1_y + box_height // 2)
-            ))
-            
-            # Top-right quadrant
-            center_2_x = brain_center_x + spacing_x // 2
-            center_2_y = brain_center_y - spacing_y // 2
-            brain_boxes.append((
-                max(brain_left, center_2_x - box_width // 2),
-                max(brain_top, center_2_y - box_height // 2),
-                min(brain_right, center_2_x + box_width // 2),
-                min(brain_bottom, center_2_y + box_height // 2)
-            ))
-            
-            # Bottom-left quadrant
-            center_3_x = brain_center_x - spacing_x // 2
-            center_3_y = brain_center_y + spacing_y // 2
-            brain_boxes.append((
-                max(brain_left, center_3_x - box_width // 2),
-                max(brain_top, center_3_y - box_height // 2),
-                min(brain_right, center_3_x + box_width // 2),
-                min(brain_bottom, center_3_y + box_height // 2)
-            ))
-            
-            # Bottom-right quadrant
-            center_4_x = brain_center_x + spacing_x // 2
-            center_4_y = brain_center_y + spacing_y // 2
-            brain_boxes.append((
-                max(brain_left, center_4_x - box_width // 2),
-                max(brain_top, center_4_y - box_height // 2),
-                min(brain_right, center_4_x + box_width // 2),
-                min(brain_bottom, center_4_y + box_height // 2)
-            ))
-            
-            # STEP 3: Validate and clamp boxes to ensure they're within image and brain boundaries
-            validated_boxes = []
-            for i, box in enumerate(brain_boxes):
-                x1, y1, x2, y2 = box
+            # Step 3: Add eyes if requested and if brain region is large enough for orbital structures
+            all_boxes = brain_boxes.copy()
+            if include_eyes and brain_boundary['brain_area_ratio'] > 0.15:  # Only if substantial brain tissue
+                anatomical_info = {}
+                if dicom_dataset:
+                    anatomical_info = self.extract_anatomical_info(dicom_dataset)
                 
-                # Ensure coordinates are within image bounds
+                eye_boxes = self.detect_eye_bounds(gray_image, anatomical_info)
+                # Add up to 2 eye boxes if they don't overlap significantly with brain boxes
+                for eye_box in eye_boxes[:2]:
+                    overlaps = False
+                    for brain_box in brain_boxes:
+                        if self._boxes_overlap_significantly(eye_box, brain_box, overlap_threshold=0.3):
+                            overlaps = True
+                            break
+                    if not overlaps:
+                        all_boxes.append(eye_box)
+            
+            # Ensure exactly 12 boxes by taking the first 12
+            final_boxes = all_boxes[:12]
+            
+            # If we have fewer than 12, pad with smaller boxes in remaining brain areas
+            if len(final_boxes) < 12:
+                needed = 12 - len(final_boxes)
+                additional_boxes = self._generate_small_brain_boxes(
+                    gray_image, brain_boundary, needed, existing_boxes=final_boxes
+                )
+                final_boxes.extend(additional_boxes[:needed])
+            
+            # Final validation: ensure all boxes are within image bounds
+            h, w = gray_image.shape
+            validated_boxes = []
+            for box in final_boxes:
+                x1, y1, x2, y2 = box
                 x1 = max(0, min(w-1, x1))
                 y1 = max(0, min(h-1, y1))
                 x2 = max(x1+1, min(w, x2))
                 y2 = max(y1+1, min(h, y2))
-                
-                # Ensure boxes are still within brain boundaries
-                x1 = max(brain_left, x1)
-                y1 = max(brain_top, y1)
-                x2 = min(brain_right, x2)
-                y2 = min(brain_bottom, y2)
-                
-                # Final validation - ensure positive dimensions
-                if x2 > x1 and y2 > y1:
-                    validated_boxes.append((x1, y1, x2, y2))
-                    logger.info(f"  Box {i+1}: ({x1}, {y1}, {x2}, {y2}) - size: {x2-x1}x{y2-y1}")
-                else:
-                    logger.warning(f"  Box {i+1}: Invalid dimensions, skipping")
+                validated_boxes.append((x1, y1, x2, y2))
             
-            if len(validated_boxes) == 4:
-                logger.info(f"Successfully generated 4 brain-bounded boxes for slice {slice_index}")
-            else:
-                logger.warning(f"Generated {len(validated_boxes)} boxes instead of 4 for slice {slice_index}")
+            # Ensure we have exactly 12 boxes
+            while len(validated_boxes) < 12:
+                # Add small fallback box at brain center
+                brain_center_row, brain_center_col = brain_boundary['brain_centroid']
+                center_x, center_y = int(brain_center_col), int(brain_center_row)
+                fallback_box = (
+                    max(0, center_x - 10),
+                    max(0, center_y - 10), 
+                    min(w, center_x + 10),
+                    min(h, center_y + 10)
+                )
+                validated_boxes.append(fallback_box)
             
-            return validated_boxes
+            final_boxes = validated_boxes[:12]
+            
+            logger.info(f"Generated {len(final_boxes)} brain-constrained bounding boxes")
+            return final_boxes
             
         except Exception as e:
-            logger.error(f"Error generating brain-bounded prompt boxes for slice {slice_index}: {e}")
-            # Return empty list on error rather than crashing
-            return []
+            logger.error(f"Error generating brain-constrained prompt boxes: {e}")
+            # Fallback: return 12 standard grid boxes
+            try:
+                h, w = image.shape[:2]
+                fallback_boxes = self._generate_standard_grid_boxes(h, w, 12)
+                logger.warning(f"Error in brain detection, using fallback with {len(fallback_boxes)} boxes")
+                return fallback_boxes
+            except Exception as fallback_error:
+                logger.error(f"Failed to generate any prompts: {fallback_error}")
+                return []
     
     def generate_anatomical_boxes(
         self, 
@@ -935,6 +876,7 @@ class BrainROIDetector:
         # Step 6: Analyze brain shape for intelligent box placement
         # Find brain contour for more precise boundary
         contours, _ = cv2.findContours(main_brain_mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        
         if contours:
             brain_contour = max(contours, key=cv2.contourArea)
             # Create a more precise mask using the contour
@@ -942,7 +884,8 @@ class BrainROIDetector:
             cv2.fillPoly(precise_brain_mask, [brain_contour], 255)
             precise_brain_mask = precise_brain_mask > 0
         else:
-            precise_brain_mask = main_brain_mask        
+            precise_brain_mask = main_brain_mask
+        
         boundary_info = {
             'brain_mask': precise_brain_mask,
             'brain_bbox': brain_bbox  # (min_row, min_col, max_row, max_col)
@@ -952,238 +895,22 @@ class BrainROIDetector:
         
         return boundary_info
     
-    def detect_brain_boundary_optimized(self, image: np.ndarray) -> Dict:
-        """
-        Robust brain boundary detection for dynamic brain region identification.
-        Improved to handle slices with small or unusual brain regions.
-        
-        Args:
-            image: Input medical image (grayscale)
-            
-        Returns:
-            Dictionary with brain boundary information including mask and bbox
-        """
-        h, w = image.shape[:2]
-        
-        # Convert to grayscale if needed
-        if len(image.shape) == 3:
-            gray_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-        else:
-            gray_image = image.copy()
-        
-        # Normalize image to 0-255 range
-        if gray_image.max() <= 1.0:
-            gray_image = (gray_image * 255).astype(np.uint8)
-        else:
-            gray_image = gray_image.astype(np.uint8)
-        
-        # Step 1: More robust background detection
-        # Use multiple methods to detect brain vs background
-        non_zero_pixels = gray_image[gray_image > 5]  # Exclude near-zero pixels
-        
-        if len(non_zero_pixels) > 0:
-            # Use lower percentile for background to be more inclusive
-            background_threshold = max(8, np.percentile(non_zero_pixels, 5))
-            
-            # For brain tissue, use a more conservative approach
-            # Brain tissue can vary significantly between slices
-            tissue_threshold_low = np.percentile(non_zero_pixels, 15)
-            tissue_threshold_high = np.percentile(non_zero_pixels, 90)
-            
-            # Create a more inclusive brain mask
-            brain_mask = (gray_image > background_threshold) & (gray_image < tissue_threshold_high)
-            
-            # Also include medium-intensity regions that might be brain tissue
-            medium_intensity_mask = (gray_image > tissue_threshold_low) & (gray_image < tissue_threshold_high * 0.8)
-            brain_mask = brain_mask | medium_intensity_mask
-            
-        else:
-            # Fallback if no non-zero pixels
-            brain_mask = gray_image > 10
-        
-        # Step 2: Morphological operations - more aggressive for small regions
-        # Use smaller kernels to preserve small brain regions
-        kernel_small = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2, 2))
-        kernel_medium = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4))
-        
-        # Light cleaning to remove noise but preserve small regions
-        brain_mask = cv2.morphologyEx(brain_mask.astype(np.uint8), cv2.MORPH_OPEN, kernel_small)
-        brain_mask = cv2.morphologyEx(brain_mask, cv2.MORPH_CLOSE, kernel_medium)
-        
-        # Step 3: Find connected components with improved logic
-        try:
-            from skimage import measure
-            labeled_regions = measure.label(brain_mask)
-            
-            if labeled_regions.max() > 0:
-                regions = measure.regionprops(labeled_regions)
-                
-                # More flexible region selection for problematic slices
-                valid_regions = []
-                
-                for region in regions:
-                    minr, minc, maxr, maxc = region.bbox
-                    region_width = maxc - minc
-                    region_height = maxr - minr
-                    
-                    # More lenient criteria for region validation
-                    min_area = max(h * w * 0.005, 200)  # At least 0.5% of image or 200 pixels
-                    max_area = h * w * 0.8  # At most 80% of image
-                    
-                    # Check if region is reasonable
-                    if (region.area >= min_area and region.area <= max_area and
-                        region_width >= 20 and region_height >= 20 and  # Minimum dimensions
-                        minr >= 0 and maxr <= h and minc >= 0 and maxc <= w):  # Within bounds
-                        valid_regions.append(region)
-                
-                if valid_regions:
-                    # Use the largest valid region
-                    largest_region = max(valid_regions, key=lambda r: r.area)
-                    main_brain_mask = labeled_regions == largest_region.label
-                    brain_bbox = largest_region.bbox
-                else:
-                    # If no valid regions, use the largest region regardless
-                    largest_region = max(regions, key=lambda r: r.area)
-                    main_brain_mask = labeled_regions == largest_region.label
-                    brain_bbox = largest_region.bbox
-            else:
-                # No connected components - use the mask as is
-                main_brain_mask = brain_mask
-                brain_bbox = self._calculate_fallback_brain_bbox(brain_mask, h, w)
-                
-        except ImportError:
-            # Fallback if scikit-image not available
-            main_brain_mask = brain_mask
-            brain_bbox = self._calculate_fallback_brain_bbox(brain_mask, h, w)
-        
-        # Step 4: Validate and expand brain bbox if it's too small
-        brain_bbox = self._validate_and_expand_brain_bbox(brain_bbox, h, w)
-        
-        return {
-            'brain_mask': main_brain_mask,
-            'brain_bbox': brain_bbox
-        }
-    
-    def _calculate_fallback_brain_bbox(self, brain_mask: np.ndarray, h: int, w: int) -> Tuple[int, int, int, int]:
-        """Calculate brain bounding box from mask when region analysis fails"""
-        if np.any(brain_mask):
-            rows, cols = np.where(brain_mask)
-            min_row, max_row = rows.min(), rows.max()
-            min_col, max_col = cols.min(), cols.max()
-            return (min_row, min_col, max_row, max_col)
-        else:
-            # Ultimate fallback - assume brain is in center 60% of image
-            margin_h = h // 5
-            margin_w = w // 5
-            return (margin_h, margin_w, h - margin_h, w - margin_w)
-    
-    def _validate_brain_bbox(self, brain_bbox: Tuple[int, int, int, int], h: int, w: int) -> Tuple[int, int, int, int]:
-        """Validate and adjust brain bounding box to ensure reasonable dimensions"""
-        min_row, min_col, max_row, max_col = brain_bbox
-        
-        # Ensure coordinates are within image bounds
-        min_row = max(0, min(h-1, min_row))
-        min_col = max(0, min(w-1, min_col))
-        max_row = max(min_row+1, min(h, max_row))
-        max_col = max(min_col+1, min(w, max_col))
-        
-        # Ensure minimum brain size (at least 20% of image in each dimension)
-        min_brain_height = h // 5
-        min_brain_width = w // 5
-        
-        brain_height = max_row - min_row
-        brain_width = max_col - min_col
-        
-        if brain_height < min_brain_height or brain_width < min_brain_width:
-            # Expand brain region to minimum size
-            center_row = (min_row + max_row) // 2
-            center_col = (min_col + max_col) // 2
-            
-            half_height = max(min_brain_height // 2, brain_height // 2)
-            half_width = max(min_brain_width // 2, brain_width // 2)
-            
-            min_row = max(0, center_row - half_height)
-            max_row = min(h, center_row + half_height)
-            min_col = max(0, center_col - half_width)
-            max_col = min(w, center_col + half_width)
-        
-        return (min_row, min_col, max_row, max_col)
-    
-    def _validate_and_expand_brain_bbox(self, brain_bbox: Tuple[int, int, int, int], h: int, w: int) -> Tuple[int, int, int, int]:
-        """
-        Validate and expand brain bounding box if it's too small (for problematic slices).
-        This addresses the issue where slices 7-11 have very small brain regions detected.
-        """
-        min_row, min_col, max_row, max_col = brain_bbox
-        
-        # Ensure coordinates are within image bounds
-        min_row = max(0, min(h-1, min_row))
-        min_col = max(0, min(w-1, min_col))
-        max_row = max(min_row+1, min(h, max_row))
-        max_col = max(min_col+1, min(w, max_col))
-        
-        # Calculate current dimensions
-        brain_height = max_row - min_row
-        brain_width = max_col - min_col
-        
-        # Define minimum acceptable brain dimensions
-        # More generous minimums to handle problematic slices
-        min_brain_height = max(h // 6, 80)  # At least 1/6 of image height or 80 pixels
-        min_brain_width = max(w // 6, 80)   # At least 1/6 of image width or 80 pixels
-        
-        # If brain region is too small, expand it
-        if brain_height < min_brain_height or brain_width < min_brain_width:
-            logger.info(f"Brain region too small ({brain_width}x{brain_height}), expanding to minimum size")
-            
-            # Calculate center of current brain region
-            center_row = (min_row + max_row) // 2
-            center_col = (min_col + max_col) // 2
-            
-            # Expand to minimum dimensions
-            half_height = max(min_brain_height // 2, brain_height // 2)
-            half_width = max(min_brain_width // 2, brain_width // 2)
-            
-            # Create new expanded bbox
-            new_min_row = max(0, center_row - half_height)
-            new_max_row = min(h, center_row + half_height)
-            new_min_col = max(0, center_col - half_width)
-            new_max_col = min(w, center_col + half_width)
-            
-            # Ensure we still have reasonable dimensions after clamping
-            if new_max_row - new_min_row < min_brain_height:
-                # Expand vertically if needed
-                if new_min_row > 0:
-                    new_min_row = max(0, new_max_row - min_brain_height)
-                elif new_max_row < h:
-                    new_max_row = min(h, new_min_row + min_brain_height)
-            
-            if new_max_col - new_min_col < min_brain_width:
-                # Expand horizontally if needed
-                if new_min_col > 0:
-                    new_min_col = max(0, new_max_col - min_brain_width)
-                elif new_max_col < w:
-                    new_max_col = min(w, new_min_col + min_brain_width)
-            brain_bbox = (new_min_row, new_min_col, new_max_row, new_max_col)
-            logger.info(f"Expanded brain region to: {new_max_col - new_min_col}x{new_max_row - new_min_row}")
-        
-        return brain_bbox
-    
     def generate_brain_constrained_boxes(
         self, 
         image: np.ndarray, 
         brain_boundary: Dict, 
-        target_boxes: int = 4  # Changed from 12 to 4
+        target_boxes: int = 12
     ) -> List[Tuple[int, int, int, int]]:
         """
-        Generate exactly 4 boxes positioned INSIDE the brain boundary (updated from 12)
+        Generate exactly 12 boxes positioned INSIDE the brain boundary
         
         Args:
             image: Input medical image
             brain_boundary: Brain boundary detection results
-            target_boxes: Number of boxes to generate (default 4, was 12)
+            target_boxes: Number of boxes to generate (default 12)
             
         Returns:
-            List of 4 bounding boxes positioned within brain tissue
+            List of 12 bounding boxes positioned within brain tissue
         """
         h, w = image.shape[:2]
         brain_mask = brain_boundary['brain_mask']
@@ -1199,9 +926,10 @@ class BrainROIDetector:
         box_width = max(20, brain_width // 4)
         
         boxes = []
-          # Strategy 1: Grid-based placement within brain boundary
-        # Use 2x2 grid for 4 boxes (changed from 3x4 for 12 boxes)
-        grid_rows, grid_cols = 2, 2
+        
+        # Strategy 1: Grid-based placement within brain boundary
+        # Use 3x4 grid for 12 boxes
+        grid_rows, grid_cols = 3, 4
         
         # Calculate grid step sizes with overlap
         step_row = max(box_height // 2, (brain_height - box_height) // (grid_rows - 1)) if grid_rows > 1 else 0

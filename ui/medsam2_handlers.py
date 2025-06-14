@@ -33,6 +33,8 @@ class MEDSAM2Handlers:
     def __init__(self, state):
         self.state = state
         self.selected_coordinates = []  # Store [(x, y), ...] coordinate pairs
+        self.prompt_boxes = []  # Store [{'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2}, ...] box prompts
+        self.box_mode_enabled = False  # Flag to control box-based prompts
         self.annotated_slice = None  # Store the slice number that was annotated
         self.annotation_overlays = {}  # Store overlays for each slice {slice_index: overlay_data}
         self.score_threshold = 0.3  # Default score threshold for filtering annotations
@@ -98,14 +100,14 @@ class MEDSAM2Handlers:
             logger.error(f"Error handling image click: {str(e)}")
             import traceback
             logger.error(f"Full traceback: {traceback.format_exc()}")
-            return f"Error: {str(e)}"
-    @log_exception
+            return f"Error: {str(e)}"    @log_exception
     def clear_coordinates(self) -> str:
-        """Clear all selected coordinates and reset annotated slice"""
+        """Clear all selected coordinates, prompt boxes, and reset annotated slice"""
         self.selected_coordinates = []
+        self.prompt_boxes = []
         self.annotated_slice = None  # Reset annotated slice when clearing coordinates
-        logger.info("Cleared all coordinates and reset annotated slice")
-        return ""    
+        logger.info("Cleared all coordinates, prompt boxes, and reset annotated slice")
+        return ""
     @log_exception
     def clear_annotation_overlays(self) -> Tuple[str, Optional[Dict]]:
         """Clear all annotation overlays from memory and refresh current image"""
@@ -337,21 +339,21 @@ class MEDSAM2Handlers:
                             self.state.current_view,
                             crosshair=None
                         )
-                        
-                        # Generate bounding boxes for this slice
+                          # Generate bounding boxes for this slice with dynamic sizing
                         boxes = self.brain_roi_detector.generate_prompt_boxes(
                             slice_image, 
                             dicom_ds, 
-                            include_eyes=True
+                            include_eyes=True,
+                            slice_index=i  # Pass 0-based slice index for characteristics caching
                         )
                         
                         if boxes:
-                            # Convert to MEDSAM2 format (UI slice + 1)
-                            prompt_key = str(ui_slice + 1)
+                            # Convert to MEDSAM2 format - use 1-based indexing that matches volume processing
+                            prompt_key = str(i + 1)  # Direct 1-based indexing from dataset
                             prompt_data[prompt_key] = {"boxes": boxes}
                             successful_slices += 1
                             
-                            logger.info(f"Generated {len(boxes)} automatic prompts for slice {ui_slice}")
+                            logger.info(f"Generated {len(boxes)} dynamic boxes for slice {i+1} (dataset index {i})")
                             
                     except Exception as e:
                         logger.warning(f"Failed to generate prompts for slice {i+1}: {e}")
@@ -549,20 +551,25 @@ class MEDSAM2Handlers:
                 status_msg = f"❌ Automatic brain annotation failed (return code: {result.returncode})\n"
                 if result.stderr:
                     status_msg += f"Error output:\n{result.stderr[:500]}"
-                if result.stdout:
-                    status_msg += f"\nStandard output:\n{result.stdout[:500]}"
+                if result.stdout:                    status_msg += f"\nStandard output:\n{result.stdout[:500]}"
             
             return status_msg, annotated_result, success_flag
             
         except Exception as e:
             logger.error(f"Error running automatic MEDSAM2 annotation: {str(e)}")
             return f"Error: {str(e)}", None, False
+    
     @log_exception
     def run_medsam2_annotation(self, dicom_folder: str, output_dir: str, 
                               save_visualizations: bool, device: str) -> str:
-        """Run the MEDSAM2 annotation script"""
-        if not self.selected_coordinates:
-            return "Error: No coordinates selected. Please click on the image to select points."
+        """Run the MEDSAM2 annotation script with point or box prompts"""
+        # Check if we have either point coordinates or box prompts
+        has_points = bool(self.selected_coordinates)
+        has_boxes = bool(self.prompt_boxes)
+        
+        if not has_points and not has_boxes:
+            return "Error: No prompts selected. Please either click points or draw a box for annotation."
+        
         if not dicom_folder or not os.path.exists(dicom_folder):
             return f"Error: DICOM folder not found: {dicom_folder}"
         
@@ -583,10 +590,16 @@ class MEDSAM2Handlers:
             return f"Error: Cannot access DICOM folder contents: {str(e)}"
         
         try:
-            # Generate the prompt JSON file
-            success, prompt_file_or_error = self.generate_prompt_json(dicom_folder)
+            # Generate the appropriate prompt JSON file
+            if has_boxes:
+                success, prompt_file_or_error = self.generate_box_prompt_json(dicom_folder)
+                prompt_type = "box"
+            else:
+                success, prompt_file_or_error = self.generate_prompt_json(dicom_folder)
+                prompt_type = "point"
+                
             if not success:
-                return f"Error generating prompts: {prompt_file_or_error}"
+                return f"Error generating {prompt_type} prompts: {prompt_file_or_error}"
             
             prompt_file = prompt_file_or_error
             
@@ -605,17 +618,52 @@ class MEDSAM2Handlers:
                 return f"Error: Checkpoint not found at {checkpoint_path}"
             if not os.path.exists(config_path):
                 return f"Error: Config not found at {config_path}"
+            
             cmd = [
                 "python", script_path,
                 "--dicom_folder", dicom_folder,
                 "--output_dir", output_dir,
-                "--prompt_points", prompt_file,
                 "--checkpoint", checkpoint_path,
                 "--config", config_path,
                 "--device", device,
                 "--single_slice",  # Only process the slice with prompts
                 "--quiet"  # Reduce logging for better performance
             ]
+            
+            # Add appropriate prompt argument based on type
+            if has_boxes:
+                cmd.extend(["--prompt_boxes", prompt_file])
+                logger.info(f"Using box prompts from: {prompt_file}")
+            else:
+                cmd.extend(["--prompt_points", prompt_file])
+                logger.info(f"Using point prompts from: {prompt_file}")
+            
+            if save_visualizations:
+                cmd.append("--save_visualizations")
+                
+            logger.info(f"Running MEDSAM2 command: {' '.join(cmd)}")
+            logger.info(f"Annotated slice stored: {self.annotated_slice}")
+            
+            # Run the annotation
+            result = subprocess.run(
+                cmd, 
+                capture_output=True, 
+                text=True, 
+                cwd=os.getcwd()
+            )            
+            if result.returncode == 0:
+                logger.info("MEDSAM2 annotation completed successfully")
+                # Use the same slice number for the output file
+                expected_file_slice = self.annotated_slice  # Same as UI slice with our +1 adjustment
+                slice_num_padded = str(expected_file_slice).zfill(4)
+                logger.info(f"Will look for slice_{slice_num_padded}_mask.npy for UI slice {self.annotated_slice}")
+                return f"Annotation completed successfully using {prompt_type} prompts! Results saved to: {output_dir}"
+            else:
+                logger.error(f"MEDSAM2 failed: {result.stderr}")            
+                return f"Error running MEDSAM2: {result.stderr}"
+        except Exception as e:
+            logger.error(f"Error running MEDSAM2 annotation: {str(e)}")
+            return f"Error: {str(e)}"
             
             if save_visualizations:
                 cmd.append("--save_visualizations")
@@ -714,12 +762,50 @@ class MEDSAM2Handlers:
             )
             from utils.visualization import make_image_for_gradio
             result_image = make_image_for_gradio(overlayed_img)
-            self.annotation_overlays[self.annotated_slice] = {
+            
+            # Preserve existing annotations and add new one
+            current_slice = self.annotated_slice
+            if current_slice not in self.annotation_overlays:
+                self.annotation_overlays[current_slice] = {}
+            
+            # Generate a unique annotation ID based on timestamp or existing count
+            import time
+            annotation_id = f"annotation_{int(time.time() * 1000) % 100000}"  # Last 5 digits of timestamp
+              # Store the new annotation alongside existing ones
+            self.annotation_overlays[current_slice][annotation_id] = {
                 'mask': mask_array,
                 'output_dir': output_dir,
-                'slice_idx': dicom_slice_idx
+                'slice_idx': dicom_slice_idx,
+                'timestamp': time.time()
             }
-            return f"Successfully loaded annotation for slice {self.annotated_slice} (file: slice_{slice_num_padded}_mask.npy)", result_image
+            
+            logger.info(f"Added annotation {annotation_id} to slice {current_slice}. Total annotations for this slice: {len(self.annotation_overlays[current_slice])}")
+            
+            # Now create a combined visualization showing ALL annotations for this slice
+            combined_mask = None
+            for ann_id, ann_data in self.annotation_overlays[current_slice].items():
+                if isinstance(ann_data, dict) and 'mask' in ann_data:
+                    mask = ann_data['mask']
+                    if combined_mask is None:
+                        combined_mask = mask.copy()
+                    else:
+                        # Combine masks (overlay them)
+                        combined_mask = np.maximum(combined_mask, mask)
+            
+            # Create the final overlay image with all annotations
+            if combined_mask is not None:
+                final_overlayed_img = overlay_segmentation(
+                    original_slice_img,
+                    combined_mask,
+                    alpha=0.4,
+                    colormap={1: [255, 0, 0]}
+                )
+                final_result_image = make_image_for_gradio(final_overlayed_img)
+                logger.info(f"Created combined visualization showing {len(self.annotation_overlays[current_slice])} annotations")
+            else:
+                final_result_image = result_image  # Fallback to single annotation view
+            
+            return f"Successfully loaded annotation for slice {self.annotated_slice} (file: slice_{slice_num_padded}_mask.npy). Total annotations on slice: {len(self.annotation_overlays[current_slice])}", final_result_image
         else:
             return f"Error: No mask file found for UI slice {self.annotated_slice}. Expected file 'slice_{slice_num_padded}_mask.npy'. Available files: {mask_files}", None    @log_exception
     def load_all_records_results(self, output_dir: str) -> Tuple[str, Optional[np.ndarray]]:
@@ -730,7 +816,7 @@ class MEDSAM2Handlers:
         if current_slice in self.annotation_overlays:
             overlay_data = self.annotation_overlays[current_slice]
             
-            # Handle both old format (single mask) and new format (multiple annotations)
+            # Handle both old format (single annotation) and new format (multiple annotations)
             if isinstance(overlay_data, dict) and 'mask' in overlay_data:
                 # Old format - single annotation
                 mask_array = overlay_data['mask']
@@ -803,23 +889,40 @@ class MEDSAM2Handlers:
             return dicom_folder
         else:
             logger.warning("No files in state.file_list - cannot determine DICOM folder")
-            return None
-    @log_exception
+            return None    @log_exception
     def run_full_annotation_workflow(self, output_dir: str, save_visualizations: bool, 
                                    device: str, processing_mode: str = "Single Slice", 
-                                   score_threshold: float = 0.3) -> Tuple[str, Optional[np.ndarray]]:
+                                   score_threshold: float = 0.3, image_display_data=None) -> Tuple[str, Optional[np.ndarray], bool]:
         """Run the complete annotation workflow from coordinates to results"""
-        # Validate that coordinates are selected for both modes
-        if not self.selected_coordinates:
-            return "Error: No coordinates selected. Please click on the image to select points first.", None
+        
+        # Extract boxes from image display data if in box mode
+        if self.box_mode_enabled and image_display_data:
+            self.extract_boxes_from_image_data(image_display_data)
+        
+        # Validate that coordinates or boxes are selected
+        if not self.selected_coordinates and not self.prompt_boxes:
+            return "Error: No coordinates or boxes selected. Please click on the image to select points or draw boxes first.", None, False
         
         # Store the score threshold for filtering
         self.score_threshold = score_threshold
         
+        # Log current annotation state before running new annotation
+        current_slice = self.state.current_slice_idx
+        existing_count = 0
+        if current_slice in self.annotation_overlays:
+            annotations = self.annotation_overlays[current_slice]
+            if isinstance(annotations, dict):
+                if 'mask' in annotations:
+                    existing_count = 1  # Old format
+                else:
+                    existing_count = len([k for k, v in annotations.items() if isinstance(v, dict) and 'mask' in v])
+        
+        logger.info(f"Starting annotation workflow. Current slice {current_slice} has {existing_count} existing annotations")
+        
         # Get current DICOM folder
         dicom_folder = self.get_current_dicom_folder()
         if not dicom_folder:
-            return "Error: No DICOM data loaded. Please load DICOM files first.", None
+            return "Error: No DICOM data loaded. Please load DICOM files first.", None, False
         
         # Run annotation based on processing mode
         if processing_mode == "Single Slice":
@@ -891,9 +994,20 @@ class MEDSAM2Handlers:
                 }
             else:
                 annotated_result = None
-            
-            # Clear coordinates after successful annotation
+              # Clear coordinates after successful annotation
             self.clear_coordinates()
+            
+            # Log final annotation count
+            final_count = 0
+            if current_slice in self.annotation_overlays:
+                annotations = self.annotation_overlays[current_slice]
+                if isinstance(annotations, dict):
+                    if 'mask' in annotations:
+                        final_count = 1  # Old format
+                    else:
+                        final_count = len([k for k, v in annotations.items() if isinstance(v, dict) and 'mask' in v])
+            logger.info(f"Annotation workflow completed. Slice {current_slice} now has {final_count} total annotations")
+            
             # Return tuple indicating success for UI updates
             return f"{annotation_result}\n{load_result}", annotated_result, True
         else:
@@ -1328,7 +1442,6 @@ class MEDSAM2Handlers:
         
         # Handle both old format (single annotation) and new format (multiple annotations)
         slice_data = self.annotation_overlays[slice_idx]
-        
         if isinstance(slice_data, dict) and 'mask' in slice_data:
             # Old format - single annotation
             return {'default': slice_data}
@@ -1347,3 +1460,255 @@ class MEDSAM2Handlers:
         for slice_idx in self.annotation_overlays:
             result[slice_idx] = self.get_slice_annotations(slice_idx)
         return result
+
+    def enable_box_mode(self):
+        """Enable box-based prompt mode"""
+        self.box_mode_enabled = True
+        self.point_mode_enabled = False
+        logger.info("Box mode enabled")
+    
+    def disable_box_mode(self):
+        """Disable box-based prompt mode and clear stored box prompts"""
+        self.box_mode_enabled = False
+        self.prompt_boxes = []  # Clear any stored box prompts
+        logger.info("Box mode disabled and box prompts cleared")
+    
+    def handle_box_annotation(self, annotated_image_value):
+        """Handle box annotations from the image_annotator when in box mode"""
+        try:
+            if not self.box_mode_enabled:
+                logger.info("Box mode not enabled, ignoring box annotation")
+                return "Box mode not enabled"
+            
+            if not annotated_image_value or not isinstance(annotated_image_value, dict):
+                logger.info("No valid annotation data received")
+                return "No annotation data"
+            
+            boxes = annotated_image_value.get('boxes', [])
+            if not boxes:
+                logger.info("No boxes found in annotation data")
+                self.prompt_boxes = []  # Clear if no boxes
+                return "No boxes found"
+            
+            # Store the latest box as the prompt box for MEDSAM2
+            # We'll use the most recent box as the prompt
+            latest_box = boxes[-1]  # Get the last/most recent box
+              # Convert from image_annotator format to MEDSAM2 format
+            # image_annotator actual format: {'xmin', 'ymin', 'xmax', 'ymax'}
+            # MEDSAM2 expects: [x1, y1, x2, y2]
+            if 'xmin' in latest_box and 'ymin' in latest_box and 'xmax' in latest_box and 'ymax' in latest_box:
+                x1 = latest_box['xmin']
+                y1 = latest_box['ymin']
+                x2 = latest_box['xmax']
+                y2 = latest_box['ymax']
+                
+                prompt_box = {'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2}
+                self.prompt_boxes = [prompt_box]  # Store as single box for now
+                
+                logger.info(f"Stored prompt box from coordinates: ({x1}, {y1}) to ({x2}, {y2})")
+                logger.info(f"Box details: {prompt_box}")
+                return self.update_box_prompt_display()
+            else:
+                logger.warning(f"Invalid box format: {latest_box}")
+                logger.info(f"Expected keys: xmin, ymin, xmax, ymax. Got keys: {list(latest_box.keys())}")
+                return "Invalid box format"
+                
+        except Exception as e:
+            logger.error(f"Error handling box annotation: {str(e)}")
+            return f"Error: {str(e)}"
+    
+    def clear_prompt_boxes(self):
+        """Clear all stored prompt boxes"""
+        self.prompt_boxes = []
+        logger.info("Cleared all prompt boxes")
+        return "Prompt boxes cleared"
+    @log_exception
+    def generate_box_prompt_json(self, dicom_folder: str) -> Tuple[bool, str]:
+        """Generate the brain_target_prompts.json file from selected box prompts"""
+        if not self.prompt_boxes:
+            return False, "No box prompts selected"
+            
+        if not dicom_folder or not os.path.exists(dicom_folder):
+            return False, f"DICOM folder not found: {dicom_folder}"
+        
+        try:
+            # Get current slice information from state
+            current_slice = self.state.current_slice_idx
+            logger.info(f"Current slice from state: {current_slice} (type: {type(current_slice)})")
+            
+            # Store the slice that will be annotated (keep as 1-based for UI consistency)
+            self.annotated_slice = current_slice
+            logger.info(f"Stored annotated slice: {self.annotated_slice} (UI-based)")
+            
+            # Convert box prompts to MEDSAM2 format
+            # MEDSAM2 expects boxes as [x1, y1, x2, y2] format
+            boxes = []
+            for box in self.prompt_boxes:
+                box_coords = [int(box['x1']), int(box['y1']), int(box['x2']), int(box['y2'])]
+                boxes.append(box_coords)
+            
+            # Create the prompt structure expected by MEDSAM2
+            # prompt_key = UI_slice + 1 (MEDSAM2 will convert this to 0-based by subtracting 1 internally)
+            # We add 1 to compensate for MEDSAM2's internal subtraction
+            prompt_key = str(current_slice + 1)
+            prompt_data = {
+                prompt_key: {
+                    "boxes": boxes
+                }
+            }
+            
+            # Save to brain_target_prompts.json in the project root (not in DICOM folder)
+            prompt_file = "brain_target_prompts.json"
+            with open(prompt_file, 'w') as f:
+                json.dump(prompt_data, f, indent=2)
+            
+            logger.info(f"Generated box prompt file: {prompt_file} for slice {current_slice} with {len(self.prompt_boxes)} boxes")
+            logger.info(f"Using prompt key: {prompt_key} (UI slice {current_slice} + 1) for MEDSAM2")
+            logger.info(f"Boxes: {boxes}")
+            logger.info(f"Stored annotated slice number: {self.annotated_slice}")
+            
+            return True, prompt_file
+            
+        except Exception as e:
+            logger.error(f"Error generating box prompt JSON: {str(e)}")
+            return False, f"Error: {str(e)}"
+    
+    def update_box_prompt_display(self) -> str:
+        """Update the display text for box prompts"""
+        if not self.prompt_boxes:
+            return ""
+        
+        box_descriptions = []
+        for i, box in enumerate(self.prompt_boxes):
+            x1, y1, x2, y2 = box['x1'], box['y1'], box['x2'], box['y2']
+            width = x2 - x1
+            height = y2 - y1
+            box_descriptions.append(f"Box {i+1}: ({x1},{y1}) to ({x2},{y2}) [W:{width} H:{height}]")
+        
+        return f"📦 Box prompts ready for MEDSAM2:\n" + "\n".join(box_descriptions)
+
+    def extract_boxes_from_image_data(self, image_display_data):
+        """Extract boxes from image display data and store as prompt boxes"""
+        try:
+            if not image_display_data or not isinstance(image_display_data, dict):
+                logger.info("No valid image display data")
+                return
+            
+            boxes = image_display_data.get('boxes', [])
+            if not boxes:
+                logger.info("No boxes found in image display data")
+                self.prompt_boxes = []
+                return
+              # Convert all boxes to MEDSAM2 format
+            converted_boxes = []
+            for box in boxes:
+                if 'xmin' in box and 'ymin' in box and 'xmax' in box and 'ymax' in box:
+                    x1 = box['xmin']
+                    y1 = box['ymin']
+                    x2 = box['xmax']
+                    y2 = box['ymax']
+                    
+                    prompt_box = {'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2}
+                    converted_boxes.append(prompt_box)
+                    logger.info(f"Converted box: ({x1}, {y1}) to ({x2}, {y2})")
+                else:
+                    logger.warning(f"Invalid box format: {box}")
+                    logger.info(f"Expected keys: xmin, ymin, xmax, ymax. Got keys: {list(box.keys())}")
+            
+            self.prompt_boxes = converted_boxes
+            logger.info(f"Extracted {len(converted_boxes)} boxes from image display data")
+            
+        except Exception as e:
+            logger.error(f"Error extracting boxes from image data: {str(e)}")
+    
+    def get_annotations_info(self) -> str:
+        """Get information about current annotations for debugging"""
+        if not self.annotation_overlays:
+            return "No annotations stored"
+        
+        info_lines = []
+        for slice_idx, annotations in self.annotation_overlays.items():
+            if isinstance(annotations, dict):
+                if 'mask' in annotations:
+                    # Old format - single annotation
+                    info_lines.append(f"Slice {slice_idx}: 1 annotation (old format)")
+                else:
+                    # New format - multiple annotations
+                    annotation_count = len([k for k, v in annotations.items() if isinstance(v, dict) and 'mask' in v])
+                    info_lines.append(f"Slice {slice_idx}: {annotation_count} annotations")
+                    for ann_id, ann_data in annotations.items():
+                        if isinstance(ann_data, dict) and 'mask' in ann_data:
+                            timestamp = ann_data.get('timestamp', 'unknown')
+                            info_lines.append(f"  - {ann_id} (timestamp: {timestamp})")
+        
+        return "\n".join(info_lines)
+    
+    def sync_annotations_with_ui_shapes(self, annotated_image_value):
+        """Synchronize stored annotations with current UI shapes - remove annotations for deleted shapes"""
+        try:
+            current_slice = self.state.current_slice_idx
+            if current_slice not in self.annotation_overlays:
+                return "No annotations to sync"
+            
+            # Get current boxes from UI
+            ui_boxes = []
+            if annotated_image_value and isinstance(annotated_image_value, dict):
+                boxes = annotated_image_value.get('boxes', [])
+                for box in boxes:
+                    if 'xmin' in box and 'ymin' in box and 'xmax' in box and 'ymax' in box:
+                        # Convert to our internal format for comparison
+                        ui_boxes.append({
+                            'x1': box['xmin'], 'y1': box['ymin'], 
+                            'x2': box['xmax'], 'y2': box['ymax']
+                        })
+            
+            # Get stored annotations for current slice
+            stored_annotations = self.annotation_overlays[current_slice]
+            if isinstance(stored_annotations, dict) and 'mask' in stored_annotations:
+                # Old format - single annotation, skip sync for now
+                return "Old format annotation, sync skipped"
+            
+            # Check which stored annotations no longer have corresponding UI shapes
+            annotations_to_remove = []
+            
+            for annotation_id, annotation_data in stored_annotations.items():
+                if not isinstance(annotation_data, dict) or 'mask' not in annotation_data:
+                    continue
+                
+                # For each stored annotation, check if there's a similar box in UI
+                annotation_found = False
+                
+                # We need to be flexible with matching since UI coordinates might have small variations
+                # For now, let's just count total shapes vs stored annotations
+                
+            # Simple approach: if UI has fewer boxes than stored annotations, remove excess
+            stored_count = len([k for k, v in stored_annotations.items() 
+                              if isinstance(v, dict) and 'mask' in v])
+            ui_count = len(ui_boxes)
+            
+            if ui_count < stored_count:
+                # Some annotations were deleted - remove the oldest ones
+                # Sort by timestamp and remove oldest
+                timestamped_annotations = []
+                for ann_id, ann_data in stored_annotations.items():
+                    if isinstance(ann_data, dict) and 'mask' in ann_data:
+                        timestamp = ann_data.get('timestamp', 0)
+                        timestamped_annotations.append((timestamp, ann_id))
+                
+                # Sort by timestamp (oldest first)
+                timestamped_annotations.sort()
+                
+                # Remove the oldest annotations to match UI count
+                annotations_to_remove = timestamped_annotations[:stored_count - ui_count]
+                
+                for _, ann_id in annotations_to_remove:
+                    del stored_annotations[ann_id]
+                    logger.info(f"Removed annotation {ann_id} from slice {current_slice} due to shape deletion")
+                
+                return f"Removed {len(annotations_to_remove)} annotations to match UI shapes"
+            
+            return f"Sync complete: {stored_count} stored, {ui_count} UI shapes"
+            
+        except Exception as e:
+            logger.error(f"Error syncing annotations with UI shapes: {str(e)}")
+            return f"Sync error: {str(e)}"

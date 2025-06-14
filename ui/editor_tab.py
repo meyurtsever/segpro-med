@@ -116,7 +116,7 @@ def create_editor_tab() -> dict:
                     info="Click on the image to select coordinates",
                     visible=False  # Initially hidden until point-based is selected
                 )
-                clear_coords_btn = gr.Button("Clear Coordinates")
+                clear_coords_btn = gr.Button("Clear Coordinates & Prompts")
                 clear_overlays_btn = gr.Button(
                     "Clear Annotation Overlays", 
                     variant="stop",  # Makes the button red
