@@ -96,14 +96,25 @@ class CustomAnnotatorHandlers:
                 image_rgb = np.stack([image_normalized] * 3, axis=-1)
             else:
                 image_rgb = image_normalized
-                
-            # Create the annotation value for the plugin
-            annotation_value = {
-                "image": image_rgb,
-                "boxes": []  # Start with no annotations
-            }
+                  # Check if we have saved annotations for this slice/view combination
+            saved_annotations = self.state.get_slice_annotations(current_view, current_slice)
             
-            logger.info(f"Loaded medical slice {current_slice} ({current_view}) with shape: {image_rgb.shape}")
+            # Create the annotation value for the plugin
+            if saved_annotations and 'boxes' in saved_annotations:
+                # Use saved annotations
+                annotation_value = {
+                    "image": image_rgb,
+                    "boxes": saved_annotations['boxes']
+                }
+                logger.info(f"Loaded medical slice {current_slice} ({current_view}) with {len(saved_annotations['boxes'])} saved annotations")
+            else:
+                # Start with no annotations
+                annotation_value = {
+                    "image": image_rgb,
+                    "boxes": []
+                }
+                logger.info(f"Loaded medical slice {current_slice} ({current_view}) with no saved annotations")
+            
             return annotation_value
             
         except Exception as e:

@@ -58,6 +58,16 @@ class AppState:
             8: [128, 0, 128]   # Label 8 (Purple)
         }
         
+        # Image viewer state (used by image_viewer_handlers)
+        self.image_viewer_tool: str = "pan"
+        
+        # Window/level settings
+        self.window_level: float = 500.0
+        self.window_width: float = 1000.0
+        
+        # Track which annotations are saved for which slice/view combinations
+        self.slice_annotations: Dict[str, Any] = {}  # Key: "{view}_{slice_idx}", Value: annotation_data
+        
         # Tab-specific segmentation display flags (default false for editor tab)
         self.show_segmentation_in_viewer: bool = True   # Default true for viewer tab
         self.show_segmentation_in_editor: bool = False  # Default false for editor tab as requested
@@ -164,6 +174,27 @@ class AppState:
             return None
         
         return None
+    
+    def save_slice_annotations(self, view: str, slice_idx: int, annotation_data: Dict[str, Any]) -> None:
+        """Save annotations for a specific slice and view"""
+        key = f"{view.lower()}_{slice_idx}"
+        self.slice_annotations[key] = annotation_data
+        logger.info(f"Saved annotations for {key}: {len(annotation_data.get('boxes', []))} boxes")
+    
+    def get_slice_annotations(self, view: str, slice_idx: int) -> Optional[Dict[str, Any]]:
+        """Get saved annotations for a specific slice and view"""
+        key = f"{view.lower()}_{slice_idx}"
+        return self.slice_annotations.get(key)
+    
+    def has_slice_annotations(self, view: str, slice_idx: int) -> bool:
+        """Check if there are saved annotations for a specific slice and view"""
+        key = f"{view.lower()}_{slice_idx}"
+        return key in self.slice_annotations
+    
+    def clear_all_annotations(self) -> None:
+        """Clear all saved annotations"""
+        self.slice_annotations.clear()
+        logger.info("Cleared all slice annotations")
 
 # Singleton instance
 _app_state = None

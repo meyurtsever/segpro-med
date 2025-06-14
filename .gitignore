@@ -188,6 +188,7 @@ logs/
 # medical data
 cvm_48_t1/
 cvm_t1/
+cvm (7)/
 dist_custom_annotator/
 brain_target_results/
 brain_target_prompts.json

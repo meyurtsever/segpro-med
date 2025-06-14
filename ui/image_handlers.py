@@ -344,7 +344,15 @@ class ImagePlotToolHandlers:
         # Store user annotations across all slices {slice_idx: [list_of_annotation_boxes]}
         self.user_annotations = {}
         # Store combined annotations (MEDSAM2 + user) for each slice
-        self.combined_annotations = {}
+        self.combined_annotations = {}        # Track if we're currently loading a slice to prevent saving during load
+        self._loading_slice = False
+        # Store fingerprints of loaded annotations to detect actual changes
+        self._loaded_fingerprints = {}  # {slice_idx: annotation_fingerprint}        # Add a lock to prevent race conditions during fast navigation
+        self._navigation_lock = False
+        # Track the last slice we were saving to prevent conflicts
+        self._last_saved_slice = None
+        # Track last save time to prevent rapid saves
+        self._last_save_time = 0
     
     def update_plot_tool(self, tool_name):
         """Since we're using gr.Image now, this method just returns the current image"""
@@ -389,6 +397,11 @@ class ImagePlotToolHandlers:
         """Update slice for image_annotator component - returns AnnotatedImageValue format"""
         if self.state.current_data is None:
             return None, "0/0", "x: 0, y: 0, z: 0", {}, None, None
+          # Set loading flag to prevent saving during slice load
+        self._loading_slice = True
+        
+        # Add a small delay to help prevent race conditions during fast navigation
+        time.sleep(0.05)  # 50ms delay
         
         logger.info(f"Updating slice for annotator: value={slider_value}, view={view_type}")
         
@@ -468,53 +481,64 @@ class ImagePlotToolHandlers:
                 img_rgb = img
             
             if img_rgb.dtype != np.uint8:
-                img_rgb = (img_rgb * 255).astype(np.uint8)            # Check for MEDSAM2 annotation overlays and convert to polygon shapes
+                img_rgb = (img_rgb * 255).astype(np.uint8)            # Check for annotation overlays and convert to polygon shapes
             annotation_shapes = []
+              # Check if user has edited annotations for this slice
+            has_user_annotations = self.state.current_slice_idx in self.user_annotations
+            user_annotation_count = len(self.user_annotations.get(self.state.current_slice_idx, []))
             
-            # Load MEDSAM2 annotations for current slice
-            if (self.medsam2_handlers and 
-                hasattr(self.medsam2_handlers, 'annotation_overlays') and
-                self.state.current_slice_idx in self.medsam2_handlers.annotation_overlays):
-                try:
-                    from utils.visualization import create_annotation_boxes_from_mask
-                    overlay_data = self.medsam2_handlers.annotation_overlays[self.state.current_slice_idx]
-                    
-                    # Handle both old format (single mask) and new format (multiple annotations)
-                    if isinstance(overlay_data, dict) and 'mask' in overlay_data:
-                        # Old format - single annotation
-                        mask_array = overlay_data['mask']
-                        medsam2_shapes = create_annotation_boxes_from_mask(
-                            mask_array, 
-                            label="MEDSAM2 Annotation",
-                            label_index=1
-                        )
-                        annotation_shapes.extend(medsam2_shapes)
-                    else:
-                        # New format - multiple annotations per slice
-                        for annotation_id, annotation_data in overlay_data.items():
-                            if isinstance(annotation_data, dict) and 'mask' in annotation_data:
-                                mask_array = annotation_data['mask']
-                                shapes = create_annotation_boxes_from_mask(
-                                    mask_array, 
-                                    label=f"MEDSAM2 {annotation_id}",
-                                    label_index=1
-                                )
-                                annotation_shapes.extend(shapes)
-                    
-                    logger.info(f"Loaded {len(annotation_shapes)} MEDSAM2 annotations for slice {self.state.current_slice_idx}")
-                except Exception as e:
-                    logger.error(f"Error converting MEDSAM2 annotation to polygon shapes: {str(e)}")
+            logger.info(f"Slice {self.state.current_slice_idx}: has_user_annotations={has_user_annotations}, count={user_annotation_count}")
+            
+            if has_user_annotations and user_annotation_count > 0:
+                # Load user annotations (these replace MEDSAM2 annotations completely)
+                user_annotation_objects = self.user_annotations[self.state.current_slice_idx]
+                # Extract the actual annotation data from the stored user annotation objects
+                for user_ann in user_annotation_objects:
+                    if isinstance(user_ann, dict) and 'data' in user_ann:
+                        annotation_shapes.append(user_ann['data'])
+                    else:                        # For backward compatibility, if it's not in the expected format
+                        annotation_shapes.append(user_ann)
+                
+                logger.info(f"Loaded {len(user_annotation_objects)} user annotations for slice {self.state.current_slice_idx} (replaces MEDSAM2)")
+            elif has_user_annotations and user_annotation_count == 0:
+                # User has explicitly deleted all annotations on this slice - show empty
+                logger.info(f"Slice {self.state.current_slice_idx} has user deletions - showing empty slice")
+            else:                # Load original MEDSAM2 annotations only if user hasn't edited them
+                if (self.medsam2_handlers and 
+                    hasattr(self.medsam2_handlers, 'annotation_overlays') and
+                    self.state.current_slice_idx in self.medsam2_handlers.annotation_overlays):
+                    try:
+                        from utils.visualization import create_annotation_boxes_from_mask
+                        overlay_data = self.medsam2_handlers.annotation_overlays[self.state.current_slice_idx]
+                        
+                        # Handle both old format (single mask) and new format (multiple annotations)
+                        if isinstance(overlay_data, dict) and 'mask' in overlay_data:
+                            # Old format - single annotation
+                            mask_array = overlay_data['mask']
+                            medsam2_shapes = create_annotation_boxes_from_mask(
+                                mask_array, 
+                                label="MEDSAM2 Annotation",
+                                label_index=1
+                            )
+                            annotation_shapes.extend(medsam2_shapes)
+                        else:
+                            # New format - multiple annotations per slice
+                            for annotation_id, annotation_data in overlay_data.items():
+                                if isinstance(annotation_data, dict) and 'mask' in annotation_data:
+                                    mask_array = annotation_data['mask']
+                                    shapes = create_annotation_boxes_from_mask(
+                                        mask_array, 
+                                        label=f"MEDSAM2 {annotation_id}",
+                                        label_index=1
+                                    )
+                                    annotation_shapes.extend(shapes)
+                        
+                        logger.info(f"Loaded {len(annotation_shapes)} original MEDSAM2 annotations for slice {self.state.current_slice_idx}")
+                    except Exception as e:
+                        logger.error(f"Error converting MEDSAM2 annotation to polygon shapes: {str(e)}")
                     logger.error(f"Overlay data structure: {type(overlay_data)}")
                     if isinstance(overlay_data, dict):
-                        logger.error(f"Overlay data keys: {list(overlay_data.keys())}")
-            
-            # Load user annotations for current slice
-            if self.state.current_slice_idx in self.user_annotations:
-                user_shapes = self.user_annotations[self.state.current_slice_idx]
-                annotation_shapes.extend(user_shapes)
-                logger.info(f"Loaded {len(user_shapes)} user annotations for slice {self.state.current_slice_idx}")
-            
-            # Store combined annotations for this slice
+                        logger.error(f"Overlay data keys: {list(overlay_data.keys())}")            # Store combined annotations for this slice
             self.combined_annotations[self.state.current_slice_idx] = annotation_shapes.copy()
             
             logger.info(f"Total annotations for slice {self.state.current_slice_idx}: {len(annotation_shapes)}")
@@ -526,21 +550,29 @@ class ImagePlotToolHandlers:
                 "orientation": 0
             }
             
+            # Store the fingerprint of what we just loaded to detect future user changes
+            loaded_fingerprint = self._get_annotation_fingerprint(annotated_value)
+            self._loaded_fingerprints[self.state.current_slice_idx] = loaded_fingerprint
+            logger.info(f"Stored loaded fingerprint for slice {self.state.current_slice_idx}: '{loaded_fingerprint}'")
+            
             logger.info(f"Generated annotated slice image with shape {img_rgb.shape}")
             
             # Update crosshair info
             x, y, z = self.state.crosshair_position
             crosshair_text = f"x: {x}, y: {y}, z: {z}"
-            
-            # Default values for window center and width if not found
+              # Default values for window center and width if not found
             if window_center is None:
                 window_center = 500
             if window_width is None:
                 window_width = 1000
             
+            # Clear loading flag before returning
+            self._loading_slice = False
             return annotated_value, f"{self.state.current_slice_idx + 1}/{total_slices}", crosshair_text, metadata, window_center, window_width
         except Exception as e:
             logger.error(f"Error generating annotated slice image: {str(e)}")
+            # Clear loading flag before returning
+            self._loading_slice = False
             return None, f"Error: {str(e)}", "x: 0, y: 0, z: 0", {}, None, None
 
     def change_view_for_annotator(self, view):
@@ -839,7 +871,22 @@ class ImagePlotToolHandlers:
             if slice_idx is None:
                 slice_idx = self.state.current_slice_idx
             
-            logger.info(f"Saving annotations for slice {slice_idx}")
+            logger.info(f"Checking if annotations need saving for slice {slice_idx}")
+            
+            # Generate fingerprint of current annotation state
+            current_fingerprint = self._get_annotation_fingerprint(annotated_image_value)
+            
+            # Check if we have a stored fingerprint for this slice (from when we loaded it)
+            stored_fingerprint = self._loaded_fingerprints.get(slice_idx, None)
+            
+            logger.info(f"Slice {slice_idx}: current_fingerprint='{current_fingerprint}', stored_fingerprint='{stored_fingerprint}'")
+            
+            # Only save if the annotation has actually changed from what we loaded
+            if current_fingerprint == stored_fingerprint:
+                logger.info(f"No changes detected for slice {slice_idx} - skipping save")
+                return
+            
+            logger.info(f"Changes detected - saving annotations for slice {slice_idx}")
             
             # Always clear existing user annotations for this slice first
             # This ensures deletions are properly handled
@@ -849,6 +896,8 @@ class ImagePlotToolHandlers:
             
             if annotated_image_value is None:
                 logger.info(f"No annotations to save for slice {slice_idx}")
+                # Update stored fingerprint to reflect empty state
+                self._loaded_fingerprints[slice_idx] = current_fingerprint
                 return
             
             # Extract annotations from the AnnotatedImageValue
@@ -860,7 +909,7 @@ class ImagePlotToolHandlers:
             elif isinstance(annotated_image_value, dict) and 'boxes' in annotated_image_value:
                 annotations = annotated_image_value['boxes']
             elif isinstance(annotated_image_value, dict) and 'annotations' in annotated_image_value:
-                annotations = annotated_image_value['annotations']
+                annotations = annotated_image_value['annotations']            
             else:
                 logger.warning(f"Unknown annotation format: {type(annotated_image_value)}")
                 return
@@ -889,8 +938,13 @@ class ImagePlotToolHandlers:
                     else:
                         logger.info(f"  Annotation {i}: {type(ann_data)}")
             else:
-                logger.info(f"No annotations found in image value for slice {slice_idx}")
-                
+                # Save empty list to indicate user explicitly deleted all annotations
+                self.user_annotations[slice_idx] = []
+                logger.info(f"Saved empty annotation list for slice {slice_idx} (user deleted all annotations)")
+            
+            # Update stored fingerprint to reflect the new saved state
+            self._loaded_fingerprints[slice_idx] = current_fingerprint
+            
         except Exception as e:
             logger.error(f"Error saving user annotations for slice {slice_idx}: {e}")
             import traceback
@@ -911,19 +965,40 @@ class ImagePlotToolHandlers:
             
             logger.info(f"Retrieved {len(all_annotations)} total annotations for slice {slice_idx}")
             return all_annotations
-            
         except Exception as e:
             logger.error(f"Error getting all annotations for slice {slice_idx}: {e}")
             return []
-
+    
     def on_annotation_change(self, annotated_image_value):
         """Handle annotation changes in the ImageAnnotator component"""
         try:
+            # Skip saving if we're currently loading a slice or navigating
+            if self._loading_slice or self._navigation_lock:
+                logger.info(f"Skipping annotation save during slice load or navigation (loading={self._loading_slice}, nav_lock={self._navigation_lock})")
+                return None
+            
             current_slice = self.state.current_slice_idx
             logger.info(f"Processing annotation change for slice {current_slice}")
             
+            # Additional protection: don't save if this is the same slice we just processed
+            if (self._last_saved_slice is not None and 
+                current_slice != self._last_saved_slice and 
+                time.time() - getattr(self, '_last_save_time', 0) < 0.5):
+                logger.info(f"Skipping save - slice changed too quickly from {self._last_saved_slice} to {current_slice}")
+                return None
+            
+            # Additional debug: log the source of the change
+            if annotated_image_value:
+                if isinstance(annotated_image_value, dict) and 'boxes' in annotated_image_value:
+                    box_count = len(annotated_image_value.get('boxes', []))
+                    logger.info(f"Annotation change contains {box_count} boxes")
+            
             # Save current annotations immediately - this handles deletions, edits, additions
             self.save_user_annotations(annotated_image_value, current_slice)
+            
+            # Track the save operation
+            self._last_saved_slice = current_slice
+            self._last_save_time = time.time()
             
             # Log change details for debugging
             if annotated_image_value:
@@ -935,27 +1010,43 @@ class ImagePlotToolHandlers:
                     current_count = 0
                     
                 logger.info(f"Saved {current_count} annotations for slice {current_slice}")
-            
-            # Return the current value to maintain the interface
-            # Don't reload - this prevents losing user edits in progress
-            return annotated_image_value
+              # Don't return anything to avoid circular dependency with image_display.change
+            return None
             
         except Exception as e:
             logger.error(f"Error handling annotation change: {e}")
-            return annotated_image_value
-    
+            return None
+
     def handle_annotator_slider_change(self, slider_value, current_annotated_value=None):
         """Handle slider changes in the annotator - save current annotations and load new slice"""
         try:
-            # Save current annotations if provided
+            # Set navigation lock to prevent race conditions
+            if self._navigation_lock:
+                logger.info(f"Navigation already in progress, skipping slider change to {slider_value}")
+                return None, f"{slider_value}/0", "x: 0, y: 0, z: 0", {}, None, None
+            
+            self._navigation_lock = True
+            logger.info(f"Starting slider navigation to slice {slider_value}")
+            
+            # Save current annotations if provided - use the CURRENT slice before it changes
             if current_annotated_value is not None:
-                self.save_user_annotations(current_annotated_value)
+                previous_slice_idx = self.state.current_slice_idx  # This is the slice we're leaving
+                logger.info(f"Saving annotations for previous slice {previous_slice_idx} before moving to slice {slider_value}")
+                self.save_user_annotations(current_annotated_value, previous_slice_idx)
             
             # Update to new slice
-            return self.update_slice_for_annotator(slider_value, self.state.current_view)
+            result = self.update_slice_for_annotator(slider_value, self.state.current_view)
+            
+            # Clear navigation lock
+            self._navigation_lock = False
+            logger.info(f"Completed slider navigation to slice {slider_value}")
+            
+            return result
             
         except Exception as e:
             logger.error(f"Error handling annotator slider change: {e}")
+            # Clear navigation lock on error
+            self._navigation_lock = False
             # Return current state if error occurs
             if current_annotated_value is not None:
                 return current_annotated_value, f"{slider_value}/0", "x: 0, y: 0, z: 0", {}, None, None
@@ -965,9 +1056,19 @@ class ImagePlotToolHandlers:
     def handle_annotator_navigation(self, direction, current_slider_value, current_annotated_value=None):
         """Handle navigation buttons (prev/next) in the annotator"""
         try:
-            # Save current annotations if provided
+            # Set navigation lock to prevent race conditions during fast clicking
+            if self._navigation_lock:
+                logger.info(f"Navigation already in progress, skipping {direction} navigation")
+                return (None, f"{current_slider_value}/0", "x: 0, y: 0, z: 0", {}, None, None), current_slider_value
+            
+            self._navigation_lock = True
+            logger.info(f"Starting {direction} navigation from slice {current_slider_value}")
+            
+            # Save current annotations if provided - use the CURRENT slice before it changes
             if current_annotated_value is not None:
-                self.save_user_annotations(current_annotated_value)
+                previous_slice_idx = self.state.current_slice_idx  # This is the slice we're leaving
+                logger.info(f"Saving annotations for previous slice {previous_slice_idx} before navigation")
+                self.save_user_annotations(current_annotated_value, previous_slice_idx)
             
             # Calculate new slider value
             if direction == "next":
@@ -978,48 +1079,50 @@ class ImagePlotToolHandlers:
                 new_value = current_slider_value
             
             # Update to new slice
-            return self.update_slice_for_annotator(new_value, self.state.current_view), new_value
+            result = self.update_slice_for_annotator(new_value, self.state.current_view), new_value
+            
+            # Clear navigation lock
+            self._navigation_lock = False
+            logger.info(f"Completed {direction} navigation to slice {new_value}")
+            
+            return result
             
         except Exception as e:
             logger.error(f"Error handling annotator navigation: {e}")
+            # Clear navigation lock on error
+            self._navigation_lock = False
             return (None, f"{current_slider_value}/0", "x: 0, y: 0, z: 0", {}, None, None), current_slider_value
 
     def debug_annotation_state(self):
         """Debug method to show current annotation state"""
-        try:
-            logger.info("=== ANNOTATION DEBUG STATE ===")
-            logger.info(f"Current slice: {self.state.current_slice_idx}")
-            
-            # Check MEDSAM2 annotations
-            if (self.medsam2_handlers and 
-                hasattr(self.medsam2_handlers, 'annotation_overlays')):
-                medsam2_overlays = self.medsam2_handlers.annotation_overlays
-                logger.info(f"MEDSAM2 overlays available for slices: {list(medsam2_overlays.keys())}")
-                
-                for slice_idx, overlay_data in medsam2_overlays.items():
-                    if isinstance(overlay_data, dict) and 'mask' in overlay_data:
-                        logger.info(f"  Slice {slice_idx}: Single annotation (old format)")
-                    else:
-                        count = len([k for k, v in overlay_data.items() 
-                                   if isinstance(v, dict) and 'mask' in v])
-                        logger.info(f"  Slice {slice_idx}: {count} annotations (new format)")
-            else:
-                logger.info("No MEDSAM2 handler or overlays available")
-            
-            # Check user annotations
-            logger.info(f"User annotations available for slices: {list(self.user_annotations.keys())}")
-            for slice_idx, annotations in self.user_annotations.items():
-                logger.info(f"  Slice {slice_idx}: {len(annotations)} user annotations")
-            
-            # Check combined annotations
-            logger.info(f"Combined annotations available for slices: {list(self.combined_annotations.keys())}")
-            for slice_idx, annotations in self.combined_annotations.items():
-                logger.info(f"  Slice {slice_idx}: {len(annotations)} combined annotations")
-            
-            logger.info("=== END ANNOTATION DEBUG ===")
-            
-        except Exception as e:
-            logger.error(f"Error in debug_annotation_state: {e}")
+        logger.info("=== ANNOTATION DEBUG STATE ===")
+        logger.info(f"Current slice: {self.state.current_slice_idx}")
+        logger.info(f"User annotations stored for slices: {list(self.user_annotations.keys())}")
+        
+        for slice_idx, annotations in self.user_annotations.items():
+            logger.info(f"Slice {slice_idx}: {len(annotations)} annotations")
+            for i, ann in enumerate(annotations):
+                if isinstance(ann, dict):
+                    ann_type = ann.get('type', 'unknown')
+                    timestamp = ann.get('timestamp', 'no timestamp')
+                    logger.info(f"  Annotation {i}: {ann_type} at {timestamp}")
+                else:
+                    logger.info(f"  Annotation {i}: {type(ann)}")
+        
+        logger.info("=== END ANNOTATION DEBUG ===")
+        return f"Debug info logged. User annotations on {len(self.user_annotations)} slices."
+
+    def debug_fingerprint_state(self):
+        """Debug method to show current fingerprint state"""
+        logger.info("=== FINGERPRINT DEBUG STATE ===")
+        logger.info(f"Current slice: {self.state.current_slice_idx}")
+        logger.info(f"Stored fingerprints for slices: {list(self._loaded_fingerprints.keys())}")
+        
+        for slice_idx, fingerprint in self._loaded_fingerprints.items():
+            logger.info(f"Slice {slice_idx}: fingerprint='{fingerprint}'")
+        
+        logger.info("=== END FINGERPRINT DEBUG ===")
+        return f"Debug info logged. Fingerprints stored for {len(self._loaded_fingerprints)} slices."
 
     def get_annotation_status_message(self):
         """Get a status message about current annotations"""
@@ -1059,3 +1162,83 @@ class ImagePlotToolHandlers:
         except Exception as e:
             logger.error(f"Error getting annotation status: {e}")
             return f"Annotation status error: {str(e)}"
+    
+    def get_annotation_mode_for_slice(self, slice_idx: int) -> str:
+        """Debug method to check annotation mode for a slice"""
+        if slice_idx in self.user_annotations:
+            return f"USER_EDITED ({len(self.user_annotations[slice_idx])} annotations)"
+        elif (self.medsam2_handlers and 
+              hasattr(self.medsam2_handlers, 'annotation_overlays') and
+              slice_idx in self.medsam2_handlers.annotation_overlays):
+            return "ORIGINAL_MEDSAM2"
+        else:            return "NO_ANNOTATIONS"
+    
+    def _get_annotation_fingerprint(self, annotated_image_value):
+        """Generate a fingerprint of annotation data to detect changes"""
+        if not annotated_image_value:
+            return "empty"
+        
+        try:
+            if isinstance(annotated_image_value, dict) and 'boxes' in annotated_image_value:
+                boxes = annotated_image_value.get('boxes', [])
+                # Create a detailed fingerprint based on all annotation properties
+                fingerprint_data = []
+                for box in boxes:
+                    if isinstance(box, dict):
+                        # Extract key properties that uniquely identify the annotation
+                        box_info = {
+                            'type': box.get('type', ''),
+                            'label': box.get('label', ''),
+                            'color': box.get('color', ''),
+                            'coordinates': str(box.get('coordinates', box.get('points', []))),
+                        }
+                        # Add any other properties that might be relevant
+                        if 'stroke' in box:
+                            box_info['stroke'] = box['stroke']
+                        if 'fill' in box:
+                            box_info['fill'] = box['fill']
+                        
+                        fingerprint_data.append(str(sorted(box_info.items())))
+                
+                fingerprint = f"boxes:{len(boxes)}|" + "|".join(sorted(fingerprint_data))
+                return fingerprint
+            
+            return f"unknown_format:{type(annotated_image_value)}"
+        except Exception as e:
+            logger.error(f"Error creating annotation fingerprint: {e}")
+            return f"error:{str(e)}"
+    
+    def clear_user_annotations_for_slice(self, slice_idx: int):
+        """Clear user annotations for a specific slice and reset to MEDSAM2 state"""
+        try:
+            if slice_idx in self.user_annotations:
+                del self.user_annotations[slice_idx]
+                logger.info(f"Cleared user annotations for slice {slice_idx}")
+            
+            # Also clear the fingerprint so the slice can be reloaded fresh
+            if slice_idx in self._loaded_fingerprints:
+                del self._loaded_fingerprints[slice_idx]
+                logger.info(f"Cleared fingerprint for slice {slice_idx}")
+            
+            return f"Cleared user annotations for slice {slice_idx}"
+        except Exception as e:
+            logger.error(f"Error clearing user annotations for slice {slice_idx}: {e}")
+            return f"Error clearing annotations: {str(e)}"
+    
+    def reset_navigation_state(self):
+        """Reset navigation locks if they get stuck - emergency method"""
+        logger.info("Resetting navigation state - clearing locks")
+        self._loading_slice = False
+        self._navigation_lock = False
+        self._last_save_time = 0
+        return "Navigation state reset successfully"
+    
+    def get_navigation_status(self):
+        """Get current navigation status for debugging"""
+        return {
+            "loading_slice": self._loading_slice,
+            "navigation_lock": self._navigation_lock,
+            "last_saved_slice": self._last_saved_slice,
+            "last_save_time": self._last_save_time,
+            "current_slice": self.state.current_slice_idx
+        }

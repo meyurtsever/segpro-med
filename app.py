@@ -628,11 +628,10 @@ class SegMedPro:
             fn=self.data_handlers.debug_selected_file,
             inputs=[file_input, dir_input],
             outputs=[error_display]
-        )
-          # Viewer handlers (using annotator-specific methods)
+        )        # Viewer handlers (using annotator-specific methods)
         slice_slider.change(
-            fn=self.image_plot_tool_handlers.update_slice_for_annotator,
-            inputs=[slice_slider, view_selector],
+            fn=self.image_plot_tool_handlers.handle_annotator_slider_change,
+            inputs=[slice_slider, image_display],
             outputs=[image_display, slice_text, crosshair_info, metadata_display, window_level, window_width]
         )
         view_selector.change(
@@ -649,16 +648,33 @@ class SegMedPro:
             fn=self.image_plot_tool_handlers.select_file_from_browser_for_annotator,
             inputs=[file_browser],
             outputs=[image_display, slice_text, crosshair_info, metadata_display, slice_slider, window_level, window_width]        )
+          # Navigation buttons with annotation saving
+        def handle_prev_navigation(current_slider_value, current_annotated_value):
+            """Handle previous button click with annotation saving"""
+            result_tuple, new_slider_value = self.image_plot_tool_handlers.handle_annotator_navigation(
+                "prev", current_slider_value, current_annotated_value
+            )
+            # result_tuple contains (image_display, slice_text, crosshair_info, metadata, window_level, window_width)
+            return result_tuple + (new_slider_value,)
+        
+        def handle_next_navigation(current_slider_value, current_annotated_value):
+            """Handle next button click with annotation saving"""  
+            result_tuple, new_slider_value = self.image_plot_tool_handlers.handle_annotator_navigation(
+                "next", current_slider_value, current_annotated_value
+            )
+            # result_tuple contains (image_display, slice_text, crosshair_info, metadata, window_level, window_width)
+            return result_tuple + (new_slider_value,)
+        
         prev_btn.click(
-            fn=self.image_plot_tool_handlers.prev_slice,
-            inputs=[slice_slider],
-            outputs=[slice_slider]
+            fn=handle_prev_navigation,
+            inputs=[slice_slider, image_display],
+            outputs=[image_display, slice_text, crosshair_info, metadata_display, window_level, window_width, slice_slider]
         )
         
         next_btn.click(
-            fn=self.image_plot_tool_handlers.next_slice,
-            inputs=[slice_slider],
-            outputs=[slice_slider]
+            fn=handle_next_navigation,
+            inputs=[slice_slider, image_display],
+            outputs=[image_display, slice_text, crosshair_info, metadata_display, window_level, window_width, slice_slider]
         )
           # Connect processing mode change event
         processing_mode.change(
@@ -705,12 +721,17 @@ class SegMedPro:
             inputs=[box_prompt_checkbox, point_prompt_checkbox],
             outputs=[box_prompt_checkbox, point_prompt_checkbox, coordinates_text]
         )
-        
-        # Connect MEDSAM2 handlers - back to basics
+          # Connect MEDSAM2 handlers - back to basics
         image_display.select(
             fn=self.medsam2_handlers.handle_image_click,
             inputs=[],
             outputs=[coordinates_text]
+        )
+          # Save annotations immediately when they change (edits, deletions, additions)
+        image_display.change(
+            fn=self.image_plot_tool_handlers.on_annotation_change,
+            inputs=[image_display],
+            outputs=[]  # No outputs to avoid circular dependency
         )
         
         clear_coords_btn.click(
