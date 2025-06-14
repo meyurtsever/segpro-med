@@ -105,16 +105,28 @@ def create_custom_annotator_tab():
                     )
                     next_btn = gr.Button("Next")
                 
-                slice_text = gr.Textbox(label="Slice", interactive=False)
-              # Column 3: Annotation Controls and Management
+                slice_text = gr.Textbox(label="Slice", interactive=False)              # Column 3: Annotation Controls and Management
             with gr.Column(scale=1):
                 # Point Selection Section (from Editor tab)
                 gr.Markdown("### Point Selection")
+                # Prompt type selection
+                with gr.Row():
+                    point_prompt_checkbox = gr.Checkbox(
+                        label="Point-based Prompt",
+                        value=False,
+                        info="Use point coordinates for segmentation"
+                    )
+                    box_prompt_checkbox = gr.Checkbox(
+                        label="Box-based Prompt", 
+                        value=False,
+                        info="Use bounding boxes for segmentation"
+                    )
                 coordinates_text = gr.Textbox(
                     label="Selected Coordinates (x,y)",
                     value="",
                     interactive=False,
-                    info="Click on the image to select coordinates"
+                    info="Click on the image to select coordinates",
+                    visible=False  # Initially hidden until point-based is selected
                 )
                 clear_coords_btn = gr.Button("Clear Coordinates")
                 clear_overlays_btn = gr.Button(

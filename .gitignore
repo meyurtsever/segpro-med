@@ -184,3 +184,10 @@ logs/
 # Backup files
 *.bak
 *.backup
+
+# medical data
+cvm_48_t1/
+cvm_t1/
+dist_custom_annotator/
+brain_target_results/
+brain_target_prompts.json

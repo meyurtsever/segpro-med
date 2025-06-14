@@ -625,6 +625,11 @@ def save_results(results: List[dict], output_dir: str, windowing_metadata: dict,
     """Save segmentation results with windowing metadata"""
     os.makedirs(output_dir, exist_ok=True)
     
+    # Check if we have any results
+    if not results:
+        logger.warning("No results to save")
+        return
+    
     # Save masks
     masks_dir = os.path.join(output_dir, 'masks')
     os.makedirs(masks_dir, exist_ok=True)
@@ -649,25 +654,51 @@ def save_results(results: List[dict], output_dir: str, windowing_metadata: dict,
     windowing_summary = {}
     
     for result in results:
-        slice_idx = result['slice_idx']
-        
-        # Save best mask
-        best_mask_idx = np.argmax(result['scores'])
-        best_mask = result['masks'][best_mask_idx]
-        
-        # Save as PNG
-        mask_image = Image.fromarray((best_mask * 255).astype(np.uint8))
-        mask_image.save(os.path.join(masks_dir, f'slice_{slice_idx:04d}_mask.png'))
-        
-        # Save as NPY for exact values
-        np.save(os.path.join(masks_dir, f'slice_{slice_idx:04d}_mask.npy'), best_mask)
-        
-        # Save all masks and scores
-        np.save(os.path.join(masks_dir, f'slice_{slice_idx:04d}_all_masks.npy'), result['masks'])
-        np.save(os.path.join(masks_dir, f'slice_{slice_idx:04d}_scores.npy'), result['scores'])
-        
-        # Save slice-specific windowing metadata
-        if 'windowing_metadata' in result:
+        try:
+            slice_idx = result['slice_idx']
+            
+            # Check if we have masks and scores
+            if 'masks' not in result or 'scores' not in result:
+                logger.warning(f"Skipping slice {slice_idx} - missing masks or scores")
+                continue
+                
+            masks = result['masks']
+            scores = result['scores']
+            
+            if len(masks) == 0 or len(scores) == 0:
+                logger.warning(f"Skipping slice {slice_idx} - empty masks or scores")
+                continue
+            
+            # Save best mask
+            best_mask_idx = np.argmax(scores)
+            best_mask = masks[best_mask_idx]
+            
+            # Save as PNG
+            mask_image = Image.fromarray((best_mask * 255).astype(np.uint8))
+            mask_image.save(os.path.join(masks_dir, f'slice_{slice_idx:04d}_mask.png'))
+            
+            # Save as NPY for exact values
+            np.save(os.path.join(masks_dir, f'slice_{slice_idx:04d}_mask.npy'), best_mask)
+            
+            # Save all masks and scores
+            np.save(os.path.join(masks_dir, f'slice_{slice_idx:04d}_all_masks.npy'), masks)
+            np.save(os.path.join(masks_dir, f'slice_{slice_idx:04d}_scores.npy'), scores)
+            
+            # Save slice-specific windowing metadata
+            if 'windowing_metadata' in result:
+                windowing_summary[slice_idx] = result['windowing_metadata']
+            
+            # Add to summary
+            summary['average_scores'].append(float(np.mean(scores)))
+            
+            # Save visualization
+            if save_visualizations:
+                viz_path = os.path.join(viz_dir, f'slice_{slice_idx:04d}_visualization.png')
+                visualize_results(result, viz_path)
+            
+        except Exception as e:
+            logger.error(f"Error saving results for slice {result.get('slice_idx', 'unknown')}: {e}")
+            continue
             windowing_summary[slice_idx] = result['windowing_metadata']
         
         # Add to summary

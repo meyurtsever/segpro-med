@@ -50,7 +50,11 @@ class SegMedPro:
         """Initialize the application"""
         # Initialize application state
         self.state = AppState()
-          # Initialize event handlers
+        
+        # Initialize checkbox state tracking
+        self._point_checkbox_state = False
+        
+        # Initialize event handlers
         self.data_handlers = DataLoadingHandlers(self.state)
         self.plot_viewer_handlers = PlotViewerHandlers(self.state)  # For viewer tab (gr.Plot)
         self.image_viewer_handlers = ImageViewerHandlers(self.state)  # For editor tab (gr.Image)
@@ -60,12 +64,11 @@ class SegMedPro:
         self.segmentation_handlers = SegmentationHandlers(self.state)
         self.label_manager_handlers = LabelManagerHandlers(self.state)
         self.medsam2_handlers = MEDSAM2Handlers(self.state)
-        self.custom_annotator_handlers = CustomAnnotatorHandlers(self.state)          # Update image viewer handlers with medsam2 reference for overlay support
-        self.image_viewer_handlers.medsam2_handlers = self.medsam2_handlers
-        # Update image plot tool handlers with medsam2 reference for overlay support (for Editor tab)
-        self.image_plot_tool_handlers.medsam2_handlers = self.medsam2_handlers
+        self.custom_annotator_handlers = CustomAnnotatorHandlers(self.state)
         
-        logger.info("SegMed-Pro application initialized")
+        # Connect MEDSAM2 handlers to other components that need them
+        self.image_viewer_handlers.medsam2_handlers = self.medsam2_handlers
+        self.image_plot_tool_handlers.medsam2_handlers = self.medsam2_handlers
     
     def build_interface(self):
         """Build the complete Gradio interface"""
@@ -591,13 +594,11 @@ class SegMedPro:
         
         (file_input, dir_input, load_btn, reset_dir_btn, file_browser, 
          metadata_display_dl, error_display_dl, window_level, window_width, apply_window_btn, debug_btn) = data_loading
-        
-        (error_display, metadata_display, view_selector, image_display, prev_btn, slice_slider, next_btn, slice_text, crosshair_info) = visualization
-        
-        (coordinates_text, clear_coords_btn, clear_overlays_btn, ai_model_selector, 
+        (error_display, metadata_display, view_selector, image_display, prev_btn, slice_slider, next_btn, slice_text, crosshair_info) = visualization        
+        (point_prompt_checkbox, box_prompt_checkbox, coordinates_text, clear_coords_btn, clear_overlays_btn, ai_model_selector, 
          processing_mode, score_threshold,
          output_dir, save_visualizations, device_selector, 
-         annotate_btn, annotation_status) = ai_tools
+         auto_brain_annotate_btn, annotate_btn, annotation_status) = ai_tools
           # Data loading handlers (updated for annotator compatibility)
         load_btn.click(
             fn=self.data_handlers.load_data_for_annotator,
@@ -659,15 +660,53 @@ class SegMedPro:
             inputs=[slice_slider],
             outputs=[slice_slider]
         )
-        
-        # Connect processing mode change event
+          # Connect processing mode change event
         processing_mode.change(
             fn=lambda mode: gr.Slider(visible=(mode == "All Records")),
             inputs=[processing_mode],
-            outputs=[score_threshold]       
+            outputs=[score_threshold]         )
+        
+        # Connect checkbox handlers for prompt type selection
+        def handle_point_prompt_change(point_checked, box_checked):
+            """Handle point prompt checkbox change - ensure mutual exclusivity and clear coords"""
+            if point_checked:
+                # If point is checked, uncheck box and show coordinates
+                self.medsam2_handlers.enable_point_mode()
+                return True, False, gr.update(visible=True)
+            else:
+                # If point is unchecked, hide coordinates and clear them
+                self.medsam2_handlers.disable_point_mode()
+                self.medsam2_handlers.selected_coordinates = []  # Clear coordinates from handler state
+                return False, box_checked, gr.update(visible=False)
+        
+        def handle_box_prompt_change(box_checked, point_checked):
+            """Handle box prompt checkbox change - ensure mutual exclusivity and clear coords"""
+            if box_checked:
+                # If box is checked, uncheck point and hide coordinates
+                self.medsam2_handlers.disable_point_mode()
+                self.medsam2_handlers.selected_coordinates = []  # Clear coordinates from handler state
+                return True, False, gr.update(visible=False)
+            else:
+                # If box is unchecked, keep point state and show coordinates if point is checked
+                if point_checked:
+                    self.medsam2_handlers.enable_point_mode()
+                else:
+                    self.medsam2_handlers.disable_point_mode()
+                return False, point_checked, gr.update(visible=point_checked)
+        
+        point_prompt_checkbox.change(
+            fn=handle_point_prompt_change,
+            inputs=[point_prompt_checkbox, box_prompt_checkbox],
+            outputs=[point_prompt_checkbox, box_prompt_checkbox, coordinates_text]
         )
         
-        # Connect MEDSAM2 handlers
+        box_prompt_checkbox.change(
+            fn=handle_box_prompt_change,
+            inputs=[box_prompt_checkbox, point_prompt_checkbox],
+            outputs=[box_prompt_checkbox, point_prompt_checkbox, coordinates_text]
+        )
+        
+        # Connect MEDSAM2 handlers - back to basics
         image_display.select(
             fn=self.medsam2_handlers.handle_image_click,
             inputs=[],
@@ -685,16 +724,48 @@ class SegMedPro:
             inputs=[],
             outputs=[annotation_status, image_display]
         )
-        
-        # Custom wrapper function to handle the 3-tuple return and button visibility
+          # Custom wrapper function to handle the 3-tuple return and button visibility
         def handle_annotation_workflow(output_dir, save_visualizations, device_selector, processing_mode, score_threshold):
             status, image, success = self.medsam2_handlers.run_full_annotation_workflow(
                 output_dir, save_visualizations, device_selector, processing_mode, score_threshold
             )
             return status, image, gr.update(visible=success)
-        annotate_btn.click(
-            fn=handle_annotation_workflow,
-            inputs=[output_dir, save_visualizations, device_selector, processing_mode, score_threshold],
+        
+        annotate_btn.click(            fn=handle_annotation_workflow,            inputs=[output_dir, save_visualizations, device_selector, processing_mode, score_threshold],
+            outputs=[annotation_status, image_display, clear_overlays_btn]
+        )
+        
+        # Auto-brain annotation handler
+        def handle_auto_brain_annotation(output_dir, save_visualizations, device_selector, processing_mode, score_threshold, dir_input_value):
+            """Handle automatic brain structure annotation"""
+            # Get the current directory from state or use directory input as fallback
+            dicom_folder = getattr(self.state, 'current_directory', None)
+            
+            if not dicom_folder:
+                # Fallback to directory input field
+                dicom_folder = dir_input_value.strip() if dir_input_value else None
+            
+            if not dicom_folder:
+                return "Error: No DICOM folder specified. Please load data first or enter a directory path.", None, gr.update(visible=False)
+            
+            if not os.path.exists(dicom_folder):
+                return f"Error: DICOM folder not found: {dicom_folder}", None, gr.update(visible=False)
+            
+            # Check if we have loaded data for this directory
+            if not hasattr(self.state, 'current_data') or self.state.current_data is None:
+                return "Error: Please load DICOM data first using the 'Load Data' button before running automatic annotation.", None, gr.update(visible=False)
+            
+            # Run the automatic annotation with the user's score threshold
+            status, annotated_result, success = self.medsam2_handlers.run_medsam2_annotation_automatic(
+                dicom_folder, output_dir, save_visualizations, device_selector, processing_mode, score_threshold
+            )
+            
+            # Return the annotated result directly to the image_annotator
+            return status, annotated_result, gr.update(visible=success)
+        
+        auto_brain_annotate_btn.click(
+            fn=handle_auto_brain_annotation,
+            inputs=[output_dir, save_visualizations, device_selector, processing_mode, score_threshold, dir_input],
             outputs=[annotation_status, image_display, clear_overlays_btn]
         )
           # Handle image removal from image_annotator (X button / clear button)

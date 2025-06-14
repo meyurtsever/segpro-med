@@ -9,7 +9,8 @@ import os
 import logging
 import gradio as gr
 import numpy as np
-from typing import Optional
+from typing import Optional, List
+import time
 
 from utils.dicom_utils import get_dicom_metadata
 from utils.visualization import (display_slice, overlay_segmentation, make_image_for_gradio)
@@ -25,6 +26,10 @@ class ImageViewerHandlers:
     def __init__(self, state: AppState, medsam2_handlers=None):
         self.state = state
         self.medsam2_handlers = medsam2_handlers
+        # Store user annotations across all slices {slice_idx: [list_of_annotation_boxes]}
+        self.user_annotations = {}
+        # Store combined annotations (MEDSAM2 + user) for each slice
+        self.combined_annotations = {}
     
     @log_exception
     def update_slice(self, slider_value, view_type):
@@ -333,9 +338,13 @@ class ImageViewerHandlers:
 
 class ImagePlotToolHandlers:
     """Handlers for plot tool operations using gr.Image component (dummy implementation)"""
-    
     def __init__(self, state: AppState):
         self.state = state
+        self.medsam2_handlers = None  # Will be set by the main app
+        # Store user annotations across all slices {slice_idx: [list_of_annotation_boxes]}
+        self.user_annotations = {}
+        # Store combined annotations (MEDSAM2 + user) for each slice
+        self.combined_annotations = {}
     
     def update_plot_tool(self, tool_name):
         """Since we're using gr.Image now, this method just returns the current image"""
@@ -461,23 +470,54 @@ class ImagePlotToolHandlers:
             if img_rgb.dtype != np.uint8:
                 img_rgb = (img_rgb * 255).astype(np.uint8)            # Check for MEDSAM2 annotation overlays and convert to polygon shapes
             annotation_shapes = []
+            
+            # Load MEDSAM2 annotations for current slice
             if (self.medsam2_handlers and 
                 hasattr(self.medsam2_handlers, 'annotation_overlays') and
                 self.state.current_slice_idx in self.medsam2_handlers.annotation_overlays):
                 try:
                     from utils.visualization import create_annotation_boxes_from_mask
                     overlay_data = self.medsam2_handlers.annotation_overlays[self.state.current_slice_idx]
-                    mask_array = overlay_data['mask']
                     
-                    # Convert mask to polygon shapes for interactive editing
-                    annotation_shapes = create_annotation_boxes_from_mask(
-                        mask_array, 
-                        label="MEDSAM2 Annotation",
-                        label_index=1
-                    )
-                    logger.info(f"Converted MEDSAM2 mask to {len(annotation_shapes)} polygon shapes for display")
+                    # Handle both old format (single mask) and new format (multiple annotations)
+                    if isinstance(overlay_data, dict) and 'mask' in overlay_data:
+                        # Old format - single annotation
+                        mask_array = overlay_data['mask']
+                        medsam2_shapes = create_annotation_boxes_from_mask(
+                            mask_array, 
+                            label="MEDSAM2 Annotation",
+                            label_index=1
+                        )
+                        annotation_shapes.extend(medsam2_shapes)
+                    else:
+                        # New format - multiple annotations per slice
+                        for annotation_id, annotation_data in overlay_data.items():
+                            if isinstance(annotation_data, dict) and 'mask' in annotation_data:
+                                mask_array = annotation_data['mask']
+                                shapes = create_annotation_boxes_from_mask(
+                                    mask_array, 
+                                    label=f"MEDSAM2 {annotation_id}",
+                                    label_index=1
+                                )
+                                annotation_shapes.extend(shapes)
+                    
+                    logger.info(f"Loaded {len(annotation_shapes)} MEDSAM2 annotations for slice {self.state.current_slice_idx}")
                 except Exception as e:
                     logger.error(f"Error converting MEDSAM2 annotation to polygon shapes: {str(e)}")
+                    logger.error(f"Overlay data structure: {type(overlay_data)}")
+                    if isinstance(overlay_data, dict):
+                        logger.error(f"Overlay data keys: {list(overlay_data.keys())}")
+            
+            # Load user annotations for current slice
+            if self.state.current_slice_idx in self.user_annotations:
+                user_shapes = self.user_annotations[self.state.current_slice_idx]
+                annotation_shapes.extend(user_shapes)
+                logger.info(f"Loaded {len(user_shapes)} user annotations for slice {self.state.current_slice_idx}")
+            
+            # Store combined annotations for this slice
+            self.combined_annotations[self.state.current_slice_idx] = annotation_shapes.copy()
+            
+            logger.info(f"Total annotations for slice {self.state.current_slice_idx}: {len(annotation_shapes)}")
             
             # Create AnnotatedImageValue format - display at full size
             annotated_value = {
@@ -718,3 +758,304 @@ class ImagePlotToolHandlers:
         }
         
         return empty_annotated_value
+    
+    @log_exception
+    def save_user_annotations(self, annotated_image_data):
+        """Save user annotations from the image annotator component"""
+        if annotated_image_data is None:
+            return "No annotation data provided"
+        
+        try:
+            current_slice = self.state.current_slice_idx
+            
+            # Extract boxes from the annotated image data
+            if isinstance(annotated_image_data, dict) and 'boxes' in annotated_image_data:
+                all_boxes = annotated_image_data['boxes']
+                
+                # Separate MEDSAM2 annotations from user annotations
+                user_boxes = []
+                for box in all_boxes:
+                    # Check if it's a user annotation (not MEDSAM2)
+                    if isinstance(box, dict) and 'label' in box:
+                        label = box.get('label', '')
+                        if not label.startswith('MEDSAM2'):
+                            user_boxes.append(box)
+                    else:
+                        # If no label or not MEDSAM2, consider it user annotation
+                        user_boxes.append(box)
+                
+                # Store user annotations for this slice
+                self.user_annotations[current_slice] = user_boxes
+                
+                logger.info(f"Saved {len(user_boxes)} user annotations for slice {current_slice}")
+                return f"Saved {len(user_boxes)} user annotations for slice {current_slice}"
+            
+            return "No annotation boxes found in data"
+            
+        except Exception as e:
+            logger.error(f"Error saving user annotations: {str(e)}")
+            return f"Error saving annotations: {str(e)}"
+    
+    @log_exception
+    def get_annotation_summary(self):
+        """Get a summary of all annotations across all slices"""
+        try:
+            summary = {}
+            
+            # Count MEDSAM2 annotations
+            medsam2_count = 0
+            if (self.medsam2_handlers and 
+                hasattr(self.medsam2_handlers, 'annotation_overlays')):
+                for slice_idx, overlay_data in self.medsam2_handlers.annotation_overlays.items():
+                    if isinstance(overlay_data, dict):
+                        if 'mask' in overlay_data:
+                            # Old format - single annotation
+                            medsam2_count += 1
+                            summary[slice_idx] = summary.get(slice_idx, 0) + 1
+                        else:
+                            # New format - multiple annotations
+                            count = len([k for k, v in overlay_data.items() 
+                                       if isinstance(v, dict) and 'mask' in v])
+                            medsam2_count += count
+                            summary[slice_idx] = summary.get(slice_idx, 0) + count
+            
+            # Count user annotations
+            user_count = 0
+            for slice_idx, user_boxes in self.user_annotations.items():
+                count = len(user_boxes)
+                user_count += count
+                summary[slice_idx] = summary.get(slice_idx, 0) + count
+            
+            logger.info(f"Annotation summary - MEDSAM2: {medsam2_count}, User: {user_count}, Total slices with annotations: {len(summary)}")
+            return summary, medsam2_count, user_count
+            
+        except Exception as e:
+            logger.error(f"Error getting annotation summary: {str(e)}")
+            return {}, 0, 0
+
+    def save_user_annotations(self, annotated_image_value, slice_idx: int = None):
+        """Save user annotations from the ImageAnnotator component to persistent storage"""
+        try:
+            if slice_idx is None:
+                slice_idx = self.state.current_slice_idx
+            
+            logger.info(f"Saving annotations for slice {slice_idx}")
+            
+            # Always clear existing user annotations for this slice first
+            # This ensures deletions are properly handled
+            if slice_idx in self.user_annotations:
+                del self.user_annotations[slice_idx]
+                logger.info(f"Cleared existing user annotations for slice {slice_idx}")
+            
+            if annotated_image_value is None:
+                logger.info(f"No annotations to save for slice {slice_idx}")
+                return
+            
+            # Extract annotations from the AnnotatedImageValue
+            new_annotations = []
+            
+            # Handle different possible structures of annotated_image_value
+            if hasattr(annotated_image_value, 'annotations'):
+                annotations = annotated_image_value.annotations
+            elif isinstance(annotated_image_value, dict) and 'boxes' in annotated_image_value:
+                annotations = annotated_image_value['boxes']
+            elif isinstance(annotated_image_value, dict) and 'annotations' in annotated_image_value:
+                annotations = annotated_image_value['annotations']
+            else:
+                logger.warning(f"Unknown annotation format: {type(annotated_image_value)}")
+                return
+            
+            if annotations:
+                for annotation in annotations:
+                    # Create a complete copy of the annotation with all properties
+                    # This preserves shape, color, label, and any other modifications
+                    user_annotation = {
+                        'type': 'user_drawn',
+                        'data': annotation,  # Store the complete annotation object
+                        'timestamp': time.time(),
+                        'slice_idx': slice_idx
+                    }
+                    new_annotations.append(user_annotation)
+                
+                # Store all new annotations for this slice
+                self.user_annotations[slice_idx] = new_annotations
+                logger.info(f"Saved {len(new_annotations)} user annotations for slice {slice_idx}")
+                
+                # Log the annotation details for debugging
+                for i, ann in enumerate(new_annotations):
+                    ann_data = ann['data']
+                    if isinstance(ann_data, dict):
+                        logger.info(f"  Annotation {i}: {ann_data.get('type', 'unknown')} - {ann_data.get('label', 'no label')}")
+                    else:
+                        logger.info(f"  Annotation {i}: {type(ann_data)}")
+            else:
+                logger.info(f"No annotations found in image value for slice {slice_idx}")
+                
+        except Exception as e:
+            logger.error(f"Error saving user annotations for slice {slice_idx}: {e}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
+
+    def get_all_annotations_for_slice(self, slice_idx: int) -> List:
+        """Get all annotations (MEDSAM2 + user) for a specific slice"""
+        all_annotations = []
+        
+        try:
+            # Add MEDSAM2 annotations
+            medsam2_annotations = self.get_medsam2_annotations_for_slice(slice_idx)
+            all_annotations.extend(medsam2_annotations)
+              # Add user annotations
+            if slice_idx in self.user_annotations:
+                for user_annotation in self.user_annotations[slice_idx]:
+                    all_annotations.append(user_annotation['data'])
+            
+            logger.info(f"Retrieved {len(all_annotations)} total annotations for slice {slice_idx}")
+            return all_annotations
+            
+        except Exception as e:
+            logger.error(f"Error getting all annotations for slice {slice_idx}: {e}")
+            return []
+
+    def on_annotation_change(self, annotated_image_value):
+        """Handle annotation changes in the ImageAnnotator component"""
+        try:
+            current_slice = self.state.current_slice_idx
+            logger.info(f"Processing annotation change for slice {current_slice}")
+            
+            # Save current annotations immediately - this handles deletions, edits, additions
+            self.save_user_annotations(annotated_image_value, current_slice)
+            
+            # Log change details for debugging
+            if annotated_image_value:
+                if hasattr(annotated_image_value, 'annotations'):
+                    current_count = len(annotated_image_value.annotations or [])
+                elif isinstance(annotated_image_value, dict) and 'boxes' in annotated_image_value:
+                    current_count = len(annotated_image_value['boxes'] or [])
+                else:
+                    current_count = 0
+                    
+                logger.info(f"Saved {current_count} annotations for slice {current_slice}")
+            
+            # Return the current value to maintain the interface
+            # Don't reload - this prevents losing user edits in progress
+            return annotated_image_value
+            
+        except Exception as e:
+            logger.error(f"Error handling annotation change: {e}")
+            return annotated_image_value
+    
+    def handle_annotator_slider_change(self, slider_value, current_annotated_value=None):
+        """Handle slider changes in the annotator - save current annotations and load new slice"""
+        try:
+            # Save current annotations if provided
+            if current_annotated_value is not None:
+                self.save_user_annotations(current_annotated_value)
+            
+            # Update to new slice
+            return self.update_slice_for_annotator(slider_value, self.state.current_view)
+            
+        except Exception as e:
+            logger.error(f"Error handling annotator slider change: {e}")
+            # Return current state if error occurs
+            if current_annotated_value is not None:
+                return current_annotated_value, f"{slider_value}/0", "x: 0, y: 0, z: 0", {}, None, None
+            else:
+                return None, f"{slider_value}/0", "x: 0, y: 0, z: 0", {}, None, None
+
+    def handle_annotator_navigation(self, direction, current_slider_value, current_annotated_value=None):
+        """Handle navigation buttons (prev/next) in the annotator"""
+        try:
+            # Save current annotations if provided
+            if current_annotated_value is not None:
+                self.save_user_annotations(current_annotated_value)
+            
+            # Calculate new slider value
+            if direction == "next":
+                new_value = self.next_slice(current_slider_value)
+            elif direction == "prev":
+                new_value = self.prev_slice(current_slider_value)
+            else:
+                new_value = current_slider_value
+            
+            # Update to new slice
+            return self.update_slice_for_annotator(new_value, self.state.current_view), new_value
+            
+        except Exception as e:
+            logger.error(f"Error handling annotator navigation: {e}")
+            return (None, f"{current_slider_value}/0", "x: 0, y: 0, z: 0", {}, None, None), current_slider_value
+
+    def debug_annotation_state(self):
+        """Debug method to show current annotation state"""
+        try:
+            logger.info("=== ANNOTATION DEBUG STATE ===")
+            logger.info(f"Current slice: {self.state.current_slice_idx}")
+            
+            # Check MEDSAM2 annotations
+            if (self.medsam2_handlers and 
+                hasattr(self.medsam2_handlers, 'annotation_overlays')):
+                medsam2_overlays = self.medsam2_handlers.annotation_overlays
+                logger.info(f"MEDSAM2 overlays available for slices: {list(medsam2_overlays.keys())}")
+                
+                for slice_idx, overlay_data in medsam2_overlays.items():
+                    if isinstance(overlay_data, dict) and 'mask' in overlay_data:
+                        logger.info(f"  Slice {slice_idx}: Single annotation (old format)")
+                    else:
+                        count = len([k for k, v in overlay_data.items() 
+                                   if isinstance(v, dict) and 'mask' in v])
+                        logger.info(f"  Slice {slice_idx}: {count} annotations (new format)")
+            else:
+                logger.info("No MEDSAM2 handler or overlays available")
+            
+            # Check user annotations
+            logger.info(f"User annotations available for slices: {list(self.user_annotations.keys())}")
+            for slice_idx, annotations in self.user_annotations.items():
+                logger.info(f"  Slice {slice_idx}: {len(annotations)} user annotations")
+            
+            # Check combined annotations
+            logger.info(f"Combined annotations available for slices: {list(self.combined_annotations.keys())}")
+            for slice_idx, annotations in self.combined_annotations.items():
+                logger.info(f"  Slice {slice_idx}: {len(annotations)} combined annotations")
+            
+            logger.info("=== END ANNOTATION DEBUG ===")
+            
+        except Exception as e:
+            logger.error(f"Error in debug_annotation_state: {e}")
+
+    def get_annotation_status_message(self):
+        """Get a status message about current annotations"""
+        try:
+            total_slices_with_annotations = set()
+            medsam2_count = 0
+            user_count = 0
+            
+            # Count MEDSAM2 annotations
+            if (self.medsam2_handlers and 
+                hasattr(self.medsam2_handlers, 'annotation_overlays')):
+                for slice_idx, overlay_data in self.medsam2_handlers.annotation_overlays.items():
+                    total_slices_with_annotations.add(slice_idx)
+                    if isinstance(overlay_data, dict) and 'mask' in overlay_data:
+                        medsam2_count += 1
+                    else:
+                        count = len([k for k, v in overlay_data.items() 
+                                   if isinstance(v, dict) and 'mask' in v])
+                        medsam2_count += count
+            
+            # Count user annotations
+            for slice_idx, annotations in self.user_annotations.items():
+                total_slices_with_annotations.add(slice_idx)
+                user_count += len(annotations)
+            
+            message = f"Annotations: {len(total_slices_with_annotations)} slices, "
+            message += f"{medsam2_count} MEDSAM2, {user_count} user-drawn"
+            
+            current_slice_annotations = 0
+            if self.state.current_slice_idx in self.combined_annotations:
+                current_slice_annotations = len(self.combined_annotations[self.state.current_slice_idx])
+            
+            message += f" | Current slice: {current_slice_annotations} annotations"
+            
+            return message
+            
+        except Exception as e:
+            logger.error(f"Error getting annotation status: {e}")
+            return f"Annotation status error: {str(e)}"

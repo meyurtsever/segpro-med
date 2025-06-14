@@ -20,7 +20,10 @@ def create_editor_tab() -> dict:
                     label="Load File (DICOM, NIFTI, MAT)",
                     file_types=[".dcm", ".nii", ".nii.gz", ".mat"]
                 )
-                dir_input = gr.Textbox(label="Enter directory path containing DICOM files")
+                dir_input = gr.Textbox(
+                    label="Enter directory path containing DICOM files",
+                    value=r"C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1"
+                )
                 load_btn = gr.Button("Load Data")
                 reset_dir_btn = gr.Button("Reset Directory")
                 file_browser = gr.Dropdown(label="Available Files", choices=[], interactive=True)
@@ -90,16 +93,28 @@ def create_editor_tab() -> dict:
                 with gr.Accordion("Metadata", open=False):
                     metadata_display = gr.JSON(label=None, visible=True)
                 col2 = (error_display, metadata_display, view_selector, image_display, prev_btn, slice_slider, next_btn, slice_text, crosshair_info)
-            
-            # Column 3: Annotate with AI Models
+              # Column 3: Annotate with AI Models
             with gr.Column(scale=1):
                 # Coordinate Selection for MEDSAM2
                 gr.Markdown("### Point Selection")
+                # Prompt type selection
+                with gr.Row():
+                    point_prompt_checkbox = gr.Checkbox(
+                        label="Point-based Prompt",
+                        value=False,
+                        info="Use point coordinates for segmentation"
+                    )
+                    box_prompt_checkbox = gr.Checkbox(
+                        label="Box-based Prompt", 
+                        value=False,
+                        info="Use bounding boxes for segmentation"
+                    )
                 coordinates_text = gr.Textbox(
                     label="Selected Coordinates (x,y)",
                     value="",
                     interactive=False,
-                    info="Click on the image to select coordinates"
+                    info="Click on the image to select coordinates",
+                    visible=False  # Initially hidden until point-based is selected
                 )
                 clear_coords_btn = gr.Button("Clear Coordinates")
                 clear_overlays_btn = gr.Button(
@@ -149,17 +164,37 @@ def create_editor_tab() -> dict:
                             value="cpu",
                             info="Processing device for MEDSAM2"
                         )
-                annotate_btn = gr.Button("Run MEDSAM2 Annotation")
+                
+                # Automatic Brain Annotation Section
+                gr.Markdown("### Automatic Brain Detection")
+                with gr.Row():
+                    auto_brain_annotate_btn = gr.Button(
+                        "🧠 Auto-Annotate Brain Structures", 
+                        variant="primary",
+                        size="lg"
+                    )
+                
+                with gr.Accordion("Auto-Annotation Info", open=False):
+                    gr.Markdown("""
+                    **Automatic Brain Structure Detection:**
+                    - Automatically detects brain regions and eye structures
+                    - Uses anatomical priors and image processing
+                    - Generates bounding box prompts for MEDSAM2
+                    - Works with "All Records" mode to process entire volumes
+                    - No manual coordinate selection required
+                    """)
+                
+                annotate_btn = gr.Button("Run MEDSAM2 Annotation (Manual Prompts)")
                 annotation_status = gr.Textbox(
                     label="Annotation Status", 
                     interactive=False,
                     value="Ready to annotate"
                 )
                 
-                col3 = (coordinates_text, clear_coords_btn, clear_overlays_btn, ai_model_selector, 
-                       processing_mode, score_threshold,
-                       output_dir, save_visualizations, device_selector, 
-                       annotate_btn, annotation_status)
+                col3 = (point_prompt_checkbox, box_prompt_checkbox, coordinates_text, clear_coords_btn, clear_overlays_btn, ai_model_selector, 
+                        processing_mode, score_threshold,
+                        output_dir, save_visualizations, device_selector, 
+                        auto_brain_annotate_btn, annotate_btn, annotation_status)
 
     # Return all components in a structured way
     return {
