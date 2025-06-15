@@ -107,13 +107,13 @@ class SegmentationHandlers:
             # Store the segmentation data
             self.state.segmentation_data = seg_data
             self.state.segmentation_loaded = True
-            
-            # Update display with segmentation overlay
+              # Update display with segmentation overlay
             img = display_slice(
                 self.state.current_data, 
                 self.state.current_slice_idx, 
                 self.state.current_view,
-                crosshair=self.state.crosshair_position
+                crosshair=None,
+                add_orientation_marker=False
             )
             
             # Get the corresponding segmentation slice
@@ -169,13 +169,13 @@ class SegmentationHandlers:
             return "No segmentation loaded", None
         
         self.state.segmentation_alpha = opacity
-        
-        # Re-generate the image with updated opacity
+          # Re-generate the image with updated opacity
         img = display_slice(
             self.state.current_data, 
             self.state.current_slice_idx, 
             self.state.current_view,
-            crosshair=self.state.crosshair_position
+            crosshair=None,
+            add_orientation_marker=False
         )
           # Get the corresponding segmentation slice
         seg_slice = self.state.get_segmentation_slice(
@@ -206,8 +206,7 @@ class SegmentationHandlers:
             }
             
             dragmode = tool_mapping.get(self.state.current_plot_tool, "pan")
-            fig = make_slice_figure(overlaid_img, dragmode=dragmode)
-            
+            fig = make_slice_figure(overlaid_img, dragmode=dragmode)            
             return f"Segmentation opacity updated to {opacity:.1f}", fig
         else:
             return "Error: Could not extract segmentation slice", None
@@ -225,7 +224,8 @@ class SegmentationHandlers:
             self.state.current_data, 
             self.state.current_slice_idx, 
             self.state.current_view,
-            crosshair=self.state.crosshair_position
+            crosshair=None,
+            add_orientation_marker=False
         )
           # Map tool names to plotly dragmode
         tool_mapping = {
@@ -265,13 +265,13 @@ class SegmentationHandlers:
                 from skimage import measure
             except ImportError:
                 return "Error: scikit-image is required for contour detection. Please install with 'pip install scikit-image'", None
-            
-            # Display the current slice without segmentation overlay
+              # Display the current slice without segmentation overlay
             img = display_slice(
                 self.state.current_data, 
                 self.state.current_slice_idx, 
                 self.state.current_view,
-                crosshair=self.state.crosshair_position
+                crosshair=None,
+                add_orientation_marker=False
             )
             
             # Create a figure with the current image, specifically set to editing mode

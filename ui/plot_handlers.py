@@ -34,14 +34,14 @@ class PlotViewerHandlers:
         # Update slice and view based on input
         self.state.current_slice_idx = int(slider_value)
         self.state.current_view = view_type.lower()
-        
-        # Generate the slice image
+          # Generate the slice image
         try:
             img = display_slice(
                 self.state.current_data, 
                 self.state.current_slice_idx, 
                 self.state.current_view,
-                crosshair=self.state.crosshair_position
+                crosshair=None,
+                add_orientation_marker=False
             )
               # Apply segmentation overlay if segmentation is loaded AND viewer tab should show it
             if (self.state.segmentation_loaded and self.state.segmentation_data is not None 
@@ -110,13 +110,13 @@ class PlotViewerHandlers:
             self.state.current_slice_idx = self.state.crosshair_position[0]
         elif self.state.current_view == "coronal":
             self.state.current_slice_idx = self.state.crosshair_position[1]
-        
-        # Generate the slice image
+          # Generate the slice image
         img = display_slice(
             self.state.current_data, 
             self.state.current_slice_idx, 
             self.state.current_view,
-            crosshair=self.state.crosshair_position
+            crosshair=None,
+            add_orientation_marker=False
         )
         
         # Apply segmentation overlay if loaded AND viewer tab should show it
@@ -141,11 +141,11 @@ class PlotViewerHandlers:
         # Create plotly figure for gr.Plot
         fig = make_slice_figure(img, dragmode='pan')
         
-        return (
-            gr.Slider(minimum=slider_min, maximum=slider_max, value=self.state.current_slice_idx), 
+        return (            gr.Slider(minimum=slider_min, maximum=slider_max, value=self.state.current_slice_idx), 
             f"{self.state.current_slice_idx}/{slider_max}", 
             fig
         )
+    
     @log_exception
     def update_window_level_for_plot(self, level, width):
         """Apply window/level adjustments to the current image for gr.Plot component"""
@@ -158,7 +158,8 @@ class PlotViewerHandlers:
             self.state.current_view,
             window_level=level,
             window_width=width,
-            crosshair=self.state.crosshair_position
+            crosshair=None,
+            add_orientation_marker=False
         )
         
         # Apply segmentation overlay if loaded AND viewer tab should show it
@@ -224,15 +225,15 @@ class PlotViewerHandlers:
             if metadata and 'WindowWidth' in metadata:
                 window_width = metadata['WindowWidth']
                 if isinstance(window_width, list):
-                    window_width = window_width[0]
-              # Generate image at the new index
+                    window_width = window_width[0]            # Generate image at the new index
             img = display_slice(
                 self.state.current_data, 
                 slice_idx, 
                 "axial",
                 window_level=window_center,
                 window_width=window_width,
-                crosshair=self.state.crosshair_position
+                crosshair=None,
+                add_orientation_marker=False
             )
             
             # Apply segmentation overlay if loaded AND viewer tab should show it
@@ -290,13 +291,13 @@ class PlotToolHandlers:
             return make_slice_figure(np.zeros((100, 100, 3), dtype=np.uint8))
         
         # Store the selected tool for reference
-        self.state.current_plot_tool = tool_name
-          # Generate the current slice image
+        self.state.current_plot_tool = tool_name        # Generate the current slice image
         img = display_slice(
             self.state.current_data, 
             self.state.current_slice_idx, 
             self.state.current_view,
-            crosshair=self.state.crosshair_position
+            crosshair=None,
+            add_orientation_marker=False
         )
         
         # Apply segmentation overlay if loaded AND viewer tab should show it

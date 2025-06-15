@@ -86,8 +86,7 @@ class ImageViewerHandlers:
             if isinstance(window_width, list):
                 window_width = window_width[0]
             logger.info(f"Using WindowWidth from metadata: {window_width}")
-        
-        # Generate the slice image
+          # Generate the slice image
         try:
             img = display_slice(
                 self.state.current_data, 
@@ -95,8 +94,9 @@ class ImageViewerHandlers:
                 self.state.current_view,
                 window_level=window_center,
                 window_width=window_width,
-                crosshair=self.state.crosshair_position
-            )            # Apply segmentation overlay if segmentation is loaded AND editor tab should show it
+                crosshair=None,
+                add_orientation_marker=False
+            )# Apply segmentation overlay if segmentation is loaded AND editor tab should show it
             if (self.state.segmentation_loaded and self.state.segmentation_data is not None
                 and self.state.show_segmentation_in_editor):
                 try:
@@ -146,8 +146,7 @@ class ImageViewerHandlers:
             if window_center is None:
                 window_center = 500
             if window_width is None:
-                window_width = 1000
-            
+                window_width = 1000            
             return pil_image, f"{self.state.current_slice_idx + 1}/{total_slices}", crosshair_text, metadata, window_center, window_width
         except Exception as e:
             logger.error(f"Error generating slice image: {str(e)}")
@@ -171,12 +170,14 @@ class ImageViewerHandlers:
             self.state.current_slice_idx = self.state.crosshair_position[0]
         elif self.state.current_view == "coronal":
             self.state.current_slice_idx = self.state.crosshair_position[1]
-          # Generate the slice image
+        
+        # Generate the slice image
         img = display_slice(
             self.state.current_data, 
             self.state.current_slice_idx, 
             self.state.current_view,
-            crosshair=self.state.crosshair_position
+            crosshair=None,
+            add_orientation_marker=False
         )
         
         # Apply segmentation overlay if loaded AND editor tab should show it
@@ -210,15 +211,15 @@ class ImageViewerHandlers:
     def update_window_level(self, level, width):
         """Apply window/level adjustments to the current image"""
         if self.state.current_data is None:
-            return None
-          # Generate the slice image with window/level adjustments
+            return None        # Generate the slice image with window/level adjustments
         img = display_slice(
             self.state.current_data, 
             self.state.current_slice_idx, 
             self.state.current_view,
             window_level=level,
             window_width=width,
-            crosshair=self.state.crosshair_position
+            crosshair=None,
+            add_orientation_marker=False
         )
         
         # Apply segmentation overlay if loaded AND editor tab should show it
@@ -283,15 +284,15 @@ class ImageViewerHandlers:
             if metadata and 'WindowWidth' in metadata:
                 window_width = metadata['WindowWidth']
                 if isinstance(window_width, list):
-                    window_width = window_width[0]
-              # Generate image at the new index
+                    window_width = window_width[0]            # Generate image at the new index
             img = display_slice(
                 self.state.current_data, 
                 slice_idx, 
                 "axial",
                 window_level=window_center,
                 window_width=window_width,
-                crosshair=self.state.crosshair_position
+                crosshair=None,
+                add_orientation_marker=False
             )
             
             # Apply segmentation overlay if loaded AND editor tab should show it
@@ -361,13 +362,13 @@ class ImagePlotToolHandlers:
         
         # Store the selected tool for reference (though not used with gr.Image)
         self.state.current_plot_tool = tool_name
-        
-        # Generate the current slice image
+          # Generate the current slice image
         img = display_slice(
             self.state.current_data, 
             self.state.current_slice_idx, 
             self.state.current_view,
-            crosshair=self.state.crosshair_position
+            crosshair=None,
+            add_orientation_marker=False
         )
           # Apply segmentation overlay if loaded AND editor tab should show it
         if (self.state.segmentation_loaded and self.state.segmentation_data is not None
@@ -442,8 +443,7 @@ class ImagePlotToolHandlers:
                         logger.info(f"Using WindowWidth from per-slice metadata: {window_width}")
             except Exception as e:
                 logger.error(f"Error getting per-slice metadata: {str(e)}")
-        
-        # Generate the slice image as numpy array
+          # Generate the slice image as numpy array
         try:
             img = display_slice(
                 self.state.current_data, 
@@ -451,7 +451,8 @@ class ImagePlotToolHandlers:
                 self.state.current_view,
                 window_level=window_center,
                 window_width=window_width,
-                crosshair=self.state.crosshair_position
+                crosshair=None,
+                add_orientation_marker=False
             )
             
             # Apply segmentation overlay if segmentation is loaded AND editor tab should show it
@@ -593,13 +594,13 @@ class ImagePlotToolHandlers:
             self.state.current_slice_idx = self.state.crosshair_position[0]
         elif self.state.current_view == "coronal":
             self.state.current_slice_idx = self.state.crosshair_position[1]
-        
-        # Generate the slice image for annotator
+          # Generate the slice image for annotator
         img = display_slice(
             self.state.current_data, 
             self.state.current_slice_idx, 
             self.state.current_view,
-            crosshair=self.state.crosshair_position
+            crosshair=None,
+            add_orientation_marker=False
         )
         
         # Apply segmentation overlay if loaded AND editor tab should show it
@@ -651,15 +652,15 @@ class ImagePlotToolHandlers:
         # Store the window level and width in state
         self.state.window_level = window_level
         self.state.window_width = window_width
-        
-        # Regenerate the current slice with new windowing
+          # Regenerate the current slice with new windowing
         img = display_slice(
             self.state.current_data, 
             self.state.current_slice_idx, 
             self.state.current_view,
             window_level=window_level,
             window_width=window_width,
-            crosshair=self.state.crosshair_position
+            crosshair=None,
+            add_orientation_marker=False
         )
         
         # Convert to format expected by image_annotator
@@ -707,13 +708,13 @@ class ImagePlotToolHandlers:
                 metadata = get_dicom_metadata(selected_file_path)
                 if not metadata:
                     metadata = self.state.current_metadata
-                
-                # Generate the slice image
+                  # Generate the slice image
                 img = display_slice(
                     self.state.current_data, 
                     self.state.current_slice_idx, 
                     self.state.current_view,
-                    crosshair=self.state.crosshair_position
+                    crosshair=None,
+                    add_orientation_marker=False
                 )
                 
                 # Convert to format expected by image_annotator

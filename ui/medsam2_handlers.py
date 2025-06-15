@@ -113,15 +113,15 @@ class MEDSAM2Handlers:
         """Clear all annotation overlays from memory and refresh current image"""
         self.annotation_overlays = {}
         logger.info("Cleared all annotation overlays")
-        
-        # Refresh the current image display to show the cleared overlays
+          # Refresh the current image display to show the cleared overlays
         if self.state.current_data is not None:
             current_slice = self.state.current_slice_idx
             original_slice_img = display_slice(
                 self.state.current_data,
                 current_slice,
                 self.state.current_view,
-                crosshair=self.state.crosshair_position
+                crosshair=None,
+                add_orientation_marker=False
             )
             
             # Convert to format expected by image_annotator
@@ -322,13 +322,13 @@ class MEDSAM2Handlers:
                     return False, f"Current slice {current_slice} out of range"
                 
                 file_path, dicom_ds = dicom_datasets[current_slice - 1]  # Convert to 0-based
-                
-                # Get the current slice image
+                  # Get the current slice image
                 slice_image = display_slice(
                     self.state.current_data,
                     current_slice,
                     self.state.current_view,
-                    crosshair=None  # Don't include crosshair in analysis
+                    crosshair=None,  # Don't include crosshair in analysis
+                    add_orientation_marker=False
                 )
                 
                 # Generate bounding boxes for this slice
@@ -354,14 +354,14 @@ class MEDSAM2Handlers:
                 successful_slices = 0
                 
                 for i, (file_path, dicom_ds) in enumerate(dicom_datasets):
-                    try:
-                        # Get the slice image (convert from 0-based dataset index to 1-based UI slice)
+                    try:                        # Get the slice image (convert from 0-based dataset index to 1-based UI slice)
                         ui_slice = i + 1
                         slice_image = display_slice(
                             self.state.current_data,
                             ui_slice,
                             self.state.current_view,
-                            crosshair=None
+                            crosshair=None,
+                            add_orientation_marker=False
                         )
                           # Generate bounding boxes for this slice with dynamic sizing
                         boxes = self.brain_roi_detector.generate_prompt_boxes(
@@ -508,8 +508,7 @@ class MEDSAM2Handlers:
                     load_msg, result_image = self.load_annotation_results(output_dir, processing_mode)
                     if result_image is not None:
                         status_msg += f"\n{load_msg}"
-                        
-                        # Convert result to annotated format like manual workflow
+                          # Convert result to annotated format like manual workflow
                         from utils.visualization import display_slice, create_annotation_boxes_from_mask
                         
                         # Get clean image
@@ -517,7 +516,8 @@ class MEDSAM2Handlers:
                             self.state.current_data,
                             self.state.current_slice_idx,
                             self.state.current_view,
-                            crosshair=self.state.crosshair_position
+                            crosshair=None,
+                            add_orientation_marker=False
                         )
                         
                         # Ensure it's RGB and uint8
