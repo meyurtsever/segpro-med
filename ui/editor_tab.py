@@ -33,8 +33,9 @@ def load_annotation_data(output_dir="brain_target_results"):
     except Exception as e:
         return None, f"Error loading annotation data: {str(e)}"
 
-def load_slice_masks(output_dir="brain_target_results", slice_indices=None):
-    """Load mask data for specified slices"""
+def load_slice_masks(output_dir="brain_target_results", slice_indices=None, score_threshold=None):
+    """Load mask data for specified slices, applying the EXACT SAME score threshold as image_annotator"""
+    print(f"🔍 load_slice_masks: Called with score_threshold={score_threshold} (SAME filtering as image_annotator)")
     masks = {}
     masks_dir = os.path.join(output_dir, "masks")
     
@@ -43,8 +44,92 @@ def load_slice_masks(output_dir="brain_target_results", slice_indices=None):
     
     if slice_indices is None:
         return masks
+
+    # Use the EXACT SAME filtering approach as image_annotator
+    # Load summary.json to get the same score data that image_annotator uses
+    qualifying_slices = set()
+    annotations_per_slice = {}
     
+    if score_threshold is not None:
+        try:
+            # Load summary.json exactly like image_annotator filter_manual_results_by_score does
+            summary_path = os.path.join(output_dir, "summary.json")
+            if os.path.exists(summary_path):
+                import json
+                with open(summary_path, 'r') as f:
+                    summary_data = json.load(f)
+                
+                slice_indices_from_summary = summary_data.get('slice_indices', [])
+                average_scores = summary_data.get('average_scores', [])
+                
+                if slice_indices_from_summary and average_scores:
+                    print(f"🔍 3D Viewer: Processing {len(average_scores)} scores from {len(slice_indices_from_summary)} slices (SAME as image_annotator)")
+                    
+                    # Apply the EXACT SAME logic as filter_manual_results_by_score
+                    valid_annotations = []
+                    filtered_annotations = []
+                    
+                    # Check if we have multiple scores per slice (same logic as image_annotator)
+                    if len(average_scores) > len(slice_indices_from_summary):
+                        scores_per_slice = len(average_scores) // len(slice_indices_from_summary)
+                        print(f"🔍 3D Viewer: Detected {scores_per_slice} scores per slice (SAME as image_annotator)")
+                        
+                        # Process each score individually, creating separate annotations (SAME as image_annotator)
+                        for slice_idx in slice_indices_from_summary:
+                            slice_annotations = 0
+                            for score_offset in range(scores_per_slice):
+                                score_index = slice_indices_from_summary.index(slice_idx) * scores_per_slice + score_offset
+                                if score_index < len(average_scores):
+                                    score = average_scores[score_index]
+                                    
+                                    if score >= score_threshold:
+                                        annotation_id = f"slice_{slice_idx}_ann_{score_offset}"
+                                        valid_annotations.append((slice_idx, score, annotation_id))
+                                        slice_annotations += 1
+                                        print(f"✅ 3D Viewer: {annotation_id} passed with score {score:.6f} (SAME as image_annotator)")
+                                    else:
+                                        filtered_annotations.append((slice_idx, score, f"slice_{slice_idx}_ann_{score_offset}"))
+                                        print(f"🚫 3D Viewer: slice_{slice_idx}_ann_{score_offset} filtered with score {score:.6f} (SAME as image_annotator)")
+                            
+                            if slice_annotations > 0:
+                                qualifying_slices.add(slice_idx)
+                                annotations_per_slice[slice_idx] = slice_annotations
+                                print(f"✅ 3D Viewer: Slice {slice_idx} has {slice_annotations} qualifying annotations (SAME as image_annotator)")
+                    else:
+                        # Single score per slice - original behavior (SAME as image_annotator)
+                        for slice_idx, score in zip(slice_indices_from_summary, average_scores):
+                            if score >= score_threshold:
+                                annotation_id = f"slice_{slice_idx}_ann_0"
+                                valid_annotations.append((slice_idx, score, annotation_id))
+                                qualifying_slices.add(slice_idx)
+                                annotations_per_slice[slice_idx] = 1
+                                print(f"✅ 3D Viewer: {annotation_id} passed with score {score:.6f} (SAME as image_annotator)")
+                            else:
+                                filtered_annotations.append((slice_idx, score, f"slice_{slice_idx}_ann_0"))
+                                print(f"🚫 3D Viewer: slice_{slice_idx}_ann_0 filtered with score {score:.6f} (SAME as image_annotator)")
+                    
+                    # Print the EXACT SAME summary as image_annotator
+                    print(f"🔍 3D Viewer Summary (EXACT SAME as image_annotator):")
+                    print(f"   - Manual annotation processed {len(average_scores)} scores from {len(slice_indices_from_summary)} slices")
+                    print(f"   - {len(valid_annotations)} annotations passed threshold (>= {score_threshold}), {len(filtered_annotations)} filtered out")
+                    if annotations_per_slice:
+                        print(f"   - Annotations per slice: {dict(sorted(annotations_per_slice.items()))}")
+                    
+        except Exception as e:
+            print(f"Error loading summary.json for score filtering: {e}")
+            # Fallback to old method if summary.json is not available
+            qualifying_slices = set(slice_indices)
+    else:
+        # No score threshold, include all slices
+        qualifying_slices = set(slice_indices)
+
+    # Now load masks only for qualifying slices
     for slice_idx in slice_indices:
+        # Skip slices that don't qualify based on score threshold
+        if score_threshold is not None and slice_idx not in qualifying_slices:
+            print(f"🚫 3D Viewer: Skipping slice {slice_idx} - doesn't meet score threshold (SAME filtering as image_annotator)")
+            continue
+        
         # Try both 4-digit and 3-digit formatting
         mask_file_4digit = os.path.join(masks_dir, f"slice_{slice_idx:04d}_mask.npy")
         mask_file_3digit = os.path.join(masks_dir, f"slice_{slice_idx:03d}_mask.npy")
@@ -57,14 +142,17 @@ def load_slice_masks(output_dir="brain_target_results", slice_indices=None):
         
         if mask_file:
             try:
-                mask = np.load(mask_file)
-                masks[slice_idx] = mask
-                print(f"Loaded mask for slice {slice_idx}: {mask.shape}")
+                mask = np.load(mask_file)                # Apply the EXACT same binary threshold as image_annotator overlay_segmentation function (> 0)
+                # This matches the logic in utils/visualization.py overlay_segmentation where mask = (seg_slice > 0)
+                # The image_annotator uses overlay_segmentation which shows all pixels where seg_slice > 0
+                binary_mask = (mask > 0).astype(np.uint8)
+                masks[slice_idx] = binary_mask
+                print(f"✅ 3D Viewer: Loaded and thresholded mask for slice {slice_idx}: {mask.shape}, unique values: {np.unique(binary_mask)} (SAME > 0 threshold as image_annotator)")
             except Exception as e:
                 print(f"Error loading mask for slice {slice_idx}: {e}")
         else:
             print(f"No mask file found for slice {slice_idx}")
-    
+
     return masks
 
 def create_3d_volume_from_masks(masks, slice_spacing=1.0):
@@ -113,8 +201,8 @@ def create_3d_mesh_from_volume(volume, threshold=0.5):
         print(f"Error creating 3D mesh: {e}")
         return None, None, None
 
-def create_3d_visualization(output_dir="brain_target_results"):
-    """Create 3D visualization of annotated regions"""
+def create_3d_visualization(output_dir="brain_target_results", score_threshold=None):
+    """Create 3D visualization of annotated regions using the same thresholding as image_annotator"""
     # Load annotation data
     summary, error = load_annotation_data(output_dir)
     if error:
@@ -146,15 +234,20 @@ def create_3d_visualization(output_dir="brain_target_results"):
             slice_indices = sorted(detected_indices)
             print(f"Auto-detected slice indices: {slice_indices}")
     
-    if len(slice_indices) < 2:
-        return create_empty_3d_plot("Need at least 2 annotated slices for 3D visualization")
-    
-    # Load masks
-    masks = load_slice_masks(output_dir, slice_indices)
+    if len(slice_indices) < 1:  # Allow single slice for consistency
+        return create_empty_3d_plot("No annotated slices found for 3D visualization")
+      # Load masks with score threshold filtering (same as image_annotator)
+    print(f"🔍 3D Viewer: Loading masks with score_threshold: {score_threshold} (SAME as image_annotator)")
+    masks = load_slice_masks(output_dir, slice_indices, score_threshold)
     if not masks:
-        return create_empty_3d_plot("No mask data found")
+        threshold_msg = f" (score threshold: {score_threshold})" if score_threshold else ""
+        return create_empty_3d_plot(f"No mask data found{threshold_msg}")
     
-    print(f"Loaded {len(masks)} masks for 3D visualization")
+    print(f"✅ 3D Viewer: Loaded {len(masks)} masks for 3D visualization (after score filtering, using > 0 binary threshold like image_annotator)")
+    print(f"🔍 3D Viewer: Slices with valid masks: {sorted(masks.keys())}")
+    
+    if len(masks) < 2:
+        return create_empty_3d_plot("Need at least 2 qualifying slices for 3D visualization")
     
     # Create 3D volume
     volume = create_3d_volume_from_masks(masks)
@@ -475,8 +568,7 @@ def create_editor_tab() -> dict:
     
     def reset_layout_and_clear():
         """Reset to full layout and clear everything"""
-        return (
-            gr.update(scale=10),  # image_column - full width
+        return (            gr.update(scale=10),  # image_column - full width
             gr.update(scale=6, visible=False),  # viewer_3d_column - hidden  
             gr.update(width=1200),  # image_display - maximum width for initial state
             create_empty_3d_plot("3D Viewer will appear here after 'All Records' annotation"),  # Reset 3D viewer
@@ -491,23 +583,25 @@ def create_editor_tab() -> dict:
         else:
             return gr.update(visible=False), gr.update(visible=False)
     
-    def refresh_3d_view(output_dir):
+    def refresh_3d_view(output_dir, score_threshold=None):
         """Refresh the 3D visualization"""
         try:
-            fig = create_3d_visualization(output_dir)
+            fig = create_3d_visualization(output_dir, score_threshold)
             return fig
         except Exception as e:
             return create_empty_3d_plot(f"Error refreshing view: {str(e)}")
     
-    def export_3d_view(output_dir):
+    def export_3d_view(output_dir, score_threshold=None):
         """Export 3D view as HTML"""
         try:
-            fig = create_3d_visualization(output_dir)
+            fig = create_3d_visualization(output_dir, score_threshold)
             export_path = os.path.join(output_dir, "3d_visualization.html")
             fig.write_html(export_path)
             return f"3D view exported to: {export_path}"
         except Exception as e:
-            return f"Error exporting 3D view: {str(e)}"    # Return all components in a structured way
+            return f"Error exporting 3D view: {str(e)}"
+    
+    # Return all components in a structured way
     return {
         'data_loading': col1,
         'visualization': col2,

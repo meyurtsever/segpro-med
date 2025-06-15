@@ -696,14 +696,15 @@ class SegMedPro:
             inputs=[processing_mode],
             outputs=[score_threshold, image_column, viewer_3d_column, image_display]
         )
-        
-        # 3D Viewer event handlers
+          # 3D Viewer event handlers
         def handle_refresh_3d_view(output_dir_value):
             """Handle refresh 3D view button click"""
             try:
                 # Import the 3D visualization function from editor_tab
                 from ui.editor_tab import create_3d_visualization
-                fig = create_3d_visualization(output_dir_value)
+                # Get the current score threshold from medsam2_handlers
+                current_score_threshold = getattr(self.medsam2_handlers, 'score_threshold', 0.3)
+                fig = create_3d_visualization(output_dir_value, current_score_threshold)
                 return fig
             except Exception as e:
                 from ui.editor_tab import create_empty_3d_plot
@@ -714,7 +715,9 @@ class SegMedPro:
             try:
                 from ui.editor_tab import create_3d_visualization
                 import os
-                fig = create_3d_visualization(output_dir_value)
+                # Get the current score threshold from medsam2_handlers
+                current_score_threshold = getattr(self.medsam2_handlers, 'score_threshold', 0.3)
+                fig = create_3d_visualization(output_dir_value, current_score_threshold)
                 export_path = os.path.join(output_dir_value, "3d_visualization.html")
                 fig.write_html(export_path)
                 return f"✅ 3D view exported to: {export_path}"
@@ -862,14 +865,13 @@ class SegMedPro:
                 output_dir, save_visualizations, device_selector, processing_mode, score_threshold, image_display_data
             )
             print(f"🔍 Annotation result: success={success}")
-            
-            # If processing mode is "All Records" and annotation was successful, refresh 3D viewer
+              # If processing mode is "All Records" and annotation was successful, refresh 3D viewer
             # Always return a valid Plotly figure to avoid the __module__ attribute error
             from ui.editor_tab import create_empty_3d_plot, create_3d_visualization
             if processing_mode == "All Records" and success:
                 print(f"🔍 Updating 3D viewer for All Records mode with output_dir={output_dir}")
                 try:
-                    viewer_3d_update = create_3d_visualization(output_dir)
+                    viewer_3d_update = create_3d_visualization(output_dir, score_threshold)
                     print("✅ 3D viewer updated successfully")
                 except Exception as e:
                     print(f"❌ Error updating 3D view: {str(e)}")
@@ -909,13 +911,12 @@ class SegMedPro:
             status, annotated_result, success = self.medsam2_handlers.run_medsam2_annotation_automatic(
                 dicom_folder, output_dir, save_visualizations, device_selector, processing_mode, score_threshold
             )
-            
-            # If processing mode is "All Records" and annotation was successful, refresh 3D viewer
+              # If processing mode is "All Records" and annotation was successful, refresh 3D viewer
             # Always return a valid Plotly figure to avoid the __module__ attribute error
             from ui.editor_tab import create_empty_3d_plot, create_3d_visualization
             if processing_mode == "All Records" and success:
                 try:
-                    viewer_3d_update = create_3d_visualization(output_dir)
+                    viewer_3d_update = create_3d_visualization(output_dir, score_threshold)
                 except Exception as e:
                     viewer_3d_update = create_empty_3d_plot(f"Error updating 3D view: {str(e)}")
             else:
