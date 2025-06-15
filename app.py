@@ -590,15 +590,20 @@ class SegMedPro:
         """Connect all event handlers for the editor tab (mirroring viewer tab, plus MEDSAM2 functionality)"""
         data_loading = components['data_loading']
         visualization = components['visualization']
-        ai_tools = components['ai_tools']  # Now we have AI tools including MEDSAM2
-        
+        ai_tools = components['ai_tools']  # Now we have AI tools including MEDSAM2        
+        # Unpack components
         (file_input, dir_input, load_btn, reset_dir_btn, file_browser, 
          metadata_display_dl, error_display_dl, window_level, window_width, apply_window_btn, debug_btn) = data_loading
-        (error_display, metadata_display, view_selector, image_display, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn) = visualization        
-        (point_prompt_checkbox, box_prompt_checkbox, coordinates_text, clear_coords_btn, clear_overlays_btn, ai_model_selector, 
+        (error_display, metadata_display, view_selector, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn) = visualization        
+        (point_prompt_checkbox, box_prompt_checkbox, coordinates_text, clear_coords_btn, ai_model_selector, 
          processing_mode, score_threshold,
          output_dir, save_visualizations, device_selector, 
          auto_brain_annotate_btn, annotate_btn, annotation_status) = ai_tools
+        
+        # Get layout functions
+        layout_functions = components.get('layout_functions', {})
+        toggle_layout = layout_functions.get('toggle_layout')
+        reset_layout = layout_functions.get('reset_layout')
           # Data loading handlers (updated for annotator compatibility)
         load_btn.click(
             fn=self.data_handlers.load_data_for_annotator,
@@ -674,19 +679,22 @@ class SegMedPro:
         next_btn.click(            fn=handle_next_navigation,            inputs=[slice_slider, image_display],
             outputs=[image_display, slice_text, crosshair_info, metadata_display, window_level, window_width, slice_slider]
         )
-        
-        # Connect processing mode change event
+          # Connect processing mode change event with layout switching
         def handle_processing_mode_change(mode):
-            """Handle processing mode change - show/hide score threshold and 3D viewer"""
+            """Handle processing mode change - switch layout and show/hide score threshold and 3D viewer"""
             score_threshold_update = gr.Slider(visible=(mode == "All Records"))
-            viewer_3d_update = gr.Plot(visible=(mode == "All Records"))
-            viewer_controls_update = gr.Row(visible=(mode == "All Records"))
-            return score_threshold_update, viewer_3d_update, viewer_controls_update
+            # Use the layout toggle function
+            if toggle_layout:
+                layout_updates = toggle_layout(mode)
+                return (score_threshold_update,) + layout_updates
+            else:
+                # Fallback if toggle_layout is not available
+                return score_threshold_update, gr.update(), gr.update(), gr.update()
         
         processing_mode.change(
             fn=handle_processing_mode_change,
             inputs=[processing_mode],
-            outputs=[score_threshold, viewer_3d, viewer_3d_controls]
+            outputs=[score_threshold, image_column, viewer_3d_column, image_display]
         )
         
         # 3D Viewer event handlers
@@ -820,48 +828,62 @@ class SegMedPro:
             outputs=[]  # No outputs to avoid circular dependency
         )
         
-        def clear_all_prompts_and_overlays():
-            """Clear all prompts, coordinates, and annotation overlays"""
+        def clear_all_prompts_and_reset_layout():
+            """Clear all prompts, coordinates, annotation overlays, and reset layout"""
             self.medsam2_handlers.clear_coordinates()
             self.medsam2_handlers.prompt_boxes = []
             status, image = self.medsam2_handlers.clear_annotation_overlays()
-            return "", status, image, gr.update(visible=False)  # Clear coordinates, update status, clear overlays, hide clear button
-        
+            
+            # Use the reset layout function
+            if reset_layout:
+                layout_updates = reset_layout()
+                # layout_updates contains: (image_column, viewer_3d_column, image_display, viewer_3d, coordinates, processing_mode)
+                # We need: (coordinates_text, annotation_status, image_display, image_column, viewer_3d_column, viewer_3d, processing_mode)
+                return (
+                    layout_updates[4],  # coordinates ("")
+                    status,             # annotation_status
+                    image,              # image_display (cleared image)
+                    layout_updates[0],  # image_column (scale=10)
+                    layout_updates[1],  # viewer_3d_column (scale=6, visible=False)
+                    layout_updates[3],  # viewer_3d (reset plot)
+                    layout_updates[5]   # processing_mode ("Single Slice")
+                )
+            else:
+                # Fallback if reset_layout is not available
+                return "", status, image, gr.update(), gr.update(), gr.update(), "Single Slice"
         clear_coords_btn.click(
-            fn=clear_all_prompts_and_overlays,
+            fn=clear_all_prompts_and_reset_layout,
             inputs=[],
-            outputs=[coordinates_text, annotation_status, image_display, clear_overlays_btn]        )
-        
-        clear_overlays_btn.click(
-            fn=self.medsam2_handlers.clear_annotation_overlays,
-            inputs=[],
-            outputs=[annotation_status, image_display]
-        )
-        
-        # Custom wrapper function to handle the 3-tuple return and button visibility
+            outputs=[coordinates_text, annotation_status, image_display, image_column, viewer_3d_column, viewer_3d, processing_mode]
+        )        # Custom wrapper function to handle the 3-tuple return and button visibility
         def handle_annotation_workflow(output_dir, save_visualizations, device_selector, processing_mode, score_threshold, image_display_data):
+            print(f"🔍 Annotation workflow: processing_mode={processing_mode}")
             status, image, success = self.medsam2_handlers.run_full_annotation_workflow(
                 output_dir, save_visualizations, device_selector, processing_mode, score_threshold, image_display_data
             )
+            print(f"🔍 Annotation result: success={success}")
             
             # If processing mode is "All Records" and annotation was successful, refresh 3D viewer
             # Always return a valid Plotly figure to avoid the __module__ attribute error
             from ui.editor_tab import create_empty_3d_plot, create_3d_visualization
             if processing_mode == "All Records" and success:
+                print(f"🔍 Updating 3D viewer for All Records mode with output_dir={output_dir}")
                 try:
                     viewer_3d_update = create_3d_visualization(output_dir)
+                    print("✅ 3D viewer updated successfully")
                 except Exception as e:
+                    print(f"❌ Error updating 3D view: {str(e)}")
                     viewer_3d_update = create_empty_3d_plot(f"Error updating 3D view: {str(e)}")
             else:
                 # For non-"All Records" mode, show message
+                print(f"🔍 Not updating 3D viewer: mode={processing_mode}, success={success}")
                 viewer_3d_update = create_empty_3d_plot("3D Viewer available in 'All Records' mode")
             
-            return status, image, gr.update(visible=success), viewer_3d_update
-        
+            return status, image, viewer_3d_update
         annotate_btn.click(
             fn=handle_annotation_workflow,
             inputs=[output_dir, save_visualizations, device_selector, processing_mode, score_threshold, image_display],
-            outputs=[annotation_status, image_display, clear_overlays_btn, viewer_3d]
+            outputs=[annotation_status, image_display, viewer_3d]
         )
         
         # Auto-brain annotation handler
@@ -899,14 +921,12 @@ class SegMedPro:
             else:
                 # For non-"All Records" mode, show message
                 viewer_3d_update = create_empty_3d_plot("3D Viewer available in 'All Records' mode")
-            
-            # Return the annotated result directly to the image_annotator
-            return status, annotated_result, gr.update(visible=success), viewer_3d_update
-        
+              # Return the annotated result directly to the image_annotator
+            return status, annotated_result, viewer_3d_update
         auto_brain_annotate_btn.click(
             fn=handle_auto_brain_annotation,
             inputs=[output_dir, save_visualizations, device_selector, processing_mode, score_threshold, dir_input],
-            outputs=[annotation_status, image_display, clear_overlays_btn, viewer_3d]
+            outputs=[annotation_status, image_display, viewer_3d]
         )
           # Handle image removal from image_annotator (X button / clear button)
         image_display.clear(

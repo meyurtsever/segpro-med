@@ -301,9 +301,11 @@ def create_editor_tab() -> dict:
                         choices=["Axial", "Sagittal", "Coronal"],
                         value="Axial",
                         label="View Orientation"
-                    )                # Image and 3D Viewer side by side - no margins, medical image wider
-                with gr.Row(equal_height=True):
-                    with gr.Column(scale=7):
+                    )                # Image and 3D Viewer - dynamic layout based on processing mode
+                with gr.Row(equal_height=True) as main_viewer_row:
+                    # Image annotator column - dynamic scaling
+                    image_column = gr.Column(scale=10)  # Full width initially
+                    with image_column:
                         image_display = image_annotator(
                             value=None,
                             label="Medical Image", 
@@ -314,8 +316,7 @@ def create_editor_tab() -> dict:
                             box_thickness=2,
                             box_selected_thickness=3,
                             boxes_alpha=0.7,
-                            height=600,
-                            width=650,  # Increased width for better viewing 800
+                            height=600,                            width=1200,  # Maximum width initially - will be full screen
                             interactive=True,
                             show_label=True,
                             show_download_button=True,
@@ -329,16 +330,18 @@ def create_editor_tab() -> dict:
                             shape_creation_mode="drag",
                         )
                     
-                    with gr.Column(scale=6):
+                    # 3D Viewer column - initially hidden
+                    viewer_3d_column = gr.Column(scale=6, visible=False)
+                    with viewer_3d_column:
                         # 3D Viewer - initially hidden, shown when "All Records" is selected and annotations exist
                         viewer_3d = gr.Plot(
                             value=create_empty_3d_plot("3D Viewer will appear here after 'All Records' annotation"),
                             label="3D Viewer",
-                            visible=False  # Initially hidden
+                            visible=True  # Visible within its column
                         )
                         
                         # 3D Viewer Controls
-                        with gr.Row(visible=False) as viewer_3d_controls:
+                        with gr.Row() as viewer_3d_controls:
                             refresh_3d_btn = gr.Button("🔄 Refresh 3D View", size="sm")
                             export_3d_btn = gr.Button("💾 Export 3D", size="sm")# Navigation controls (middle)
                 with gr.Row():
@@ -355,7 +358,7 @@ def create_editor_tab() -> dict:
                 with gr.Accordion("Metadata", open=False):
                     metadata_display = gr.JSON(label=None, visible=True)
                 
-                col2 = (error_display, metadata_display, view_selector, image_display, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn)
+                col2 = (error_display, metadata_display, view_selector, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn)
             
             # Column 3: Annotate with AI Models
             with gr.Column(scale=1):
@@ -381,12 +384,6 @@ def create_editor_tab() -> dict:
                     visible=False  # Initially hidden until point-based is selected
                 )
                 clear_coords_btn = gr.Button("Clear Coordinates & Prompts", variant="stop",)
-                
-                clear_overlays_btn = gr.Button(
-                    "Clear Annotation Overlays", 
-                    variant="stop",  # Makes the button red
-                    visible=False    # Hidden by default, shown after successful annotation
-                )
                 
                 gr.Markdown("## Annotate with AI Models")
                 ai_model_selector = gr.Dropdown(
@@ -453,17 +450,42 @@ def create_editor_tab() -> dict:
                 annotation_status = gr.Textbox(
                     label="Annotation Status", 
                     interactive=False,
-                    value="Ready to annotate"
-                )
+                    value="Ready to annotate"                )
                 
-                col3 = (point_prompt_checkbox, box_prompt_checkbox, coordinates_text, clear_coords_btn, clear_overlays_btn, ai_model_selector, 
+                col3 = (point_prompt_checkbox, box_prompt_checkbox, coordinates_text, clear_coords_btn, ai_model_selector, 
                         processing_mode, score_threshold,
                         output_dir, save_visualizations, device_selector, 
-                        auto_brain_annotate_btn, annotate_btn, annotation_status)
-
-    # Helper functions for 3D viewer interactions
+                        auto_brain_annotate_btn, annotate_btn, annotation_status)    # Helper functions for 3D viewer interactions and layout switching
+    def toggle_layout_for_processing_mode(processing_mode):
+        """Switch between full-width and split layout based on processing mode"""
+        if processing_mode == "All Records":
+            # Split layout: image scale 7, 3D viewer visible with scale 6
+            return (
+                gr.update(scale=7),  # image_column
+                gr.update(scale=6, visible=True),  # viewer_3d_column
+                gr.update(width=650),  # image_display - reduced width for split layout
+            )
+        else:
+            # Full layout: image full width, 3D viewer hidden
+            return (
+                gr.update(scale=10),  # image_column - full width
+                gr.update(scale=6, visible=False),  # viewer_3d_column - hidden
+                gr.update(width=1200),  # image_display - maximum width for full layout
+            )
+    
+    def reset_layout_and_clear():
+        """Reset to full layout and clear everything"""
+        return (
+            gr.update(scale=10),  # image_column - full width
+            gr.update(scale=6, visible=False),  # viewer_3d_column - hidden  
+            gr.update(width=1200),  # image_display - maximum width for initial state
+            create_empty_3d_plot("3D Viewer will appear here after 'All Records' annotation"),  # Reset 3D viewer
+            "",  # Clear coordinates
+            "Single Slice"  # Reset processing mode to valid choice
+        )
+    
     def toggle_3d_viewer_visibility(processing_mode):
-        """Show/hide 3D viewer based on processing mode"""
+        """Show/hide 3D viewer based on processing mode - legacy function"""
         if processing_mode == "All Records":
             return gr.update(visible=True), gr.update(visible=True)
         else:
@@ -485,9 +507,7 @@ def create_editor_tab() -> dict:
             fig.write_html(export_path)
             return f"3D view exported to: {export_path}"
         except Exception as e:
-            return f"Error exporting 3D view: {str(e)}"
-
-    # Return all components in a structured way
+            return f"Error exporting 3D view: {str(e)}"    # Return all components in a structured way
     return {
         'data_loading': col1,
         'visualization': col2,
@@ -496,5 +516,9 @@ def create_editor_tab() -> dict:
             'toggle_visibility': toggle_3d_viewer_visibility,
             'refresh_view': refresh_3d_view,
             'export_view': export_3d_view
+        },
+        'layout_functions': {
+            'toggle_layout': toggle_layout_for_processing_mode,
+            'reset_layout': reset_layout_and_clear
         }
     }
