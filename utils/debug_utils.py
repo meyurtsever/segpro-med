@@ -13,12 +13,30 @@ log_file = os.path.join(log_dir, 'segmed_pro_debug.log')
 if not os.path.exists(log_dir):
     os.makedirs(log_dir)
 
+# Custom logging filter to only show specific INFO messages for debugging
+class DebugFilter(logging.Filter):
+    """Filter to only show specific INFO messages for debugging annotation and 3D viewer logic"""
+    def filter(self, record):
+        if record.levelno == logging.INFO:
+            # Only allow INFO messages that contain these specific keywords
+            allowed_keywords = [
+                "Annotation Status",
+                "3D Viewer status", 
+                "3D Viewer:",  # For 3D viewer debug messages
+                "Annotation Status:",  # For annotation status messages
+            ]
+            message = record.getMessage()
+            return any(keyword in message for keyword in allowed_keywords)
+        # Allow all non-INFO messages (ERROR, WARNING, DEBUG, etc.)
+        return record.levelno != logging.INFO
+
 logger = logging.getLogger('segmed_pro')
 logger.setLevel(logging.DEBUG)
 
 # Create file handler
 file_handler = RotatingFileHandler(log_file, maxBytes=10*1024*1024, backupCount=5)
 file_handler.setLevel(logging.DEBUG)
+file_handler.addFilter(DebugFilter())  # Apply filter to file handler
 
 # Create formatter and add to handler
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -30,6 +48,7 @@ logger.addHandler(file_handler)
 # Add console handler
 console_handler = logging.StreamHandler()
 console_handler.setLevel(logging.INFO)
+console_handler.addFilter(DebugFilter())  # Apply filter to console handler
 console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 

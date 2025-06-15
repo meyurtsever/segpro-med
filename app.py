@@ -14,6 +14,44 @@ import sys
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Custom logging filter to only show specific INFO messages for debugging
+class DebugFilter(logging.Filter):
+    """Filter to only show specific INFO messages for debugging annotation and 3D viewer logic"""
+    def filter(self, record):
+        if record.levelno == logging.INFO:
+            # Only allow INFO messages that contain these specific keywords
+            allowed_keywords = [
+                "Annotation Status",
+                "3D Viewer status",
+                "3D Viewer:",  # For 3D viewer debug messages
+                "Annotation Status:",  # For annotation status messages
+            ]
+            message = record.getMessage()
+            return any(keyword in message for keyword in allowed_keywords)
+        # Allow all non-INFO messages (ERROR, WARNING, DEBUG, etc.)
+        return record.levelno != logging.INFO
+
+# Apply the filter to the root logger
+root_logger = logging.getLogger()
+debug_filter = DebugFilter()
+for handler in root_logger.handlers:
+    handler.addFilter(debug_filter)
+
+# Also apply to specific loggers that might bypass the root logger
+specific_loggers = [
+    'segmed_pro',
+    '__main__',
+    'ui.image_handlers',
+    'ui.editor_tab',
+    'utils.debug_utils',
+    'utils.dicom_utils'
+]
+for logger_name in specific_loggers:
+    specific_logger = logging.getLogger(logger_name)
+    for handler in specific_logger.handlers:
+        handler.addFilter(debug_filter)
+    # If no handlers, the filter on root logger will catch it
+
 # Suppress excessive pydicom debug logs
 pydicom_logger = logging.getLogger('pydicom')
 pydicom_logger.setLevel(logging.WARNING)
@@ -659,7 +697,7 @@ class SegMedPro:
             result_tuple, new_slider_value = self.image_plot_tool_handlers.handle_annotator_navigation(
                 "prev", current_slider_value, current_annotated_value
             )
-            # result_tuple contains (image_display, slice_text, crosshair_info, metadata, window_level, window_width)
+            # result_tuple contains: (image_display, slice_text, crosshair_info, metadata, window_level, window_width)
             return result_tuple + (new_slider_value,)
         
         def handle_next_navigation(current_slider_value, current_annotated_value):
@@ -667,7 +705,7 @@ class SegMedPro:
             result_tuple, new_slider_value = self.image_plot_tool_handlers.handle_annotator_navigation(
                 "next", current_slider_value, current_annotated_value
             )
-            # result_tuple contains (image_display, slice_text, crosshair_info, metadata, window_level, window_width)
+            # result_tuple contains: (image_display, slice_text, crosshair_info, metadata, window_level, window_width)
             return result_tuple + (new_slider_value,)
         
         prev_btn.click(
@@ -818,7 +856,7 @@ class SegMedPro:
                 # If box mode is enabled, also extract box prompts for MEDSAM2
                 if hasattr(self.medsam2_handlers, 'box_mode_enabled') and self.medsam2_handlers.box_mode_enabled:
                     status_msg = self.medsam2_handlers.handle_box_annotation(annotated_image_value)
-                    logger.info(f"Box annotation handled: {status_msg}")
+                    logger.info(f"Annotation Status: Box annotation handled - {status_msg}")
                 
                 return None  # No outputs to avoid circular dependency
             except Exception as e:
@@ -839,8 +877,7 @@ class SegMedPro:
             
             # Use the reset layout function
             if reset_layout:
-                layout_updates = reset_layout()
-                # layout_updates contains: (image_column, viewer_3d_column, image_display, viewer_3d, coordinates, processing_mode)
+                layout_updates = reset_layout()                # layout_updates contains: (image_column, viewer_3d_column, image_display, viewer_3d, coordinates, processing_mode)
                 # We need: (coordinates_text, annotation_status, image_display, image_column, viewer_3d_column, viewer_3d, processing_mode)
                 return (
                     layout_updates[4],  # coordinates ("")
@@ -854,31 +891,34 @@ class SegMedPro:
             else:
                 # Fallback if reset_layout is not available
                 return "", status, image, gr.update(), gr.update(), gr.update(), "Single Slice"
+        
         clear_coords_btn.click(
             fn=clear_all_prompts_and_reset_layout,
             inputs=[],
             outputs=[coordinates_text, annotation_status, image_display, image_column, viewer_3d_column, viewer_3d, processing_mode]
-        )        # Custom wrapper function to handle the 3-tuple return and button visibility
+        )
+        
+        # Custom wrapper function to handle the 3-tuple return and button visibility
         def handle_annotation_workflow(output_dir, save_visualizations, device_selector, processing_mode, score_threshold, image_display_data):
-            print(f"🔍 Annotation workflow: processing_mode={processing_mode}")
+            logger.info(f"Annotation Status: workflow started with processing_mode={processing_mode}")
             status, image, success = self.medsam2_handlers.run_full_annotation_workflow(
                 output_dir, save_visualizations, device_selector, processing_mode, score_threshold, image_display_data
             )
-            print(f"🔍 Annotation result: success={success}")
-              # If processing mode is "All Records" and annotation was successful, refresh 3D viewer
+            logger.info(f"Annotation Status: workflow completed with success={success}")
+            # If processing mode is "All Records" and annotation was successful, refresh 3D viewer
             # Always return a valid Plotly figure to avoid the __module__ attribute error
             from ui.editor_tab import create_empty_3d_plot, create_3d_visualization
             if processing_mode == "All Records" and success:
-                print(f"🔍 Updating 3D viewer for All Records mode with output_dir={output_dir}")
+                logger.info(f"3D Viewer status: Updating 3D viewer for All Records mode with output_dir={output_dir}")
                 try:
                     viewer_3d_update = create_3d_visualization(output_dir, score_threshold)
-                    print("✅ 3D viewer updated successfully")
+                    logger.info("3D Viewer status: 3D viewer updated successfully")
                 except Exception as e:
-                    print(f"❌ Error updating 3D view: {str(e)}")
+                    logger.info(f"3D Viewer status: Error updating 3D view: {str(e)}")
                     viewer_3d_update = create_empty_3d_plot(f"Error updating 3D view: {str(e)}")
             else:
                 # For non-"All Records" mode, show message
-                print(f"🔍 Not updating 3D viewer: mode={processing_mode}, success={success}")
+                logger.info(f"3D Viewer status: Not updating 3D viewer: mode={processing_mode}, success={success}")
                 viewer_3d_update = create_empty_3d_plot("3D Viewer available in 'All Records' mode")
             
             return status, image, viewer_3d_update

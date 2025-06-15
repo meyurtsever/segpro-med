@@ -3,7 +3,26 @@ SegMed-Pro Editor Tab UI Components
 
 This module contains the UI layout for the Editor tab,
 including data loading, visualization with advanced annotation capabilities,
-AI annotation tools using gradio_image_annotation, and 3D visualization.
+AI annotation tools usi            for mask_file in mask_files:
+                filename = os.path.basename(mask_file)
+                # Extract slice number from filename
+                if filename.sta    # Fi    valid_masks = {k: v for k, v in masks.items() if np.any(v > 0)}
+    
+    if not valid_masks:
+        threshold_msg = f" (score threshold: {score_threshold})" if score_threshold else ""
+        return create_empty_3d_plot(f"No valid mask data found{threshold_msg}") masks to only include those that actually have annotation data
+    # This ensures we don't create empty 3D visualizations
+    valid_masks = {k: v for k, v in masks.items() if np.any(v > 0)}
+    
+    if not valid_masks:
+        threshold_msg = f" (score threshold: {score_threshold})" if score_threshold else ""
+        return create_empty_3d_plot(f"No valid mask data found{threshold_msg}")h("slice_") and filename.endswith("_mask.npy"):
+                    slice_num_str = filename[6:-9]  # Remove "slice_" and "_mask.npy"
+                    try:
+                        slice_num = int(slice_num_str)
+                        detected_indices.append(slice_num)
+                    except ValueError:
+                        continueimage_annotation, and 3D visualization.
 """
 
 import gradio as gr
@@ -15,9 +34,14 @@ from .viewer_tab import create_data_loading_section
 import json
 import os
 import glob
+import logging
 from scipy import ndimage
 from skimage import measure
 import cv2
+import nibabel as nib  # Import nibabel for NIfTI file handling
+
+# Set up logger for this module
+logger = logging.getLogger(__name__)
 
 def load_annotation_data(output_dir="brain_target_results"):
     """Load annotation data from the results directory"""
@@ -35,7 +59,7 @@ def load_annotation_data(output_dir="brain_target_results"):
 
 def load_slice_masks(output_dir="brain_target_results", slice_indices=None, score_threshold=None):
     """Load mask data for specified slices, applying the EXACT SAME score threshold as image_annotator"""
-    print(f"🔍 load_slice_masks: Called with score_threshold={score_threshold} (SAME filtering as image_annotator)")
+    logger.info(f"load_slice_masks called with score_threshold={score_threshold} (SAME filtering as image_annotator)")
     masks = {}
     masks_dir = os.path.join(output_dir, "masks")
     
@@ -44,66 +68,111 @@ def load_slice_masks(output_dir="brain_target_results", slice_indices=None, scor
     
     if slice_indices is None:
         return masks
-      # Load scores if score_threshold is provided
+    
+    # Load scores if score_threshold is provided - USE SAME LOGIC AS image_annotator
     scores_data = {}
     if score_threshold is not None:
         try:
-            # Try to load scores - look for both automatic and manual annotation results
-            scores_files = glob.glob(os.path.join(masks_dir, "*_scores.npy"))
-            for score_file in scores_files:
-                filename = os.path.basename(score_file)
-                if filename.startswith("slice_") and filename.endswith("_scores.npy"):
-                    slice_num_str = filename[6:-11]  # Remove "slice_" and "_scores.npy"
-                    try:
-                        slice_num = int(slice_num_str)
-                        scores = np.load(score_file)
-                        scores_data[slice_num] = scores
-                        print(f"Loaded scores for slice {slice_num}: {scores}")
-                    except (ValueError, Exception) as e:
-                        print(f"Error loading scores from {score_file}: {e}")
-        except Exception as e:            print(f"Error loading score files: {e}")
+            # Load scores from summary.json EXACTLY like image_annotator does
+            summary_path = os.path.join(output_dir, "summary.json")
+            if os.path.exists(summary_path):
+                with open(summary_path, 'r') as f:
+                    summary_data = json.load(f)
+                
+                summary_slice_indices = summary_data.get('slice_indices', [])
+                average_scores = summary_data.get('average_scores', [])
+                
+                if summary_slice_indices and average_scores:
+                    logger.info(f"Using summary.json scores - {len(average_scores)} scores from {len(summary_slice_indices)} slices (SAME as image_annotator)")
+                    
+                    # Check if we have multiple scores per slice (SAME logic as image_annotator)
+                    if len(average_scores) > len(summary_slice_indices):
+                        scores_per_slice = len(average_scores) // len(summary_slice_indices)
+                        logger.info(f"Detected {scores_per_slice} scores per slice (SAME as image_annotator)")
+                        
+                        # Process each score individually (SAME as image_annotator)
+                        for slice_idx in summary_slice_indices:
+                            slice_scores = []
+                            for score_offset in range(scores_per_slice):
+                                score_index = summary_slice_indices.index(slice_idx) * scores_per_slice + score_offset
+                                if score_index < len(average_scores):
+                                    slice_scores.append(average_scores[score_index])
+                            
+                            if slice_scores:
+                                scores_data[slice_idx] = np.array(slice_scores)
+                                logger.info(f"Loaded {len(slice_scores)} scores for slice {slice_idx}: {slice_scores} (from summary.json)")
+                    else:
+                        # Single score per slice (SAME as image_annotator)
+                        for slice_idx, score in zip(summary_slice_indices, average_scores):
+                            scores_data[slice_idx] = np.array([score])
+                            logger.info(f"Loaded score for slice {slice_idx}: {score} (from summary.json)")
+                else:
+                    logger.warning("No slice data found in summary.json")
+            else:
+                logger.warning("No summary.json found, cannot apply score filtering")
+        except Exception as e:
+            logger.error(f"Error loading scores from summary.json: {e}")      # Process all requested slices for 3D visualization (including empty ones)
+    # but apply score filtering only to slices that have annotation data
+    slices_to_process = slice_indices
     
-    for slice_idx in slice_indices:
-        # Apply score threshold filtering if available
+    # For score threshold filtering, we'll check each slice individually
+    # This allows us to include empty slices while still filtering annotated ones
+    if score_threshold is not None:
+        logger.info(f"Score threshold {score_threshold} will be applied to slices with annotation data")
+        logger.info(f"Processing complete slice range: {min(slice_indices)} to {max(slice_indices)} ({len(slice_indices)} slices)")
+        logger.info(f"Slices with score data: {sorted(scores_data.keys()) if scores_data else 'None'}")
+    else:
+        logger.info(f"No score threshold - processing all {len(slice_indices)} slices")
+    
+    for slice_idx in slices_to_process:
+        # Determine if this slice should have annotation data or be empty
+        should_load_annotation = True
+        
+        # Apply score threshold filtering if available (SAME logic as image_annotator)
         if score_threshold is not None and slice_idx in scores_data:
             scores = scores_data[slice_idx]
-            
             # Process individual scores like image_annotator does (SAME logic as filter_manual_results_by_score)
-            qualifying_scores = 0
+            qualifying_scores = 0            
             if isinstance(scores, np.ndarray):
-                print(f"🔍 3D Viewer: Processing {len(scores)} scores for slice {slice_idx} (SAME as image_annotator)")
+                logger.info(f"Processing {len(scores)} scores for slice {slice_idx} (SAME as image_annotator)")
                 for i, score in enumerate(scores):
                     if score >= score_threshold:
                         qualifying_scores += 1
-                        print(f"✅ 3D Viewer: Slice {slice_idx} annotation {i} passed - score {score:.6f} >= threshold {score_threshold} (SAME as image_annotator)")
+                        logger.info(f"Slice {slice_idx} annotation {i} passed - score {score:.6f} >= threshold {score_threshold} (SAME as image_annotator)")
                     else:
-                        print(f"🚫 3D Viewer: Slice {slice_idx} annotation {i} filtered - score {score:.6f} < threshold {score_threshold} (SAME as image_annotator)")
+                        logger.info(f"Slice {slice_idx} annotation {i} filtered - score {score:.6f} < threshold {score_threshold} (SAME as image_annotator)")
                 
-                # Only include slice if it has at least one qualifying score
+                # Only load annotation if it has at least one qualifying score
                 if qualifying_scores == 0:
-                    print(f"🚫 3D Viewer: Slice {slice_idx} excluded - no qualifying annotations (SAME filtering as image_annotator)")
-                    continue
+                    logger.info(f"Slice {slice_idx} - no qualifying annotations, will be empty in 3D (SAME filtering as image_annotator)")
+                    should_load_annotation = False
                 else:
-                    print(f"✅ 3D Viewer: Slice {slice_idx} included with {qualifying_scores} qualifying annotations (SAME filtering as image_annotator)")
+                    logger.info(f"Slice {slice_idx} included with {qualifying_scores} qualifying annotations (SAME filtering as image_annotator)")
             else:
                 # Single score
                 if scores >= score_threshold:
                     qualifying_scores = 1
-                    print(f"✅ 3D Viewer: Slice {slice_idx} included - score {scores:.6f} >= threshold {score_threshold} (SAME filtering as image_annotator)")
+                    logger.info(f"Slice {slice_idx} included - score {scores:.6f} >= threshold {score_threshold} (SAME filtering as image_annotator)")
                 else:
-                    print(f"🚫 3D Viewer: Slice {slice_idx} filtered out - score {scores:.6f} < threshold {score_threshold} (SAME filtering as image_annotator)")
-                    continue
-          # Try both 4-digit and 3-digit formatting
-        mask_file_4digit = os.path.join(masks_dir, f"slice_{slice_idx:04d}_mask.npy")
-        mask_file_3digit = os.path.join(masks_dir, f"slice_{slice_idx:03d}_mask.npy")
+                    logger.info(f"Slice {slice_idx} filtered out - score {scores:.6f} < threshold {score_threshold}, will be empty in 3D (SAME filtering as image_annotator)")
+                    should_load_annotation = False
+        elif score_threshold is not None:
+            # No score data for this slice - it should be empty
+            logger.info(f"Slice {slice_idx} - no score data, will be empty in 3D")
+            should_load_annotation = False
         
+        # Try both 4-digit and 3-digit formatting, but only if we should load annotation
         mask_file = None
-        if os.path.exists(mask_file_4digit):
-            mask_file = mask_file_4digit
-        elif os.path.exists(mask_file_3digit):
-            mask_file = mask_file_3digit
+        if should_load_annotation:
+            mask_file_4digit = os.path.join(masks_dir, f"slice_{slice_idx:04d}_mask.npy")
+            mask_file_3digit = os.path.join(masks_dir, f"slice_{slice_idx:03d}_mask.npy")
+            
+            if os.path.exists(mask_file_4digit):
+                mask_file = mask_file_4digit
+            elif os.path.exists(mask_file_3digit):
+                mask_file = mask_file_3digit
         
-        if mask_file:
+        if mask_file and should_load_annotation:
             try:
                 mask = np.load(mask_file)
                 # Apply the EXACT same binary threshold as image_annotator overlay_segmentation function (> 0)
@@ -111,58 +180,176 @@ def load_slice_masks(output_dir="brain_target_results", slice_indices=None, scor
                 # The image_annotator uses overlay_segmentation which shows all pixels where seg_slice > 0
                 binary_mask = (mask > 0).astype(np.uint8)
                 masks[slice_idx] = binary_mask
-                print(f"✅ 3D Viewer: Loaded and thresholded mask for slice {slice_idx}: {mask.shape}, unique values: {np.unique(binary_mask)} (SAME > 0 threshold as image_annotator)")
+                logger.info(f"3D Viewer: Loaded and thresholded mask for slice {slice_idx}: {mask.shape}, unique values: {np.unique(binary_mask)} (SAME > 0 threshold as image_annotator)")
             except Exception as e:
-                print(f"Error loading mask for slice {slice_idx}: {e}")
+                logger.error(f"Error loading mask for slice {slice_idx}: {e}")
+                # Create empty mask for failed loads to maintain spatial continuity
+                if slice_indices:  # Ensure we have a reference for dimensions
+                    # Try to get dimensions from other masks or use default
+                    reference_mask = None
+                    for ref_idx in slice_indices:
+                        ref_file_4digit = os.path.join(masks_dir, f"slice_{ref_idx:04d}_mask.npy")
+                        ref_file_3digit = os.path.join(masks_dir, f"slice_{ref_idx:03d}_mask.npy")
+                        if os.path.exists(ref_file_4digit):
+                            try:
+                                reference_mask = np.load(ref_file_4digit)
+                                break
+                            except:
+                                continue
+                        elif os.path.exists(ref_file_3digit):
+                            try:
+                                reference_mask = np.load(ref_file_3digit)
+                                break
+                            except:
+                                continue
+                    
+                    if reference_mask is not None:
+                        masks[slice_idx] = np.zeros(reference_mask.shape, dtype=np.uint8)
+                        logger.info(f"3D Viewer: Created empty mask for slice {slice_idx} (failed load)")
         else:
-            print(f"No mask file found for slice {slice_idx}")
-    
-    # Add summary logging to match image_annotator format
+            # No mask file found OR we shouldn't load annotation - create empty mask for spatial continuity
+            if should_load_annotation:
+                logger.info(f"No mask file found for slice {slice_idx} - creating empty mask for spatial continuity")
+            else:
+                logger.info(f"Slice {slice_idx} filtered by score threshold - creating empty mask for 3D continuity")
+            
+            # Try to get dimensions from existing masks or other available mask files
+            reference_mask = None
+            
+            # First, check if we already have a mask loaded
+            if masks:
+                reference_mask = next(iter(masks.values()))
+            else:
+                # Try to load any available mask to get dimensions
+                for ref_idx in slice_indices:
+                    if ref_idx == slice_idx:
+                        continue
+                    ref_file_4digit = os.path.join(masks_dir, f"slice_{ref_idx:04d}_mask.npy")
+                    ref_file_3digit = os.path.join(masks_dir, f"slice_{ref_idx:03d}_mask.npy")
+                    if os.path.exists(ref_file_4digit):
+                        try:
+                            reference_mask = np.load(ref_file_4digit)
+                            break
+                        except:
+                            continue
+                    elif os.path.exists(ref_file_3digit):
+                        try:
+                            reference_mask = np.load(ref_file_3digit)
+                            break
+                        except:
+                            continue
+            
+            if reference_mask is not None:
+                # Create empty mask with same dimensions
+                masks[slice_idx] = np.zeros(reference_mask.shape, dtype=np.uint8)
+                logger.info(f"3D Viewer: Created empty mask for slice {slice_idx}: {reference_mask.shape}")
+            else:
+                logger.warning(f"Could not determine mask dimensions for empty slice {slice_idx}")# Add summary logging to match image_annotator format EXACTLY
     if score_threshold is not None:
         included_slices = list(masks.keys())
-        annotations_per_slice = {slice_idx: 1 for slice_idx in included_slices}  # Each slice has 1 combined mask
-        total_annotations = len(included_slices)
+        # Count actual qualifying scores per slice (SAME logic as image_annotator)
+        annotations_per_slice = {}
+        total_processed_scores = 0
+        total_slices_processed = len(scores_data)
         
-        print(f"🔍 3D Viewer Summary (SAME as image_annotator):")
-        print(f"   - {total_annotations} slice masks loaded after score filtering (>= {score_threshold})")
-        print(f"   - Included slices: {sorted(included_slices)}")
+        # Process only slices that were in summary.json (SAME as image_annotator)
+        for slice_idx in scores_data.keys():
+            scores = scores_data[slice_idx]
+            qualifying_count = 0
+            
+            if isinstance(scores, np.ndarray):
+                total_processed_scores += len(scores)
+                for score in scores:
+                    if score >= score_threshold:
+                        qualifying_count += 1
+            else:
+                total_processed_scores += 1
+                if scores >= score_threshold:
+                    qualifying_count += 1
+                    
+            if qualifying_count > 0:
+                annotations_per_slice[slice_idx] = qualifying_count
+        
+        total_annotations = sum(annotations_per_slice.values())
+        filtered_annotations = total_processed_scores - total_annotations
+        
+        # Log in EXACT same format as image_annotator
+        logger.info(f"All records annotation completed successfully! Manual annotation processed {total_processed_scores} scores from {total_slices_processed} slices. {total_annotations} annotations passed threshold (>= {score_threshold}), {filtered_annotations} filtered out.")
         if annotations_per_slice:
-            print(f"   - Annotations per slice: {dict(sorted(annotations_per_slice.items()))}")
+            logger.info(f"Annotations per slice: {dict(sorted(annotations_per_slice.items()))}")
+        
+        # Check for slices with no qualifying annotations
+        missing_slices = []
+        for slice_idx in slice_indices:
+            if slice_idx not in annotations_per_slice:
+                missing_slices.append(slice_idx)
+        
+        if missing_slices:
+            for slice_idx in missing_slices:
+                logger.info(f"No annotation available for slice {slice_idx} (may not meet score threshold))")
     
     return masks
 
 def create_3d_volume_from_masks(masks, slice_spacing=1.0):
-    """Create a 3D volume from 2D slice masks"""
+    """Create a 3D volume from 2D slice masks, including empty slices for spatial continuity"""
     if not masks:
         return None
     
     slice_indices = sorted(masks.keys())
-    if len(slice_indices) < 2:
+    if len(slice_indices) < 1:
         return None
     
-    # Get mask dimensions
-    first_mask = masks[slice_indices[0]]
+    # Get mask dimensions from the first available mask
+    first_mask = None
+    for slice_idx in slice_indices:
+        if np.any(masks[slice_idx] > 0):  # Find first non-empty mask
+            first_mask = masks[slice_idx]
+            break
+    
+    if first_mask is None:
+        # If all masks are empty, use the first one for dimensions
+        first_mask = masks[slice_indices[0]]
+    
     height, width = first_mask.shape
     
-    # Create volume with proper spacing
+    # Create volume spanning complete range from min to max slice
     min_slice = min(slice_indices)
     max_slice = max(slice_indices)
     volume_depth = max_slice - min_slice + 1
     
+    logger.info(f"Creating 3D volume: dimensions {height}x{width}x{volume_depth}, slice range {min_slice}-{max_slice}")
+    
     volume = np.zeros((height, width, volume_depth), dtype=np.uint8)
     
-    # Fill volume with masks
+    # Fill volume with masks (empty slices will remain as zeros)
+    annotated_count = 0
+    empty_count = 0
+    
     for slice_idx in slice_indices:
         z_pos = slice_idx - min_slice
-        volume[:, :, z_pos] = (masks[slice_idx] > 0).astype(np.uint8)
+        mask_data = masks[slice_idx]
+        
+        if np.any(mask_data > 0):
+            volume[:, :, z_pos] = (mask_data > 0).astype(np.uint8)
+            annotated_count += 1
+        else:
+            # Explicitly keep as zeros for empty slices
+            empty_count += 1
     
-    # Apply morphological closing to connect nearby regions
-    volume = ndimage.binary_closing(volume, structure=np.ones((3, 3, 3))).astype(np.uint8)
+    logger.info(f"3D Volume: {annotated_count} slices with annotations, {empty_count} empty slices, total depth: {volume_depth}")
+    
+    # Apply morphological closing to connect nearby regions across slices
+    # Use a smaller kernel to preserve spatial accuracy while still connecting nearby structures
+    if annotated_count > 1:  # Only apply morphological closing if we have multiple annotated slices
+        volume = ndimage.binary_closing(volume, structure=np.ones((2, 2, 2))).astype(np.uint8)
+        logger.info("Applied morphological closing to connect nearby structures across slices")
+    else:
+        logger.info("Single annotated slice - skipping morphological closing")
     
     return volume
 
-def create_3d_mesh_from_volume(volume, threshold=0.5):
-    """Create 3D mesh from volume using marching cubes"""
+def create_3d_mesh_from_volume(volume, threshold=0.5, slice_offset=0):
+    """Create 3D mesh from volume using marching cubes with proper slice positioning"""
     if volume is None:
         return None, None, None
     
@@ -172,9 +359,15 @@ def create_3d_mesh_from_volume(volume, threshold=0.5):
             volume, level=threshold, spacing=(1, 1, 1), method='lewiner'
         )
         
+        # Adjust the Z coordinates (slice direction) to use actual slice numbers
+        # The volume Z-axis corresponds to slice indices, so add the offset
+        verts[:, 2] = verts[:, 2] + slice_offset
+        
+        logger.info(f"3D Mesh: Applied slice offset {slice_offset}, Z range: {verts[:, 2].min():.1f} to {verts[:, 2].max():.1f}")
+        
         return verts, faces, normals
     except Exception as e:
-        print(f"Error creating 3D mesh: {e}")
+        logger.error(f"Error creating 3D mesh: {e}")
         return None, None, None
 
 def create_3d_visualization(output_dir="brain_target_results", score_threshold=None):
@@ -184,13 +377,13 @@ def create_3d_visualization(output_dir="brain_target_results", score_threshold=N
     if error:
         return create_empty_3d_plot(f"Error: {error}")
     
-    # Get slice indices - try from summary first, then auto-detect from available masks
-    slice_indices = []
+    # Get annotated slice indices - try from summary first, then auto-detect from available masks
+    annotated_slice_indices = []
     if summary and 'slice_indices' in summary:
-        slice_indices = summary['slice_indices']
+        annotated_slice_indices = summary['slice_indices']
     
     # If no slice indices in summary or less than 2, auto-detect from mask files
-    if len(slice_indices) < 2:
+    if len(annotated_slice_indices) < 2:
         masks_dir = os.path.join(output_dir, "masks")
         if os.path.exists(masks_dir):
             import glob
@@ -199,7 +392,7 @@ def create_3d_visualization(output_dir="brain_target_results", score_threshold=N
             detected_indices = []
             for mask_file in mask_files:
                 filename = os.path.basename(mask_file)
-                # Extract slice number from filename
+                # Extract slice number from filename                
                 if filename.startswith("slice_") and filename.endswith("_mask.npy"):
                     slice_num_str = filename[6:-9]  # Remove "slice_" and "_mask.npy"
                     try:
@@ -207,42 +400,120 @@ def create_3d_visualization(output_dir="brain_target_results", score_threshold=N
                         detected_indices.append(slice_num)
                     except ValueError:
                         continue
-            slice_indices = sorted(detected_indices)
-            print(f"Auto-detected slice indices: {slice_indices}")
+            annotated_slice_indices = sorted(detected_indices)
+            logger.info(f"Auto-detected annotated slice indices: {annotated_slice_indices}")
     
-    if len(slice_indices) < 1:  # Allow single slice for consistency
+    if len(annotated_slice_indices) < 1:  # Allow single slice for consistency
         return create_empty_3d_plot("No annotated slices found for 3D visualization")
-      # Load masks with score threshold filtering (same as image_annotator)
-    print(f"🔍 3D Viewer: Loading masks with score_threshold: {score_threshold} (SAME as image_annotator)")
-    masks = load_slice_masks(output_dir, slice_indices, score_threshold)
-    if not masks:
+    
+    # Determine the full dataset range (0 to total_slices-1)
+    # Try multiple methods to find the complete dataset size
+    total_slices = None
+    dataset_min_slice = 0  # Assume dataset starts from 0
+    
+    # Method 1: Check summary for total slice count
+    if summary and 'total_slices' in summary:
+        total_slices = summary['total_slices']
+        logger.info(f"Found total_slices in summary: {total_slices}")
+      # Method 2: Check windowing metadata which might contain volume info
+    if total_slices is None:
+        windowing_path = os.path.join(output_dir, "windowing_metadata.json")
+        if os.path.exists(windowing_path):
+            try:
+                with open(windowing_path, 'r') as f:
+                    windowing_data = json.load(f)
+                if 'volume_shape' in windowing_data:
+                    # Assuming volume_shape is [height, width, depth]
+                    total_slices = windowing_data['volume_shape'][2] if len(windowing_data['volume_shape']) > 2 else None
+                    logger.info(f"Found total_slices from windowing_metadata: {total_slices}")
+            except Exception as e:
+                logger.warning(f"Could not read windowing metadata: {e}")
+    
+    # Method 2.5: Try to examine original dataset directories for DICOM files
+    if total_slices is None:
+        # Look for common DICOM directories relative to the output directory
+        possible_data_dirs = [
+            os.path.join(os.path.dirname(output_dir), "cvm_48_t1"),
+            os.path.join(os.path.dirname(output_dir), "cvm_t1"),
+            # Add more possible directories as needed
+        ]
+        
+        for data_dir in possible_data_dirs:
+            if os.path.exists(data_dir):
+                dicom_files = glob.glob(os.path.join(data_dir, "*.dcm"))
+                if dicom_files:
+                    total_slices = len(dicom_files)
+                    logger.info(f"Found total_slices from DICOM directory {data_dir}: {total_slices}")
+                    break
+      # Method 3: For datasets starting from 0, use max annotated slice + some buffer
+    # This assumes the dataset goes from 0 to at least the highest annotated slice
+    if total_slices is None:
+        max_annotated = max(annotated_slice_indices)
+        min_annotated = min(annotated_slice_indices)
+        
+        # For your specific case: 20 slices indexed 0-19
+        if min_annotated == 0 and max_annotated < 20:
+            total_slices = 20  # Known dataset size
+            logger.info(f"Detected standard 20-slice dataset (0-19)")
+        elif min_annotated == 0:
+            # General case: round up to nearest reasonable size
+            total_slices = max(20, ((max_annotated // 10) + 1) * 10)
+            logger.info(f"Estimated total_slices for 0-based dataset: {total_slices} (based on max annotated: {max_annotated})")
+        else:
+            # Fall back to just the annotated range if not starting from 0
+            total_slices = max_annotated - min_annotated + 1
+            dataset_min_slice = min_annotated
+            logger.info(f"Using annotated range as fallback: {min_annotated} to {max_annotated}")
+    
+    # Create complete dataset range 
+    dataset_max_slice = dataset_min_slice + total_slices - 1
+    complete_slice_range = list(range(dataset_min_slice, dataset_max_slice + 1))
+    
+    logger.info(f"Complete dataset range for 3D visualization: {dataset_min_slice} to {dataset_max_slice} ({len(complete_slice_range)} slices)")
+    logger.info(f"Annotated slices: {annotated_slice_indices} ({len(annotated_slice_indices)} slices)")
+    logger.info(f"Empty slices to be included: {len([s for s in complete_slice_range if s not in annotated_slice_indices])} slices")
+    
+    # Load masks for the complete slice range (most will be empty/missing)
+    logger.info(f"Loading masks for complete dataset range with score_threshold: {score_threshold}")
+    masks = load_slice_masks(output_dir, complete_slice_range, score_threshold)
+    
+    # Filter masks to only include those that actually have annotation data
+    # This ensures we don't create empty 3D visualizations
+    valid_masks = {k: v for k, v in masks.items() if np.any(v > 0)}
+    if not valid_masks:
         threshold_msg = f" (score threshold: {score_threshold})" if score_threshold else ""
-        return create_empty_3d_plot(f"No mask data found{threshold_msg}")
+        return create_empty_3d_plot(f"No valid mask data found{threshold_msg}")    
     
-    print(f"✅ 3D Viewer: Loaded {len(masks)} masks for 3D visualization (after score filtering, using > 0 binary threshold like image_annotator)")
-    print(f"🔍 3D Viewer: Slices with valid masks: {sorted(masks.keys())}")
+    logger.info(f"Loaded {len(masks)} masks from complete range, {len(valid_masks)} have annotation data")
+    logger.info(f"Slices with valid annotation data: {sorted(valid_masks.keys())}")
+    logger.info(f"Empty slices (will be zeros in 3D volume): {len([s for s in complete_slice_range if s not in valid_masks])} slices")
     
-    if len(masks) < 2:
-        return create_empty_3d_plot("Need at least 2 qualifying slices for 3D visualization")
+    if len(valid_masks) < 1:
+        return create_empty_3d_plot("Need at least 1 annotated slice for 3D visualization")
     
-    # Create 3D volume
+    # Allow 3D visualization even with single annotated slice if there's a meaningful range
+    if len(valid_masks) == 1 and len(complete_slice_range) < 3:
+        return create_empty_3d_plot("Need at least 3 slices in range or 2+ annotated slices for meaningful 3D visualization")
+      # Create 3D volume using masks (including empty slices for spatial continuity)
     volume = create_3d_volume_from_masks(masks)
     if volume is None:
         return create_empty_3d_plot("Could not create 3D volume")
     
-    print(f"Created 3D volume with shape: {volume.shape}")
-    
-    # Create mesh
-    verts, faces, normals = create_3d_mesh_from_volume(volume)
+    logger.info(f"3D Viewer: Created 3D volume with shape: {volume.shape}")
+      # Create mesh with actual slice positioning
+    min_slice = dataset_min_slice
+    max_slice = dataset_max_slice
+    verts, faces, normals = create_3d_mesh_from_volume(volume, threshold=0.5, slice_offset=min_slice)
     if verts is None:
         return create_empty_3d_plot("Could not create 3D mesh")
     
-    print(f"Created 3D mesh with {len(verts)} vertices and {len(faces)} faces")
+    logger.info(f"3D Viewer: Created 3D mesh with {len(verts)} vertices and {len(faces)} faces")
+    logger.info(f"3D Viewer: Slice range in mesh: {verts[:, 2].min():.1f} to {verts[:, 2].max():.1f}")
     
     # Create plotly figure
     fig = go.Figure(data=[
         go.Mesh3d(
-            x=verts[:, 2],  # Z becomes X for better orientation
+            x=verts[:, 2],  # Z becomes X (slice direction) with actual slice numbers
             y=verts[:, 1],  # Y stays Y
             z=verts[:, 0],  # X becomes Z
             i=faces[:, 0],
@@ -253,14 +524,13 @@ def create_3d_visualization(output_dir="brain_target_results", score_threshold=N
             opacity=0.8,
             name='Annotated Region'
         )
-    ])
-      # Update layout with black background
+    ])      # Update layout with black background and proper axis configuration
     fig.update_layout(
-        title=f"3D Visualization - {len(slice_indices)} Slices",
+        title=f"3D Visualization - Slices {min_slice} to {max_slice} ({len(valid_masks)} annotated)",
         scene=dict(
-            xaxis_title="Slice Direction",
-            yaxis_title="Width",
-            zaxis_title="Height",
+            xaxis_title="Slice Number",
+            yaxis_title="Width (pixels)",
+            zaxis_title="Height (pixels)",
             camera=dict(
                 eye=dict(x=1.5, y=1.5, z=1.5)
             ),
@@ -268,7 +538,10 @@ def create_3d_visualization(output_dir="brain_target_results", score_threshold=N
             xaxis=dict(
                 backgroundcolor="black",
                 gridcolor="rgba(128,128,128,0.3)",
-                title_font=dict(color="white")
+                title_font=dict(color="white"),
+                tickmode='linear',
+                dtick=1,  # Show integer tick marks
+                range=[min_slice - 0.5, max_slice + 0.5]  # Proper range with padding
             ),
             yaxis=dict(
                 backgroundcolor="black",
@@ -303,14 +576,16 @@ def create_empty_3d_plot(message="No 3D data available"):
     fig.update_layout(
         title="3D Viewer",
         scene=dict(
-            xaxis_title="X",
-            yaxis_title="Y", 
-            zaxis_title="Z",
+            xaxis_title="Slice Number",
+            yaxis_title="Width (pixels)", 
+            zaxis_title="Height (pixels)",
             bgcolor="black",
             xaxis=dict(
                 backgroundcolor="black",
                 gridcolor="rgba(128,128,128,0.3)",
-                title_font=dict(color="white")
+                title_font=dict(color="white"),
+                tickmode='linear',
+                dtick=1
             ),
             yaxis=dict(
                 backgroundcolor="black",
