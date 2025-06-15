@@ -11,3 +11,4 @@ pylibjpeg>=2.0.0
 pylibjpeg-libjpeg>=2.1.0
 opencv-python>=4.7.0
 scikit-image>=0.20.0
+plotly>=5.15.0

@@ -187,13 +187,16 @@ class MEDSAM2Handlers:
             return True, prompt_file
         except Exception as e:
             logger.error(f"Error generating prompt JSON: {str(e)}")
-            return False, f"Error: {str(e)}"
-    
+            return False, f"Error: {str(e)}"    
     @log_exception
     def generate_prompt_json_all_slices(self, dicom_folder: str) -> Tuple[bool, str]:
-        """Generate prompt JSON for all slices using selected coordinates as template"""
-        if not self.selected_coordinates:
-            return False, "No coordinates selected"
+        """Generate prompt JSON for all slices using selected coordinates or box prompts as template"""
+        # Check if we have either point coordinates or box prompts
+        has_point_prompts = bool(self.selected_coordinates)
+        has_box_prompts = bool(getattr(self, 'prompt_boxes', []))
+        
+        if not has_point_prompts and not has_box_prompts:
+            return False, "No coordinates or box prompts selected"
             
         if not dicom_folder or not os.path.exists(dicom_folder):
             return False, f"DICOM folder not found: {dicom_folder}"
@@ -204,27 +207,45 @@ class MEDSAM2Handlers:
                 return False, "No DICOM data loaded"
             
             total_slices = self.state.current_data.shape[2]  # Assuming axial view
-            logger.info(f"Generating prompts for {total_slices} slices using user coordinates")
+            logger.info(f"Generating prompts for {total_slices} slices using user coordinates or box prompts")
             
-            # Prepare points and labels from user selection
+            # Prepare prompt data based on available input type
             points = []
             labels = []
+            boxes = []
             
-            for x, y in self.selected_coordinates:
-                points.append([int(x), int(y)])  # Ensure integers
-                labels.append(1)  # 1 for foreground point
+            # Handle point prompts if available
+            if has_point_prompts:
+                for x, y in self.selected_coordinates:
+                    points.append([int(x), int(y)])  # Ensure integers
+                    labels.append(1)  # 1 for foreground point
+                logger.info(f"Using point prompts: {points}")
             
-            # Create prompt structure for all slices using the same coordinates
+            # Handle box prompts if available
+            if has_box_prompts:
+                for box in self.prompt_boxes:
+                    # Convert box format from {'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2} to [x1, y1, x2, y2]
+                    box_coords = [int(box['x1']), int(box['y1']), int(box['x2']), int(box['y2'])]
+                    boxes.append(box_coords)
+                logger.info(f"Using box prompts: {boxes}")
+            
+            # Create prompt structure for all slices using the same prompts
             prompt_data = {}
             for slice_idx in range(total_slices):
                 # Use 0-based indexing for slice_idx, but MEDSAM2 will convert the string key to 0-based internally
                 # So we use the UI slice number (1-based) + 1 as the key to compensate for MEDSAM2's subtraction
                 ui_slice = slice_idx + 1  # Convert to 1-based UI slice
                 prompt_key = str(ui_slice + 1)  # Add 1 more to compensate for MEDSAM2's internal subtraction
-                prompt_data[prompt_key] = {
-                    "points": points,
-                    "labels": labels
-                }
+                
+                # Build prompt structure based on available prompts
+                slice_prompt = {}
+                if points:
+                    slice_prompt["points"] = points
+                    slice_prompt["labels"] = labels
+                if boxes:
+                    slice_prompt["boxes"] = boxes
+                
+                prompt_data[prompt_key] = slice_prompt
             
             logger.info(f"Prompt data for all slices: {json.dumps(prompt_data, indent=2)}")
             
@@ -235,7 +256,10 @@ class MEDSAM2Handlers:
             
             logger.info(f"Generated all-records prompt file: {prompt_file} for {total_slices} slices")
             logger.info(f"Using prompt keys: UI slice + 1 to compensate for MEDSAM2's internal subtraction")
-            logger.info(f"Using coordinates: {points}")
+            if points:
+                logger.info(f"Using point coordinates: {points}")
+            if boxes:
+                logger.info(f"Using box coordinates: {boxes}")
             return True, prompt_file
             
         except Exception as e:
@@ -1096,13 +1120,20 @@ class MEDSAM2Handlers:
             return True, "MEDSAM2 environment validation passed"
             
         except Exception as e:
-            return False, f"Error validating MEDSAM2 environment: {str(e)}"    @log_exception
+            return False, f"Error validating MEDSAM2 environment: {str(e)}"
+    
+    @log_exception
     def run_medsam2_all_records(self, dicom_folder: str, output_dir: str, 
                                save_visualizations: bool, device: str, 
                                score_threshold: float) -> str:
-        """Run MEDSAM2 annotation on all slices using user-selected coordinates"""
-        if not self.selected_coordinates:
-            return "Error: No coordinates selected. Please click on the image to select points."
+        """Run MEDSAM2 annotation on all slices using user-selected coordinates or box prompts"""
+        # Check if we have either point coordinates or box prompts
+        has_point_prompts = bool(self.selected_coordinates)
+        has_box_prompts = bool(getattr(self, 'prompt_boxes', []))
+        
+        if not has_point_prompts and not has_box_prompts:
+            return "Error: No coordinates or box prompts selected. Please click on the image to select points or draw boxes."
+        
         if not dicom_folder or not os.path.exists(dicom_folder):
             return f"Error: DICOM folder not found: {dicom_folder}"
         

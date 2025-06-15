@@ -1191,8 +1191,7 @@ class ImagePlotToolHandlers:
                             'label': box.get('label', ''),
                             'color': box.get('color', ''),
                             'coordinates': str(box.get('coordinates', box.get('points', []))),
-                        }
-                        # Add any other properties that might be relevant
+                        }                        # Add any other properties that might be relevant
                         if 'stroke' in box:
                             box_info['stroke'] = box['stroke']
                         if 'fill' in box:
@@ -1203,7 +1202,7 @@ class ImagePlotToolHandlers:
                 fingerprint = f"boxes:{len(boxes)}|" + "|".join(sorted(fingerprint_data))
                 return fingerprint
             
-            return f"unknown_format:{type(annotated_image_value)}"
+            return f"unknown_format:{type(annotated_image_value).__name__}"
         except Exception as e:
             logger.error(f"Error creating annotation fingerprint: {e}")
             return f"error:{str(e)}"

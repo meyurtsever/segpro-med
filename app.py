@@ -594,7 +594,7 @@ class SegMedPro:
         
         (file_input, dir_input, load_btn, reset_dir_btn, file_browser, 
          metadata_display_dl, error_display_dl, window_level, window_width, apply_window_btn, debug_btn) = data_loading
-        (error_display, metadata_display, view_selector, image_display, prev_btn, slice_slider, next_btn, slice_text, crosshair_info) = visualization        
+        (error_display, metadata_display, view_selector, image_display, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn) = visualization        
         (point_prompt_checkbox, box_prompt_checkbox, coordinates_text, clear_coords_btn, clear_overlays_btn, ai_model_selector, 
          processing_mode, score_threshold,
          output_dir, save_visualizations, device_selector, 
@@ -671,15 +671,59 @@ class SegMedPro:
             outputs=[image_display, slice_text, crosshair_info, metadata_display, window_level, window_width, slice_slider]
         )
         
-        next_btn.click(            fn=handle_next_navigation,
-            inputs=[slice_slider, image_display],
+        next_btn.click(            fn=handle_next_navigation,            inputs=[slice_slider, image_display],
             outputs=[image_display, slice_text, crosshair_info, metadata_display, window_level, window_width, slice_slider]
         )
-          # Connect processing mode change event
+        
+        # Connect processing mode change event
+        def handle_processing_mode_change(mode):
+            """Handle processing mode change - show/hide score threshold and 3D viewer"""
+            score_threshold_update = gr.Slider(visible=(mode == "All Records"))
+            viewer_3d_update = gr.Plot(visible=(mode == "All Records"))
+            viewer_controls_update = gr.Row(visible=(mode == "All Records"))
+            return score_threshold_update, viewer_3d_update, viewer_controls_update
+        
         processing_mode.change(
-            fn=lambda mode: gr.Slider(visible=(mode == "All Records")),
+            fn=handle_processing_mode_change,
             inputs=[processing_mode],
-            outputs=[score_threshold]
+            outputs=[score_threshold, viewer_3d, viewer_3d_controls]
+        )
+        
+        # 3D Viewer event handlers
+        def handle_refresh_3d_view(output_dir_value):
+            """Handle refresh 3D view button click"""
+            try:
+                # Import the 3D visualization function from editor_tab
+                from ui.editor_tab import create_3d_visualization
+                fig = create_3d_visualization(output_dir_value)
+                return fig
+            except Exception as e:
+                from ui.editor_tab import create_empty_3d_plot
+                return create_empty_3d_plot(f"Error refreshing view: {str(e)}")
+        
+        def handle_export_3d_view(output_dir_value):
+            """Handle export 3D view button click"""
+            try:
+                from ui.editor_tab import create_3d_visualization
+                import os
+                fig = create_3d_visualization(output_dir_value)
+                export_path = os.path.join(output_dir_value, "3d_visualization.html")
+                fig.write_html(export_path)
+                return f"✅ 3D view exported to: {export_path}"
+            except Exception as e:
+                return f"❌ Error exporting 3D view: {str(e)}"
+        
+        # Connect 3D viewer button handlers
+        refresh_3d_btn.click(
+            fn=handle_refresh_3d_view,
+            inputs=[output_dir],
+            outputs=[viewer_3d]
+        )
+        
+        export_3d_btn.click(
+            fn=handle_export_3d_view,
+            inputs=[output_dir],
+            outputs=[annotation_status]  # Show export status in annotation_status
         )
         
         # Connect checkbox handlers for prompt type selection
@@ -786,24 +830,38 @@ class SegMedPro:
         clear_coords_btn.click(
             fn=clear_all_prompts_and_overlays,
             inputs=[],
-            outputs=[coordinates_text, annotation_status, image_display, clear_overlays_btn]
-        )
+            outputs=[coordinates_text, annotation_status, image_display, clear_overlays_btn]        )
         
         clear_overlays_btn.click(
             fn=self.medsam2_handlers.clear_annotation_overlays,
             inputs=[],
             outputs=[annotation_status, image_display]
-        )          # Custom wrapper function to handle the 3-tuple return and button visibility
+        )
+        
+        # Custom wrapper function to handle the 3-tuple return and button visibility
         def handle_annotation_workflow(output_dir, save_visualizations, device_selector, processing_mode, score_threshold, image_display_data):
             status, image, success = self.medsam2_handlers.run_full_annotation_workflow(
                 output_dir, save_visualizations, device_selector, processing_mode, score_threshold, image_display_data
             )
-            return status, image, gr.update(visible=success)
+            
+            # If processing mode is "All Records" and annotation was successful, refresh 3D viewer
+            # Always return a valid Plotly figure to avoid the __module__ attribute error
+            from ui.editor_tab import create_empty_3d_plot, create_3d_visualization
+            if processing_mode == "All Records" and success:
+                try:
+                    viewer_3d_update = create_3d_visualization(output_dir)
+                except Exception as e:
+                    viewer_3d_update = create_empty_3d_plot(f"Error updating 3D view: {str(e)}")
+            else:
+                # For non-"All Records" mode, show message
+                viewer_3d_update = create_empty_3d_plot("3D Viewer available in 'All Records' mode")
+            
+            return status, image, gr.update(visible=success), viewer_3d_update
         
         annotate_btn.click(
             fn=handle_annotation_workflow,
             inputs=[output_dir, save_visualizations, device_selector, processing_mode, score_threshold, image_display],
-            outputs=[annotation_status, image_display, clear_overlays_btn]
+            outputs=[annotation_status, image_display, clear_overlays_btn, viewer_3d]
         )
         
         # Auto-brain annotation handler
@@ -824,20 +882,31 @@ class SegMedPro:
             
             # Check if we have loaded data for this directory
             if not hasattr(self.state, 'current_data') or self.state.current_data is None:
-                return "Error: Please load DICOM data first using the 'Load Data' button before running automatic annotation.", None, gr.update(visible=False)
-            
+                return "Error: Please load DICOM data first using the 'Load Data' button before running automatic annotation.", None, gr.update(visible=False)            
             # Run the automatic annotation with the user's score threshold
             status, annotated_result, success = self.medsam2_handlers.run_medsam2_annotation_automatic(
                 dicom_folder, output_dir, save_visualizations, device_selector, processing_mode, score_threshold
             )
             
+            # If processing mode is "All Records" and annotation was successful, refresh 3D viewer
+            # Always return a valid Plotly figure to avoid the __module__ attribute error
+            from ui.editor_tab import create_empty_3d_plot, create_3d_visualization
+            if processing_mode == "All Records" and success:
+                try:
+                    viewer_3d_update = create_3d_visualization(output_dir)
+                except Exception as e:
+                    viewer_3d_update = create_empty_3d_plot(f"Error updating 3D view: {str(e)}")
+            else:
+                # For non-"All Records" mode, show message
+                viewer_3d_update = create_empty_3d_plot("3D Viewer available in 'All Records' mode")
+            
             # Return the annotated result directly to the image_annotator
-            return status, annotated_result, gr.update(visible=success)
+            return status, annotated_result, gr.update(visible=success), viewer_3d_update
         
         auto_brain_annotate_btn.click(
             fn=handle_auto_brain_annotation,
             inputs=[output_dir, save_visualizations, device_selector, processing_mode, score_threshold, dir_input],
-            outputs=[annotation_status, image_display, clear_overlays_btn]
+            outputs=[annotation_status, image_display, clear_overlays_btn, viewer_3d]
         )
           # Handle image removal from image_annotator (X button / clear button)
         image_display.clear(
