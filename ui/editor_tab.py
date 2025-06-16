@@ -770,24 +770,25 @@ def create_editor_tab() -> dict:
                             choices=["cpu", "cuda"],
                             value="cpu",
                             info="Processing device for MEDSAM2"
-                        )
-                  # Automatic Brain Annotation Section
-                gr.Markdown("### Automatic Brain Detection")
+                        )                  # SAM2 Fast Masking Section
+                gr.Markdown("### SAM2 Fast Masking")
                 with gr.Row():
                     auto_brain_annotate_btn = gr.Button(
-                        "🧠 Auto-Annotate Brain Structures", 
+                        "🚀 Run SAM2 Fast Masking", 
                         variant="primary",
                         size="lg"
                     )
                 
-                with gr.Accordion("Auto-Annotation Info", open=False):
+                with gr.Accordion("SAM2 Fast Masking Info", open=False):
                     gr.Markdown("""
-                    **Automatic Brain Structure Detection:**
-                    - Automatically detects brain regions and eye structures
-                    - Uses anatomical priors and image processing
-                    - Generates bounding box prompts for MEDSAM2
-                    - Works with "All Records" mode to process entire volumes
-                    - No manual coordinate selection required
+                    **SAM2 Fast Masking Pipeline:**
+                    - Uses optimized 'fast' configuration for quick processing
+                    - Automatically segments brain structures using SAM2AutomaticMaskGenerator
+                    - Filters masks with area ≥ 500 pixels and IoU ≥ 0.8
+                    - Respects "Save Visualizations" checkbox setting
+                    - Works with both "Single Slice" and "All Records" modes
+                    - Generates JSON mask files for each processed slice
+                    - No comprehensive summary files for optimal speed
                     """)
                 
                 annotate_btn = gr.Button("Run MEDSAM2 Annotation (Manual Prompts)")

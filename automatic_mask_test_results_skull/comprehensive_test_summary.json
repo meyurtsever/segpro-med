@@ -1,0 +1,418 @@
+{
+  "test_info": {
+    "test_date": "2025-06-16T12:50:21.350699",
+    "model_config": "sam2.1_hiera_b+.yaml",
+    "model_checkpoint": "sam2.1_hiera_base_plus.pt",
+    "device": "cuda",
+    "total_dicom_files": 20,
+    "processed_slices": 20,
+    "save_visualizations": true
+  },
+  "timing_summary": {
+    "setup_time": 0.0009999275207519531,
+    "cuda_test_time": 0.18152332305908203,
+    "model_load_time": 0.6182892322540283,
+    "generator_creation_time": 0.0870809555053711,
+    "total_processing_time": 112.78514552116394,
+    "overall_time": 113.6740391254425,
+    "avg_mask_generation_time_per_slice": 4.249249887466431,
+    "total_mask_generation_time": 84.98499774932861,
+    "masks_per_second": 4.130140722428541
+  },
+  "mask_statistics": {
+    "total_masks": 351,
+    "avg_masks_per_slice": 17.55,
+    "avg_iou": 0.8824200898213862,
+    "avg_stability": 0.9034953144045215,
+    "iou_range": [
+      0.8491843163967132,
+      0.9134804308414459
+    ],
+    "stability_range": [
+      0.8902153074741364,
+      0.9267658988634745
+    ]
+  },
+  "detailed_results": [
+    {
+      "slice_idx": 0,
+      "dicom_path": "C:\\Users\\Yurtsever\\Downloads\\segpro-med\\cvm_48_t1\\1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm",
+      "num_masks": 27,
+      "timing_info": {
+        "load_dicom": 0.0050051212310791016,
+        "preprocess": 0.0005002021789550781,
+        "mask_generation": 4.415120840072632,
+        "save_json": 0.001041412353515625,
+        "save_visualization": 1.2461216449737549,
+        "total": 5.6677892208099365
+      },
+      "quality_metrics": {
+        "avg_iou": 0.854803619561372,
+        "avg_stability": 0.8910710612932841,
+        "max_iou": 0.9890678524971008
+      },
+      "success": true
+    },
+    {
+      "slice_idx": 1,
+      "dicom_path": "C:\\Users\\Yurtsever\\Downloads\\segpro-med\\cvm_48_t1\\1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm",
+      "num_masks": 28,
+      "timing_info": {
+        "load_dicom": 0.0044977664947509766,
+        "preprocess": 0.0005004405975341797,
+        "mask_generation": 3.9531631469726562,
+        "save_json": 0.0014996528625488281,
+        "save_visualization": 1.4493436813354492,
+        "total": 5.4090046882629395
+      },
+      "quality_metrics": {
+        "avg_iou": 0.8713807442358562,
+        "avg_stability": 0.893945472581046,
+        "max_iou": 0.9932772517204285
+      },
+      "success": true
+    },
+    {
+      "slice_idx": 2,
+      "dicom_path": "C:\\Users\\Yurtsever\\Downloads\\segpro-med\\cvm_48_t1\\1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm",
+      "num_masks": 16,
+      "timing_info": {
+        "load_dicom": 0.004491567611694336,
+        "preprocess": 0.0005002021789550781,
+        "mask_generation": 3.9486336708068848,
+        "save_json": 0.0010333061218261719,
+        "save_visualization": 0.9357030391693115,
+        "total": 4.890361785888672
+      },
+      "quality_metrics": {
+        "avg_iou": 0.8934740386903286,
+        "avg_stability": 0.8902153074741364,
+        "max_iou": 0.9886972904205322
+      },
+      "success": true
+    },
+    {
+      "slice_idx": 3,
+      "dicom_path": "C:\\Users\\Yurtsever\\Downloads\\segpro-med\\cvm_48_t1\\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm",
+      "num_masks": 20,
+      "timing_info": {
+        "load_dicom": 0.0050008296966552734,
+        "preprocess": 0.0005013942718505859,
+        "mask_generation": 3.9969100952148438,
+        "save_json": 0.0014989376068115234,
+        "save_visualization": 1.0997529029846191,
+        "total": 5.10366415977478
+      },
+      "quality_metrics": {
+        "avg_iou": 0.8740730553865432,
+        "avg_stability": 0.9004364848136902,
+        "max_iou": 0.9700775742530823
+      },
+      "success": true
+    },
+    {
+      "slice_idx": 4,
+      "dicom_path": "C:\\Users\\Yurtsever\\Downloads\\segpro-med\\cvm_48_t1\\1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm",
+      "num_masks": 21,
+      "timing_info": {
+        "load_dicom": 0.0044994354248046875,
+        "preprocess": 0.0009987354278564453,
+        "mask_generation": 3.8796021938323975,
+        "save_json": 0.0010008811950683594,
+        "save_visualization": 1.2528793811798096,
+        "total": 5.1389806270599365
+      },
+      "quality_metrics": {
+        "avg_iou": 0.8733794831094288,
+        "avg_stability": 0.9010136297770909,
+        "max_iou": 0.9931061863899231
+      },
+      "success": true
+    },
+    {
+      "slice_idx": 5,
+      "dicom_path": "C:\\Users\\Yurtsever\\Downloads\\segpro-med\\cvm_48_t1\\1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm",
+      "num_masks": 20,
+      "timing_info": {
+        "load_dicom": 0.005006551742553711,
+        "preprocess": 0.0005002021789550781,
+        "mask_generation": 3.997313976287842,
+        "save_json": 0.001508474349975586,
+        "save_visualization": 1.0701918601989746,
+        "total": 5.074521064758301
+      },
+      "quality_metrics": {
+        "avg_iou": 0.8491843163967132,
+        "avg_stability": 0.909593078494072,
+        "max_iou": 0.9918627738952637
+      },
+      "success": true
+    },
+    {
+      "slice_idx": 6,
+      "dicom_path": "C:\\Users\\Yurtsever\\Downloads\\segpro-med\\cvm_48_t1\\1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm",
+      "num_masks": 12,
+      "timing_info": {
+        "load_dicom": 0.004500627517700195,
+        "preprocess": 0.0004999637603759766,
+        "mask_generation": 4.023190498352051,
+        "save_json": 0.0015001296997070312,
+        "save_visualization": 0.8906986713409424,
+        "total": 4.920389890670776
+      },
+      "quality_metrics": {
+        "avg_iou": 0.8854020784298579,
+        "avg_stability": 0.9267658988634745,
+        "max_iou": 0.9944789409637451
+      },
+      "success": true
+    },
+    {
+      "slice_idx": 7,
+      "dicom_path": "C:\\Users\\Yurtsever\\Downloads\\segpro-med\\cvm_48_t1\\1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm",
+      "num_masks": 18,
+      "timing_info": {
+        "load_dicom": 0.004500150680541992,
+        "preprocess": 0.00099945068359375,
+        "mask_generation": 4.161778211593628,
+        "save_json": 0.0009996891021728516,
+        "save_visualization": 1.1713624000549316,
+        "total": 5.339639902114868
+      },
+      "quality_metrics": {
+        "avg_iou": 0.8643764224317338,
+        "avg_stability": 0.9052732421292199,
+        "max_iou": 0.9946439266204834
+      },
+      "success": true
+    },
+    {
+      "slice_idx": 8,
+      "dicom_path": "C:\\Users\\Yurtsever\\Downloads\\segpro-med\\cvm_48_t1\\1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm",
+      "num_masks": 18,
+      "timing_info": {
+        "load_dicom": 0.008030891418457031,
+        "preprocess": 0.0009996891021728516,
+        "mask_generation": 4.846611738204956,
+        "save_json": 0.001499176025390625,
+        "save_visualization": 1.831533432006836,
+        "total": 6.6886749267578125
+      },
+      "quality_metrics": {
+        "avg_iou": 0.8932150668568082,
+        "avg_stability": 0.9124256471792856,
+        "max_iou": 0.9965717792510986
+      },
+      "success": true
+    },
+    {
+      "slice_idx": 9,
+      "dicom_path": "C:\\Users\\Yurtsever\\Downloads\\segpro-med\\cvm_48_t1\\1.3.12.2.1107.5.2.36.40820.2021111512341775486333211_MR.dcm",
+      "num_masks": 14,
+      "timing_info": {
+        "load_dicom": 0.0060002803802490234,
+        "preprocess": 0.000499725341796875,
+        "mask_generation": 4.948807954788208,
+        "save_json": 0.0009999275207519531,
+        "save_visualization": 1.4178800582885742,
+        "total": 6.37418794631958
+      },
+      "quality_metrics": {
+        "avg_iou": 0.8880335092544556,
+        "avg_stability": 0.912999050957816,
+        "max_iou": 0.9926712512969971
+      },
+      "success": true
+    },
+    {
+      "slice_idx": 10,
+      "dicom_path": "C:\\Users\\Yurtsever\\Downloads\\segpro-med\\cvm_48_t1\\1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm",
+      "num_masks": 33,
+      "timing_info": {
+        "load_dicom": 0.007002353668212891,
+        "preprocess": 0.0010013580322265625,
+        "mask_generation": 3.7577216625213623,
+        "save_json": 0.0020008087158203125,
+        "save_visualization": 2.8278017044067383,
+        "total": 6.59552788734436
+      },
+      "quality_metrics": {
+        "avg_iou": 0.8744227868137937,
+        "avg_stability": 0.8970062335332235,
+        "max_iou": 0.9927095174789429
+      },
+      "success": true
+    },
+    {
+      "slice_idx": 11,
+      "dicom_path": "C:\\Users\\Yurtsever\\Downloads\\segpro-med\\cvm_48_t1\\1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm",
+      "num_masks": 24,
+      "timing_info": {
+        "load_dicom": 0.006502389907836914,
+        "preprocess": 0.0010001659393310547,
+        "mask_generation": 3.9417648315429688,
+        "save_json": 0.0015001296997070312,
+        "save_visualization": 2.205913782119751,
+        "total": 6.156681299209595
+      },
+      "quality_metrics": {
+        "avg_iou": 0.8818057676156362,
+        "avg_stability": 0.9036063179373741,
+        "max_iou": 0.9793932437896729
+      },
+      "success": true
+    },
+    {
+      "slice_idx": 12,
+      "dicom_path": "C:\\Users\\Yurtsever\\Downloads\\segpro-med\\cvm_48_t1\\1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm",
+      "num_masks": 17,
+      "timing_info": {
+        "load_dicom": 0.006499052047729492,
+        "preprocess": 0.001001596450805664,
+        "mask_generation": 3.9297399520874023,
+        "save_json": 0.0014998912811279297,
+        "save_visualization": 1.5300641059875488,
+        "total": 5.468804597854614
+      },
+      "quality_metrics": {
+        "avg_iou": 0.9069392786306494,
+        "avg_stability": 0.892651312491473,
+        "max_iou": 0.9756022691726685
+      },
+      "success": true
+    },
+    {
+      "slice_idx": 13,
+      "dicom_path": "C:\\Users\\Yurtsever\\Downloads\\segpro-med\\cvm_48_t1\\1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm",
+      "num_masks": 15,
+      "timing_info": {
+        "load_dicom": 0.006500244140625,
+        "preprocess": 0.0010008811950683594,
+        "mask_generation": 3.955411911010742,
+        "save_json": 0.001500844955444336,
+        "save_visualization": 1.4126958847045898,
+        "total": 5.37710976600647
+      },
+      "quality_metrics": {
+        "avg_iou": 0.9046868920326233,
+        "avg_stability": 0.9187282681465149,
+        "max_iou": 0.9775271415710449
+      },
+      "success": true
+    },
+    {
+      "slice_idx": 14,
+      "dicom_path": "C:\\Users\\Yurtsever\\Downloads\\segpro-med\\cvm_48_t1\\1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm",
+      "num_masks": 15,
+      "timing_info": {
+        "load_dicom": 0.0061304569244384766,
+        "preprocess": 0.0009989738464355469,
+        "mask_generation": 4.299144268035889,
+        "save_json": 0.0015044212341308594,
+        "save_visualization": 1.557314157485962,
+        "total": 5.8650922775268555
+      },
+      "quality_metrics": {
+        "avg_iou": 0.8889507969220479,
+        "avg_stability": 0.9102580587069193,
+        "max_iou": 0.993751585483551
+      },
+      "success": true
+    },
+    {
+      "slice_idx": 15,
+      "dicom_path": "C:\\Users\\Yurtsever\\Downloads\\segpro-med\\cvm_48_t1\\1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm",
+      "num_masks": 8,
+      "timing_info": {
+        "load_dicom": 0.005995273590087891,
+        "preprocess": 0.0010001659393310547,
+        "mask_generation": 4.291611433029175,
+        "save_json": 0.0010080337524414062,
+        "save_visualization": 0.9027183055877686,
+        "total": 5.202333211898804
+      },
+      "quality_metrics": {
+        "avg_iou": 0.8826190382242203,
+        "avg_stability": 0.8910243287682533,
+        "max_iou": 0.9943267703056335
+      },
+      "success": true
+    },
+    {
+      "slice_idx": 16,
+      "dicom_path": "C:\\Users\\Yurtsever\\Downloads\\segpro-med\\cvm_48_t1\\1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm",
+      "num_masks": 10,
+      "timing_info": {
+        "load_dicom": 0.005999565124511719,
+        "preprocess": 0.0009992122650146484,
+        "mask_generation": 4.582367658615112,
+        "save_json": 0.0015001296997070312,
+        "save_visualization": 0.9873566627502441,
+        "total": 5.57822322845459
+      },
+      "quality_metrics": {
+        "avg_iou": 0.9134804308414459,
+        "avg_stability": 0.9153962314128876,
+        "max_iou": 0.9950742125511169
+      },
+      "success": true
+    },
+    {
+      "slice_idx": 17,
+      "dicom_path": "C:\\Users\\Yurtsever\\Downloads\\segpro-med\\cvm_48_t1\\1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm",
+      "num_masks": 18,
+      "timing_info": {
+        "load_dicom": 0.006002187728881836,
+        "preprocess": 0.0004999637603759766,
+        "mask_generation": 4.612834930419922,
+        "save_json": 0.002711057662963867,
+        "save_visualization": 1.7630293369293213,
+        "total": 6.385077476501465
+      },
+      "quality_metrics": {
+        "avg_iou": 0.8799988362524245,
+        "avg_stability": 0.8961937129497528,
+        "max_iou": 0.9954081177711487
+      },
+      "success": true
+    },
+    {
+      "slice_idx": 18,
+      "dicom_path": "C:\\Users\\Yurtsever\\Downloads\\segpro-med\\cvm_48_t1\\1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm",
+      "num_masks": 12,
+      "timing_info": {
+        "load_dicom": 0.006499528884887695,
+        "preprocess": 0.0010006427764892578,
+        "mask_generation": 4.855778932571411,
+        "save_json": 0.0024428367614746094,
+        "save_visualization": 1.3037970066070557,
+        "total": 6.169518947601318
+      },
+      "quality_metrics": {
+        "avg_iou": 0.898603543639183,
+        "avg_stability": 0.9064872314532598,
+        "max_iou": 0.9964917302131653
+      },
+      "success": true
+    },
+    {
+      "slice_idx": 19,
+      "dicom_path": "C:\\Users\\Yurtsever\\Downloads\\segpro-med\\cvm_48_t1\\1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm",
+      "num_masks": 5,
+      "timing_info": {
+        "load_dicom": 0.006997108459472656,
+        "preprocess": 0.0005030632019042969,
+        "mask_generation": 4.58748984336853,
+        "save_json": 0.0010004043579101562,
+        "save_visualization": 0.7506794929504395,
+        "total": 5.346669912338257
+      },
+      "quality_metrics": {
+        "avg_iou": 0.8695720911026001,
+        "avg_stability": 0.894815719127655,
+        "max_iou": 0.9897854924201965
+      },
+      "success": true
+    }
+  ]
+}

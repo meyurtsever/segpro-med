@@ -927,10 +927,9 @@ class SegMedPro:
             inputs=[output_dir, save_visualizations, device_selector, processing_mode, score_threshold, image_display],
             outputs=[annotation_status, image_display, viewer_3d]
         )
-        
-        # Auto-brain annotation handler
+          # Auto-brain annotation handler - Updated to use SAM2 Fast Masking Pipeline
         def handle_auto_brain_annotation(output_dir, save_visualizations, device_selector, processing_mode, score_threshold, dir_input_value):
-            """Handle automatic brain structure annotation"""
+            """Handle automatic brain structure annotation using SAM2 Fast Masking Pipeline"""
             # Get the current directory from state or use directory input as fallback
             dicom_folder = getattr(self.state, 'current_directory', None)
             
@@ -947,9 +946,9 @@ class SegMedPro:
             # Check if we have loaded data for this directory
             if not hasattr(self.state, 'current_data') or self.state.current_data is None:
                 return "Error: Please load DICOM data first using the 'Load Data' button before running automatic annotation.", None, gr.update(visible=False)            
-            # Run the automatic annotation with the user's score threshold
-            status, annotated_result, success = self.medsam2_handlers.run_medsam2_annotation_automatic(
-                dicom_folder, output_dir, save_visualizations, device_selector, processing_mode, score_threshold
+            # Run the SAM2 Fast Masking Pipeline (replaces old automatic annotation)
+            status, annotated_result, success = self.medsam2_handlers.run_sam2_fast_masking(
+                dicom_folder, output_dir, save_visualizations, processing_mode
             )
               # If processing mode is "All Records" and annotation was successful, refresh 3D viewer
             # Always return a valid Plotly figure to avoid the __module__ attribute error
@@ -987,23 +986,20 @@ class SegMedPro:
                     "4. MEDSAM2 will create precise masks based on your box prompt",
                     visible=True
                 )
-            elif prompt_type == "Point-based Prompt":
-                return gr.update(
+            elif prompt_type == "Point-based Prompt":                return gr.update(
                     value="📍 **POINT PROMPT MODE**: \n"
                     "1. Click points on the image to guide segmentation\n"
                     "2. Use multiple points for better accuracy\n"
                     "3. Click 'Run MEDSAM2 Annotation (Manual Prompts)' to segment",
                     visible=True
                 )
-            else:  # Automatic Brain Detection
+            else:  # SAM2 Fast Masking Mode
                 return gr.update(
-                    value="🧠 **AUTOMATIC MODE**: Click 'Auto-Annotate Brain Structures' for automatic brain region detection",
+                    value="🚀 **SAM2 FAST MASKING MODE**: Click 'Run SAM2 Fast Masking' for automatic brain structure segmentation",
                     visible=True
-                )
-
-        # Add instruction text component
+                )        # Add instruction text component
         instruction_text = gr.Markdown(
-            value="🧠 **AUTOMATIC MODE**: Click 'Auto-Annotate Brain Structures' for automatic brain region detection",
+            value="🚀 **SAM2 FAST MASKING MODE**: Click 'Run SAM2 Fast Masking' for automatic brain structure segmentation",
             visible=True        )
 
 

@@ -14,7 +14,7 @@ from PIL.Image import Image
 
 from modeling.sam2_base import SAM2Base
 
-from utils.transforms import SAM2Transforms
+from sam2.utils.transforms import SAM2Transforms
 
 
 class SAM2ImagePredictor:

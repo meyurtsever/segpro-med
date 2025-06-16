@@ -1,0 +1,16 @@
+MEDSAM2 Automatic Mask Generator - Comprehensive Test Results
+================================================================================
+Test Date: 2025-06-16 12:14:05
+Device: cuda
+Model: sam2.1_hiera_base_plus.pt
+Config: sam2.1_hiera_b+.yaml
+
+PROCESSING SUMMARY:
+Total DICOM files available: 20
+Slices processed: 20
+Total masks generated: 143
+Average masks per slice: 7.15
+
+MASK QUALITY STATISTICS:
+IoU - Min: 0.854, Max: 0.966, Mean: 0.908
+Stability - Min: 0.903, Max: 0.963, Mean: 0.928

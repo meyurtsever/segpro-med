@@ -92,11 +92,13 @@ def build_sam2(
     # Initialize Hydra configuration
     try:
         # Clear any existing Hydra configuration
-        from hydra import GlobalHydra
+        from hydra.core.global_hydra import GlobalHydra
         if GlobalHydra.instance().is_initialized():
             GlobalHydra.instance().clear()
-    except Exception:
+            logging.info("Hydra cleared in build_sam2")
+    except Exception as e:
         # If GlobalHydra is not available or fails, continue without clearing
+        logging.warning(f"Could not clear Hydra in build_sam2: {e}")
         pass
     
     # Get the directory containing the config file

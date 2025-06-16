@@ -18,6 +18,7 @@ import logging
 import subprocess
 import gradio as gr
 import numpy as np
+import sys
 from typing import Optional, List, Tuple, Dict, Any
 from PIL import Image
 
@@ -30,6 +31,12 @@ logger = logging.getLogger(__name__)
 
 class MEDSAM2Handlers:
     """Handlers for MEDSAM2 annotation operations"""
+    
+    # Class-level cache for SAM2 model to avoid repeated loading and Hydra issues
+    _sam2_model_cache = None
+    _sam2_model_config_path = None
+    _sam2_model_checkpoint_path = None
+    
     def __init__(self, state):
         self.state = state
         self.selected_coordinates = []  # Store [(x, y), ...] coordinate pairs
@@ -427,7 +434,7 @@ class MEDSAM2Handlers:
         self.score_threshold = score_threshold
         
         try:
-            # Generate automatic prompts
+            # Generate automatic prompts            
             success, prompt_file_or_error = self.generate_automatic_brain_prompts(dicom_folder, processing_mode)
             if not success:
                 return f"Error generating automatic prompts: {prompt_file_or_error}", None, False
@@ -441,8 +448,8 @@ class MEDSAM2Handlers:
             
             # Get absolute paths for checkpoint and config
             medsam2_dir = os.path.join("models", "medsam2")
-            checkpoint_path = os.path.join(medsam2_dir, "checkpoints", "MedSAM2_latest.pt")
-            config_path = os.path.join(medsam2_dir, "configs", "sam2.1_hiera_t512.yaml")
+            checkpoint_path = os.path.join(medsam2_dir, "checkpoints", "sam2.1_hiera_base_plus.pt")
+            config_path = os.path.join(medsam2_dir, "configs", "sam2.1_hiera_b+.yaml")
             
             # Verify checkpoint and config exist
             if not os.path.exists(checkpoint_path):
@@ -1728,18 +1735,834 @@ class MEDSAM2Handlers:
                 
                 # Sort by timestamp (oldest first)
                 timestamped_annotations.sort()
-                
-                # Remove the oldest annotations to match UI count
+                  # Remove the oldest annotations to match UI count
                 annotations_to_remove = timestamped_annotations[:stored_count - ui_count]
                 
                 for _, ann_id in annotations_to_remove:
                     del stored_annotations[ann_id]
                     logger.info(f"Removed annotation {ann_id} from slice {current_slice} due to shape deletion")
                 
-                return f"Removed {len(annotations_to_remove)} annotations to match UI shapes"
-            
+                return f"Removed {len(annotations_to_remove)} annotations to match UI shapes"            
             return f"Sync complete: {stored_count} stored, {ui_count} UI shapes"
             
         except Exception as e:
             logger.error(f"Error syncing annotations with UI shapes: {str(e)}")
             return f"Sync error: {str(e)}"
+    
+    @log_exception
+    def run_sam2_fast_masking(self, dicom_folder: str, output_dir: str, 
+                             save_visualizations: bool, processing_mode: str = "All Records") -> Tuple[str, Optional[Dict], bool]:
+        """
+        Run SAM2 fast masking pipeline integrated from test_comprehensive_mask_generator.py
+        
+        Args:
+            dicom_folder: Path to DICOM folder
+            output_dir: Output directory for results
+            save_visualizations: Whether to save visualizations
+            processing_mode: "Single Slice" or "All Records"
+        
+        Returns:
+            Tuple of (status_message, annotated_image_data, success_flag)        """
+        import time
+        import torch
+        
+        logger.debug("🚀 Starting SAM2 Fast Masking Pipeline - Import Phase")        
+        # Simple and effective Hydra clearing (adapted from working test_comprehensive_mask_generator.py)
+        logger.debug("🧹 Simple Hydra clearing with retry mechanism...")
+        
+        def force_clear_hydra():
+            """Simple and effective Hydra clearing"""
+            try:
+                # Clear from sys.modules if loaded
+                import sys
+                modules_to_remove = [m for m in sys.modules.keys() if 'hydra' in m.lower()]
+                for module in modules_to_remove:
+                    if module != 'hydra.core.global_hydra':  # Keep this one for clearing
+                        try:
+                            del sys.modules[module]
+                        except:
+                            pass
+                
+                # Clear GlobalHydra instance
+                from hydra.core.global_hydra import GlobalHydra
+                if GlobalHydra.instance().is_initialized():
+                    GlobalHydra.instance().clear()
+                    logger.debug("✓ Cleared existing Hydra initialization")
+                return True
+            except Exception as e:
+                logger.debug(f"Note: Hydra clearing attempt: {e}")
+                return False
+        
+        # Try multiple times if needed (as in working script)
+        import time
+        for attempt in range(3):
+            if force_clear_hydra():
+                break
+            if attempt < 2:
+                logger.debug(f"Hydra clear attempt {attempt + 1} failed, retrying...")
+                time.sleep(0.1)
+        
+        logger.debug("✅ Simple Hydra clearing completed")
+        
+        # Add parent directory and models directory to path for imports (same as test_comprehensive_mask_generator.py)
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        parent_dir = os.path.dirname(current_dir)
+        models_dir = os.path.join(parent_dir, "models", "medsam2")
+        sam2_dir = os.path.join(models_dir, "sam2")  # Add SAM2 package directory
+        
+        logger.debug(f"📁 Current directory: {current_dir}")
+        logger.debug(f"📁 Parent directory: {parent_dir}")
+        logger.debug(f"📁 Models directory: {models_dir}")
+        logger.debug(f"📁 SAM2 directory: {sam2_dir}")
+        logger.debug(f"📁 Models directory exists: {os.path.exists(models_dir)}")
+        logger.debug(f"📁 SAM2 directory exists: {os.path.exists(sam2_dir)}")
+        
+        # Check for utils.misc in different locations
+        utils_misc_locations = [
+            os.path.join(models_dir, "utils", "misc.py"),
+            os.path.join(models_dir, "sam2", "utils", "misc.py"),
+            os.path.join(sam2_dir, "utils", "misc.py")
+        ]
+        for i, location in enumerate(utils_misc_locations):
+            logger.debug(f"🔍 utils.misc location {i+1}: {location} exists: {os.path.exists(location)}")
+          # Add all necessary paths for SAM2 modules
+        logger.debug("Adding paths to sys.path...")
+        paths_to_add = [parent_dir, models_dir, sam2_dir]
+        
+        # Also add utils directory to handle utils.misc imports
+        utils_dir = os.path.join(models_dir, "utils")
+        if os.path.exists(utils_dir):
+            paths_to_add.append(utils_dir)
+            logger.debug(f"📁 Utils directory: {utils_dir} exists: True")
+        
+        for path in paths_to_add:
+            if path not in sys.path:
+                sys.path.insert(0, path)
+                logger.debug(f"➕ Added to sys.path: {path}")
+        
+        logger.debug(f"📋 Updated sys.path (first 8): {sys.path[:8]}")
+          # Check if brain_segmentation_configs exists
+        brain_config_path = os.path.join(parent_dir, "brain_segmentation_configs.py")
+        logger.debug(f"🧠 Brain config file exists: {os.path.exists(brain_config_path)}")
+        
+        # Check SAM2 module paths
+        build_sam_path = os.path.join(models_dir, "build_sam.py")
+        auto_mask_gen_path = os.path.join(models_dir, "automatic_mask_generator.py")
+        logger.debug(f"🔧 build_sam.py exists: {os.path.exists(build_sam_path)}")
+        logger.debug(f"🎭 automatic_mask_generator.py exists: {os.path.exists(auto_mask_gen_path)}")
+        
+        try:
+            logger.debug("Importing brain_segmentation_configs...")
+            from brain_segmentation_configs import get_brain_config
+            logger.debug("✅ brain_segmentation_configs imported successfully")
+            
+            logger.debug("Importing build_sam...")
+            from models.medsam2.build_sam import build_sam2
+            logger.debug("✅ build_sam imported successfully")
+            
+            logger.debug("Importing automatic_mask_generator...")
+            from models.medsam2.automatic_mask_generator import SAM2AutomaticMaskGenerator
+            logger.debug("✅ automatic_mask_generator imported successfully")
+            
+        except ImportError as e:
+            logger.error(f"❌ Import error: {e}")
+            logger.debug(f"📋 Current sys.path: {sys.path}")
+            logger.debug(f"📁 Current working directory: {os.getcwd()}")
+            return f"Error importing required modules: {e}", None, False
+        
+        try:
+            # Configuration
+            logger.debug("Loading brain configuration...")
+            brain_config = get_brain_config('fast')  # Use fast configuration as requested
+            logger.debug(f"✅ Brain config loaded: {brain_config}")
+            
+            # Setup paths
+            config_path = os.path.join(models_dir, "configs", "sam2.1_hiera_b+.yaml")
+            checkpoint_path = os.path.join(models_dir, "checkpoints", "sam2.1_hiera_base_plus.pt")
+            
+            logger.debug(f"📁 Config path: {config_path}")
+            logger.debug(f"📁 Checkpoint path: {checkpoint_path}")
+            
+            # Verify files exist
+            if not os.path.exists(config_path):
+                logger.error(f"❌ Config file not found at {config_path}")
+                return f"Error: Config file not found at {config_path}", None, False
+            if not os.path.exists(checkpoint_path):
+                logger.error(f"❌ Checkpoint file not found at {checkpoint_path}")
+                return f"Error: Checkpoint file not found at {checkpoint_path}", None, False
+            
+            logger.debug("✅ Model files verified")
+            
+            # Create output directory
+            logger.debug(f"📁 Creating output directory: {output_dir}")
+            os.makedirs(output_dir, exist_ok=True)
+            logger.debug("✅ Output directory created")
+            
+            status_msg = "🚀 Starting SAM2 Fast Masking Pipeline...\n"
+            overall_start_time = time.time()
+            
+            # Setup device
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            logger.debug(f"🖥️ Using device: {device}")
+            logger.debug(f"🖥️ CUDA available: {torch.cuda.is_available()}")
+            if torch.cuda.is_available():
+                logger.debug(f"🖥️ CUDA device count: {torch.cuda.device_count()}")
+                logger.debug(f"🖥️ Current CUDA device: {torch.cuda.current_device()}")
+            status_msg += f"Using device: {device}\n"            # Load SAM2 model (with caching to avoid repeated Hydra initialization)
+            status_msg += "🔄 Loading SAM2 model...\n"
+            logger.debug("🔄 Starting SAM2 model loading...")
+            
+            # Check if we can reuse cached model
+            if (self._sam2_model_cache is not None and 
+                self._sam2_model_config_path == config_path and 
+                self._sam2_model_checkpoint_path == checkpoint_path):
+                logger.debug("✅ Using cached SAM2 model")
+                sam2_model = self._sam2_model_cache
+                status_msg += "✅ SAM2 model loaded from cache\n"
+            else:
+                # Need to load new model - apply simple Hydra clearing
+                logger.debug("🧹 Simple Hydra clearing before model loading...")
+                
+                # Simple clearing approach (from working script)
+                def force_clear_hydra():
+                    try:
+                        import sys
+                        # Clear modules except the one needed for clearing
+                        modules_to_remove = [m for m in sys.modules.keys() if 'hydra' in m.lower()]
+                        for module in modules_to_remove:
+                            if module != 'hydra.core.global_hydra':
+                                try:
+                                    del sys.modules[module]
+                                except:
+                                    pass
+                        
+                        # Clear GlobalHydra
+                        from hydra.core.global_hydra import GlobalHydra
+                        if GlobalHydra.instance().is_initialized():
+                            GlobalHydra.instance().clear()
+                            logger.debug("🧹 Cleared Hydra before model loading")
+                        return True
+                    except Exception as e:
+                        logger.debug(f"Hydra clearing attempt: {e}")
+                        return False
+                
+                # Try clearing with retry
+                import time
+                for attempt in range(3):
+                    if force_clear_hydra():
+                        break
+                    if attempt < 2:
+                        time.sleep(0.1)
+                
+                model_load_start_time = time.time()
+                try:
+                    logger.debug(f"📥 Loading SAM2 with config: {config_path}")
+                    logger.debug(f"📥 Loading SAM2 with checkpoint: {checkpoint_path}")
+                    sam2_model = build_sam2(config_path, checkpoint_path, device=device)
+                    
+                    # Cache the model
+                    self._sam2_model_cache = sam2_model
+                    self._sam2_model_config_path = config_path
+                    self._sam2_model_checkpoint_path = checkpoint_path
+                    
+                    model_load_time = time.time() - model_load_start_time
+                    logger.debug(f"✅ SAM2 model loaded successfully in {model_load_time:.2f}s")
+                    status_msg += f"✅ SAM2 model loaded in {model_load_time:.2f}s\n"
+                except Exception as e:
+                    logger.error(f"❌ Model loading failed: {e}")
+                    logger.debug(f"📋 Exception details: {type(e).__name__}: {str(e)}")
+                    # Clear cache on failure
+                    self._sam2_model_cache = None
+                    self._sam2_model_config_path = None
+                    self._sam2_model_checkpoint_path = None
+                    return f"❌ Model loading failed: {e}", None, False
+            
+            # Create mask generator with fast configuration
+            status_msg += f"🔄 Creating mask generator with 'fast' configuration...\n"
+            status_msg += f"   • Grid resolution: {brain_config['points_per_side']}x{brain_config['points_per_side']} points\n"
+            status_msg += f"   • IoU threshold: {brain_config['pred_iou_thresh']}\n"
+            status_msg += f"   • Min region area: {brain_config['min_mask_region_area']} pixels\n"
+            
+            generator_start_time = time.time()
+            mask_generator = SAM2AutomaticMaskGenerator(
+                model=sam2_model,
+                **brain_config  # Use the complete fast configuration
+            )
+            generator_time = time.time() - generator_start_time
+            status_msg += f"✅ Mask generator created in {generator_time:.3f}s\n"
+              # Find DICOM files and sort them properly to match UI ordering
+            status_msg += "🔍 Finding DICOM files...\n"
+            dicom_files = [f for f in os.listdir(dicom_folder) if f.endswith('.dcm')]
+            
+            if not dicom_files:
+                return "❌ No DICOM files found in the specified directory", None, False
+            
+            # Sort DICOM files to match the UI ordering
+            # Try to sort by numerical sequence if possible, otherwise alphabetical
+            try:
+                # Extract numbers from filenames for proper ordering
+                def get_sort_key(filename):
+                    import re
+                    numbers = re.findall(r'\d+', filename)
+                    if numbers:
+                        return int(numbers[-1])  # Use the last number in filename
+                    return filename
+                
+                dicom_files.sort(key=get_sort_key)
+                logger.debug(f"Sorted DICOM files by numerical sequence: {dicom_files[:5]}...")
+            except:
+                # Fallback to alphabetical sort
+                dicom_files.sort()
+                logger.debug(f"Sorted DICOM files alphabetically: {dicom_files[:5]}...")
+            
+            status_msg += f"✅ Found {len(dicom_files)} DICOM files\n"            # Determine slices to process based on mode
+            if processing_mode == "Single Slice":
+                # Process only current slice using data from state (more reliable than file mapping)
+                if hasattr(self.state, 'current_slice_idx') and self.state.current_slice_idx is not None:
+                    if self.state.current_data is None:
+                        return "❌ No DICOM data loaded in state. Please load DICOM series first.", None, False
+                    
+                    max_slices = 1
+                    ui_slice_idx = self.state.current_slice_idx
+                    
+                    # Store the annotated slice (UI-based, same as manual annotation system)
+                    self.annotated_slice = ui_slice_idx
+                    
+                    status_msg += f"📍 Processing single slice: UI slice {ui_slice_idx}\n"
+                    logger.info(f"Single slice mode: UI slice {ui_slice_idx} using state data")
+                else:
+                    return "❌ No current slice selected. Please select a slice first.", None, False
+            else:
+                # Process all slices using files from directory
+                max_slices = len(dicom_files)
+                start_slice = 0
+                status_msg += f"📊 Processing all {max_slices} slices from files\n"            # Process slices
+            processing_start_time = time.time()
+            results = []
+            
+            for i in range(max_slices):
+                if processing_mode == "Single Slice":
+                    # For single slice, use data directly from state (no file reading needed)
+                    ui_slice_idx = self.annotated_slice
+                    
+                    # Get the slice data from state
+                    from utils.visualization import display_slice
+                    current_slice_data = display_slice(
+                        self.state.current_data,
+                        ui_slice_idx,
+                        self.state.current_view,
+                        crosshair=None,
+                        add_orientation_marker=False
+                    )
+                    
+                    # Process this slice data directly
+                    result = self._process_slice_data_fast(
+                        mask_generator, current_slice_data, output_dir, ui_slice_idx, save_visualizations
+                    )
+                    if result and result.get('success', False):
+                        results.append(result)
+                        status_msg += f"✅ Processed UI slice {ui_slice_idx}: {result.get('num_masks', 0)} masks\n"
+                    else:
+                        status_msg += f"⚠️ Failed to process UI slice {ui_slice_idx}\n"
+                else:
+                    # For all slices, use sequential file processing
+                    dicom_file_idx = start_slice + i
+                    ui_slice_idx = dicom_file_idx + 1  # UI slice is 1-based
+                    
+                    if dicom_file_idx >= len(dicom_files):
+                        break
+                        
+                    dicom_path = os.path.join(dicom_folder, dicom_files[dicom_file_idx])
+                    
+                    # Process DICOM file
+                    result = self._process_dicom_slice_fast(
+                        mask_generator, dicom_path, output_dir, ui_slice_idx, save_visualizations
+                    )
+                    if result and result.get('success', False):
+                        results.append(result)
+                        status_msg += f"✅ Processed UI slice {ui_slice_idx} (file {dicom_files[dicom_file_idx]}): {result.get('num_masks', 0)} masks\n"
+                    else:
+                        status_msg += f"⚠️ Failed to process UI slice {ui_slice_idx} (file {dicom_files[dicom_file_idx]})\n"
+            
+            processing_time = time.time() - processing_start_time
+            overall_time = time.time() - overall_start_time
+            
+            status_msg += f"\n📊 Processing Summary:\n"
+            status_msg += f"   • Total slices processed: {len(results)}\n"
+            status_msg += f"   • Processing time: {processing_time:.2f}s\n"
+            status_msg += f"   • Overall time: {overall_time:.2f}s\n"
+            
+            if results:
+                total_masks = sum(r.get('num_masks', 0) for r in results)
+                avg_masks = total_masks / len(results) if results else 0
+                status_msg += f"   • Total masks generated: {total_masks}\n"
+                status_msg += f"   • Average masks per slice: {avg_masks:.1f}\n"                # Create annotation overlays for UI
+                self._create_annotation_overlays_from_fast_results(results, output_dir)
+                
+                # Load and display results
+                try:
+                    annotated_result = self._create_annotated_result_from_fast_masks(processing_mode)
+                    return status_msg + "\n✅ SAM2 Fast Masking completed successfully!", annotated_result, True
+                except Exception as e:
+                    status_msg += f"\n⚠️ Masks generated but display failed: {str(e)}\n"
+                    return status_msg, None, True
+            else:
+                return status_msg + "\n❌ No masks were generated", None, False
+        except Exception as e:
+            logger.error(f"Error in SAM2 fast masking: {str(e)}")
+            return f"❌ SAM2 Fast Masking failed: {str(e)}", None, False
+    
+    def _clear_hydra_completely(self):
+        """Clear Hydra initialization completely - simplified working version"""
+        try:
+            import sys
+            logger.debug("🧹 Starting simple Hydra cleanup...")
+            
+            # Clear from sys.modules if loaded
+            modules_to_remove = [m for m in sys.modules.keys() if 'hydra' in m.lower()]
+            for module in modules_to_remove:
+                if module != 'hydra.core.global_hydra':  # Keep this one for clearing
+                    try:
+                        del sys.modules[module]
+                        logger.debug(f"🧹 Removed module: {module}")
+                    except:
+                        pass
+            
+            # Clear GlobalHydra instance
+            try:
+                from hydra.core.global_hydra import GlobalHydra
+                if GlobalHydra.instance().is_initialized():
+                    GlobalHydra.instance().clear()
+                    logger.debug("🧹 GlobalHydra.clear() called successfully")
+                return True
+            except Exception as e:
+                logger.debug(f"🧹 Could not clear GlobalHydra: {e}")
+                return False
+                
+        except Exception as e:
+            logger.debug(f"🧹 Exception during Hydra cleanup: {e}")
+            return False
+    
+    def _extreme_hydra_clearing(self):
+        """Extreme Hydra clearing - use simple approach with retry mechanism"""
+        try:
+            logger.debug("🧹 EXTREME Hydra clearing with retry mechanism...")
+            
+            def force_clear_hydra():
+                """Simple and effective Hydra clearing"""
+                try:
+                    # Clear from sys.modules if loaded
+                    import sys
+                    modules_to_remove = [m for m in sys.modules.keys() if 'hydra' in m.lower()]
+                    for module in modules_to_remove:
+                        if module != 'hydra.core.global_hydra':  # Keep this one for clearing
+                            try:
+                                del sys.modules[module]
+                            except:
+                                pass
+                    
+                    # Clear GlobalHydra instance
+                    from hydra.core.global_hydra import GlobalHydra
+                    if GlobalHydra.instance().is_initialized():
+                        GlobalHydra.instance().clear()
+                        logger.debug("✓ Cleared existing Hydra initialization")
+                    return True
+                except Exception as e:
+                    logger.debug(f"Note: Hydra clearing attempt: {e}")
+                    return False
+            
+            # Try multiple times if needed (as in working script)
+            import time
+            for attempt in range(3):
+                if force_clear_hydra():
+                    break
+                if attempt < 2:
+                    logger.debug(f"Hydra clear attempt {attempt + 1} failed, retrying...")
+                    time.sleep(0.1)
+            
+            logger.debug("✅ EXTREME Hydra clearing completed")
+            
+        except Exception as e:
+            logger.debug(f"🧹 Exception during extreme Hydra cleanup: {e}")
+
+    @log_exception
+    def _process_dicom_slice_fast(self, mask_generator, dicom_path, output_dir, slice_idx, save_visualizations):
+        """Process a single DICOM slice with fast masking - adapted from test_comprehensive_mask_generator.py"""
+        import pydicom
+        import json
+        import time
+        import matplotlib.pyplot as plt
+        
+        try:
+            slice_start_time = time.time()
+            
+            # Load DICOM
+            load_start_time = time.time()
+            try:
+                dicom_data = pydicom.dcmread(dicom_path)
+                pixel_array = dicom_data.pixel_array.astype(np.float32)
+                load_time = time.time() - load_start_time
+            except Exception as e:
+                logger.error(f"Error loading DICOM {dicom_path}: {e}")
+                return None
+            
+            # Preprocess for SAM
+            preprocess_start_time = time.time()
+            try:
+                rgb_image = self._preprocess_dicom_for_sam(pixel_array)
+                preprocess_time = time.time() - preprocess_start_time
+            except Exception as e:
+                logger.error(f"Error preprocessing DICOM: {e}")
+                return None
+            
+            # Generate masks
+            mask_start_time = time.time()
+            try:
+                masks = mask_generator.generate(rgb_image)
+                mask_time = time.time() - mask_start_time
+            except Exception as e:
+                logger.error(f"Error generating masks: {e}")
+                return None
+            
+            # Filter masks based on UI annotation rules: area >= 500 and IoU >= 0.8
+            filtered_masks = []
+            for mask in masks:
+                area = mask.get('area', 0)
+                iou = mask.get('predicted_iou', 0)
+                if area >= 500 and iou >= 0.8:
+                    filtered_masks.append(mask)
+            
+            # Save mask data (JSON only, no comprehensive summary)
+            slice_name = f"slice_{slice_idx:03d}"
+            mask_data = {
+                "slice_name": slice_name,
+                "dicom_file": os.path.basename(dicom_path),
+                "num_masks": len(filtered_masks),
+                "timing_info": {
+                    "load_dicom": load_time,
+                    "preprocess": preprocess_time,
+                    "mask_generation": mask_time
+                },
+                "masks": []
+            }
+            
+            # Process masks
+            for i, mask in enumerate(filtered_masks):
+                mask_info = {
+                    "mask_id": i,
+                    "area": mask.get('area', 0),
+                    "bbox": mask.get('bbox', []),
+                    "predicted_iou": mask.get('predicted_iou', 0),
+                    "stability_score": mask.get('stability_score', 0),
+                    "point_coords": mask.get('point_coords', [])
+                }
+                mask_data["masks"].append(mask_info)
+            
+            # Save JSON
+            json_path = os.path.join(output_dir, f"{slice_name}_masks.json")
+            with open(json_path, 'w') as f:
+                json.dump(mask_data, f, indent=2)
+            
+            # Save visualization if requested
+            if save_visualizations and filtered_masks:
+                self._save_fast_visualization(rgb_image, filtered_masks, output_dir, slice_name)
+            
+            total_time = time.time() - slice_start_time
+            
+            return {
+                "success": True,
+                "slice_idx": slice_idx,
+                "slice_name": slice_name,
+                "num_masks": len(filtered_masks),
+                "timing": {
+                    "total": total_time,
+                    "load": load_time,
+                    "preprocess": preprocess_time,
+                    "mask_generation": mask_time
+                },
+                "masks": filtered_masks
+            }
+            
+        except Exception as e:
+            logger.error(f"Error processing slice {slice_idx}: {e}")
+            return None
+    
+    def _process_slice_data_fast(self, mask_generator, slice_data, output_dir, slice_idx, save_visualizations):
+        """Process slice data directly from state - for single slice mode"""
+        import json
+        import time
+        
+        try:
+            slice_start_time = time.time()
+            
+            # Convert slice data to format expected by SAM
+            preprocess_start_time = time.time()
+            try:
+                rgb_image = self._preprocess_slice_data_for_sam(slice_data)
+                preprocess_time = time.time() - preprocess_start_time
+            except Exception as e:
+                logger.error(f"Error preprocessing slice data: {e}")
+                return None
+            
+            # Generate masks
+            mask_start_time = time.time()
+            try:
+                masks = mask_generator.generate(rgb_image)
+                mask_time = time.time() - mask_start_time
+            except Exception as e:
+                logger.error(f"Error generating masks: {e}")
+                return None
+            
+            # Filter masks based on UI annotation rules: area >= 500 and IoU >= 0.8
+            filtered_masks = []
+            for mask in masks:
+                area = mask.get('area', 0)
+                iou = mask.get('predicted_iou', 0)
+                if area >= 500 and iou >= 0.8:
+                    filtered_masks.append(mask)
+            
+            # Save mask data (JSON only, no comprehensive summary)
+            slice_name = f"slice_{slice_idx:03d}"
+            mask_data = {
+                "slice_name": slice_name,
+                "source": "state_data",  # Indicate this came from state, not file
+                "num_masks": len(filtered_masks),
+                "timing_info": {
+                    "preprocess": preprocess_time,
+                    "mask_generation": mask_time
+                },
+                "masks": []
+            }
+            
+            # Process masks
+            for i, mask in enumerate(filtered_masks):
+                mask_info = {
+                    "mask_id": i,
+                    "area": mask.get('area', 0),
+                    "bbox": mask.get('bbox', []),
+                    "predicted_iou": mask.get('predicted_iou', 0),
+                    "stability_score": mask.get('stability_score', 0),
+                    "point_coords": mask.get('point_coords', [])
+                }
+                mask_data["masks"].append(mask_info)
+            
+            # Save JSON
+            json_path = os.path.join(output_dir, f"{slice_name}_masks.json")
+            with open(json_path, 'w') as f:
+                json.dump(mask_data, f, indent=2)
+            
+            # Save visualization if requested
+            if save_visualizations and filtered_masks:
+                self._save_fast_visualization(rgb_image, filtered_masks, output_dir, slice_name)
+            
+            total_time = time.time() - slice_start_time
+            
+            return {
+                "success": True,
+                "slice_idx": slice_idx,
+                "slice_name": slice_name,
+                "num_masks": len(filtered_masks),
+                "timing": {
+                    "total": total_time,
+                    "preprocess": preprocess_time,
+                    "mask_generation": mask_time
+                },
+                "masks": filtered_masks
+            }
+            
+        except Exception as e:
+            logger.error(f"Error processing slice data for slice {slice_idx}: {e}")
+            return None
+
+    def _preprocess_dicom_for_sam(self, pixel_array):
+        """Preprocess DICOM pixel array for SAM input - adapted from test_comprehensive_mask_generator.py"""
+        try:
+            # Convert to float32 for processing
+            if pixel_array.dtype != np.float32:
+                pixel_array = pixel_array.astype(np.float32)
+            
+            # Normalize to 0-255 range for SAM input
+            pixel_min = np.min(pixel_array)
+            pixel_max = np.max(pixel_array)
+            
+            if pixel_max > pixel_min:
+                normalized = (pixel_array - pixel_min) / (pixel_max - pixel_min)
+                scaled = (normalized * 255).astype(np.uint8)
+            else:
+                scaled = np.zeros_like(pixel_array, dtype=np.uint8)
+            
+            # Convert grayscale to RGB (SAM expects 3-channel input)
+            if len(scaled.shape) == 2:
+                rgb_image = np.stack([scaled, scaled, scaled], axis=2)
+            else:
+                rgb_image = scaled
+            
+            return rgb_image
+            
+        except Exception as e:
+            logger.error(f"Error preprocessing DICOM: {e}")
+            raise
+    
+    def _preprocess_slice_data_for_sam(self, slice_data):
+        """Preprocess slice data from UI state for SAM input"""
+        try:
+            # Ensure slice_data is a numpy array
+            if not isinstance(slice_data, np.ndarray):
+                slice_data = np.array(slice_data)
+            
+            # Convert to float32 for processing
+            if slice_data.dtype != np.float32:
+                slice_data = slice_data.astype(np.float32)
+            
+            # If it's already in 0-255 range (uint8), keep it
+            if slice_data.dtype == np.uint8 or (slice_data.min() >= 0 and slice_data.max() <= 255):
+                if slice_data.dtype != np.uint8:
+                    scaled = slice_data.astype(np.uint8)
+                else:
+                    scaled = slice_data
+            else:
+                # Normalize to 0-255 range for SAM input
+                slice_min = np.min(slice_data)
+                slice_max = np.max(slice_data)
+                
+                if slice_max > slice_min:
+                    normalized = (slice_data - slice_min) / (slice_max - slice_min)
+                    scaled = (normalized * 255).astype(np.uint8)
+                else:
+                    scaled = np.zeros_like(slice_data, dtype=np.uint8)
+            
+            # Convert grayscale to RGB (SAM expects 3-channel input)
+            if len(scaled.shape) == 2:
+                rgb_image = np.stack([scaled, scaled, scaled], axis=2)
+            else:
+                rgb_image = scaled
+            
+            return rgb_image
+            
+        except Exception as e:
+            logger.error(f"Error preprocessing slice data: {e}")
+            raise
+
+    def _save_fast_visualization(self, image, masks, output_dir, slice_name):
+        """Save visualization of masks - simplified version"""
+        try:
+            import matplotlib.pyplot as plt
+            import matplotlib.patches as patches
+            
+            fig, ax = plt.subplots(1, 1, figsize=(12, 8))
+            
+            # Display original image
+            if len(image.shape) == 3:
+                ax.imshow(image)
+            else:
+                ax.imshow(image, cmap='gray')
+            
+            # Overlay masks
+            for i, mask in enumerate(masks):
+                # Get mask segmentation
+                segmentation = mask.get('segmentation', None)
+                if segmentation is not None:
+                    # Create random color for each mask
+                    color = plt.cm.tab10(i % 10)
+                    ax.contour(segmentation, levels=[0.5], colors=[color], linewidths=2, alpha=0.8)
+                
+                # Draw bounding box
+                bbox = mask.get('bbox', [])
+                if len(bbox) == 4:
+                    x, y, w, h = bbox
+                    rect = patches.Rectangle((x, y), w, h, linewidth=1, 
+                                           edgecolor='red', facecolor='none', alpha=0.7)
+                    ax.add_patch(rect)
+            
+            ax.set_title(f'SAM2 Fast Masking - {slice_name}')
+            ax.axis('off')
+            
+            # Save
+            viz_path = os.path.join(output_dir, f"{slice_name}_visualization.png")
+            plt.savefig(viz_path, dpi=150, bbox_inches='tight')
+            plt.close()
+            
+        except Exception as e:
+            logger.warning(f"Could not save visualization for {slice_name}: {e}")
+    
+    def _create_annotation_overlays_from_fast_results(self, results, output_dir):
+        """Create annotation overlays from fast masking results"""
+        try:
+            if not hasattr(self, 'annotation_overlays'):
+                self.annotation_overlays = {}
+            
+            for result in results:
+                slice_idx = result['slice_idx']
+                masks = result.get('masks', [])
+                
+                # Convert masks to annotation format
+                slice_overlays = {}
+                for i, mask in enumerate(masks):
+                    segmentation = mask.get('segmentation', None)
+                    if segmentation is not None:
+                        slice_overlays[f"auto_mask_{i}"] = {
+                            'mask': segmentation,
+                            'label': f'Auto Mask {i}',
+                            'score': mask.get('predicted_iou', 0),
+                            'area': mask.get('area', 0)
+                        }
+                
+                if slice_overlays:
+                    self.annotation_overlays[slice_idx] = slice_overlays
+                    
+        except Exception as e:
+            logger.error(f"Error creating annotation overlays: {e}")
+    
+    def _create_annotated_result_from_fast_masks(self, processing_mode):
+        """Create annotated result for UI display"""
+        try:
+            from utils.visualization import display_slice, create_annotation_boxes_from_mask
+            
+            # Get clean image
+            clean_img = display_slice(
+                self.state.current_data,
+                self.state.current_slice_idx,
+                self.state.current_view,
+                crosshair=None,
+                add_orientation_marker=False
+            )
+            
+            # Ensure it's RGB and uint8
+            if len(clean_img.shape) == 2:
+                img_rgb = np.stack([clean_img] * 3, axis=-1)
+            else:
+                img_rgb = clean_img
+            if img_rgb.dtype != np.uint8:
+                img_rgb = (img_rgb * 255).astype(np.uint8)
+            
+            # Convert masks to polygon shapes
+            annotation_shapes = []
+            if (hasattr(self, 'annotation_overlays') and 
+                self.state.current_slice_idx in self.annotation_overlays):
+                
+                overlay_data = self.annotation_overlays[self.state.current_slice_idx]
+                
+                for annotation_id, annotation_data in overlay_data.items():
+                    if isinstance(annotation_data, dict) and 'mask' in annotation_data:
+                        mask_array = annotation_data['mask']
+                        shapes = create_annotation_boxes_from_mask(
+                            mask_array, 
+                            label=f"SAM2 Fast Mask",
+                            label_index=1
+                        )
+                        annotation_shapes.extend(shapes)
+                
+                logger.info(f"Converted {len(annotation_shapes)} fast masks to annotation shapes")
+            
+            # Create AnnotatedImageValue format with polygon shapes
+            annotated_result = {
+                "image": img_rgb,
+                "boxes": annotation_shapes,
+                "orientation": 0
+            }
+            
+            return annotated_result
+            
+        except Exception as e:
+            logger.error(f"Error creating annotated result: {e}")
+            return None

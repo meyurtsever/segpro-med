@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from modeling.sam2_base import SAM2Base
 from build_sam import build_sam2_video_predictor
-from utils.transforms import SAM2Transforms
+from sam2.utils.transforms import SAM2Transforms
 from modeling.sam2_utils import get_1d_sine_pe
 
 class SAM2VideoTrainer(nn.Module):
