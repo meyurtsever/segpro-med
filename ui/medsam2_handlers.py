@@ -2476,8 +2476,7 @@ class MEDSAM2Handlers:
             
             ax.set_title(f'SAM2 Fast Masking - {slice_name}')
             ax.axis('off')
-            
-            # Save
+              # Save
             viz_path = os.path.join(output_dir, f"{slice_name}_visualization.png")
             plt.savefig(viz_path, dpi=150, bbox_inches='tight')
             plt.close()
@@ -2495,16 +2494,66 @@ class MEDSAM2Handlers:
                 slice_idx = result['slice_idx']
                 masks = result.get('masks', [])
                 
-                # Convert masks to annotation format
-                slice_overlays = {}
+                # Get image dimensions for the current slice to filter out false positive masks
+                try:
+                    from utils.visualization import display_slice
+                    slice_img = display_slice(
+                        self.state.current_data,
+                        slice_idx,
+                        self.state.current_view,
+                        crosshair=None,
+                        add_orientation_marker=False
+                    )
+                    img_height, img_width = slice_img.shape[:2]
+                    
+                    logger.info(f"Image dimensions: {img_width}x{img_height}")
+                    
+                except Exception as e:
+                    # Fallback: skip filtering if we can't get image dimensions
+                    logger.warning(f"Could not get image dimensions for filtering: {e}")
+                    img_height, img_width = None, None
+                
+                # CRITICAL: Filter out false positive masks using bbox coordinates and sort by area (smallest to largest) to prevent occlusion
+                masks_with_area = []
+                filtered_count = 0
                 for i, mask in enumerate(masks):
+                    area = mask.get('area', 0)
+                    bbox = mask.get('bbox', [])
+                    
+                    # Filter out masks with bbox that spans nearly the entire image (false positives)
+                    is_false_positive = False
+                    if len(bbox) == 4 and img_height is not None and img_width is not None:
+                        x, y, w, h = bbox
+                        
+                        # Check if bbox covers most of the image (with small tolerance for edge cases)
+                        bbox_covers_width = (x <= 5) and (x + w >= img_width - 5)
+                        bbox_covers_height = (y <= 5) and (y + h >= img_height - 5)
+                        
+                        if bbox_covers_width and bbox_covers_height:
+                            is_false_positive = True
+                            filtered_count += 1
+                            logger.info(f"Filtered out mask {i} with bbox {bbox} (covers entire image {img_width}x{img_height})")
+                    
+                    if not is_false_positive:
+                        masks_with_area.append((area, i, mask))
+                
+                if filtered_count > 0:
+                    logger.info(f"Filtered out {filtered_count} false positive masks based on bbox analysis")
+                
+                # Sort by area (smallest first)
+                masks_with_area.sort(key=lambda x: x[0])
+                
+                # Convert masks to annotation format in sorted order (keeping existing logic)
+                slice_overlays = {}
+                for sort_idx, (area, orig_idx, mask) in enumerate(masks_with_area):
                     segmentation = mask.get('segmentation', None)
                     if segmentation is not None:
-                        slice_overlays[f"auto_mask_{i}"] = {
-                            'mask': segmentation,
-                            'label': f'Auto Mask {i}',
+                        slice_overlays[f"auto_mask_{sort_idx:03d}"] = {
+                            'mask': segmentation,  # Keep existing 'mask': segmentation usage
+                            'label': f'Auto Mask {sort_idx}',
                             'score': mask.get('predicted_iou', 0),
-                            'area': mask.get('area', 0)
+                            'area': area,
+                            'sort_order': sort_idx  # Track sort order for unique colors
                         }
                 
                 if slice_overlays:
@@ -2524,8 +2573,7 @@ class MEDSAM2Handlers:
                 self.state.current_slice_idx,
                 self.state.current_view,
                 crosshair=None,
-                add_orientation_marker=False
-            )
+                add_orientation_marker=False            )
             
             # Ensure it's RGB and uint8
             if len(clean_img.shape) == 2:
@@ -2535,24 +2583,60 @@ class MEDSAM2Handlers:
             if img_rgb.dtype != np.uint8:
                 img_rgb = (img_rgb * 255).astype(np.uint8)
             
-            # Convert masks to polygon shapes
+            # Define a palette of distinct colors for unique shape coloring
+            color_palette = [
+                (255, 0, 0),     # Red
+                (0, 255, 0),     # Green
+                (0, 0, 255),     # Blue
+                (255, 255, 0),   # Yellow
+                (255, 0, 255),   # Magenta
+                (0, 255, 255),   # Cyan
+                (255, 128, 0),   # Orange
+                (128, 0, 255),   # Purple
+                (255, 192, 203), # Pink
+                (0, 128, 0),     # Dark Green
+                (128, 128, 0),   # Olive
+                (0, 0, 128),     # Navy
+                (128, 0, 0),     # Maroon
+                (255, 165, 0),   # Orange Red
+                (64, 224, 208),  # Turquoise
+                (255, 69, 0),    # Red Orange
+                (50, 205, 50),   # Lime Green
+                (138, 43, 226),  # Blue Violet
+                (255, 20, 147),  # Deep Pink
+                (72, 61, 139)    # Dark Slate Blue
+            ]
+            
+            # Convert masks to polygon shapes with unique colors
             annotation_shapes = []
             if (hasattr(self, 'annotation_overlays') and 
                 self.state.current_slice_idx in self.annotation_overlays):
                 
                 overlay_data = self.annotation_overlays[self.state.current_slice_idx]
                 
-                for annotation_id, annotation_data in overlay_data.items():
+                # Sort overlay data by sort_order to maintain area-based ordering
+                sorted_overlays = sorted(
+                    overlay_data.items(), 
+                    key=lambda x: x[1].get('sort_order', 0)
+                )
+                
+                for idx, (annotation_id, annotation_data) in enumerate(sorted_overlays):
                     if isinstance(annotation_data, dict) and 'mask' in annotation_data:
                         mask_array = annotation_data['mask']
+                        
+                        # Assign unique color based on sort order
+                        color_idx = annotation_data.get('sort_order', idx) % len(color_palette)
+                        unique_color = color_palette[color_idx]
+                        
                         shapes = create_annotation_boxes_from_mask(
                             mask_array, 
-                            label=f"SAM2 Fast Mask",
-                            label_index=1
+                            label=f"SAM2 Fast Mask {idx}",
+                            label_index=idx + 1,
+                            color=unique_color  # Pass unique color
                         )
                         annotation_shapes.extend(shapes)
                 
-                logger.info(f"Converted {len(annotation_shapes)} fast masks to annotation shapes")
+                logger.info(f"Converted {len(annotation_shapes)} fast masks to annotation shapes with unique colors")
             
             # Create AnnotatedImageValue format with polygon shapes
             annotated_result = {

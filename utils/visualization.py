@@ -773,9 +773,7 @@ def mask_to_polygons(mask, min_area=50, simplify_tolerance=2.0):
     
     return polygons
     
-    return polygons
-
-def create_annotation_boxes_from_mask(mask, label="MEDSAM2 Annotation", label_index=1):
+def create_annotation_boxes_from_mask(mask, label="MEDSAM2 Annotation", label_index=1, color=(255, 0, 0)):
     """
     Create polygon annotation shapes from a binary mask for image_annotator component.
     
@@ -783,6 +781,7 @@ def create_annotation_boxes_from_mask(mask, label="MEDSAM2 Annotation", label_in
         mask (numpy.ndarray): Binary mask
         label (str): Label for the annotation
         label_index (int): Index of the label
+        color (tuple): RGB color tuple for the annotation (default: red)
         
     Returns:
         list: List of polygon annotation shapes in image_annotator format
@@ -803,13 +802,12 @@ def create_annotation_boxes_from_mask(mask, label="MEDSAM2 Annotation", label_in
                 points.append({"x": int(x), "y": int(y)})
                 x_coords.append(x)
                 y_coords.append(y)
-            
-            # Create polygon shape in image_annotator format
+              # Create polygon shape in image_annotator format
             polygon_shape = {
                 "type": "polygon",
                 "points": points,  # List of {"x": x, "y": y} objects
                 "label": f"{label}_{i+1}" if len(polygons) > 1 else label,
-                "color": (255, 0, 0),  # Red color for MEDSAM2 annotations
+                "color": color,  # Use the color parameter instead of hardcoded red
                 # Include bounding box for performance optimization
                 "xmin": int(min(x_coords)),
                 "ymin": int(min(y_coords)),
