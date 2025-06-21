@@ -4,18 +4,24 @@ from PIL import Image, ImageDraw, ImageFont
 import io
 import plotly.graph_objects as go
 from skimage import measure
+import logging
+
+logger = logging.getLogger(__name__)
 
 def load_itk_snap_labels(label_file_path):
     """
-    Load ITK-SnAP Label Description File and create a colormap.
+    Load ITK-SnAP Label Description File and create a colormap with label names.
     
     Args:
         label_file_path (str): Path to the .label file
         
     Returns:
-        dict: Colormap where keys are label indices and values are [R,G,B] lists
+        tuple: (colormap, labelmap) where:
+            - colormap: dict with keys as label indices and values as [R,G,B] lists
+            - labelmap: dict with keys as label indices and values as label names
     """
     colormap = {}
+    labelmap = {}
     
     try:
         with open(label_file_path, 'r') as f:
@@ -33,14 +39,24 @@ def load_itk_snap_labels(label_file_path):
                     g = int(parts[2])
                     b = int(parts[3])
                     colormap[idx] = [r, g, b]
+                    
+                    # Extract label name (typically the last quoted string)
+                    # Find all quoted strings in the line
+                    import re
+                    quoted_strings = re.findall(r'"([^"]*)"', line)
+                    if quoted_strings:
+                        labelmap[idx] = quoted_strings[-1]  # Use the last quoted string as label name
+                    else:
+                        labelmap[idx] = f"Label_{idx}"  # Fallback label name
+                        
                 except (ValueError, IndexError):
                     continue
     except Exception as e:
         print(f"Error loading label file: {e}")
-        # Return empty colormap on error
+        # Return empty mappings on error
         pass
         
-    return colormap
+    return colormap, labelmap
 
 def normalize_array(array, percentile_low=0, percentile_high=100, window_level=None, window_width=None):
     """
@@ -79,7 +95,7 @@ def normalize_array(array, percentile_low=0, percentile_high=100, window_level=N
     return norm_array
 
 def display_slice(volume, slice_idx=None, view='axial', window_level=None, window_width=None, crosshair=None, 
-                  add_orientation_marker=True, add_scale=True):
+                  add_orientation_marker=True, add_scale=False):
     """
     Display a slice from a 3D volume.
     
@@ -801,13 +817,20 @@ def create_annotation_boxes_from_mask(mask, label="MEDSAM2 Annotation", label_in
                 x, y = point[0], point[1]
                 points.append({"x": int(x), "y": int(y)})
                 x_coords.append(x)
-                y_coords.append(y)
-              # Create polygon shape in image_annotator format
+                y_coords.append(y)            # Create polygon shape in image_annotator format
+            # Convert RGB tuple to CSS color string for image_annotator
+            if isinstance(color, (tuple, list)) and len(color) == 3:
+                color_str = f"rgb({color[0]}, {color[1]}, {color[2]})"
+                logger.info(f"Converting color {color} to CSS format: {color_str}")
+            else:
+                color_str = "rgb(255, 0, 0)"  # Default to red
+                logger.warning(f"Invalid color format {color}, using default red")
+            
             polygon_shape = {
                 "type": "polygon",
                 "points": points,  # List of {"x": x, "y": y} objects
                 "label": f"{label}_{i+1}" if len(polygons) > 1 else label,
-                "color": color,  # Use the color parameter instead of hardcoded red
+                "color": color_str,  # Use CSS color string format
                 # Include bounding box for performance optimization
                 "xmin": int(min(x_coords)),
                 "ymin": int(min(y_coords)),

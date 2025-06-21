@@ -23,12 +23,13 @@ logger = logging.getLogger(__name__)
 class ImageViewerHandlers:
     """Handlers for viewer operations using gr.Image component"""
     
-    def __init__(self, state: AppState, medsam2_handlers=None):
+    def __init__(self, state: AppState, medsam2_handlers=None, segmentation_handlers=None):
         self.state = state
         self.medsam2_handlers = medsam2_handlers
+        self.segmentation_handlers = segmentation_handlers
         # Store user annotations across all slices {slice_idx: [list_of_annotation_boxes]}
         self.user_annotations = {}
-        # Store combined annotations (MEDSAM2 + user) for each slice
+        # Store combined annotations (MEDSAM2 + user + segmentation) for each slice
         self.combined_annotations = {}
     
     @log_exception
@@ -95,26 +96,9 @@ class ImageViewerHandlers:
                 window_level=window_center,
                 window_width=window_width,
                 crosshair=None,
-                add_orientation_marker=False
-            )# Apply segmentation overlay if segmentation is loaded AND editor tab should show it
-            if (self.state.segmentation_loaded and self.state.segmentation_data is not None
-                and self.state.show_segmentation_in_editor):
-                try:
-                    seg_slice = self.state.get_segmentation_slice(
-                        self.state.current_view, 
-                        self.state.current_slice_idx
-                    )
-                    
-                    if seg_slice is not None:
-                        img = overlay_segmentation(
-                            img, 
-                            seg_slice, 
-                            alpha=self.state.segmentation_alpha,
-                            colormap=self.state.segmentation_colormap
-                        )
-                        logger.info(f"Applied segmentation overlay to slice {self.state.current_slice_idx}")
-                except Exception as e:
-                    logger.error(f"Error applying segmentation overlay: {str(e)}")
+                add_orientation_marker=False            )
+            
+            # NOTE: Segmentation overlays are now handled via image_annotator shapes instead of image overlays
             
             # Apply MEDSAM2 annotation overlay if available for current slice
             if (self.medsam2_handlers and 
@@ -132,11 +116,30 @@ class ImageViewerHandlers:
                     )
                     logger.info(f"Applied MEDSAM2 annotation overlay to slice {self.state.current_slice_idx}")
                 except Exception as e:
-                    logger.error(f"Error applying MEDSAM2 annotation overlay: {str(e)}")
+                    logger.error(f"Error applying MEDSAM2 annotation overlay: {str(e)}")            # Convert to format expected by image_annotator
+            if len(img.shape) == 2:
+                img_rgb = np.stack([img] * 3, axis=-1)
+            else:
+                img_rgb = img
             
-            # Convert to PIL Image for gr.Image
-            pil_image = make_image_for_gradio(img)
-            logger.info(f"Generated slice image with shape {img.shape}")
+            if img_rgb.dtype != np.uint8:
+                img_rgb = (img_rgb * 255).astype(np.uint8)
+            
+            # Get segmentation shapes for current slice if available
+            segmentation_shapes = []
+            if (self.segmentation_handlers and 
+                self.state.segmentation_loaded and 
+                self.state.segmentation_data is not None):
+                segmentation_shapes = self.segmentation_handlers._get_shapes_for_current_slice()
+            
+            # Create AnnotatedImageValue format
+            annotated_value = {
+                "image": img_rgb,
+                "boxes": segmentation_shapes,  # Include segmentation shapes
+                "orientation": 0
+            }
+            
+            logger.info(f"Generated annotated slice image with shape {img_rgb.shape} and {len(segmentation_shapes)} segmentation shapes")
             
             # Update crosshair info
             x, y, z = self.state.crosshair_position
@@ -147,7 +150,7 @@ class ImageViewerHandlers:
                 window_center = 500
             if window_width is None:
                 window_width = 1000            
-            return pil_image, f"{self.state.current_slice_idx + 1}/{total_slices}", crosshair_text, metadata, window_center, window_width
+            return annotated_value, f"{self.state.current_slice_idx + 1}/{total_slices}", crosshair_text, metadata, window_center, window_width
         except Exception as e:
             logger.error(f"Error generating slice image: {str(e)}")
             return None, f"Error: {str(e)}", "x: 0, y: 0, z: 0", {}, None, None
@@ -177,35 +180,37 @@ class ImageViewerHandlers:
             self.state.current_slice_idx, 
             self.state.current_view,
             crosshair=None,
-            add_orientation_marker=False
-        )
+            add_orientation_marker=False        )
         
-        # Apply segmentation overlay if loaded AND editor tab should show it
-        if (self.state.segmentation_loaded and self.state.segmentation_data is not None
-            and self.state.show_segmentation_in_editor):
-            try:
-                seg_slice = self.state.get_segmentation_slice(
-                    self.state.current_view, 
-                    self.state.current_slice_idx
-                )
-                
-                if seg_slice is not None:
-                    img = overlay_segmentation(
-                        img, 
-                        seg_slice, 
-                        alpha=self.state.segmentation_alpha,
-                        colormap=self.state.segmentation_colormap
-                    )
-            except Exception as e:
-                logger.error(f"Error applying segmentation overlay: {str(e)}")
+        # NOTE: Segmentation overlays are now handled via image_annotator shapes instead of image overlays
         
-        # Convert to PIL Image for gr.Image
-        pil_image = make_image_for_gradio(img)
+        # Convert to format expected by image_annotator
+        if len(img.shape) == 2:
+            img_rgb = np.stack([img] * 3, axis=-1)
+        else:
+            img_rgb = img
+        
+        if img_rgb.dtype != np.uint8:
+            img_rgb = (img_rgb * 255).astype(np.uint8)
+        
+        # Get segmentation shapes for current slice if available
+        segmentation_shapes = []
+        if (self.segmentation_handlers and 
+            self.state.segmentation_loaded and 
+            self.state.segmentation_data is not None):
+            segmentation_shapes = self.segmentation_handlers._get_shapes_for_current_slice()
+        
+        # Create AnnotatedImageValue format
+        annotated_value = {
+            "image": img_rgb,
+            "boxes": segmentation_shapes,
+            "orientation": 0
+        }
         
         return (
             gr.Slider(minimum=slider_min, maximum=slider_max, value=self.state.current_slice_idx), 
             f"{self.state.current_slice_idx}/{slider_max}", 
-            pil_image
+            annotated_value
         )
     
     def update_window_level(self, level, width):
@@ -222,28 +227,32 @@ class ImageViewerHandlers:
             add_orientation_marker=False
         )
         
-        # Apply segmentation overlay if loaded AND editor tab should show it
-        if (self.state.segmentation_loaded and self.state.segmentation_data is not None
-            and self.state.show_segmentation_in_editor):
-            try:
-                seg_slice = self.state.get_segmentation_slice(
-                    self.state.current_view, 
-                    self.state.current_slice_idx
-                )
-                
-                if seg_slice is not None:
-                    img = overlay_segmentation(
-                        img, 
-                        seg_slice, 
-                        alpha=self.state.segmentation_alpha,
-                        colormap=self.state.segmentation_colormap
-                    )
-            except Exception as e:
-                logger.error(f"Error applying segmentation overlay: {str(e)}")
+        # NOTE: Segmentation overlays are now handled via image_annotator shapes instead of image overlays
         
-        # Convert to PIL Image for gr.Image
-        pil_image = make_image_for_gradio(img)
-        return pil_image
+        # Convert to format expected by image_annotator
+        if len(img.shape) == 2:
+            img_rgb = np.stack([img] * 3, axis=-1)
+        else:
+            img_rgb = img
+        
+        if img_rgb.dtype != np.uint8:
+            img_rgb = (img_rgb * 255).astype(np.uint8)
+        
+        # Get segmentation shapes for current slice if available
+        segmentation_shapes = []
+        if (self.segmentation_handlers and 
+            self.state.segmentation_loaded and 
+            self.state.segmentation_data is not None):
+            segmentation_shapes = self.segmentation_handlers._get_shapes_for_current_slice()
+        
+        # Create AnnotatedImageValue format
+        annotated_value = {
+            "image": img_rgb,
+            "boxes": segmentation_shapes,
+            "orientation": 0
+        }
+        
+        return annotated_value
     
     def select_file_from_browser(self, selected_file):
         """When a file is selected from the browser dropdown"""
@@ -294,10 +303,9 @@ class ImageViewerHandlers:
                 crosshair=None,
                 add_orientation_marker=False
             )
-            
-            # Apply segmentation overlay if loaded AND editor tab should show it
+              # Apply segmentation overlay if loaded AND viewer should show it
             if (self.state.segmentation_loaded and self.state.segmentation_data is not None
-                and self.state.show_segmentation_in_editor):
+                and self.state.show_segmentation):
                 try:
                     seg_slice = self.state.segmentation_data[slice_idx, :, :]
                     img = overlay_segmentation(
@@ -309,14 +317,27 @@ class ImageViewerHandlers:
                 except Exception as e:
                     logger.error(f"Error applying segmentation overlay: {str(e)}")
             
-            # Convert to PIL Image for gr.Image
-            pil_image = make_image_for_gradio(img)
+            # Convert to format expected by image_annotator
+            if len(img.shape) == 2:
+                img_rgb = np.stack([img] * 3, axis=-1)
+            else:
+                img_rgb = img
+            
+            if img_rgb.dtype != np.uint8:
+                img_rgb = (img_rgb * 255).astype(np.uint8)
+            
+            # Create AnnotatedImageValue format
+            annotated_value = {
+                "image": img_rgb,
+                "boxes": [],
+                "orientation": 0
+            }
             
             # Update crosshair info
             x, y, z = self.state.crosshair_position
             crosshair_text = f"x: {x}, y: {y}, z: {z}"
             
-            return (pil_image, f"{slice_idx}/{len(self.state.file_list)-1}", crosshair_text, 
+            return (annotated_value, f"{slice_idx}/{len(self.state.file_list)-1}", crosshair_text, 
                    metadata, slice_idx, window_center, window_width)
                    
         except Exception as e:
@@ -334,7 +355,275 @@ class ImageViewerHandlers:
         
         current_value = int(slider_value)
         max_value = self.state.get_max_slice_for_view(self.state.current_view)
-        return min(current_value + 1, max_value)
+        return min(current_value + 1, max_value)    
+    
+    @log_exception
+    def reset_view(self):
+        """Reset the view to default state"""
+        if self.state.current_data is None:
+            return None
+        
+        # Reset to the first slice of current view
+        self.state.update_slice_position(0, self.state.current_view)
+        
+        # Generate the slice image
+        img = display_slice(
+            self.state.current_data, 
+            self.state.current_slice_idx, 
+            self.state.current_view,
+            window_level=self.state.current_window_center, 
+            window_width=self.state.current_window_width,
+            crosshair=None,
+            add_orientation_marker=False
+        )
+        
+        # Convert to format expected by image_annotator
+        if len(img.shape) == 2:
+            img_rgb = np.stack([img] * 3, axis=-1)
+        else:
+            img_rgb = img
+        
+        if img_rgb.dtype != np.uint8:
+            img_rgb = (img_rgb * 255).astype(np.uint8)
+        
+        # Create AnnotatedImageValue format
+        annotated_value = {
+            "image": img_rgb,
+            "boxes": [],
+            "orientation": 0
+        }
+        
+        return annotated_value    @log_exception
+    def toggle_annotations(self, show_annotations):
+        """Toggle annotation visibility"""
+        if self.state.current_data is None:
+            return None
+            
+        # Generate the slice image
+        img = display_slice(
+            self.state.current_data, 
+            self.state.current_slice_idx, 
+            self.state.current_view,
+            window_level=self.state.current_window_center, 
+            window_width=self.state.current_window_width,
+            crosshair=None,
+            add_orientation_marker=False
+        )
+        
+        # If annotations should be shown and we have segmentation data
+        if show_annotations and hasattr(self.state, 'current_segmentation') and self.state.current_segmentation is not None:
+            # Overlay segmentation if available
+            seg_slice = self.state.get_current_segmentation_slice()
+            if seg_slice is not None:
+                img = overlay_segmentation(
+                    img, 
+                    seg_slice, 
+                    opacity=getattr(self.state, 'segmentation_opacity', 0.5)
+                )
+        
+        # Convert to format expected by image_annotator
+        if len(img.shape) == 2:
+            img_rgb = np.stack([img] * 3, axis=-1)
+        else:
+            img_rgb = img
+        
+        if img_rgb.dtype != np.uint8:
+            img_rgb = (img_rgb * 255).astype(np.uint8)
+        
+        # Create AnnotatedImageValue format
+        annotated_value = {
+            "image": img_rgb,
+            "boxes": [],
+            "orientation": 0
+        }
+        
+        return annotated_value    @log_exception
+    def update_annotation_opacity(self, opacity):
+        """Update annotation opacity"""
+        if self.state.current_data is None:
+            return None
+        
+        # Store the opacity setting
+        self.state.segmentation_opacity = opacity
+        
+        # Generate the slice image
+        img = display_slice(
+            self.state.current_data, 
+            self.state.current_slice_idx, 
+            self.state.current_view,
+            window_level=self.state.current_window_center, 
+            window_width=self.state.current_window_width,
+            crosshair=None,
+            add_orientation_marker=False
+        )
+        
+        # Overlay segmentation with new opacity if available
+        if hasattr(self.state, 'current_segmentation') and self.state.current_segmentation is not None:
+            seg_slice = self.state.get_current_segmentation_slice()
+            if seg_slice is not None:
+                img = overlay_segmentation(img, seg_slice, opacity=opacity)
+        
+        # Convert to format expected by image_annotator
+        if len(img.shape) == 2:
+            img_rgb = np.stack([img] * 3, axis=-1)
+        else:
+            img_rgb = img
+        
+        if img_rgb.dtype != np.uint8:
+            img_rgb = (img_rgb * 255).astype(np.uint8)
+        
+        # Create AnnotatedImageValue format
+        annotated_value = {
+            "image": img_rgb,
+            "boxes": [],
+            "orientation": 0
+        }
+        
+        return annotated_value
+
+    @log_exception
+    def export_current_view(self):
+        """Export the current view as an image file"""
+        if self.state.current_data is None:
+            logger.warning("No data loaded for export")
+            return
+        
+        try:
+            import os
+            from datetime import datetime
+            from PIL import Image
+            
+            # Get current slice data
+            slice_data = self.state.get_current_slice()
+            if slice_data is None:
+                logger.warning("No current slice data for export")
+                return
+            
+            # Create display image
+            display_img = display_slice(
+                slice_data, 
+                self.state.current_window_center, 
+                self.state.current_window_width
+            )
+            
+            # Convert to PIL Image
+            if isinstance(display_img, np.ndarray):
+                # Ensure proper format for PIL
+                if display_img.dtype != np.uint8:
+                    display_img = (display_img * 255).astype(np.uint8)
+                
+                if len(display_img.shape) == 2:
+                    pil_image = Image.fromarray(display_img, mode='L')
+                else:
+                    pil_image = Image.fromarray(display_img, mode='RGB')
+                
+                # Create export filename
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                filename = f"exported_view_{self.state.current_view}_{self.state.current_slice_index}_{timestamp}.png"
+                
+                # Save to current directory or a designated export folder
+                export_dir = "exports"
+                if not os.path.exists(export_dir):
+                    os.makedirs(export_dir)
+                
+                filepath = os.path.join(export_dir, filename)
+                pil_image.save(filepath)
+                
+                logger.info(f"View exported to: {filepath}")
+                
+        except Exception as e:
+            logger.error(f"Error exporting current view: {str(e)}")
+
+    @log_exception
+    def export_annotations(self):
+        """Export annotations as a JSON file"""
+        if not hasattr(self, 'user_annotations') or not self.user_annotations:
+            logger.warning("No annotations to export")
+            return
+        
+        try:
+            import json
+            import os
+            from datetime import datetime
+            
+            # Prepare annotation data for export
+            export_data = {
+                "metadata": {
+                    "export_timestamp": datetime.now().isoformat(),
+                    "view_type": self.state.current_view,
+                    "total_slices": len(self.user_annotations),
+                    "data_source": getattr(self.state, 'current_file_path', "unknown")
+                },
+                "annotations": self.user_annotations
+            }
+            
+            # Create export filename
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"exported_annotations_{timestamp}.json"
+            
+            # Save to current directory or a designated export folder
+            export_dir = "exports"
+            if not os.path.exists(export_dir):
+                os.makedirs(export_dir)
+            
+            filepath = os.path.join(export_dir, filename)            
+            with open(filepath, 'w') as f:
+                json.dump(export_data, f, indent=2)
+            
+            logger.info(f"Annotations exported to: {filepath}")
+            
+        except Exception as e:
+            logger.error(f"Error exporting annotations: {str(e)}")
+    
+    def on_annotation_change_viewer(self, annotated_value):
+        """Handle when user modifies annotations in image_annotator (viewer tab specific)"""
+        if annotated_value is None:
+            return annotated_value
+        
+        # Extract the current shapes/boxes from the annotated value
+        current_shapes = annotated_value.get("boxes", [])
+        
+        # Sort shapes by area (smallest first) to prevent occlusion
+        if current_shapes:
+            shapes_with_areas = []
+            
+            for shape in current_shapes:
+                if 'points' in shape and len(shape['points']) >= 3:
+                    # Calculate area using shoelace formula for polygons
+                    points = shape['points']
+                    area = 0
+                    n = len(points)
+                    for i in range(n):
+                        j = (i + 1) % n
+                        area += points[i]['x'] * points[j]['y']
+                        area -= points[j]['x'] * points[i]['y']
+                    area = abs(area) / 2.0
+                    shapes_with_areas.append((area, shape))
+                else:
+                    # For non-polygon shapes, use bounding box area
+                    if 'xmin' in shape and 'ymin' in shape and 'xmax' in shape and 'ymax' in shape:
+                        area = (shape['xmax'] - shape['xmin']) * (shape['ymax'] - shape['ymin'])
+                        shapes_with_areas.append((area, shape))
+                    else:
+                        # Default to area 0 if no area can be calculated
+                        shapes_with_areas.append((0, shape))
+            
+            # Sort shapes by area (smallest first) to prevent occlusion
+            shapes_with_areas.sort(key=lambda x: x[0])
+            sorted_shapes = [shape for area, shape in shapes_with_areas]
+            
+            # Update the annotated_value with sorted shapes
+            annotated_value = dict(annotated_value)  # Create a copy
+            annotated_value["boxes"] = sorted_shapes
+            
+            logger.info(f"Sorted {len(sorted_shapes)} shapes by area (smallest first) in viewer")
+        
+        # Store the user-modified shapes for the current slice
+        if self.segmentation_handlers:
+            self.segmentation_handlers.update_user_shapes(annotated_value.get("boxes", []), self.state.current_slice_idx)
+            logger.info(f"Updated user annotations for slice {self.state.current_slice_idx}: {len(annotated_value.get('boxes', []))} shapes")
+        
+        return annotated_value
 
 
 class ImagePlotToolHandlers:
@@ -766,32 +1055,11 @@ class ImagePlotToolHandlers:
     
     def next_slice(self, slider_value):
         """Go to next slice by incrementing slider value"""
-        if self.state.current_data is None:
-            return slider_value
-        
+        if self.state.current_data is None:            return slider_value        
         current_value = int(slider_value)
         max_value = self.state.get_max_slice_for_view(self.state.current_view)
         return min(current_value + 1, max_value)
-    
-    def handle_image_remove(self):
-        """Handle image removal event from the image_annotator component.
-        This is called when the X button (Remove Image) is clicked."""
-        # Reset the current image but keep the data in state
-        # Return an empty AnnotatedImageValue with a blank image
-        logger.info("Image removal requested via X button")
-        
-        # Create a small blank/transparent image instead of None
-        import numpy as np
-        blank_image = np.zeros((100, 100, 3), dtype=np.uint8)  # Small blank RGB image
-        
-        empty_annotated_value = {
-            "image": blank_image,
-            "boxes": [],
-            "orientation": 0
-        }
-        
-        return empty_annotated_value
-    
+
     @log_exception
     def save_user_annotations(self, annotated_image_data):
         """Save user annotations from the image annotator component"""
@@ -970,7 +1238,7 @@ class ImagePlotToolHandlers:
             logger.error(f"Error getting all annotations for slice {slice_idx}: {e}")
             return []
     
-    def on_annotation_change(self, annotated_image_value):
+    def on_annotation_change_editor_save(self, annotated_image_value):
         """Handle annotation changes in the ImageAnnotator component"""
         try:
             # Skip saving if we're currently loading a slice or navigating
@@ -1242,3 +1510,21 @@ class ImagePlotToolHandlers:
             "last_save_time": self._last_save_time,
             "current_slice": self.state.current_slice_idx
         }
+
+    def handle_image_remove(self):
+        """Handle image removal event from the image_annotator component.
+        This is called when the X button (Remove Image) is clicked."""
+        # Reset the current image but keep the data in state
+        # Return an empty AnnotatedImageValue with a blank image
+        logger.info("Image removal requested via X button")
+        
+        # Create a small blank/transparent image instead of None
+        blank_image = np.zeros((100, 100, 3), dtype=np.uint8)  # Small blank RGB image
+        
+        empty_annotated_value = {
+            "image": blank_image,
+            "boxes": [],
+            "orientation": 0
+        }
+        
+        return empty_annotated_value

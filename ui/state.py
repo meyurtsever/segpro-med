@@ -41,8 +41,7 @@ class AppState:
         self.current_shape: Tuple[int, int, int] = (0, 0, 0)
         
         # Plot tool state
-        self.current_plot_tool: str = "drawclosedpath"
-          # Segmentation state
+        self.current_plot_tool: str = "drawclosedpath"          # Segmentation state
         self.segmentation_data: Optional[np.ndarray] = None
         self.segmentation_loaded: bool = False
         self.segmentation_alpha: float = 0.5  # Default transparency
@@ -56,6 +55,18 @@ class AppState:
             6: [255, 0, 255],  # Label 6 (Magenta)
             7: [255, 165, 0],  # Label 7 (Orange)
             8: [128, 0, 128]   # Label 8 (Purple)
+        }
+        # Store label names from .label files
+        self.segmentation_labelmap: Dict[int, str] = {
+            0: "Background",
+            1: "Label_1",
+            2: "Label_2", 
+            3: "Label_3",
+            4: "Label_4",
+            5: "Label_5",
+            6: "Label_6",
+            7: "Label_7",
+            8: "Label_8"
         }
         
         # Image viewer state (used by image_viewer_handlers)
@@ -100,6 +111,7 @@ class AppState:
         self.current_slice_idx = 0
         self.crosshair_position = None
         self.current_shape = (0, 0, 0)
+    
     def reset_segmentation(self) -> None:
         """Reset segmentation-related state"""
         self.segmentation_data = None
@@ -108,6 +120,30 @@ class AppState:
         # Reset display flags to defaults
         self.show_segmentation_in_viewer = True
         self.show_segmentation_in_editor = False
+        # Reset colormap to defaults
+        self.segmentation_colormap = {
+            0: [0, 0, 0],      # Background (transparent)
+            1: [255, 0, 0],    # Label 1 (Red)
+            2: [0, 255, 0],    # Label 2 (Green)
+            3: [0, 0, 255],    # Label 3 (Blue)
+            4: [255, 255, 0],  # Label 4 (Yellow)
+            5: [0, 255, 255],  # Label 5 (Cyan)
+            6: [255, 0, 255],  # Label 6 (Magenta)
+            7: [255, 165, 0],  # Label 7 (Orange)
+            8: [128, 0, 128]   # Label 8 (Purple)
+        }
+        # Reset labelmap to defaults
+        self.segmentation_labelmap = {
+            0: "Background",
+            1: "Label_1",
+            2: "Label_2", 
+            3: "Label_3",
+            4: "Label_4",
+            5: "Label_5",
+            6: "Label_6",
+            7: "Label_7",
+            8: "Label_8"
+        }
     
     def set_data(self, data: np.ndarray, data_type: str, metadata: Dict[str, Any], 
                  file_list: List[str]) -> None:

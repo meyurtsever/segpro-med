@@ -281,14 +281,13 @@ class CustomAnnotatorHandlers:
             # This is a placeholder for batch processing functionality
             # In a real implementation, this would handle multiple images
             logger.info("Batch processing initiated")
-            return "Batch processing feature coming soon. This will allow processing multiple medical images at once."
-            
+            return "Batch processing feature coming soon. This will allow processing multiple medical images at once."            
         except Exception as e:
             logger.error(f"Error in batch processing: {e}")
             return f"Batch processing failed: {str(e)}"
     
-    def handle_annotation_change(self, annotation_data: Dict[str, Any]) -> None:
-        """Handle changes to annotations from the image_annotator component and track coordinates"""
+    def on_annotation_change_editor(self, annotation_data: Dict[str, Any]) -> None:
+        """Handle changes to annotations from the image_annotator component and track coordinates (editor tab specific)"""
         try:
             if annotation_data and 'boxes' in annotation_data:
                 boxes = annotation_data['boxes']

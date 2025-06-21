@@ -18,8 +18,8 @@ utils_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file
 if utils_path not in sys.path:
     sys.path.append(utils_path)
 
-from utils.visualization import (display_slice, make_slice_figure, overlay_segmentation, 
-                                load_itk_snap_labels, segmentation_to_shapes)
+from utils.visualization import (display_slice, overlay_segmentation, 
+                                load_itk_snap_labels, make_image_for_gradio)
 from utils.debug_utils import log_exception
 from ui.state import AppState
 
@@ -31,6 +31,101 @@ class SegmentationHandlers:
     
     def __init__(self, state: AppState):
         self.state = state
+        # Store segmentation shapes per slice for persistence across navigation        # Format: {slice_idx: [list_of_polygon_shapes]}
+        self.segmentation_shapes = {}
+        # Store user-modified shapes separately
+        self.user_modified_shapes = {}
+    
+    def _generate_segmentation_shapes_for_slice(self, seg_slice, slice_idx):
+        """Generate polygon shapes from segmentation mask for a specific slice"""
+        from utils.visualization import create_annotation_boxes_from_mask
+        
+        shapes = []
+        unique_labels = np.unique(seg_slice)
+        
+        # Collect all shapes with their areas for sorting
+        shapes_with_areas = []
+        
+        for label_val in unique_labels:
+            if label_val == 0:  # Skip background
+                continue
+                
+            # Create binary mask for this label
+            binary_mask = (seg_slice == label_val)            # Get color for this label from colormap
+            color = self.state.segmentation_colormap.get(label_val, [255, 0, 0])  # Default to red
+            logger.info(f"Label {label_val}: Using color {color} from colormap")
+            
+            # Get label name from labelmap
+            label_name = self.state.segmentation_labelmap.get(label_val, f"Seg_Label_{label_val}")
+            logger.info(f"Label {label_val}: Using label name '{label_name}' from labelmap")
+            
+            # Convert mask to polygon shapes
+            label_shapes = create_annotation_boxes_from_mask(
+                binary_mask, 
+                label=label_name,  # Use actual label name from .label file
+                label_index=label_val,
+                color=tuple(color)  # Ensure color is a tuple
+            )
+            
+            # Calculate area for each shape and store with the shape
+            for shape in label_shapes:
+                if 'points' in shape and len(shape['points']) >= 3:
+                    # Calculate area using shoelace formula
+                    points = shape['points']
+                    area = 0
+                    n = len(points)
+                    for i in range(n):
+                        j = (i + 1) % n
+                        area += points[i]['x'] * points[j]['y']
+                        area -= points[j]['x'] * points[i]['y']
+                    area = abs(area) / 2.0
+                    shapes_with_areas.append((area, shape))
+                else:
+                    # For non-polygon shapes, use bounding box area
+                    if 'xmin' in shape and 'ymin' in shape and 'xmax' in shape and 'ymax' in shape:
+                        area = (shape['xmax'] - shape['xmin']) * (shape['ymax'] - shape['ymin'])
+                        shapes_with_areas.append((area, shape))
+        
+        # Sort shapes by area (smallest first) to prevent occlusion
+        shapes_with_areas.sort(key=lambda x: x[0])
+        shapes = [shape for area, shape in shapes_with_areas]
+        
+        logger.info(f"Generated {len(shapes)} shapes for slice {slice_idx}, sorted by area (smallest first)")
+        
+        return shapes
+    
+    def _get_shapes_for_current_slice(self):
+        """Get segmentation shapes for current slice, generating if needed"""
+        current_idx = self.state.current_slice_idx
+        
+        # Check if user has modified shapes for this slice
+        if current_idx in self.user_modified_shapes:
+            return self.user_modified_shapes[current_idx]
+        
+        # Check if we have generated shapes for this slice
+        if current_idx in self.segmentation_shapes:
+            return self.segmentation_shapes[current_idx]
+        
+        # Generate shapes if segmentation is loaded
+        if self.state.segmentation_loaded and self.state.segmentation_data is not None:
+            seg_slice = self.state.get_segmentation_slice(
+                self.state.current_view, 
+                current_idx
+            )
+            
+            if seg_slice is not None:
+                shapes = self._generate_segmentation_shapes_for_slice(seg_slice, current_idx)
+                self.segmentation_shapes[current_idx] = shapes
+                return shapes        
+        return []
+    
+    def update_user_shapes(self, shapes, slice_idx=None):
+        """Update user-modified shapes for a specific slice"""
+        if slice_idx is None:
+            slice_idx = self.state.current_slice_idx
+        
+        self.user_modified_shapes[slice_idx] = shapes
+        logger.info(f"Updated user shapes for slice {slice_idx}: {len(shapes)} shapes")
     
     @log_exception
     def direct_load_segmentation(self, seg_file, label_file=None):
@@ -50,12 +145,23 @@ class SegmentationHandlers:
             if label_file is not None:
                 label_path = label_file.name
                 logger.info(f"Loading label file: {label_path}")
-                custom_colormap = load_itk_snap_labels(label_path)
+                custom_colormap, custom_labelmap = load_itk_snap_labels(label_path)
                 
                 if custom_colormap:
                     # Update the segmentation colormap with loaded values
                     self.state.segmentation_colormap = custom_colormap
                     logger.info(f"Loaded custom colormap with {len(custom_colormap)} entries")
+                    # Log some example colors for debugging
+                    example_colors = list(custom_colormap.items())[:5]
+                    logger.info(f"Example colors: {example_colors}")
+                
+                if custom_labelmap:
+                    # Update the segmentation labelmap with loaded values
+                    self.state.segmentation_labelmap = custom_labelmap
+                    logger.info(f"Loaded custom labelmap with {len(custom_labelmap)} entries")
+                    # Log some example label names for debugging
+                    example_labels = list(custom_labelmap.items())[:5]
+                    logger.info(f"Example labels: {example_labels}")
             
             # Load the NIfTI file directly with nibabel
             nii_img = nib.load(seg_path)
@@ -119,38 +225,36 @@ class SegmentationHandlers:
             # Get the corresponding segmentation slice
             seg_slice = self.state.get_segmentation_slice(
                 self.state.current_view, 
-                self.state.current_slice_idx
-            )
+                self.state.current_slice_idx            )
             
-            if seg_slice is not None:                # Overlay segmentation on the image
-                overlaid_img = overlay_segmentation(
-                    img, 
-                    seg_slice, 
-                    alpha=self.state.segmentation_alpha,
-                    colormap=self.state.segmentation_colormap
-                )
+            if seg_slice is not None:
+                # Clear any existing segmentation shapes (fresh load)
+                self.segmentation_shapes = {}
+                self.user_modified_shapes = {}
                 
-                # Map tool names to plotly dragmode
-                tool_mapping = {
-                    "draw_circle": "drawcircle",
-                    "draw_rect": "drawrect", 
-                    "draw_line": "drawline",
-                    "draw_openpath": "drawopenpath",
-                    "draw_closedpath": "drawclosedpath",
-                    "erase_shape": "eraseshape",
-                    "pan": "pan",
-                    "zoom": "zoom",
-                    "reset": "pan"  # Reset just goes back to pan mode
+                # Generate shapes for the current slice
+                shapes = self._generate_segmentation_shapes_for_slice(seg_slice, self.state.current_slice_idx)
+                
+                # Display the base image (without overlay since shapes will handle visualization)
+                annotated_image = {
+                    "image": make_image_for_gradio(img),
+                    "boxes": shapes,  # Include segmentation shapes as annotation boxes
+                    "orientation": 0
                 }
-                
-                dragmode = tool_mapping.get(self.state.current_plot_tool, "pan")
-                fig = make_slice_figure(overlaid_img, dragmode=dragmode)
-                
-                # Check unique labels in segmentation
+                  # Check unique labels in segmentation
                 unique_labels = np.unique(seg_data)
                 label_str = ", ".join(map(str, unique_labels))
                 
-                return f"Segmentation loaded with axis reorientation. Found labels: {label_str}", fig
+                # Create status message with label information
+                status_msg = f"Segmentation loaded with axis reorientation. Found labels: {label_str}. Converted to {len(shapes)} editable shapes."
+                
+                # Add label file information if available
+                if label_file is not None:
+                    label_names = [self.state.segmentation_labelmap.get(label, f"Label_{label}") for label in unique_labels if label != 0]
+                    if label_names:
+                        status_msg += f" Label names: {', '.join(label_names)}."
+                
+                return status_msg, annotated_image
             else:
                 return "Error: Could not extract segmentation slice", None
         
@@ -164,12 +268,16 @@ class SegmentationHandlers:
     
     @log_exception
     def update_segmentation_opacity(self, opacity):
-        """Update the opacity/transparency of the segmentation overlay"""
+        """Update the opacity/transparency of the segmentation shapes"""
         if not self.state.segmentation_loaded or self.state.segmentation_data is None:
             return "No segmentation loaded", None
         
         self.state.segmentation_alpha = opacity
-          # Re-generate the image with updated opacity
+        
+        # Update the opacity of all existing segmentation shapes
+        # This affects the display transparency in image_annotator
+        
+        # Re-generate the base image
         img = display_slice(
             self.state.current_data, 
             self.state.current_slice_idx, 
@@ -177,44 +285,26 @@ class SegmentationHandlers:
             crosshair=None,
             add_orientation_marker=False
         )
-          # Get the corresponding segmentation slice
-        seg_slice = self.state.get_segmentation_slice(
-            self.state.current_view, 
-            self.state.current_slice_idx
-        )
         
-        if seg_slice is not None:
-            # Overlay segmentation on the image
-            overlaid_img = overlay_segmentation(
-                img, 
-                seg_slice, 
-                alpha=self.state.segmentation_alpha,
-                colormap=self.state.segmentation_colormap
-            )
-            
-            # Map tool names to plotly dragmode
-            tool_mapping = {
-                "draw_circle": "drawcircle",
-                "draw_rect": "drawrect", 
-                "draw_line": "drawline",
-                "draw_openpath": "drawopenpath",
-                "draw_closedpath": "drawclosedpath",
-                "erase_shape": "eraseshape",
-                "pan": "pan",
-                "zoom": "zoom",
-                "reset": "pan"  # Reset just goes back to pan mode
-            }
-            
-            dragmode = tool_mapping.get(self.state.current_plot_tool, "pan")
-            fig = make_slice_figure(overlaid_img, dragmode=dragmode)            
-            return f"Segmentation opacity updated to {opacity:.1f}", fig
-        else:
-            return "Error: Could not extract segmentation slice", None
+        # Get the current shapes for the slice
+        shapes = self._get_shapes_for_current_slice()
+        
+        # Create annotated image value for image_annotator
+        annotated_image = {
+            "image": make_image_for_gradio(img),
+            "boxes": shapes,  # Include current segmentation shapes
+            "orientation": 0        }
+        
+        return f"Segmentation opacity updated to {opacity:.1f}", annotated_image
     
     @log_exception
     def clear_segmentation(self):
-        """Clear the current segmentation overlay"""
+        """Clear the current segmentation shapes"""
         self.state.reset_segmentation()
+        
+        # Clear all stored segmentation shapes
+        self.segmentation_shapes = {}
+        self.user_modified_shapes = {}
         
         if self.state.current_data is None:
             return "No data loaded", None
@@ -226,46 +316,82 @@ class SegmentationHandlers:
             self.state.current_view,
             crosshair=None,
             add_orientation_marker=False
-        )
-          # Map tool names to plotly dragmode
-        tool_mapping = {
-            "draw_circle": "drawcircle",
-            "draw_rect": "drawrect", 
-            "draw_line": "drawline",
-            "draw_openpath": "drawopenpath",
-            "draw_closedpath": "drawclosedpath",
-            "erase_shape": "eraseshape",
-            "pan": "pan",
-            "zoom": "zoom",
-            "reset": "pan"  # Reset just goes back to pan mode
+        )        # Create annotated image value for image_annotator with no shapes
+        annotated_image = {
+            "image": make_image_for_gradio(img),
+            "boxes": [],  # No annotation boxes after clearing
+            "orientation": 0
         }
         
-        dragmode = tool_mapping.get(self.state.current_plot_tool, "pan")
-        fig = make_slice_figure(img, dragmode=dragmode)
-        return "Segmentation cleared", fig
+        return "Segmentation cleared", annotated_image
     
     @log_exception
-    def convert_segmentation_to_shapes(self):
-        """Convert the current segmentation slice to editable Plotly shapes"""
-        if not self.state.segmentation_loaded or self.state.segmentation_data is None:
-            return "No segmentation loaded", None
+    def load_label_file_and_update_annotator(self, label_file):
+        """
+        Load a .label file and return a new image_annotator with updated labels while preserving existing shapes
         
-        # Get the current slice of the segmentation
-        seg_slice = self.state.get_segmentation_slice(
-            self.state.current_view, 
-            self.state.current_slice_idx
-        )
-        
-        if seg_slice is None:
-            return "Invalid view orientation or slice index", None
+        Args:
+            label_file: Gradio File object containing the .label file
+            
+        Returns:
+            tuple: (status_message, new_image_annotator_with_updated_labels)
+        """
+        if label_file is None:
+            return "No label file selected", self._get_current_annotator_state()
         
         try:
-            # Import required libraries for contour finding
-            try:
-                from skimage import measure
-            except ImportError:
-                return "Error: scikit-image is required for contour detection. Please install with 'pip install scikit-image'", None
-              # Display the current slice without segmentation overlay
+            from ui.viewer_tab import prepare_labels_for_annotator
+            from utils.visualization import load_itk_snap_labels
+            from gradio_image_annotation import image_annotator
+            
+            # Get file path from the uploaded file object
+            label_path = label_file.name
+            logger.info(f"Loading label file for annotator update: {label_path}")
+            
+            # Load the label file
+            custom_colormap, custom_labelmap = load_itk_snap_labels(label_path)
+            
+            if custom_colormap and custom_labelmap:
+                # Update the state with new labels
+                self.state.segmentation_colormap.update(custom_colormap)
+                self.state.segmentation_labelmap.update(custom_labelmap)
+                
+                # Clear existing shapes to force regeneration with new labels
+                self.segmentation_shapes = {}
+                self.user_modified_shapes = {}
+                
+                # Prepare labels for the image_annotator
+                label_list, label_colors = prepare_labels_for_annotator(custom_labelmap, custom_colormap)
+                
+                logger.info(f"Updated state with {len(label_list)} labels")
+                logger.info(f"Labels: {label_list}")
+                
+                # Get current annotator state (preserving current image and existing shapes)
+                current_state = self._get_current_annotator_state()
+                
+                # Create new annotator with updated labels but preserve existing content
+                new_annotator = self._create_annotator_with_new_labels(
+                    label_list, label_colors, current_state
+                )
+                
+                status_msg = f"Successfully loaded {len(label_list)} labels from file. "
+                status_msg += f"Available labels: {', '.join(label_list)}. "
+                status_msg += "The shape editor now uses these label names for new annotations."
+                
+                return status_msg, new_annotator
+            else:
+                return "Failed to parse label file", self._get_current_annotator_state()
+                
+        except Exception as e:
+            logger.error(f"Error loading label file: {str(e)}")
+            return f"Error loading label file: {str(e)}", self._get_current_annotator_state()
+    
+    def _get_current_annotator_state(self):
+        """Get the current state of the image_annotator to preserve existing content"""
+        if self.state.current_data is not None:
+            from utils.visualization import display_slice, make_image_for_gradio
+            
+            # Get current image
             img = display_slice(
                 self.state.current_data, 
                 self.state.current_slice_idx, 
@@ -274,47 +400,56 @@ class SegmentationHandlers:
                 add_orientation_marker=False
             )
             
-            # Create a figure with the current image, specifically set to editing mode
-            fig = make_slice_figure(img, dragmode='drawclosedpath')
+            # Get current shapes for the slice (includes both segmentation and user annotations)
+            shapes = self._get_shapes_for_current_slice()
             
-            # Convert segmentation to shapes
-            shapes = segmentation_to_shapes(seg_slice)
+            # Also check if there are any user annotations stored for this slice
+            current_idx = self.state.current_slice_idx
+            slice_key = f"{self.state.current_view}_{current_idx}"
             
-            # Add shapes to the figure
-            if shapes:
-                fig.update_layout(
-                    shapes=shapes,
-                    # Ensure shape editing is enabled with the modebar
-                    modebar=dict(
-                        add=['drawclosedpath', 'eraseshape'],
-                        remove=[]
-                    ),
-                    # Set the dragmode to modify for shape editing
-                    dragmode='drawclosedpath',
-                    # Enable selection of shapes including from inside
-                    clickmode='event+select',
-                    # Make sure all shapes can be selected
-                    selectdirection='any'
-                )
-                
-                # Directly configure JavaScript event handling through Plotly config
-                fig.update_layout(hovermode='closest')
-                
-                # Update the config to make shapes easier to select
-                for i, shape in enumerate(shapes):
-                    if 'path' in shape:
-                        # Ensure all path shapes have the properties needed for inside selection
-                        shape['fillrule'] = 'evenodd'
-                        shape['layer'] = 'above'
-                
-                return f"Converted {len(shapes)} shapes from segmentation. Click anywhere inside or on the edge of a shape to edit it.", fig
+            # Get any saved annotations from state
+            if hasattr(self.state, 'slice_annotations') and slice_key in self.state.slice_annotations:
+                saved_annotations = self.state.slice_annotations[slice_key]
+                if isinstance(saved_annotations, dict) and 'boxes' in saved_annotations:
+                    # Merge segmentation shapes with user annotations
+                    all_shapes = shapes + saved_annotations['boxes']
+                else:
+                    all_shapes = shapes
             else:
-                return "No shapes found in segmentation", fig
+                all_shapes = shapes
+            
+            return {
+                "image": make_image_for_gradio(img),
+                "boxes": all_shapes,
+                "orientation": 0
+            }
+        else:
+            return None
+    
+    def _create_annotator_with_new_labels(self, label_list, label_colors, current_state):
+        """Create a new image_annotator with updated labels while preserving current content"""
+        from gradio_image_annotation import image_annotator
         
-        except ImportError:
-            return "Error: scikit-image is required for contour detection. Please install with 'pip install scikit-image'", None
-        except Exception as e:
-            import traceback
-            logger.error(f"Error converting segmentation to shapes: {str(e)}")
-            logger.error(traceback.format_exc())
-            return f"Error converting segmentation to shapes: {str(e)}", None
+        return image_annotator(
+            value=current_state,
+            label="Medical Image Viewer", 
+            label_list=label_list,
+            label_colors=label_colors,
+            box_min_size=10,
+            handle_size=8,
+            box_thickness=2,
+            box_selected_thickness=3,
+            boxes_alpha=0.7,
+            height=600,
+            width=1200,
+            interactive=True,
+            show_label=True,
+            show_download_button=True,
+            show_clear_button=True,
+            show_remove_button=True,
+            use_default_label=False,
+            handles_cursor=True,
+            image_type="numpy",
+            single_box=False,
+            disable_edit_boxes=False,            shape_creation_mode="drag",
+        )

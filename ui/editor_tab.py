@@ -665,7 +665,7 @@ def create_editor_tab() -> dict:
                             show_label=True,
                             show_download_button=True,
                             show_clear_button=True,
-                            show_remove_button=True,
+                            show_remove_button=False,
                             use_default_label=False, # Do not use default label, opens modal for custom labels
                             handles_cursor=True,  # Enable cursor handling for drag mode
                             image_type="numpy",  # Important for medical images

@@ -7,6 +7,77 @@ including data loading, visualization, and segmentation tools.
 
 import gradio as gr
 import os
+from gradio_image_annotation import image_annotator
+
+
+def update_image_annotator_labels(image_annotator_component, label_list, label_colors):
+    """
+    Update the image_annotator component with new labels and colors from a loaded .label file
+    
+    Args:
+        image_annotator_component: The image_annotator gradio component
+        label_list: List of label names from the .label file
+        label_colors: List of RGB tuples corresponding to the labels
+    
+    Returns:
+        Updated image_annotator component with new labels and colors
+    """
+    try:
+        # Update the component's configuration
+        updated_component = gr.update(
+            label_list=label_list,
+            label_colors=label_colors
+        )
+        return updated_component
+    except Exception as e:
+        print(f"Error updating image_annotator labels: {e}")
+        return gr.update()
+
+
+def prepare_labels_for_annotator(labelmap, colormap):
+    """
+    Convert labelmap and colormap from .label file format to image_annotator format
+    
+    Args:
+        labelmap: Dict with label indices as keys and label names as values
+        colormap: Dict with label indices as keys and [R,G,B] lists as values
+    
+    Returns:
+        tuple: (label_list, label_colors) formatted for image_annotator
+    """
+    if not labelmap or not colormap:
+        # Return default labels if no custom labels loaded
+        return (
+            ["Normal Tissue", "Tumor", "Organ", "Lesion", "ROI", "Other"],
+            [(0, 255, 0), (255, 0, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255)]
+        )
+    
+    # Sort by label index to maintain consistent order
+    sorted_indices = sorted(labelmap.keys())
+    
+    label_list = []
+    label_colors = []
+    
+    for idx in sorted_indices:
+        if idx == 0:  # Skip background label typically
+            continue
+            
+        label_name = labelmap.get(idx, f"Label_{idx}")
+        label_list.append(label_name)
+        
+        # Convert [R,G,B] list to (R,G,B) tuple
+        color_rgb = colormap.get(idx, [128, 128, 128])  # Default gray if color not found
+        if isinstance(color_rgb, list) and len(color_rgb) >= 3:
+            label_colors.append((color_rgb[0], color_rgb[1], color_rgb[2]))
+        else:
+            label_colors.append((128, 128, 128))  # Default gray
+    
+    # Ensure we have at least one label
+    if not label_list:
+        label_list = ["Label_1"]
+        label_colors = [(255, 0, 0)]
+    
+    return label_list, label_colors
 
 
 def create_data_loading_section() -> tuple:
@@ -52,29 +123,25 @@ def create_data_loading_section() -> tuple:
 
 def create_segmentation_tools_section() -> tuple:
     """Create the segmentation tools section"""
-    # Segmentation Tools in the middle column
-    gr.Markdown("### Segmentation Tools")
+    # Segmentation Tools in the middle column    gr.Markdown("### Segmentation Tools")
     with gr.Row():
         with gr.Column(scale=1):
             segmentation_file = gr.File(
                 label="Load Segmentation (NIfTI .nii.gz)", 
                 file_types=[".nii", ".nii.gz"]
             )
-            load_seg_btn = gr.Button("Load Segmentation")
+            load_seg_btn = gr.Button("Load Segmentation", visible=False)
+            
             seg_opacity = gr.Slider(
                 minimum=0.0, maximum=1.0, value=0.5, step=0.1, 
-                label="Segmentation Opacity"
-            )
+                label="Segmentation Opacity", visible=False)
+            
         with gr.Column(scale=1):
             label_file = gr.File(
                 label="Load Label File (.label)", 
                 file_types=[".label"]
             )
-            clear_seg_btn = gr.Button("Clear Segmentation")
-    
-    with gr.Row():
-        convert_to_shapes_btn = gr.Button("Convert to Editable Shapes")
-    
+            clear_seg_btn = gr.Button("Clear Segmentation", visible=False)    
     with gr.Row():
         seg_status = gr.Textbox(
             label="Segmentation Status", 
@@ -82,26 +149,37 @@ def create_segmentation_tools_section() -> tuple:
         )
     
     return (segmentation_file, load_seg_btn, seg_opacity, label_file, 
-            clear_seg_btn, convert_to_shapes_btn, seg_status)
+            clear_seg_btn, seg_status)
 
 
-def create_plot_tools_section() -> tuple:
-    """Create the plot tools section"""
+def create_viewer_controls_section() -> tuple:
+    """Create viewer-specific controls for the image_annotator"""
     with gr.Column(scale=1):
-        # Third column: Plot tool buttons (vertical stack)
-        gr.Markdown("## Plot Tools")
-        draw_circle_btn = gr.Button("Draw Circle")
-        draw_rect_btn = gr.Button("Draw Rectangle")
-        draw_line_btn = gr.Button("Draw Line")
-        draw_openpath_btn = gr.Button("Draw Open Path")
-        draw_closedpath_btn = gr.Button("Draw Closed Path")
-        erase_shape_btn = gr.Button("Erase Shape")
-        pan_btn = gr.Button("Pan")
-        zoom_btn = gr.Button("Zoom")
-        reset_btn = gr.Button("Reset")
+        # Viewer Controls Section
+        gr.Markdown("## Viewer Controls")
+        
+        # Basic navigation and display controls
+        reset_view_btn = gr.Button("Reset View")
+        
+        # Annotation display controls
+        with gr.Accordion("Annotation Settings", open=False):
+            show_annotations = gr.Checkbox(
+                label="Show Annotations", 
+                value=True,
+                info="Toggle annotation visibility"
+            )
+            annotation_opacity = gr.Slider(
+                minimum=0.0, maximum=1.0, value=0.7, step=0.1,
+                label="Annotation Opacity"
+            )
+        
+        # Export options
+        with gr.Accordion("Export Options", open=False):
+            export_image_btn = gr.Button("Export Current View")
+            export_annotations_btn = gr.Button("Export Annotations")
     
-    return (draw_circle_btn, draw_rect_btn, draw_line_btn, draw_openpath_btn,
-            draw_closedpath_btn, erase_shape_btn, pan_btn, zoom_btn, reset_btn)
+    return (reset_view_btn, show_annotations, annotation_opacity, 
+            export_image_btn, export_annotations_btn)
 
 
 def create_viewer_tab() -> tuple:
@@ -122,7 +200,8 @@ def create_viewer_tab() -> tuple:
                     )
                 
                 with gr.Row():
-                    image_plot = gr.Plot(label="Image Plot", show_label=True)
+                    # Create image_annotator with dynamic labels
+                    image_display = create_dynamic_image_annotator()
                 
                 with gr.Row():
                     prev_btn = gr.Button("Previous")
@@ -139,16 +218,44 @@ def create_viewer_tab() -> tuple:
                 # Segmentation tools integrated in the middle column
                 seg_components = create_segmentation_tools_section()
             
-            # Right column: Plot tools
-            plot_tools_components = create_plot_tools_section()
+            # Right column: Viewer controls (replacing plot tools)
+            viewer_controls_components = create_viewer_controls_section()
     
     # Return all components in a structured way
-    viz_components = (view_selector, image_plot, prev_btn, slice_slider, next_btn, 
+    viz_components = (view_selector, image_display, prev_btn, slice_slider, next_btn, 
                      slice_text, crosshair_info)
     
     return {
         'data_loading': data_loading_components,
         'visualization': viz_components,
-        'plot_tools': plot_tools_components,
+        'viewer_controls': viewer_controls_components,
         'segmentation': seg_components
     }
+
+
+def create_dynamic_image_annotator():
+    """Create an image_annotator component that can be updated with new labels"""
+    return image_annotator(
+        value=None,
+        label="Medical Image Viewer", 
+        label_list=["Normal Tissue", "Tumor", "Organ", "Lesion", "ROI", "Other"],
+        label_colors=[(0, 255, 0), (255, 0, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255)],
+        box_min_size=10,
+        handle_size=8,
+        box_thickness=2,
+        box_selected_thickness=3,
+        boxes_alpha=0.7,
+        height=600,
+        width=1200,
+        interactive=True,
+        show_label=True,
+        show_download_button=True,
+        show_clear_button=True,
+        show_remove_button=True,
+        use_default_label=False,
+        handles_cursor=True,
+        image_type="numpy",
+        single_box=False,
+        disable_edit_boxes=False,
+        shape_creation_mode="drag",
+    )
