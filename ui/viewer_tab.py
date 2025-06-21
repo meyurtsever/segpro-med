@@ -96,7 +96,7 @@ def create_data_loading_section() -> tuple:
         file_browser = gr.Dropdown(label="Available Files", choices=[], interactive=True)
         
         # Metadata Display
-        metadata_display = gr.JSON(label="Metadata")
+        metadata_display = gr.JSON(label="Metadata", open=False)
         
         # Error display
         error_display = gr.Textbox(label="Status/Errors", interactive=False)
@@ -158,28 +158,45 @@ def create_viewer_controls_section() -> tuple:
         # Viewer Controls Section
         gr.Markdown("## Viewer Controls")
         
-        # Basic navigation and display controls
-        reset_view_btn = gr.Button("Reset View")
-        
-        # Annotation display controls
-        with gr.Accordion("Annotation Settings", open=False):
-            show_annotations = gr.Checkbox(
-                label="Show Annotations", 
-                value=True,
-                info="Toggle annotation visibility"
-            )
-            annotation_opacity = gr.Slider(
-                minimum=0.0, maximum=1.0, value=0.7, step=0.1,
-                label="Annotation Opacity"
-            )
-        
-        # Export options
+        # Enhanced Export Options
         with gr.Accordion("Export Options", open=False):
-            export_image_btn = gr.Button("Export Current View")
-            export_annotations_btn = gr.Button("Export Annotations")
+            # Export format selection
+            export_format = gr.Dropdown(
+                label="Export Format",
+                choices=["NIfTI (*.nii)", "JSON", "YOLO", "CSV"],
+                value="JSON",
+                info="Select the export format for annotations"
+            )
+            
+            # Include Overlays option with explanation
+            # gr.Markdown("*If selected, PNG images will be saved showing the visible overlays on each exported slice.*")
+            include_overlays = gr.Checkbox(
+                label="Include Overlays (PNG)",
+                value=False,
+                info="Export PNG images with visible overlays"
+            )
+            
+            # Export buttons side by side
+            with gr.Row():
+                export_single_btn = gr.Button("Export Single Slice", variant="primary")
+                export_all_btn = gr.Button("Export All", variant="secondary")
+            
+            # Output directory selection
+            output_dir = gr.Textbox(
+                label="Output Directory",
+                value="exports",
+                info="Directory where exported files will be saved"
+            )
+            
+            # Export status
+            export_status = gr.Textbox(
+                label="Export Status",
+                interactive=False,
+                value="Ready to export"
+            )
     
-    return (reset_view_btn, show_annotations, annotation_opacity, 
-            export_image_btn, export_annotations_btn)
+    return (export_format, include_overlays, export_single_btn, export_all_btn, 
+            output_dir, export_status)
 
 
 def create_viewer_tab() -> tuple:

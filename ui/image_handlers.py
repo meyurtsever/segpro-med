@@ -16,6 +16,7 @@ from utils.dicom_utils import get_dicom_metadata
 from utils.visualization import (display_slice, overlay_segmentation, make_image_for_gradio)
 from utils.debug_utils import log_exception
 from ui.state import AppState
+from ui.export_handlers import ExportHandlers
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +32,8 @@ class ImageViewerHandlers:
         self.user_annotations = {}
         # Store combined annotations (MEDSAM2 + user + segmentation) for each slice
         self.combined_annotations = {}
+        # Initialize export handlers
+        self.export_handlers = ExportHandlers(state)
     
     @log_exception
     def update_slice(self, slider_value, view_type):
@@ -621,9 +624,52 @@ class ImageViewerHandlers:
         # Store the user-modified shapes for the current slice
         if self.segmentation_handlers:
             self.segmentation_handlers.update_user_shapes(annotated_value.get("boxes", []), self.state.current_slice_idx)
-            logger.info(f"Updated user annotations for slice {self.state.current_slice_idx}: {len(annotated_value.get('boxes', []))} shapes")
-        
+            logger.info(f"Updated user annotations for slice {self.state.current_slice_idx}: {len(annotated_value.get('boxes', []))} shapes")        
         return annotated_value
+    
+    def export_single_slice(self, export_format, include_overlays, output_dir, current_annotator_value=None):
+        """Export the current slice in the selected format with optional overlays"""
+        try:
+            if self.state.current_data is None:
+                return "No data loaded for export"
+            
+            success, message = self.export_handlers.export_single_slice(
+                export_format=export_format,
+                output_dir=output_dir,
+                include_overlays=include_overlays,
+                current_annotator_value=current_annotator_value
+            )
+            
+            if success:
+                return f"Success: {message}"
+            else:
+                return f"Error: {message}"
+            
+        except Exception as e:
+            logger.error(f"Error in export_single_slice: {str(e)}")
+            return f"Export failed: {str(e)}"
+    
+    def export_all_slices(self, export_format, include_overlays, output_dir, all_annotator_values=None):
+        """Export all slices in the selected format with optional overlays"""
+        try:
+            if self.state.current_data is None:
+                return "No data loaded for export"
+            
+            success, message = self.export_handlers.export_all_slices(
+                export_format=export_format,
+                output_dir=output_dir,
+                include_overlays=include_overlays,
+                all_annotator_values=all_annotator_values
+            )
+            
+            if success:
+                return f"Success: {message}"
+            else:
+                return f"Error: {message}"
+            
+        except Exception as e:
+            logger.error(f"Error in export_all_slices: {str(e)}")
+            return f"Export failed: {str(e)}"
 
 
 class ImagePlotToolHandlers:
@@ -1528,3 +1574,5 @@ class ImagePlotToolHandlers:
         }
         
         return empty_annotated_value
+    
+    

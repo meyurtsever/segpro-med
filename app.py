@@ -138,16 +138,14 @@ class SegMedPro:
         visualization = components['visualization']
         viewer_controls = components['viewer_controls']
         segmentation = components['segmentation']
-        
-        # Unpack individual components
+          # Unpack individual components
         (file_input, dir_input, load_btn, reset_dir_btn, file_browser, 
          metadata_display, error_display, window_level, window_width, 
          apply_window_btn, debug_btn) = data_loading
         (view_selector, image_display, prev_btn, slice_slider, next_btn, 
          slice_text, crosshair_info) = visualization
-        
-        (reset_view_btn, show_annotations, annotation_opacity, 
-         export_image_btn, export_annotations_btn) = viewer_controls        
+        (export_format, include_overlays, export_single_btn, export_all_btn, 
+         output_dir, export_status) = viewer_controls
         (segmentation_file, load_seg_btn, seg_opacity, label_file, 
          clear_seg_btn, seg_status) = segmentation
         
@@ -218,36 +216,20 @@ class SegMedPro:
             outputs=[slice_slider]
         )
         
-        # Connect viewer control handlers
-        reset_view_btn.click(
-            fn=self.image_viewer_handlers.reset_view,
-            inputs=[],
-            outputs=[image_display]
+        # Connect viewer control handlers        # Connect new export handlers
+        export_single_btn.click(
+            fn=self.image_viewer_handlers.export_single_slice,
+            inputs=[export_format, include_overlays, output_dir, image_display],
+            outputs=[export_status]
         )
         
-        show_annotations.change(
-            fn=self.image_viewer_handlers.toggle_annotations,
-            inputs=[show_annotations],
-            outputs=[image_display]
+        export_all_btn.click(
+            fn=self.image_viewer_handlers.export_all_slices,
+            inputs=[export_format, include_overlays, output_dir, image_display],
+            outputs=[export_status]
         )
         
-        annotation_opacity.change(
-            fn=self.image_viewer_handlers.update_annotation_opacity,
-            inputs=[annotation_opacity],
-            outputs=[image_display]
-        )
-        
-        export_image_btn.click(
-            fn=self.image_viewer_handlers.export_current_view,
-            inputs=[],
-            outputs=[]
-        )
-        
-        export_annotations_btn.click(
-            fn=self.image_viewer_handlers.export_annotations,
-            inputs=[],
-            outputs=[]
-        )        # Connect segmentation handlers
+        # Connect segmentation handlers
         load_seg_btn.click(
             fn=self.segmentation_handlers.direct_load_segmentation,
             inputs=[segmentation_file, label_file],
