@@ -10,15 +10,33 @@ The VLM feature is located in the **Editor Tab**, positioned below the "Slice" a
 
 ## Components
 
-- **"Run VLM" Button**: Triggers the visual language model inference
+- **"Run SmolVLM" Button**: Triggers the visual language model inference
 - **"VLM Caption" Text Field**: Displays the AI-generated caption/description
+- **Prompt Selection Checkboxes**: Choose between different analysis modes:
+  - **"Identify Anomalies"**: Focuses on identifying abnormal regions and potential pathology (default)
+  - **"Describe MRI Slice"**: Provides general description of anatomical structures
 
 ## How to Use
 
 1. **Load Medical Data**: Use the data loading controls in the left column to load DICOM, NIfTI, or other medical images
 2. **Navigate to Slice**: Use the slice navigation controls to select the desired slice
-3. **Generate Caption**: Click the "Run VLM" button to generate a description
-4. **Read Results**: The generated caption will appear in the "VLM Caption" text field
+3. **Select Prompt Mode**: Choose between:
+   - **Identify Anomalies**: For clinical analysis focusing on pathology detection
+   - **Describe MRI Slice**: For general anatomical structure description
+4. **Generate Caption**: Click the "Run SmolVLM" button to generate a description
+5. **Read Results**: The generated caption will appear in the "VLM Caption" text field
+
+## Prompt Modes
+
+### Identify Anomalies (Default)
+- **Purpose**: Clinical analysis and pathology detection
+- **Prompt**: "Identify and label abnormal regions in this brain MRI. Highlight any suspicious areas and suggest their likely pathology."
+- **Use Case**: Medical diagnosis, anomaly detection, clinical review
+
+### Describe MRI Slice
+- **Purpose**: General anatomical description
+- **Prompt**: "Describe this medical image slice in detail, focusing on visible anatomical structures and any notable features."
+- **Use Case**: Educational purposes, general image analysis, documentation
 
 ## Technical Details
 
@@ -32,7 +50,9 @@ The VLM feature is located in the **Editor Tab**, positioned below the "Slice" a
 - Grayscale medical images are converted to RGB format as required by the VLM
 
 ### Inference Parameters
-- **Message Prompt**: "Describe this medical image slice in detail, focusing on visible anatomical structures and any notable features."
+- **Message Prompt**: Configurable based on selected prompt mode:
+  - Anomalies: "Identify and label abnormal regions in this brain MRI. Highlight any suspicious areas and suggest their likely pathology."
+  - Description: "Describe this medical image slice in detail, focusing on visible anatomical structures and any notable features."
 - **Max Tokens**: 256
 - **Device**: Auto-detection (CUDA if available, CPU otherwise)
 - **Timeout**: 120 seconds
@@ -68,17 +88,21 @@ The VLM feature is located in the **Editor Tab**, positioned below the "Slice" a
 Editor Tab UI
 ├── Navigation Controls (Slice, Crosshair)
 ├── VLM Integration Row
-│   ├── "Run VLM" Button → SmolVLMHandlers.run_vlm_inference()
+│   ├── "Run SmolVLM" Button → SmolVLMHandlers.run_vlm_inference()
 │   └── "VLM Caption" TextField ← Generated caption
+├── VLM Prompt Selection Row
+│   ├── "Identify Anomalies" Checkbox (default: True)
+│   └── "Describe MRI Slice" Checkbox (default: False)
 └── Status/Metadata Sections
 
 SmolVLM Workflow:
 1. Extract image from image_annotator
-2. Convert numpy array to PIL Image
-3. Save as temporary JPEG file
-4. Execute smolvlm_cli.py subprocess
-5. Parse and return generated caption
-6. Cleanup temporary files
+2. Determine prompt based on checkbox selection
+3. Convert numpy array to PIL Image
+4. Save as temporary JPEG file
+5. Execute smolvlm_cli.py subprocess with custom prompt
+6. Parse and return generated caption
+7. Cleanup temporary files
 ```
 
 ## Code Files
@@ -131,6 +155,12 @@ Potential improvements for future versions:
 
 ## Example Output
 
+### Identify Anomalies Mode
 ```
-VLM Caption: "This appears to be an axial T1-weighted MRI slice of the brain showing clear visualization of cerebral cortex, white matter structures, and ventricular system. The image demonstrates good contrast between gray and white matter, with visible sulci and gyri patterns typical of normal brain anatomy. No obvious pathological abnormalities are evident in this particular slice."
+VLM Caption: "Analysis of this axial brain MRI slice reveals a hypointense lesion in the left frontal white matter region, approximately 8mm in diameter. The lesion demonstrates clear borders and appears to be surrounded by minimal edema. Given the T1-weighted characteristics and location, differential diagnosis should include demyelinating plaque, small infarct, or possible metastatic lesion. Further contrast-enhanced imaging would be recommended for definitive characterization."
+```
+
+### Describe MRI Slice Mode  
+```
+VLM Caption: "This appears to be an axial T1-weighted MRI slice of the brain showing clear visualization of cerebral cortex, white matter structures, and ventricular system. The image demonstrates good contrast between gray and white matter, with visible sulci and gyri patterns typical of normal brain anatomy. The lateral ventricles appear symmetrical and of normal size. No obvious pathological abnormalities are evident in this particular slice."
 ```

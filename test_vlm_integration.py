@@ -50,16 +50,24 @@ def test_vlm_integration():
     print(f"Image data type: {image_rgb.dtype}")
     print(f"Image value range: {image_rgb.min()} - {image_rgb.max()}")
     
-    # Test the VLM inference
-    print("\nRunning VLM inference...")
-    result = vlm_handlers.run_vlm_inference(annotator_value)
+    # Test both prompt modes
+    print("\nTesting 'Identify Anomalies' prompt...")
+    result_anomalies = vlm_handlers.run_vlm_inference(annotator_value, identify_anomalies=True, describe_slice=False)
     
-    print(f"\nVLM Result:")
+    print(f"\nVLM Result (Anomalies):")
     print("=" * 50)
-    print(result)
+    print(result_anomalies)
     print("=" * 50)
     
-    return result
+    print("\nTesting 'Describe MRI Slice' prompt...")
+    result_describe = vlm_handlers.run_vlm_inference(annotator_value, identify_anomalies=False, describe_slice=True)
+    
+    print(f"\nVLM Result (Description):")
+    print("=" * 50)
+    print(result_describe)
+    print("=" * 50)
+    
+    return result_anomalies, result_describe
 
 def test_actual_image():
     """Test with an actual image file if available"""
@@ -94,14 +102,18 @@ if __name__ == "__main__":
         sys.exit(1)
     
     try:
-        result = test_vlm_integration()
+        result_anomalies, result_describe = test_vlm_integration()
         
-        if result.startswith("Error"):
-            print(f"\n❌ VLM integration test failed: {result}")
+        if result_anomalies.startswith("Error") or result_describe.startswith("Error"):
+            print(f"\n❌ VLM integration test failed:")
+            if result_anomalies.startswith("Error"):
+                print(f"Anomalies prompt: {result_anomalies}")
+            if result_describe.startswith("Error"):
+                print(f"Describe prompt: {result_describe}")
             sys.exit(1)
         else:
             print(f"\n✅ VLM integration test passed!")
-            print("The VLM successfully generated a caption for the test image.")
+            print("The VLM successfully generated captions for both prompt types.")
     
     except Exception as e:
         print(f"\n❌ Test failed with exception: {e}")
@@ -115,5 +127,8 @@ if __name__ == "__main__":
     print("You can now use the VLM feature in the Editor tab by:")
     print("1. Loading medical data")
     print("2. Navigating to a slice")  
-    print("3. Clicking the 'Run VLM' button")
-    print("4. Reading the generated caption")
+    print("3. Selecting a prompt mode:")
+    print("   - 'Identify Anomalies': Focus on abnormal regions and pathology")
+    print("   - 'Describe MRI Slice': General anatomical structure description")
+    print("4. Clicking the 'Run SmolVLM' button")
+    print("5. Reading the generated caption based on your selected prompt")

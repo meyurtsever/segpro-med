@@ -698,10 +698,19 @@ def create_editor_tab() -> dict:
                 with gr.Row():
                     slice_text = gr.Textbox(label="Slice", interactive=False)
                     crosshair_info = gr.Textbox(label="Crosshair", interactive=True)
-                
-                # VLM (Visual Language Model) for Slice Captioning
+                  # VLM (Visual Language Model) for Slice Captioning
                 with gr.Row():
                     vlm_btn = gr.Button("Run SmolVLM", variant="primary", size="lg")
+                    vlm_prompt_anomalies = gr.Checkbox(
+                        label="Identify Anomalies",
+                        value=True,  # Default selected
+                        info="Focus on identifying abnormal regions"
+                    )
+                    vlm_prompt_describe = gr.Checkbox(
+                        label="Describe MRI Slice", 
+                        value=False,
+                        info="General description of anatomical structures"
+                    )
                     vlm_caption = gr.Textbox(
                         label="SmolVLM Description",
                         interactive=False,
@@ -709,12 +718,16 @@ def create_editor_tab() -> dict:
                         scale=4
                     )
                 
+                # VLM Prompt Selection
+                #with gr.Row():
+                    
+                
                 # Status/Errors and Metadata (bottom)
                 error_display = gr.Textbox(label="Status/Errors", interactive=False)
                 with gr.Accordion("Metadata", open=False):
                     metadata_display = gr.JSON(label=None, visible=True)
                 
-                col2 = (error_display, metadata_display, view_selector, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, vlm_btn, vlm_caption, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn)
+                col2 = (error_display, metadata_display, view_selector, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, vlm_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn)
             
             # Column 3: Annotate with AI Models
             with gr.Column(scale=1):

@@ -25,12 +25,14 @@ class SmolVLMHandlers:
         self.state = state
         self.smolvlm_path = os.path.join(os.getcwd(), "models", "smolvlm", "smolvlm_cli.py")
         
-    def run_vlm_inference(self, image_annotator_value: Optional[dict]) -> str:
+    def run_vlm_inference(self, image_annotator_value: Optional[dict], identify_anomalies: bool = True, describe_slice: bool = False) -> str:
         """
         Run VLM inference on the current image from image_annotator
         
         Args:
             image_annotator_value: Current value from the image_annotator component
+            identify_anomalies: Whether to use anomaly identification prompt
+            describe_slice: Whether to use general description prompt
             
         Returns:
             str: VLM generated caption or error message
@@ -44,7 +46,17 @@ class SmolVLMHandlers:
             if image_array is None:
                 return "Error: Image data is None"
             
-            logger.info(f"Running VLM inference on image with shape: {image_array.shape}")
+            # Determine the prompt based on checkbox selection
+            if identify_anomalies:
+                prompt = "Identify and label abnormal regions in this brain MRI. Highlight any suspicious areas and suggest their likely pathology."
+            elif describe_slice:
+                prompt = "Describe this medical image slice in detail, focusing on visible anatomical structures and any notable features."
+            else:
+                # Fallback prompt if neither is selected
+                prompt = "Describe this medical image slice in detail, focusing on visible anatomical structures and any notable features."
+            
+            logger.info(f"Running VLM inference with prompt: {prompt[:50]}...")
+            logger.info(f"Image shape: {image_array.shape}")
             
             # Convert numpy array to PIL Image
             if isinstance(image_array, np.ndarray):
@@ -70,11 +82,10 @@ class SmolVLMHandlers:
               # Save image to temporary file
             temp_image_path = self._save_temp_image(image)
             if temp_image_path is None:
-                return "Error: Failed to save temporary image"
-            
+                return "Error: Failed to save temporary image"            
             try:
-                # Run SmolVLM CLI
-                caption = self._run_smolvlm_cli(temp_image_path)
+                # Run SmolVLM CLI with the selected prompt
+                caption = self._run_smolvlm_cli(temp_image_path, prompt)
                 return caption
             finally:
                 # Clean up temporary file
@@ -116,12 +127,13 @@ class SmolVLMHandlers:
             logger.error(f"Error saving temporary image: {e}")
             return None
     
-    def _run_smolvlm_cli(self, image_path: str) -> str:
+    def _run_smolvlm_cli(self, image_path: str, prompt: str) -> str:
         """
-        Run SmolVLM CLI with the given image path
+        Run SmolVLM CLI with the given image path and prompt
         
         Args:
             image_path: Path to the image file
+            prompt: Custom prompt for the VLM
             
         Returns:
             str: VLM generated caption
@@ -130,14 +142,13 @@ class SmolVLMHandlers:
             # Check if SmolVLM CLI exists
             if not os.path.exists(self.smolvlm_path):
                 return f"Error: SmolVLM CLI not found at {self.smolvlm_path}"
-            
-            # Prepare command
+              # Prepare command
             cmd = [
                 "python", 
                 self.smolvlm_path,
                 image_path,
-                "--message", "Describe this medical image slice in detail, focusing on visible anatomical structures and any notable features.",
-                "--max-tokens", "256",
+                "--message", prompt,
+                "--max-tokens", "100", # 256
                 "--device", "auto"
             ]
             

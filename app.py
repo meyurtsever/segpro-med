@@ -541,7 +541,7 @@ class SegMedPro:
         # Unpack components
         (file_input, dir_input, load_btn, reset_dir_btn, file_browser, 
          metadata_display_dl, error_display_dl, window_level, window_width, apply_window_btn, debug_btn) = data_loading
-        (error_display, metadata_display, view_selector, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, vlm_btn, vlm_caption, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn) = visualization        
+        (error_display, metadata_display, view_selector, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, vlm_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn) = visualization        
         (point_prompt_checkbox, box_prompt_checkbox, coordinates_text, clear_coords_btn, ai_model_selector, 
          processing_mode, score_threshold,
          output_dir, save_visualizations, device_selector, 
@@ -738,6 +738,39 @@ class SegMedPro:
             outputs=[box_prompt_checkbox, point_prompt_checkbox, coordinates_text]
         )
         
+        # VLM checkbox mutual exclusivity handlers
+        def handle_anomalies_checkbox_change(anomalies_checked, describe_checked):
+            """Handle anomalies checkbox change - ensure mutual exclusivity"""
+            if anomalies_checked:
+                return True, False
+            else:
+                # If unchecking anomalies and describe is not checked, default to describe
+                if not describe_checked:
+                    return False, True
+                return False, describe_checked
+        
+        def handle_describe_checkbox_change(describe_checked, anomalies_checked):
+            """Handle describe checkbox change - ensure mutual exclusivity"""
+            if describe_checked:
+                return True, False
+            else:
+                # If unchecking describe and anomalies is not checked, default to anomalies
+                if not anomalies_checked:
+                    return False, True
+                return describe_checked, False
+        
+        vlm_prompt_anomalies.change(
+            fn=handle_anomalies_checkbox_change,
+            inputs=[vlm_prompt_anomalies, vlm_prompt_describe],
+            outputs=[vlm_prompt_anomalies, vlm_prompt_describe]
+        )
+        
+        vlm_prompt_describe.change(
+            fn=handle_describe_checkbox_change,
+            inputs=[vlm_prompt_describe, vlm_prompt_anomalies],
+            outputs=[vlm_prompt_describe, vlm_prompt_anomalies]
+        )
+        
         def handle_image_select_conditionally(evt: gr.SelectData):
             """Handle image select events only when point mode is enabled, ignore in box mode"""
             # Check if point mode is enabled
@@ -836,11 +869,10 @@ class SegMedPro:
             inputs=[output_dir, save_visualizations, device_selector, processing_mode, score_threshold, image_display],
             outputs=[annotation_status, image_display, viewer_3d]
         )
-        
-        # VLM button handler for slice captioning
+          # VLM button handler for slice captioning
         vlm_btn.click(
             fn=self.smolvlm_handlers.run_vlm_inference,
-            inputs=[image_display],
+            inputs=[image_display, vlm_prompt_anomalies, vlm_prompt_describe],
             outputs=[vlm_caption]
         )
           # Auto-brain annotation handler - Updated to use SAM2 Fast Masking Pipeline
