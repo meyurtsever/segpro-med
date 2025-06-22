@@ -100,14 +100,38 @@ class SegMedPro:
         self.medsam2_handlers = MEDSAM2Handlers(self.state)
         self.custom_annotator_handlers = CustomAnnotatorHandlers(self.state)
         self.smolvlm_handlers = SmolVLMHandlers(self.state)
-        
-        # Connect MEDSAM2 handlers to other components that need them
+          # Connect MEDSAM2 handlers to other components that need them
         self.image_viewer_handlers.medsam2_handlers = self.medsam2_handlers
         self.image_plot_tool_handlers.medsam2_handlers = self.medsam2_handlers
-    
+        
     def build_interface(self):
         """Build the complete Gradio interface"""
-        with gr.Blocks(title="SegMed-Pro") as app:
+        custom_css = """
+        .vlm-caption-text textarea {
+            font-size: 16px !important;
+            line-height: 1.4 !important;
+        }
+        /* Ensure consistent heights for VLM row components */
+        .vlm-row {
+            align-items: stretch !important;
+        }
+        .vlm-row > * {
+            height: 100% !important;
+        }
+        /* Make button match other component heights */
+        .vlm-row button {
+            height: auto !important;
+            min-height: 42px !important;
+        }
+        /* Ensure checkboxes align properly */
+        .vlm-row .gr-checkbox {
+            display: flex !important;
+            align-items: center !important;
+            height: 100% !important;
+        }
+        """
+        
+        with gr.Blocks(title="SegMed-Pro", css=custom_css) as app:
             gr.Markdown("# SegMed-Pro: Medical Imaging Annotation Tool")
             with gr.Tabs() as tabs:
                 # Create viewer tab
@@ -736,28 +760,24 @@ class SegMedPro:
             fn=handle_box_prompt_change,
             inputs=[box_prompt_checkbox, point_prompt_checkbox],
             outputs=[box_prompt_checkbox, point_prompt_checkbox, coordinates_text]
-        )
-        
-        # VLM checkbox mutual exclusivity handlers
+        )        # VLM checkbox mutual exclusivity handlers
         def handle_anomalies_checkbox_change(anomalies_checked, describe_checked):
             """Handle anomalies checkbox change - ensure mutual exclusivity"""
             if anomalies_checked:
-                return True, False
+                # When anomalies is clicked and becomes checked, uncheck describe
+                return True, False  # (anomalies=True, describe=False)
             else:
-                # If unchecking anomalies and describe is not checked, default to describe
-                if not describe_checked:
-                    return False, True
-                return False, describe_checked
+                # When anomalies is clicked and becomes unchecked, check describe
+                return False, True  # (anomalies=False, describe=True)
         
         def handle_describe_checkbox_change(describe_checked, anomalies_checked):
             """Handle describe checkbox change - ensure mutual exclusivity"""
             if describe_checked:
-                return True, False
+                # When describe is clicked and becomes checked, uncheck anomalies
+                return True, False  # (describe=True, anomalies=False)
             else:
-                # If unchecking describe and anomalies is not checked, default to anomalies
-                if not anomalies_checked:
-                    return False, True
-                return describe_checked, False
+                # When describe is clicked and becomes unchecked, check anomalies
+                return False, True  # (describe=False, anomalies=True)
         
         vlm_prompt_anomalies.change(
             fn=handle_anomalies_checkbox_change,

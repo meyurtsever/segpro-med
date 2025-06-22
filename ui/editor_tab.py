@@ -697,25 +697,27 @@ def create_editor_tab() -> dict:
                     next_btn = gr.Button("Next")
                 with gr.Row():
                     slice_text = gr.Textbox(label="Slice", interactive=False)
-                    crosshair_info = gr.Textbox(label="Crosshair", interactive=True)
-                  # VLM (Visual Language Model) for Slice Captioning
-                with gr.Row():
-                    vlm_btn = gr.Button("Run SmolVLM", variant="primary", size="lg")
+                    crosshair_info = gr.Textbox(label="Crosshair", interactive=True)                # VLM (Visual Language Model) for Slice Captioning
+                with gr.Row(elem_classes="vlm-row"):
+                    vlm_btn = gr.Button("Run SmolVLM", variant="primary", size="lg", scale=2)
                     vlm_prompt_anomalies = gr.Checkbox(
                         label="Identify Anomalies",
                         value=True,  # Default selected
-                        info="Focus on identifying abnormal regions"
+                        info="Focus on identifying abnormal regions",
+                        scale=1
                     )
                     vlm_prompt_describe = gr.Checkbox(
                         label="Describe MRI Slice", 
                         value=False,
-                        info="General description of anatomical structures"
+                        info="General description of anatomical structures",
+                        scale=1
                     )
                     vlm_caption = gr.Textbox(
                         label="SmolVLM Description",
                         interactive=False,
                         placeholder="Click 'Run SmolVLM' to generate slice description...",
-                        scale=4
+                        scale=4,
+                        elem_classes="vlm-caption-text"
                     )
                 
                 # VLM Prompt Selection

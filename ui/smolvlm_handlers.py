@@ -2,17 +2,24 @@
 SmolVLM Handler for SegMed-Pro
 
 This module provides functionality to integrate SmolVLM visual language model
-for slice captioning in the Editor tab.
+for slice captioning in the Editor tab using a persistent service for fast inference.
 """
 
 import logging
 import os
-import subprocess
 import tempfile
+import sys
 from pathlib import Path
 from typing import Optional, Tuple
 import numpy as np
 from PIL import Image
+
+# Add models directory to path for import
+models_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "models")
+if models_dir not in sys.path:
+    sys.path.append(models_dir)
+
+from smolvlm.smolvlm_service import get_service, cleanup_service
 
 logger = logging.getLogger(__name__)
 
@@ -23,11 +30,22 @@ class SmolVLMHandlers:
     def __init__(self, state):
         """Initialize with application state"""
         self.state = state
-        self.smolvlm_path = os.path.join(os.getcwd(), "models", "smolvlm", "smolvlm_cli.py")
+        self._service = None
+        
+    def _get_service(self):
+        """Get or initialize the SmolVLM service"""
+        if self._service is None:
+            try:
+                self._service = get_service(device="auto")
+                logger.info("SmolVLM service initialized successfully")
+            except Exception as e:
+                logger.error(f"Failed to initialize SmolVLM service: {e}")
+                self._service = None
+        return self._service
         
     def run_vlm_inference(self, image_annotator_value: Optional[dict], identify_anomalies: bool = True, describe_slice: bool = False) -> str:
         """
-        Run VLM inference on the current image from image_annotator
+        Run VLM inference on the current image from image_annotator using persistent service
         
         Args:
             image_annotator_value: Current value from the image_annotator component
@@ -79,14 +97,30 @@ class SmolVLMHandlers:
                     return "Error: Unsupported image shape for VLM processing"
             else:
                 return "Error: Image data is not a numpy array"
-              # Save image to temporary file
+              
+            # Save image to temporary file
             temp_image_path = self._save_temp_image(image)
             if temp_image_path is None:
                 return "Error: Failed to save temporary image"            
+            
             try:
-                # Run SmolVLM CLI with the selected prompt
-                caption = self._run_smolvlm_cli(temp_image_path, prompt)
-                return caption
+                # Get the persistent service
+                service = self._get_service()
+                if service is None:
+                    return "Error: Failed to initialize SmolVLM service"
+                
+                # Run inference using the persistent service (much faster!)
+                result = service.generate_caption(temp_image_path, prompt, max_tokens=75) # 100
+                
+                if result["success"]:
+                    timings = result["timings"]
+                    logger.info(f"VLM inference completed in {timings['total_time']:.2f}s "
+                              f"(generation: {timings['text_generation']:.2f}s)")
+                    return result["caption"]
+                else:
+                    logger.error(f"VLM service error: {result['error']}")
+                    return f"Error: {result['error']}"
+                    
             finally:
                 # Clean up temporary file
                 try:
@@ -117,8 +151,7 @@ class SmolVLMHandlers:
             # Convert image to RGB if it's not already (handles RGBA, grayscale, etc.)
             if image.mode != 'RGB':
                 image = image.convert('RGB')
-            
-            # Save image as JPG for maximum compatibility
+              # Save image as JPG for maximum compatibility
             image.save(temp_path, 'JPEG', quality=95)
             logger.info(f"Saved temporary image to: {temp_path}")
             return temp_path
@@ -127,78 +160,12 @@ class SmolVLMHandlers:
             logger.error(f"Error saving temporary image: {e}")
             return None
     
-    def _run_smolvlm_cli(self, image_path: str, prompt: str) -> str:
-        """
-        Run SmolVLM CLI with the given image path and prompt
-        
-        Args:
-            image_path: Path to the image file
-            prompt: Custom prompt for the VLM
-            
-        Returns:
-            str: VLM generated caption
-        """
-        try:
-            # Check if SmolVLM CLI exists
-            if not os.path.exists(self.smolvlm_path):
-                return f"Error: SmolVLM CLI not found at {self.smolvlm_path}"
-              # Prepare command
-            cmd = [
-                "python", 
-                self.smolvlm_path,
-                image_path,
-                "--message", prompt,
-                "--max-tokens", "100", # 256
-                "--device", "auto"
-            ]
-            
-            logger.info(f"Running SmolVLM command: {' '.join(cmd)}")
-            
-            # Run the command and capture output
-            result = subprocess.run(
-                cmd, 
-                capture_output=True, 
-                text=True, 
-                timeout=120,  # 2 minute timeout
-                cwd=os.getcwd()
-            )
-            
-            if result.returncode == 0:
-                # Parse the output to extract the actual response
-                output_lines = result.stdout.strip().split('\n')
-                
-                # Look for the response between the "SMOLVLM RESPONSE:" markers
-                in_response = False
-                response_lines = []
-                
-                for line in output_lines:
-                    if "SMOLVLM RESPONSE:" in line:
-                        in_response = True
-                        continue
-                    elif in_response and "=" * 50 in line and len(response_lines) > 0:
-                        break
-                    elif in_response:
-                        response_lines.append(line)
-                
-                if response_lines:
-                    caption = '\n'.join(response_lines).strip()
-                    logger.info(f"VLM generated caption: {caption[:100]}...")
-                    return caption
-                else:
-                    # Fallback: return the last few non-empty lines
-                    non_empty_lines = [line for line in output_lines if line.strip()]
-                    if non_empty_lines:
-                        return non_empty_lines[-1]
-                    else:
-                        return "VLM completed but no response found in output"
-            else:
-                error_msg = result.stderr.strip() if result.stderr else "Unknown error"
-                logger.error(f"SmolVLM CLI failed with return code {result.returncode}: {error_msg}")
-                return f"VLM Error: {error_msg}"
-                
-        except subprocess.TimeoutExpired:
-            logger.error("SmolVLM CLI timed out")
-            return "Error: VLM inference timed out (>120s)"
-        except Exception as e:
-            logger.error(f"Error running SmolVLM CLI: {e}")
-            return f"Error running VLM: {str(e)}"
+    def cleanup(self):
+        """Clean up the VLM service resources"""
+        if self._service is not None:
+            try:
+                cleanup_service()
+                self._service = None
+                logger.info("SmolVLM service cleaned up successfully")
+            except Exception as e:
+                logger.error(f"Error cleaning up SmolVLM service: {e}")
