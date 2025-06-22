@@ -697,12 +697,24 @@ def create_editor_tab() -> dict:
                     next_btn = gr.Button("Next")
                 with gr.Row():
                     slice_text = gr.Textbox(label="Slice", interactive=False)
-                    crosshair_info = gr.Textbox(label="Crosshair", interactive=True)                # Status/Errors and Metadata (bottom)
+                    crosshair_info = gr.Textbox(label="Crosshair", interactive=True)
+                
+                # VLM (Visual Language Model) for Slice Captioning
+                with gr.Row():
+                    vlm_btn = gr.Button("Run SmolVLM", variant="primary", size="lg")
+                    vlm_caption = gr.Textbox(
+                        label="SmolVLM Description",
+                        interactive=False,
+                        placeholder="Click 'Run SmolVLM' to generate slice description...",
+                        scale=4
+                    )
+                
+                # Status/Errors and Metadata (bottom)
                 error_display = gr.Textbox(label="Status/Errors", interactive=False)
                 with gr.Accordion("Metadata", open=False):
                     metadata_display = gr.JSON(label=None, visible=True)
                 
-                col2 = (error_display, metadata_display, view_selector, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn)
+                col2 = (error_display, metadata_display, view_selector, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, vlm_btn, vlm_caption, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn)
             
             # Column 3: Annotate with AI Models
             with gr.Column(scale=1):

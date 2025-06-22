@@ -78,6 +78,7 @@ from ui.segmentation_handlers import SegmentationHandlers
 from ui.label_manager_handlers import LabelManagerHandlers
 from ui.medsam2_handlers import MEDSAM2Handlers
 from ui.custom_annotator_handlers import CustomAnnotatorHandlers
+from ui.smolvlm_handlers import SmolVLMHandlers
 
 
 class SegMedPro:
@@ -98,6 +99,7 @@ class SegMedPro:
         self.label_manager_handlers = LabelManagerHandlers(self.state)
         self.medsam2_handlers = MEDSAM2Handlers(self.state)
         self.custom_annotator_handlers = CustomAnnotatorHandlers(self.state)
+        self.smolvlm_handlers = SmolVLMHandlers(self.state)
         
         # Connect MEDSAM2 handlers to other components that need them
         self.image_viewer_handlers.medsam2_handlers = self.medsam2_handlers
@@ -539,7 +541,7 @@ class SegMedPro:
         # Unpack components
         (file_input, dir_input, load_btn, reset_dir_btn, file_browser, 
          metadata_display_dl, error_display_dl, window_level, window_width, apply_window_btn, debug_btn) = data_loading
-        (error_display, metadata_display, view_selector, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn) = visualization        
+        (error_display, metadata_display, view_selector, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, vlm_btn, vlm_caption, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn) = visualization        
         (point_prompt_checkbox, box_prompt_checkbox, coordinates_text, clear_coords_btn, ai_model_selector, 
          processing_mode, score_threshold,
          output_dir, save_visualizations, device_selector, 
@@ -828,10 +830,18 @@ class SegMedPro:
                 viewer_3d_update = create_empty_3d_plot("3D Viewer available in 'All Records' mode")
             
             return status, image, viewer_3d_update
+        
         annotate_btn.click(
             fn=handle_annotation_workflow,
             inputs=[output_dir, save_visualizations, device_selector, processing_mode, score_threshold, image_display],
             outputs=[annotation_status, image_display, viewer_3d]
+        )
+        
+        # VLM button handler for slice captioning
+        vlm_btn.click(
+            fn=self.smolvlm_handlers.run_vlm_inference,
+            inputs=[image_display],
+            outputs=[vlm_caption]
         )
           # Auto-brain annotation handler - Updated to use SAM2 Fast Masking Pipeline
         def handle_auto_brain_annotation(output_dir, save_visualizations, device_selector, processing_mode, score_threshold, dir_input_value):

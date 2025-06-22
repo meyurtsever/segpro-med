@@ -49,17 +49,17 @@ def main():
         # Check if it's a local file or URL
         if args.image_path.startswith(('http://', 'https://')):
             image = load_image(args.image_path)
-            print(f"✓ Image loaded from URL")
+            print(f"Image loaded from URL")
         else:
             image_path = Path(args.image_path)
             if not image_path.exists():
                 print(f"Error: Image file '{args.image_path}' not found!")
                 sys.exit(1)
             image = Image.open(image_path).convert('RGB')
-            print(f"✓ Image loaded from local file")
+            print(f"Image loaded from local file")
             
         image_load_time = time.time() - image_start_time
-        print(f"✓ Image loaded in {image_load_time:.2f} seconds")
+        print(f"Image loaded in {image_load_time:.2f} seconds")
         
         # Initialize processor and model
         print("Loading SmolVLM model and processor...")
@@ -77,12 +77,12 @@ def main():
             torch.backends.cudnn.benchmark = True
             try:
                 model = torch.compile(model)
-                print("✓ Model compiled for optimal performance")
+                print(" Model compiled for optimal performance")
             except Exception:
-                print("✓ Model loaded (compilation not available)")
+                print(" Model loaded (compilation not available)")
         
         model_load_time = time.time() - model_start_time
-        print(f"✓ Model loaded in {model_load_time:.2f} seconds")
+        print(f" Model loaded in {model_load_time:.2f} seconds")
         
         # Create input messages
         messages = [
@@ -102,7 +102,7 @@ def main():
         inputs = processor(text=prompt, images=[image], return_tensors="pt")
         inputs = inputs.to(DEVICE)
         processing_time = time.time() - processing_start_time
-        print(f"✓ Inputs processed in {processing_time:.2f} seconds")
+        print(f" Inputs processed in {processing_time:.2f} seconds")
         
         # Generate outputs with optimized parameters
         print("Generating response...")
@@ -150,7 +150,7 @@ def main():
             )
         
         generation_time = time.time() - generation_start_time
-        print(f"✓ Response generated in {generation_time:.2f} seconds")
+        print(f" Response generated in {generation_time:.2f} seconds")
         
         # Calculate total time
         total_time = time.time() - total_start_time
@@ -168,11 +168,11 @@ def main():
         
         # Performance feedback
         if generation_time <= 3.0:
-            print("🚀 EXCELLENT! Generation time under 3 seconds!")
+            print("EXCELLENT! Generation time under 3 seconds!")
         elif generation_time <= 5.0:
-            print("✅ GOOD! Generation time under 5 seconds")
+            print("GOOD! Generation time under 5 seconds")
         else:
-            print("⏰ Consider GPU acceleration for faster inference")
+            print("Consider GPU acceleration for faster inference")
         
         print("\n" + "="*50)
         print("SMOLVLM RESPONSE:")
