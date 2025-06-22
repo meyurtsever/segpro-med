@@ -699,7 +699,8 @@ def create_editor_tab() -> dict:
                     slice_text = gr.Textbox(label="Slice", interactive=False)
                     crosshair_info = gr.Textbox(label="Crosshair", interactive=True)                # VLM (Visual Language Model) for Slice Captioning
                 with gr.Row(elem_classes="vlm-row"):
-                    vlm_btn = gr.Button("Run SmolVLM", variant="primary", size="lg", scale=2)
+                    vlm_btn = gr.Button("Run SmolVLM", variant="primary", size="lg", scale=1)
+                    vlm_med_r1_btn = gr.Button("Run Med-R1 VLM", variant="secondary", size="lg", scale=1)
                     vlm_prompt_anomalies = gr.Checkbox(
                         label="Identify Anomalies",
                         value=True,  # Default selected
@@ -712,12 +713,15 @@ def create_editor_tab() -> dict:
                         info="General description of anatomical structures",
                         scale=1
                     )
+                    
+                with gr.Row():
                     vlm_caption = gr.Textbox(
-                        label="SmolVLM Description",
+                        label="VLM Analysis",
                         interactive=False,
-                        placeholder="Click 'Run SmolVLM' to generate slice description...",
-                        scale=4,
-                        elem_classes="vlm-caption-text"
+                        placeholder="Click 'Run SmolVLM' or 'Run Med-R1 VLM' to generate slice analysis...",
+                        scale=1,
+                        elem_classes="vlm-caption-text",
+                        lines=4
                     )
                 
                 # VLM Prompt Selection
@@ -729,7 +733,7 @@ def create_editor_tab() -> dict:
                 with gr.Accordion("Metadata", open=False):
                     metadata_display = gr.JSON(label=None, visible=True)
                 
-                col2 = (error_display, metadata_display, view_selector, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, vlm_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn)
+                col2 = (error_display, metadata_display, view_selector, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, vlm_btn, vlm_med_r1_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn)
             
             # Column 3: Annotate with AI Models
             with gr.Column(scale=1):

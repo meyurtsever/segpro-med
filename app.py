@@ -80,6 +80,7 @@ from ui.label_manager_handlers import LabelManagerHandlers
 from ui.medsam2_handlers import MEDSAM2Handlers
 from ui.custom_annotator_handlers import CustomAnnotatorHandlers
 from ui.smolvlm_handlers import SmolVLMHandlers
+from ui.med_r1_handlers import MedR1Handlers
 
 
 class SegMedPro:
@@ -100,9 +101,12 @@ class SegMedPro:
         self.medsam2_handlers = MEDSAM2Handlers(self.state)
         self.custom_annotator_handlers = CustomAnnotatorHandlers(self.state)
         self.smolvlm_handlers = SmolVLMHandlers(self.state)
-        
-        # Preload SmolVLM service in background for instant availability
+        self.med_r1_handlers = MedR1Handlers(self.state)
+          # Preload SmolVLM service in background for instant availability
         self._preload_vlm_service()
+        
+        # Preload Med-R1 service in background for instant availability
+        self._preload_med_r1_service()
         
         # Connect MEDSAM2 handlers to other components that need them
         self.image_viewer_handlers.medsam2_handlers = self.medsam2_handlers
@@ -157,10 +161,9 @@ class SegMedPro:
             self._connect_label_manager_handlers(label_manager_components)
             # Connect event handlers for custom annotator tab
             self._connect_custom_annotator_handlers(custom_annotator_components)            # Connect event handlers for custom annotator tab
-            self._connect_custom_annotator_handlers(custom_annotator_components)
-            
+            self._connect_custom_annotator_handlers(custom_annotator_components)            
             return app
-
+    
     def _preload_vlm_service(self):
         """Preload SmolVLM service in background thread for instant availability"""
         def load_service():
@@ -185,6 +188,40 @@ class SegMedPro:
         preload_thread = threading.Thread(target=load_service, daemon=True)
         preload_thread.start()
         logger.info("🚀 SmolVLM preloading started in background thread")
+
+    def _preload_med_r1_service(self):
+        """Preload Med-R1 service in background thread for instant availability"""
+        def load_service():
+            try:
+                logger.info("🔄 Preloading Med-R1 service in background...")
+                # Import here to avoid import issues during module loading
+                import sys
+                import os
+                
+                # Add med-r1 directory to path
+                models_dir = os.path.join(os.path.dirname(__file__), "models")
+                med_r1_dir = os.path.join(models_dir, "med-r1")
+                if med_r1_dir not in sys.path:
+                    sys.path.append(med_r1_dir)
+                
+                from med_r1_service import get_service
+                
+                # Initialize the service (this will load the model)
+                service = get_service()
+                
+                if service.model_loaded:
+                    logger.info("✅ Med-R1 service preloaded successfully - ready for instant medical inference")
+                else:
+                    logger.warning("⚠️ Med-R1 service preloading failed - model not loaded")
+                    
+            except Exception as e:
+                logger.error(f"❌ Failed to preload Med-R1 service: {e}")
+                logger.info("Med-R1 will still work but with slower first inference time")
+        
+        # Start loading in background thread to not block UI initialization
+        preload_thread = threading.Thread(target=load_service, daemon=True)
+        preload_thread.start()
+        logger.info("🚀 Med-R1 preloading started in background thread")
 
     def _connect_viewer_handlers(self, components):
         """Connect all event handlers for the viewer tab"""
@@ -594,7 +631,7 @@ class SegMedPro:
         # Unpack components
         (file_input, dir_input, load_btn, reset_dir_btn, file_browser, 
          metadata_display_dl, error_display_dl, window_level, window_width, apply_window_btn, debug_btn) = data_loading
-        (error_display, metadata_display, view_selector, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, vlm_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn) = visualization        
+        (error_display, metadata_display, view_selector, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, vlm_btn, vlm_med_r1_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn) = visualization        
         (point_prompt_checkbox, box_prompt_checkbox, coordinates_text, clear_coords_btn, ai_model_selector, 
          processing_mode, score_threshold,
          output_dir, save_visualizations, device_selector, 
@@ -917,10 +954,15 @@ class SegMedPro:
             fn=handle_annotation_workflow,
             inputs=[output_dir, save_visualizations, device_selector, processing_mode, score_threshold, image_display],
             outputs=[annotation_status, image_display, viewer_3d]
-        )
-          # VLM button handler for slice captioning
+        )          # VLM button handler for slice captioning
         vlm_btn.click(
             fn=self.smolvlm_handlers.run_vlm_inference,
+            inputs=[image_display, vlm_prompt_anomalies, vlm_prompt_describe],
+            outputs=[vlm_caption]
+        )
+          # Med-R1 button handler for medical image analysis
+        vlm_med_r1_btn.click(
+            fn=self.med_r1_handlers.run_med_r1_inference,
             inputs=[image_display, vlm_prompt_anomalies, vlm_prompt_describe],
             outputs=[vlm_caption]
         )

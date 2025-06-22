@@ -2,6 +2,7 @@
 models/medsam2/checkpoints/*.pt
 models/medsam2/checkpoints/*.pth
 models/medsam2/checkpoints/*.ckpt
+models/med-r1/*
 
 # Other potential large model files
 *.pt
@@ -66,6 +67,9 @@ coverage.xml
 # Translations
 *.mo
 *.pot
+
+# Test scripts
+test_*.py
 
 # Django stuff:
 *.log
