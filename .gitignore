@@ -146,6 +146,7 @@ dmypy.json
 *.nii.gz
 *.img
 *.hdr
+exports/
 
 # Temporary files and folders
 temp/
