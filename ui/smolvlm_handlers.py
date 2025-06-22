@@ -85,8 +85,7 @@ class SmolVLMHandlers:
                         image_array = (image_array * 255).astype(np.uint8)
                     else:
                         image_array = image_array.astype(np.uint8)
-                
-                # Convert to PIL Image
+                  # Convert to PIL Image
                 if len(image_array.shape) == 3:
                     image = Image.fromarray(image_array, 'RGB')
                 elif len(image_array.shape) == 2:
@@ -101,7 +100,10 @@ class SmolVLMHandlers:
             # Save image to temporary file
             temp_image_path = self._save_temp_image(image)
             if temp_image_path is None:
-                return "Error: Failed to save temporary image"            
+                return "Error: Failed to save temporary image"
+            
+            # Also save a persistent copy for debugging/reference - disabled after debugging
+            # self._save_processed_image(image)
             
             try:
                 # Get the persistent service
@@ -132,6 +134,33 @@ class SmolVLMHandlers:
             logger.error(f"Error in VLM inference: {e}")
             return f"Error: {str(e)}"
     
+    def _save_processed_image(self, image: Image.Image) -> Optional[str]:
+        """
+        Save a persistent copy of the processed image for debugging/reference
+        
+        Args:
+            image: PIL Image object
+            
+        Returns:
+            str: Path to saved image file or None if failed
+        """
+        try:
+            # Create the filename in the current working directory
+            output_path = "latest_processed_smolvlm.jpg"
+            
+            # Convert image to RGB if it's not already (handles RGBA, grayscale, etc.)
+            if image.mode != 'RGB':
+                image = image.convert('RGB')
+            
+            # Save image as JPG for maximum compatibility
+            image.save(output_path, 'JPEG', quality=95)
+            logger.info(f"Saved processed SmolVLM image to: {output_path}")
+            return output_path
+            
+        except Exception as e:
+            logger.error(f"Error saving processed SmolVLM image: {e}")
+            return None
+
     def _save_temp_image(self, image: Image.Image) -> Optional[str]:
         """
         Save PIL Image to temporary file

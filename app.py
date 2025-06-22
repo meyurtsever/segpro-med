@@ -9,6 +9,7 @@ import gradio as gr
 import logging
 import os
 import sys
+import threading
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -89,8 +90,7 @@ class SegMedPro:
         # Initialize application state
         self.state = AppState()
           # Initialize checkbox state tracking
-        self._point_checkbox_state = False
-          # Initialize event handlers
+        self._point_checkbox_state = False        # Initialize event handlers
         self.data_handlers = DataLoadingHandlers(self.state)
         self.segmentation_handlers = SegmentationHandlers(self.state)
         self.image_viewer_handlers = ImageViewerHandlers(self.state, segmentation_handlers=self.segmentation_handlers)  # For editor tab (gr.Image) and viewer tab (image_annotator)
@@ -100,7 +100,11 @@ class SegMedPro:
         self.medsam2_handlers = MEDSAM2Handlers(self.state)
         self.custom_annotator_handlers = CustomAnnotatorHandlers(self.state)
         self.smolvlm_handlers = SmolVLMHandlers(self.state)
-          # Connect MEDSAM2 handlers to other components that need them
+        
+        # Preload SmolVLM service in background for instant availability
+        self._preload_vlm_service()
+        
+        # Connect MEDSAM2 handlers to other components that need them
         self.image_viewer_handlers.medsam2_handlers = self.medsam2_handlers
         self.image_plot_tool_handlers.medsam2_handlers = self.medsam2_handlers
         
@@ -152,10 +156,35 @@ class SegMedPro:
             # Connect event handlers for label manager tab
             self._connect_label_manager_handlers(label_manager_components)
             # Connect event handlers for custom annotator tab
+            self._connect_custom_annotator_handlers(custom_annotator_components)            # Connect event handlers for custom annotator tab
             self._connect_custom_annotator_handlers(custom_annotator_components)
-            # Connect event handlers for custom annotator tab
-            self._connect_custom_annotator_handlers(custom_annotator_components)
+            
             return app
+
+    def _preload_vlm_service(self):
+        """Preload SmolVLM service in background thread for instant availability"""
+        def load_service():
+            try:
+                logger.info("🔄 Preloading SmolVLM service in background...")
+                # Import here to avoid import issues during module loading
+                from models.smolvlm.smolvlm_service import get_service
+                
+                # Initialize the service (this will load the model)
+                service = get_service()
+                
+                if service.model_loaded:
+                    logger.info("✅ SmolVLM service preloaded successfully - ready for instant inference")
+                else:
+                    logger.warning("⚠️ SmolVLM service preloading failed - model not loaded")
+                    
+            except Exception as e:
+                logger.error(f"❌ Failed to preload SmolVLM service: {e}")
+                logger.info("VLM will still work but with slower first inference time")
+        
+        # Start loading in background thread to not block UI initialization
+        preload_thread = threading.Thread(target=load_service, daemon=True)
+        preload_thread.start()
+        logger.info("🚀 SmolVLM preloading started in background thread")
 
     def _connect_viewer_handlers(self, components):
         """Connect all event handlers for the viewer tab"""
