@@ -71,6 +71,9 @@ coverage.xml
 # Test scripts
 test_*.py
 
+# Download scripts
+download_*.py
+
 # Django stuff:
 *.log
 local_settings.py
@@ -165,6 +168,7 @@ tmp/
 *.temp
 .DS_Store
 Thumbs.db
+latest_*.jpg
 
 # IDE and editor files
 .vscode/

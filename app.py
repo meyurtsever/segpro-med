@@ -81,6 +81,7 @@ from ui.medsam2_handlers import MEDSAM2Handlers
 from ui.custom_annotator_handlers import CustomAnnotatorHandlers
 from ui.smolvlm_handlers import SmolVLMHandlers
 from ui.med_r1_handlers import MedR1Handlers
+from ui.patient_retrieval_handlers import PatientRetrievalHandlers
 
 
 class SegMedPro:
@@ -102,11 +103,13 @@ class SegMedPro:
         self.custom_annotator_handlers = CustomAnnotatorHandlers(self.state)
         self.smolvlm_handlers = SmolVLMHandlers(self.state)
         self.med_r1_handlers = MedR1Handlers(self.state)
+        self.patient_retrieval_handlers = PatientRetrievalHandlers(self.state)
           # Preload SmolVLM service in background for instant availability
         self._preload_vlm_service()
         
-        # Preload Med-R1 service in background for instant availability
+        # Skip Med-R1 preloading due to meta tensor issues - use lazy loading instead
         self._preload_med_r1_service()
+        #logger.info("📋 Med-R1 service will use lazy loading (load on first use) to avoid meta tensor issues")
         
         # Connect MEDSAM2 handlers to other components that need them
         self.image_viewer_handlers.medsam2_handlers = self.medsam2_handlers
@@ -193,26 +196,8 @@ class SegMedPro:
         """Preload Med-R1 service in background thread for instant availability"""
         def load_service():
             try:
-                logger.info("🔄 Preloading Med-R1 service in background...")
-                # Import here to avoid import issues during module loading
-                import sys
-                import os
-                
-                # Add med-r1 directory to path
-                models_dir = os.path.join(os.path.dirname(__file__), "models")
-                med_r1_dir = os.path.join(models_dir, "med-r1")
-                if med_r1_dir not in sys.path:
-                    sys.path.append(med_r1_dir)
-                
-                from med_r1_service import get_service
-                
-                # Initialize the service (this will load the model)
-                service = get_service()
-                
-                if service.model_loaded:
-                    logger.info("✅ Med-R1 service preloaded successfully - ready for instant medical inference")
-                else:
-                    logger.warning("⚠️ Med-R1 service preloading failed - model not loaded")
+                logger.info("🔄 Med-R1 preloading disabled to avoid checkpoint conflicts")
+                logger.info("Med-R1 will load on first use with proper local checkpoint detection")
                     
             except Exception as e:
                 logger.error(f"❌ Failed to preload Med-R1 service: {e}")
@@ -231,9 +216,9 @@ class SegMedPro:
         viewer_controls = components['viewer_controls']
         segmentation = components['segmentation']
           # Unpack individual components
-        (file_input, dir_input, load_btn, reset_dir_btn, file_browser, 
-         metadata_display, error_display, window_level, window_width, 
-         apply_window_btn, debug_btn) = data_loading
+        (file_input, dir_input, load_btn, reset_dir_btn, patient_search_input,
+         clear_search_btn, patient_dropdown, file_browser, metadata_display, error_display, 
+         window_level, window_width, apply_window_btn, debug_btn) = data_loading
         (view_selector, image_display, prev_btn, slice_slider, next_btn, 
          slice_text, crosshair_info) = visualization
         (export_format, include_overlays, export_single_btn, export_all_btn, 
@@ -256,6 +241,29 @@ class SegMedPro:
             fn=self.data_handlers.reset_directory,
             inputs=[],
             outputs=[dir_input]
+        )
+        
+        # Connect patient retrieval handlers
+        patient_search_input.change(
+            fn=self.patient_retrieval_handlers.search_patients,
+            inputs=[patient_search_input],
+            outputs=[patient_dropdown]
+        )
+        
+        clear_search_btn.click(
+            fn=self.patient_retrieval_handlers.clear_search,
+            inputs=[],
+            outputs=[patient_search_input, patient_dropdown]
+        )
+        
+        patient_dropdown.change(
+            fn=self.patient_retrieval_handlers.load_selected_patient,
+            inputs=[patient_dropdown],
+            outputs=[
+                image_display, file_browser, metadata_display,
+                slice_slider, slice_text, crosshair_info, error_display,
+                window_level, window_width, seg_status
+            ]
         )        # Auto-trigger load_data on file selection
         file_input.change(
             fn=self.data_handlers.load_data_for_annotator,
@@ -631,7 +639,7 @@ class SegMedPro:
         # Unpack components
         (file_input, dir_input, load_btn, reset_dir_btn, file_browser, 
          metadata_display_dl, error_display_dl, window_level, window_width, apply_window_btn, debug_btn) = data_loading
-        (error_display, metadata_display, view_selector, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, vlm_btn, vlm_med_r1_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn) = visualization        
+        (error_display, metadata_display, view_selector, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, vlm_btn, vlm_med_r1_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn) = visualization        
         (point_prompt_checkbox, box_prompt_checkbox, coordinates_text, clear_coords_btn, ai_model_selector, 
          processing_mode, score_threshold,
          output_dir, save_visualizations, device_selector, 
@@ -959,11 +967,17 @@ class SegMedPro:
             fn=self.smolvlm_handlers.run_vlm_inference,
             inputs=[image_display, vlm_prompt_anomalies, vlm_prompt_describe],
             outputs=[vlm_caption]
-        )
-          # Med-R1 button handler for medical image analysis
+        )        # Med-R1 button handler for medical image analysis
         vlm_med_r1_btn.click(
             fn=self.med_r1_handlers.run_med_r1_inference,
             inputs=[image_display, vlm_prompt_anomalies, vlm_prompt_describe],
+            outputs=[vlm_caption]
+        )
+        
+        # Med-R1 label suggestion button handler for annotated shapes
+        vlm_suggest_labels_btn.click(
+            fn=self.med_r1_handlers.suggest_labels_for_annotations,
+            inputs=[image_display],
             outputs=[vlm_caption]
         )
           # Auto-brain annotation handler - Updated to use SAM2 Fast Masking Pipeline

@@ -92,6 +92,24 @@ def create_data_loading_section() -> tuple:
         load_btn = gr.Button("Load Data")
         reset_dir_btn = gr.Button("Reset Directory")
         
+        # Patient Retrieval System Section
+        with gr.Accordion("Retrieval System", open=True):
+            with gr.Row():
+                patient_search_input = gr.Textbox(
+                    label="Search Patients",
+                    placeholder="Type to search for patients (e.g., 'hgg', 'lgg', etc.)",
+                    interactive=True,
+                    scale=4
+                )
+                clear_search_btn = gr.Button("Clear", scale=1, size="sm")
+            patient_dropdown = gr.Dropdown(
+                label="Matching Patients",
+                choices=[],
+                value=None,
+                interactive=True,
+                allow_custom_value=True
+            )
+        
         # File Browser Section (when directory is loaded)
         file_browser = gr.Dropdown(label="Available Files", choices=[], interactive=True)
         
@@ -116,9 +134,9 @@ def create_data_loading_section() -> tuple:
         # Debug button
         debug_btn = gr.Button("Debug Selected File")
     
-    return (file_input, dir_input, load_btn, reset_dir_btn, file_browser, 
-            metadata_display, error_display, window_level, window_width, 
-            apply_window_btn, debug_btn)
+    return (file_input, dir_input, load_btn, reset_dir_btn, patient_search_input, 
+            clear_search_btn, patient_dropdown, file_browser, metadata_display, error_display, 
+            window_level, window_width, apply_window_btn, debug_btn)
 
 
 def create_segmentation_tools_section() -> tuple:
