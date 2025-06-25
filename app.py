@@ -92,28 +92,43 @@ class SegMedPro:
         # Initialize application state
         self.state = AppState()
           # Initialize checkbox state tracking
-        self._point_checkbox_state = False        # Initialize event handlers
+        self._point_checkbox_state = False        # Initialize SHARED handlers that can be used across tabs without interference
         self.data_handlers = DataLoadingHandlers(self.state)
-        self.segmentation_handlers = SegmentationHandlers(self.state)
-        self.image_viewer_handlers = ImageViewerHandlers(self.state, segmentation_handlers=self.segmentation_handlers)  # For editor tab (gr.Image) and viewer tab (image_annotator)
-        self.image_plot_tool_handlers = ImagePlotToolHandlers(self.state)  # For editor tab (dummy)
         self.conversion_handlers = ConversionHandlers(self.state)
         self.label_manager_handlers = LabelManagerHandlers(self.state)
-        self.medsam2_handlers = MEDSAM2Handlers(self.state)
-        self.custom_annotator_handlers = CustomAnnotatorHandlers(self.state)
-        self.smolvlm_handlers = SmolVLMHandlers(self.state)
-        self.med_r1_handlers = MedR1Handlers(self.state)
         self.patient_retrieval_handlers = PatientRetrievalHandlers(self.state)
-          # Preload SmolVLM service in background for instant availability
+        self.custom_annotator_handlers = CustomAnnotatorHandlers(self.state)
+        
+        # Initialize SEPARATE handlers for VIEWER TAB (read-only, no AI annotations)
+        self.viewer_segmentation_handlers = SegmentationHandlers(self.state)
+        self.viewer_image_handlers = ImageViewerHandlers(self.state, segmentation_handlers=self.viewer_segmentation_handlers)
+        
+        # Initialize SEPARATE handlers for EDITOR TAB (full AI annotation capabilities)
+        self.editor_segmentation_handlers = SegmentationHandlers(self.state)
+        self.editor_image_handlers = ImagePlotToolHandlers(self.state)
+        self.editor_medsam2_handlers = MEDSAM2Handlers(self.state)
+        self.editor_smolvlm_handlers = SmolVLMHandlers(self.state)
+        self.editor_med_r1_handlers = MedR1Handlers(self.state)
+        
+        # Connect editor-specific handlers (only editor tab gets AI functionality)
+        self.editor_image_handlers.medsam2_handlers = self.editor_medsam2_handlers
+        
+        # Keep legacy aliases for backward compatibility
+        self.segmentation_handlers = self.viewer_segmentation_handlers  # Viewer gets priority for legacy code
+        self.image_viewer_handlers = self.viewer_image_handlers
+        self.image_plot_tool_handlers = self.editor_image_handlers
+        self.medsam2_handlers = self.editor_medsam2_handlers
+        self.smolvlm_handlers = self.editor_smolvlm_handlers
+        self.med_r1_handlers = self.editor_med_r1_handlers
+        
+        # Preload SmolVLM service in background for instant availability
         self._preload_vlm_service()
         
         # Skip Med-R1 preloading due to meta tensor issues - use lazy loading instead
         self._preload_med_r1_service()
         #logger.info("📋 Med-R1 service will use lazy loading (load on first use) to avoid meta tensor issues")
         
-        # Connect MEDSAM2 handlers to other components that need them
-        self.image_viewer_handlers.medsam2_handlers = self.medsam2_handlers
-        self.image_plot_tool_handlers.medsam2_handlers = self.medsam2_handlers
+        logger.info("🔄 Tab separation complete - Viewer and Editor tabs now use independent handlers")
         
     def build_interface(self):
         """Build the complete Gradio interface"""
@@ -153,8 +168,8 @@ class SegMedPro:
                 conversion_components = create_conversion_tab()
                 # Create label manager tab
                 label_manager_components = create_label_manager_tab()
-                # Create custom annotator tab
-                custom_annotator_components = create_custom_annotator_tab()            # Connect event handlers for viewer tab
+                # Create custom annotator tab - HIDDEN
+                # custom_annotator_components = create_custom_annotator_tab()            # Connect event handlers for viewer tab
             self._connect_viewer_handlers(viewer_components)
             # Connect event handlers for editor tab
             self._connect_editor_handlers(editor_components)
@@ -162,9 +177,8 @@ class SegMedPro:
             self._connect_conversion_handlers(conversion_components)
             # Connect event handlers for label manager tab
             self._connect_label_manager_handlers(label_manager_components)
-            # Connect event handlers for custom annotator tab
-            self._connect_custom_annotator_handlers(custom_annotator_components)            # Connect event handlers for custom annotator tab
-            self._connect_custom_annotator_handlers(custom_annotator_components)            
+            # Connect event handlers for custom annotator tab - HIDDEN
+            # self._connect_custom_annotator_handlers(custom_annotator_components)            
             return app
     
     def _preload_vlm_service(self):
@@ -217,7 +231,8 @@ class SegMedPro:
         segmentation = components['segmentation']
           # Unpack individual components
         (file_input, dir_input, load_btn, reset_dir_btn, patient_search_input,
-         clear_search_btn, patient_dropdown, file_browser, metadata_display, error_display, 
+         clear_search_btn, patient_dropdown, load_retrieval_seg_btn, clear_retrieval_overlays_btn,
+         file_browser, metadata_display, error_display, 
          window_level, window_width, apply_window_btn, debug_btn) = data_loading
         (view_selector, image_display, prev_btn, slice_slider, next_btn, 
          slice_text, crosshair_info) = visualization
@@ -264,6 +279,19 @@ class SegMedPro:
                 slice_slider, slice_text, crosshair_info, error_display,
                 window_level, window_width, seg_status
             ]
+        )
+        
+        # Connect manual segmentation controls for patient retrieval
+        load_retrieval_seg_btn.click(
+            fn=self.patient_retrieval_handlers.load_manual_segmentation,
+            inputs=[patient_dropdown],
+            outputs=[image_display, seg_status]
+        )
+        
+        clear_retrieval_overlays_btn.click(
+            fn=self.patient_retrieval_handlers.clear_manual_segmentation,
+            inputs=[],
+            outputs=[image_display, seg_status]
         )        # Auto-trigger load_data on file selection
         file_input.change(
             fn=self.data_handlers.load_data_for_annotator,
@@ -279,99 +307,107 @@ class SegMedPro:
             inputs=[file_input, dir_input],
             outputs=[error_display]
         )
-          # Connect viewer handlers (using image_annotator-specific methods)
+        
+        # Connect viewer handlers (using image_annotator-specific methods) (VIEWER-SPECIFIC)
         slice_slider.change(
-            fn=self.image_viewer_handlers.update_slice,
+            fn=self.viewer_image_handlers.update_slice,
             inputs=[slice_slider, view_selector],
             outputs=[image_display, slice_text, crosshair_info, metadata_display, window_level, window_width]
         )
         
         view_selector.change(
-            fn=self.image_viewer_handlers.change_view,
+            fn=self.viewer_image_handlers.change_view,
             inputs=[view_selector],
             outputs=[slice_slider, slice_text, image_display]
         )
         
         apply_window_btn.click(
-            fn=self.image_viewer_handlers.update_window_level,
+            fn=self.viewer_image_handlers.update_window_level,
             inputs=[window_level, window_width],
             outputs=[image_display]
         )
         file_browser.change(
-            fn=self.image_viewer_handlers.select_file_from_browser,
+            fn=self.viewer_image_handlers.select_file_from_browser,
             inputs=[file_browser],
             outputs=[image_display, slice_text, crosshair_info, metadata_display, slice_slider, window_level, window_width]
         )
         
-        # Previous/Next button functionality
+        # Previous/Next button functionality (VIEWER-SPECIFIC)
         prev_btn.click(
-            fn=self.image_viewer_handlers.prev_slice,
+            fn=self.viewer_image_handlers.prev_slice,
             inputs=[slice_slider],
             outputs=[slice_slider]
         )
         
         next_btn.click(
-            fn=self.image_viewer_handlers.next_slice,
+            fn=self.viewer_image_handlers.next_slice,
             inputs=[slice_slider],
             outputs=[slice_slider]
         )
         
-        # Connect viewer control handlers        # Connect new export handlers
+        # Connect viewer control handlers (VIEWER-SPECIFIC)        # Connect new export handlers (VIEWER-SPECIFIC)
         export_single_btn.click(
-            fn=self.image_viewer_handlers.export_single_slice,
+            fn=self.viewer_image_handlers.export_single_slice,
             inputs=[export_format, include_overlays, output_dir, image_display],
             outputs=[export_status]
         )
         
         export_all_btn.click(
-            fn=self.image_viewer_handlers.export_all_slices,
+            fn=self.viewer_image_handlers.export_all_slices,
             inputs=[export_format, include_overlays, output_dir, image_display],
             outputs=[export_status]
         )
         
-        # Connect segmentation handlers
+        # Connect segmentation handlers (VIEWER-SPECIFIC)
         load_seg_btn.click(
-            fn=self.segmentation_handlers.direct_load_segmentation,
+            fn=self.viewer_segmentation_handlers.direct_load_segmentation,
             inputs=[segmentation_file, label_file],
             outputs=[seg_status, image_display]
         )
         
-        # Auto-trigger load segmentation when file is selected
+        # Auto-trigger load segmentation when file is selected (VIEWER-SPECIFIC)
         segmentation_file.change(
-            fn=self.segmentation_handlers.direct_load_segmentation,
+            fn=self.viewer_segmentation_handlers.direct_load_segmentation,
             inputs=[segmentation_file, label_file],
             outputs=[seg_status, image_display]
         )
-          # Bind segmentation file clear (X button) to clear segmentation
+          # Bind segmentation file clear (X button) to clear segmentation (VIEWER-SPECIFIC)
         segmentation_file.clear(
-            fn=self.segmentation_handlers.clear_segmentation,
+            fn=self.viewer_segmentation_handlers.clear_segmentation,
             inputs=[],
             outputs=[seg_status, image_display]
         )
         
         seg_opacity.change(
-            fn=self.segmentation_handlers.update_segmentation_opacity,
+            fn=self.viewer_segmentation_handlers.update_segmentation_opacity,
             inputs=[seg_opacity],
             outputs=[seg_status, image_display]
         )
         
         clear_seg_btn.click(
-            fn=self.segmentation_handlers.clear_segmentation,
+            fn=self.viewer_segmentation_handlers.clear_segmentation,
             inputs=[],
             outputs=[seg_status, image_display]
         )
-          # Update image_annotator labels/colors when a .label file is loaded
+          # Update image_annotator labels/colors when a .label file is loaded (VIEWER-SPECIFIC)
         label_file.change(
-            fn=self.segmentation_handlers.load_label_file_and_update_annotator,
+            fn=self.viewer_segmentation_handlers.load_label_file_and_update_annotator,
             inputs=[label_file],
             outputs=[seg_status, image_display]
         )
         
-        # Handle user annotation changes in the viewer tab
+        # Handle user annotation changes in the viewer tab (VIEWER-SPECIFIC)
         image_display.change(
-            fn=self.image_viewer_handlers.on_annotation_change_viewer,
+            fn=self.viewer_image_handlers.on_annotation_change_viewer,
             inputs=[image_display],
             outputs=[]  # No outputs to avoid circular dependency
+        )
+        
+        # Handle image removal (X button) - Clear image_annotator on viewer tab (VIEWER-SPECIFIC)
+        image_display.clear(
+            fn=self.viewer_image_handlers.handle_image_remove_viewer,
+            inputs=[],
+            outputs=[image_display]
         )
 
     # Plot tool handlers removed - image_annotator has built-in annotation tools
@@ -626,7 +662,7 @@ class SegMedPro:
         )
         
         clear_overlays_btn.click(
-            fn=self.medsam2_handlers.clear_annotation_overlays,
+            fn=self.editor_medsam2_handlers.clear_annotation_overlays,
             inputs=[],
             outputs=[error_display, annotator]
         )
@@ -637,7 +673,7 @@ class SegMedPro:
         visualization = components['visualization']
         ai_tools = components['ai_tools']  # Now we have AI tools including MEDSAM2        
         # Unpack components
-        (file_input, dir_input, load_btn, reset_dir_btn, file_browser, 
+        (file_input, dir_input, load_btn, reset_dir_btn, file_browser, label_file,
          metadata_display_dl, error_display_dl, window_level, window_width, apply_window_btn, debug_btn) = data_loading
         (error_display, metadata_display, view_selector, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, vlm_btn, vlm_med_r1_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn) = visualization        
         (point_prompt_checkbox, box_prompt_checkbox, coordinates_text, clear_coords_btn, ai_model_selector, 
@@ -678,38 +714,47 @@ class SegMedPro:
             fn=self.data_handlers.debug_selected_file,
             inputs=[file_input, dir_input],
             outputs=[error_display]
-        )        # Viewer handlers (using annotator-specific methods)
+        )
+        
+        # Label file handler for updating image_annotator labels (EDITOR-SPECIFIC)
+        label_file.change(
+            fn=self.editor_segmentation_handlers.load_label_file_and_update_annotator,
+            inputs=[label_file],
+            outputs=[annotation_status, image_display]
+        )
+        
+        # Viewer handlers (using annotator-specific methods) (EDITOR-SPECIFIC)
         slice_slider.change(
-            fn=self.image_plot_tool_handlers.handle_annotator_slider_change,
+            fn=self.editor_image_handlers.handle_annotator_slider_change,
             inputs=[slice_slider, image_display],
             outputs=[image_display, slice_text, crosshair_info, metadata_display, window_level, window_width]
         )
         view_selector.change(
-            fn=self.image_plot_tool_handlers.change_view_for_annotator,
+            fn=self.editor_image_handlers.change_view_for_annotator,
             inputs=[view_selector],
             outputs=[slice_slider, slice_text, image_display]
         )
         apply_window_btn.click(
-            fn=self.image_plot_tool_handlers.update_window_level_for_annotator,
+            fn=self.editor_image_handlers.update_window_level_for_annotator,
             inputs=[window_level, window_width],
             outputs=[image_display]
         )
         file_browser.change(
-            fn=self.image_plot_tool_handlers.select_file_from_browser_for_annotator,
+            fn=self.editor_image_handlers.select_file_from_browser_for_annotator,
             inputs=[file_browser],
             outputs=[image_display, slice_text, crosshair_info, metadata_display, slice_slider, window_level, window_width]        )
           # Navigation buttons with annotation saving
         def handle_prev_navigation(current_slider_value, current_annotated_value):
-            """Handle previous button click with annotation saving"""
-            result_tuple, new_slider_value = self.image_plot_tool_handlers.handle_annotator_navigation(
+            """Handle previous button click with annotation saving (EDITOR-SPECIFIC)"""
+            result_tuple, new_slider_value = self.editor_image_handlers.handle_annotator_navigation(
                 "prev", current_slider_value, current_annotated_value
             )
             # result_tuple contains: (image_display, slice_text, crosshair_info, metadata, window_level, window_width)
             return result_tuple + (new_slider_value,)
         
         def handle_next_navigation(current_slider_value, current_annotated_value):
-            """Handle next button click with annotation saving"""  
-            result_tuple, new_slider_value = self.image_plot_tool_handlers.handle_annotator_navigation(
+            """Handle next button click with annotation saving (EDITOR-SPECIFIC)"""  
+            result_tuple, new_slider_value = self.editor_image_handlers.handle_annotator_navigation(
                 "next", current_slider_value, current_annotated_value
             )
             # result_tuple contains: (image_display, slice_text, crosshair_info, metadata, window_level, window_width)
@@ -743,12 +788,12 @@ class SegMedPro:
         )
           # 3D Viewer event handlers
         def handle_refresh_3d_view(output_dir_value):
-            """Handle refresh 3D view button click"""
+            """Handle refresh 3D view button click (EDITOR-SPECIFIC)"""
             try:
                 # Import the 3D visualization function from editor_tab
                 from ui.editor_tab import create_3d_visualization
-                # Get the current score threshold from medsam2_handlers
-                current_score_threshold = getattr(self.medsam2_handlers, 'score_threshold', 0.3)
+                # Get the current score threshold from editor medsam2_handlers
+                current_score_threshold = getattr(self.editor_medsam2_handlers, 'score_threshold', 0.3)
                 fig = create_3d_visualization(output_dir_value, current_score_threshold)
                 return fig
             except Exception as e:
@@ -756,12 +801,12 @@ class SegMedPro:
                 return create_empty_3d_plot(f"Error refreshing view: {str(e)}")
         
         def handle_export_3d_view(output_dir_value):
-            """Handle export 3D view button click"""
+            """Handle export 3D view button click (EDITOR-SPECIFIC)"""
             try:
                 from ui.editor_tab import create_3d_visualization
                 import os
-                # Get the current score threshold from medsam2_handlers
-                current_score_threshold = getattr(self.medsam2_handlers, 'score_threshold', 0.3)
+                # Get the current score threshold from editor medsam2_handlers
+                current_score_threshold = getattr(self.editor_medsam2_handlers, 'score_threshold', 0.3)
                 fig = create_3d_visualization(output_dir_value, current_score_threshold)
                 export_path = os.path.join(output_dir_value, "3d_visualization.html")
                 fig.write_html(export_path)
@@ -784,24 +829,24 @@ class SegMedPro:
         
         # Connect checkbox handlers for prompt type selection
         def handle_point_prompt_change(point_checked, box_checked):
-            """Handle point prompt checkbox change - ensure mutual exclusivity and clear coords"""
+            """Handle point prompt checkbox change - ensure mutual exclusivity and clear coords (EDITOR-SPECIFIC)"""
             if point_checked:
                 # If point is checked, uncheck box and show coordinates
-                self.medsam2_handlers.enable_point_mode()
+                self.editor_medsam2_handlers.enable_point_mode()
                 return True, False, gr.update(visible=True)
             else:                # If point is unchecked, hide coordinates and clear them
-                self.medsam2_handlers.disable_point_mode()
-                self.medsam2_handlers.selected_coordinates = []  # Clear coordinates from handler state
+                self.editor_medsam2_handlers.disable_point_mode()
+                self.editor_medsam2_handlers.selected_coordinates = []  # Clear coordinates from handler state
                 return False, box_checked, gr.update(visible=False)
         
         def handle_box_prompt_change(box_checked, point_checked):
-            """Handle box prompt checkbox change - ensure mutual exclusivity and enable box mode"""
+            """Handle box prompt checkbox change - ensure mutual exclusivity and enable box mode (EDITOR-SPECIFIC)"""
             if box_checked:
                 # If box is checked, uncheck point, hide coordinates, and enable box mode
-                self.medsam2_handlers.disable_point_mode()
-                self.medsam2_handlers.enable_box_mode()
-                self.medsam2_handlers.selected_coordinates = []  # Clear coordinates from handler state
-                self.medsam2_handlers.prompt_boxes = []  # Clear any existing box prompts                # Show instructions for box mode
+                self.editor_medsam2_handlers.disable_point_mode()
+                self.editor_medsam2_handlers.enable_box_mode()
+                self.editor_medsam2_handlers.selected_coordinates = []  # Clear coordinates from handler state
+                self.editor_medsam2_handlers.prompt_boxes = []  # Clear any existing box prompts                # Show instructions for box mode
                 return (True, False, 
                        gr.update(visible=True, 
                                label="Box Prompt Status", 
@@ -809,16 +854,16 @@ class SegMedPro:
                                info="Draw boxes on the image. Coordinates are automatically captured for MEDSAM2."))
             else:
                 # If box is unchecked, disable box mode and keep point state
-                self.medsam2_handlers.disable_box_mode()
+                self.editor_medsam2_handlers.disable_box_mode()
                 if point_checked:
-                    self.medsam2_handlers.enable_point_mode()
+                    self.editor_medsam2_handlers.enable_point_mode()
                     return (False, True, 
                            gr.update(visible=True, 
                                    label="Selected Coordinates (x,y)", 
                                    value="",
                                    info="Click on the image to select coordinates"))
                 else:
-                    self.medsam2_handlers.disable_point_mode()
+                    self.editor_medsam2_handlers.disable_point_mode()
                     return (False, False, 
                            gr.update(visible=True, 
                                    label="Mode Status", 
@@ -866,17 +911,17 @@ class SegMedPro:
         )
         
         def handle_image_select_conditionally(evt: gr.SelectData):
-            """Handle image select events only when point mode is enabled, ignore in box mode"""
+            """Handle image select events only when point mode is enabled, ignore in box mode (EDITOR-SPECIFIC)"""
             # Check if point mode is enabled
-            if (hasattr(self.medsam2_handlers, 'point_mode_enabled') and 
-                self.medsam2_handlers.point_mode_enabled and 
-                not getattr(self.medsam2_handlers, 'box_mode_enabled', False)):
-                return self.medsam2_handlers.handle_image_click(evt)
+            if (hasattr(self.editor_medsam2_handlers, 'point_mode_enabled') and 
+                self.editor_medsam2_handlers.point_mode_enabled and 
+                not getattr(self.editor_medsam2_handlers, 'box_mode_enabled', False)):
+                return self.editor_medsam2_handlers.handle_image_click(evt)
             else:
                 # In box mode or when point mode is disabled, don't process select events at all
                 return ""
         
-        # Connect MEDSAM2 handlers - conditional based on mode
+        # Connect MEDSAM2 handlers - conditional based on mode (EDITOR-SPECIFIC)
         image_display.select(
             fn=handle_image_select_conditionally,
             inputs=[],
@@ -884,13 +929,13 @@ class SegMedPro:
         )
         
         def handle_image_annotation_change(annotated_image_value):
-            """Handle both normal annotation changes and box prompt extraction"""
+            """Handle both normal annotation changes and box prompt extraction (EDITOR-SPECIFIC)"""
             try:                # First, let the normal annotation handler process the change
-                self.image_plot_tool_handlers.on_annotation_change_editor_save(annotated_image_value)
+                self.editor_image_handlers.on_annotation_change_editor_save(annotated_image_value)
                 
                 # If box mode is enabled, also extract box prompts for MEDSAM2
-                if hasattr(self.medsam2_handlers, 'box_mode_enabled') and self.medsam2_handlers.box_mode_enabled:
-                    status_msg = self.medsam2_handlers.handle_box_annotation(annotated_image_value)
+                if hasattr(self.editor_medsam2_handlers, 'box_mode_enabled') and self.editor_medsam2_handlers.box_mode_enabled:
+                    status_msg = self.editor_medsam2_handlers.handle_box_annotation(annotated_image_value)
                     logger.info(f"Annotation Status: Box annotation handled - {status_msg}")
                 
                 return None  # No outputs to avoid circular dependency
@@ -905,10 +950,10 @@ class SegMedPro:
         )
         
         def clear_all_prompts_and_reset_layout():
-            """Clear all prompts, coordinates, annotation overlays, and reset layout"""
-            self.medsam2_handlers.clear_coordinates()
-            self.medsam2_handlers.prompt_boxes = []
-            status, image = self.medsam2_handlers.clear_annotation_overlays()
+            """Clear all prompts, coordinates, annotation overlays, and reset layout (EDITOR-SPECIFIC)"""
+            self.editor_medsam2_handlers.clear_coordinates()
+            self.editor_medsam2_handlers.prompt_boxes = []
+            status, image = self.editor_medsam2_handlers.clear_annotation_overlays()
             
             # Use the reset layout function
             if reset_layout:
@@ -933,10 +978,10 @@ class SegMedPro:
             outputs=[coordinates_text, annotation_status, image_display, image_column, viewer_3d_column, viewer_3d, processing_mode]
         )
         
-        # Custom wrapper function to handle the 3-tuple return and button visibility
+        # Custom wrapper function to handle the 3-tuple return and button visibility (EDITOR-SPECIFIC)
         def handle_annotation_workflow(output_dir, save_visualizations, device_selector, processing_mode, score_threshold, image_display_data):
             logger.info(f"Annotation Status: workflow started with processing_mode={processing_mode}")
-            status, image, success = self.medsam2_handlers.run_full_annotation_workflow(
+            status, image, success = self.editor_medsam2_handlers.run_full_annotation_workflow(
                 output_dir, save_visualizations, device_selector, processing_mode, score_threshold, image_display_data
             )
             logger.info(f"Annotation Status: workflow completed with success={success}")
@@ -962,27 +1007,27 @@ class SegMedPro:
             fn=handle_annotation_workflow,
             inputs=[output_dir, save_visualizations, device_selector, processing_mode, score_threshold, image_display],
             outputs=[annotation_status, image_display, viewer_3d]
-        )          # VLM button handler for slice captioning
+        )          # VLM button handler for slice captioning (EDITOR-SPECIFIC)
         vlm_btn.click(
-            fn=self.smolvlm_handlers.run_vlm_inference,
+            fn=self.editor_smolvlm_handlers.run_vlm_inference,
             inputs=[image_display, vlm_prompt_anomalies, vlm_prompt_describe],
             outputs=[vlm_caption]
-        )        # Med-R1 button handler for medical image analysis
+        )        # Med-R1 button handler for medical image analysis (EDITOR-SPECIFIC)
         vlm_med_r1_btn.click(
-            fn=self.med_r1_handlers.run_med_r1_inference,
+            fn=self.editor_med_r1_handlers.run_med_r1_inference,
             inputs=[image_display, vlm_prompt_anomalies, vlm_prompt_describe],
             outputs=[vlm_caption]
         )
         
-        # Med-R1 label suggestion button handler for annotated shapes
+        # Med-R1 label suggestion button handler for annotated shapes (EDITOR-SPECIFIC)
         vlm_suggest_labels_btn.click(
-            fn=self.med_r1_handlers.suggest_labels_for_annotations,
+            fn=self.editor_med_r1_handlers.suggest_labels_for_annotations,
             inputs=[image_display],
             outputs=[vlm_caption]
         )
-          # Auto-brain annotation handler - Updated to use SAM2 Fast Masking Pipeline
+          # Auto-brain annotation handler - Updated to use SAM2 Fast Masking Pipeline (EDITOR-SPECIFIC)
         def handle_auto_brain_annotation(output_dir, save_visualizations, device_selector, processing_mode, score_threshold, dir_input_value):
-            """Handle automatic brain structure annotation using SAM2 Fast Masking Pipeline"""
+            """Handle automatic brain structure annotation using SAM2 Fast Masking Pipeline (EDITOR-SPECIFIC)"""
             # Get the current directory from state or use directory input as fallback
             dicom_folder = getattr(self.state, 'current_directory', None)
             
@@ -1000,7 +1045,7 @@ class SegMedPro:
             if not hasattr(self.state, 'current_data') or self.state.current_data is None:
                 return "Error: Please load DICOM data first using the 'Load Data' button before running automatic annotation.", None, gr.update(visible=False)            
             # Run the SAM2 Fast Masking Pipeline (replaces old automatic annotation)
-            status, annotated_result, success = self.medsam2_handlers.run_sam2_fast_masking(
+            status, annotated_result, success = self.editor_medsam2_handlers.run_sam2_fast_masking(
                 dicom_folder, output_dir, save_visualizations, processing_mode
             )
               # If processing mode is "All Records" and annotation was successful, refresh 3D viewer
@@ -1021,10 +1066,10 @@ class SegMedPro:
             inputs=[output_dir, save_visualizations, device_selector, processing_mode, score_threshold, dir_input],
             outputs=[annotation_status, image_display, viewer_3d]
         )
-          # Handle image removal from image_annotator (X button / clear button)
+          # Handle image removal from image_annotator (X button / clear button) (EDITOR-SPECIFIC)
     
         image_display.clear(
-            fn=self.image_plot_tool_handlers.handle_image_remove,
+            fn=self.editor_image_handlers.handle_image_remove,
             inputs=[],
             outputs=[image_display]
         )

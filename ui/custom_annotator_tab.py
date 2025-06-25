@@ -43,7 +43,8 @@ def create_custom_annotator_tab():
                     label="Load File (DICOM, NIFTI, MAT)",
                     file_types=[".dcm", ".nii", ".nii.gz", ".mat"]
                 )
-                dir_input = gr.Textbox(label="Enter directory path containing DICOM files")
+                dir_input = gr.Textbox(label="Enter directory path containing DICOM files",
+                                       value=r"E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (50)")
                 load_btn = gr.Button("Load Data", variant="primary")
                 reset_dir_btn = gr.Button("Reset Directory")
                 file_browser = gr.Dropdown(label="Available Files", choices=[], interactive=True)

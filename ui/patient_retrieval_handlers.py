@@ -112,46 +112,21 @@ class PatientRetrievalHandlers:
                 if isinstance(image_display.value, dict) and 'annotations' in image_display.value:
                     image_display.value['annotations'] = []
             
-            # Handle segmentation loading if available
+            # Handle segmentation loading - DO NOT AUTO-LOAD, provide status only
             segmentation_status = "No segmentation loaded"
             updated_image_display = image_display
             
             if segmentation_path and os.path.exists(segmentation_path):
-                try:
-                    # Import segmentation handlers
-                    from ui.segmentation_handlers import SegmentationHandlers
-                    
-                    # Create temporary segmentation handler
-                    seg_handler = SegmentationHandlers(self.state)
-                    
-                    # First clear any existing segmentation
-                    clear_result = seg_handler.clear_segmentation()
-                    
-                    # Create a dummy file object for the segmentation file
-                    class DummyFile:
-                        def __init__(self, path):
-                            self.name = path
-                    
-                    dummy_seg_file = DummyFile(segmentation_path)
-                    dummy_label_file = None
-                    
-                    # Load segmentation
-                    seg_result = seg_handler.direct_load_segmentation(dummy_seg_file, dummy_label_file)
-                    segmentation_status, updated_image_display = seg_result
-                    
-                    logger.info(f"Loaded segmentation from: {segmentation_path}")
-                    
-                except Exception as seg_error:
-                    logger.error(f"Failed to load segmentation: {seg_error}")
-                    segmentation_status = f"Failed to load segmentation: {str(seg_error)}"
+                segmentation_status = "Segmentation available - click 'Load Segmentation' to view"
+            else:
+                segmentation_status = "No segmentation file found for this patient"
             
             # Update status with patient info
             success_msg = f"Loaded patient: {selected_patient}"
-            if segmentation_path:
-                if "Failed" not in segmentation_status:
-                    success_msg += " (with segmentation)"
-                else:
-                    success_msg += " (segmentation failed)"
+            if segmentation_path and os.path.exists(segmentation_path):
+                success_msg += " (segmentation available)"
+            else:
+                success_msg += " (no segmentation)"
             
             logger.info(success_msg)
             
@@ -181,3 +156,81 @@ class PatientRetrievalHandlers:
             Tuple of (cleared_input, cleared_dropdown)
         """
         return "", gr.update(choices=[], value=None, allow_custom_value=True)
+    
+    def load_manual_segmentation(self, selected_patient: str) -> Tuple[str, Optional[dict]]:
+        """
+        Manually load segmentation for the currently selected patient
+        
+        Args:
+            selected_patient: Selected patient display name
+            
+        Returns:
+            Tuple of (status_message, updated_image_display)
+        """
+        try:
+            if not selected_patient:
+                return "No patient selected", None
+                
+            # Get patient information
+            patient_info = patient_retrieval.get_patient_info(selected_patient)
+            if not patient_info:
+                return f"Patient information not found for: {selected_patient}", None
+            
+            segmentation_path = patient_info['segmentation_path']
+            
+            if not segmentation_path or not os.path.exists(segmentation_path):
+                return f"No segmentation file found for patient: {selected_patient}", None
+            
+            # Import segmentation handlers
+            from ui.segmentation_handlers import SegmentationHandlers
+            
+            # Create temporary segmentation handler
+            seg_handler = SegmentationHandlers(self.state)
+            
+            # Create a dummy file object for the segmentation file
+            class DummyFile:
+                def __init__(self, path):
+                    self.name = path
+            
+            dummy_seg_file = DummyFile(segmentation_path)
+            dummy_label_file = None
+            
+            # Load segmentation
+            seg_result = seg_handler.direct_load_segmentation(dummy_seg_file, dummy_label_file)
+            status_message, updated_image_display = seg_result
+            
+            logger.info(f"Manually loaded segmentation from: {segmentation_path}")
+            
+            return updated_image_display, status_message
+            
+        except Exception as e:
+            error_msg = f"Failed to load segmentation for {selected_patient}: {str(e)}"
+            logger.error(error_msg)
+            return None, error_msg
+    
+    def clear_manual_segmentation(self) -> Tuple[str, Optional[dict]]:
+        """
+        Clear the currently loaded segmentation overlay
+        
+        Returns:
+            Tuple of (status_message, updated_image_display)
+        """
+        try:
+            # Import segmentation handlers
+            from ui.segmentation_handlers import SegmentationHandlers
+            
+            # Create temporary segmentation handler
+            seg_handler = SegmentationHandlers(self.state)
+            
+            # Clear segmentation
+            clear_result = seg_handler.clear_segmentation()
+            status_message, updated_image_display = clear_result
+            
+            logger.info("Manually cleared segmentation overlay")
+            
+            return updated_image_display, status_message
+            
+        except Exception as e:
+            error_msg = f"Failed to clear segmentation: {str(e)}"
+            logger.error(error_msg)
+            return None, error_msg

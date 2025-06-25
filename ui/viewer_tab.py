@@ -88,7 +88,8 @@ def create_data_loading_section() -> tuple:
             label="Load File (DICOM, NIFTI, MAT)",
             file_types=[".dcm", ".nii", ".nii.gz", ".mat"]
         )
-        dir_input = gr.Textbox(label="Enter directory path containing DICOM files")
+        dir_input = gr.Textbox(label="Enter directory path containing DICOM files",
+                               value=r"E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (50)\flair")
         load_btn = gr.Button("Load Data")
         reset_dir_btn = gr.Button("Reset Directory")
         
@@ -109,6 +110,10 @@ def create_data_loading_section() -> tuple:
                 interactive=True,
                 allow_custom_value=True
             )
+            # Manual Segmentation Controls for Retrieval System
+            with gr.Row():
+                load_retrieval_seg_btn = gr.Button("🔘 Load Segmentation", variant="secondary", scale=1)
+                clear_retrieval_seg_btn = gr.Button("🔘 Clear Overlays", variant="secondary", scale=1)
         
         # File Browser Section (when directory is loaded)
         file_browser = gr.Dropdown(label="Available Files", choices=[], interactive=True)
@@ -135,7 +140,8 @@ def create_data_loading_section() -> tuple:
         debug_btn = gr.Button("Debug Selected File")
     
     return (file_input, dir_input, load_btn, reset_dir_btn, patient_search_input, 
-            clear_search_btn, patient_dropdown, file_browser, metadata_display, error_display, 
+            clear_search_btn, patient_dropdown, load_retrieval_seg_btn, clear_retrieval_seg_btn,
+            file_browser, metadata_display, error_display, 
             window_level, window_width, apply_window_btn, debug_btn)
 
 

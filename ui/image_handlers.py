@@ -670,6 +670,24 @@ class ImageViewerHandlers:
         except Exception as e:
             logger.error(f"Error in export_all_slices: {str(e)}")
             return f"Export failed: {str(e)}"
+        
+    def handle_image_remove_viewer(self):
+        """Handle image removal event from the image_annotator component.
+        This is called when the X button (Remove Image) is clicked."""
+        # Reset the current image but keep the data in state
+        # Return an empty AnnotatedImageValue with a blank image
+        logger.info("Image removal requested via X button")
+        
+        # Create a small blank/transparent image instead of None
+        blank_image = np.zeros((10, 10, 3), dtype=np.uint8)  # Small blank RGB image
+        
+        empty_annotated_value = {
+            "image": blank_image,
+            "boxes": [],
+            "orientation": 0
+        }
+        
+        return empty_annotated_value
 
 
 class ImagePlotToolHandlers:

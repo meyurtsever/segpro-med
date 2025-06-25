@@ -623,6 +623,13 @@ def create_editor_tab() -> dict:
                 load_btn = gr.Button("Load Data")
                 reset_dir_btn = gr.Button("Reset Directory")
                 file_browser = gr.Dropdown(label="Available Files", choices=[], interactive=True)
+                
+                # Label File Loader
+                label_file = gr.File(
+                    label="Load Label File (.label)", 
+                    file_types=[".label"]
+                )
+                
                 # Image Adjustments moved here
                 with gr.Accordion("Image Adjustments", open=False):
                     window_level = gr.Slider(
@@ -637,7 +644,7 @@ def create_editor_tab() -> dict:
                 debug_btn = gr.Button("Debug Selected File")
                 # For handler compatibility, include error_display and metadata_display in col1 (even if rendered in col2)
                 # They will be created in col2 below
-                col1 = (file_input, dir_input, load_btn, reset_dir_btn, file_browser, None, None, window_level, window_width, apply_window_btn, debug_btn)            # Column 2: View orientation and image annotator on top, then navigation controls, then Status/Errors and Metadata below
+                col1 = (file_input, dir_input, load_btn, reset_dir_btn, file_browser, label_file, None, None, window_level, window_width, apply_window_btn, debug_btn)            # Column 2: View orientation and image annotator on top, then navigation controls, then Status/Errors and Metadata below
             with gr.Column(scale=4):
                 # Main Visualization Area (top)
                 with gr.Row():
