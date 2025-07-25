@@ -2,7 +2,7 @@
 models/medsam2/checkpoints/*.pt
 models/medsam2/checkpoints/*.pth
 models/medsam2/checkpoints/*.ckpt
-models/med-r1/*
+models/med-r1/checkpoints/*
 
 # Other potential large model files
 *.pt

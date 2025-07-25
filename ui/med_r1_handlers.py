@@ -49,42 +49,9 @@ class MedR1Handlers:
         """Get or initialize the Med-R1 service with meta tensor handling"""
         if self._service is None and get_service is not None:
             try:
-                # Use MRI checkpoint for brain imaging (if available)
-                # You can modify this path to point to your local MRI checkpoint
-                checkpoint_path = "yuxianglai117/Med-R1"  # Default HuggingFace model
-                
-                # Check if local MRI checkpoint exists and has model files
-                # The actual model files are in models/med-r1/checkpoints/MRI (sharded safetensors)
-                local_mri_checkpoint = os.path.join(
-                    os.path.dirname(__file__), "..", "models", "med-r1", "checkpoints", "MRI"
-                )
-                # Resolve the absolute path for better debugging
-                local_mri_checkpoint = os.path.abspath(local_mri_checkpoint)
-                logger.info(f"Checking for local MRI checkpoint at: {local_mri_checkpoint}")
-                
-                # Check for sharded model files (model.safetensors.index.json indicates sharded model)
-                index_file = os.path.join(local_mri_checkpoint, "model.safetensors.index.json")
-                config_file = os.path.join(local_mri_checkpoint, "config.json")
-                
-                logger.info(f"Index file exists: {os.path.exists(index_file)}")
-                logger.info(f"Config file exists: {os.path.exists(config_file)}")
-                
-                has_model_files = (
-                    os.path.exists(local_mri_checkpoint) and 
-                    os.path.exists(index_file) and
-                    os.path.exists(config_file)
-                )
-                
-                if has_model_files:
-                    checkpoint_path = local_mri_checkpoint
-                    logger.info(f"✅ Using local MRI checkpoint: {checkpoint_path}")
-                else:
-                    logger.info(f"❌ Local MRI checkpoint not found or incomplete at {local_mri_checkpoint}")
-                    logger.info(f"📥 Using default HuggingFace checkpoint: {checkpoint_path}")
-                
-                # Initialize service with meta tensor error handling
+                # Initialize service (it will auto-detect local MRI checkpoint)
                 logger.info("Loading Med-R1 service (this may take a moment on first use)...")
-                self._service = get_service(device="auto", checkpoint_path=checkpoint_path)
+                self._service = get_service(device="auto")
                 logger.info("Med-R1 service initialized successfully")
             except Exception as e:
                 error_msg = str(e)
@@ -96,7 +63,7 @@ class MedR1Handlers:
                         import torch
                         device = "cuda" if torch.cuda.is_available() else "cpu"
                         logger.info(f"Attempting Med-R1 load with explicit device: {device}")
-                        self._service = get_service(device=device, checkpoint_path=checkpoint_path)
+                        self._service = get_service(device=device)
                         logger.info("Med-R1 service initialized successfully with explicit device")
                     except Exception as e2:
                         logger.error(f"Failed to initialize Med-R1 service even with explicit device: {e2}")
@@ -130,21 +97,25 @@ class MedR1Handlers:
             if image_array is None:
                 return "Error: Image data is None"
             
-            # Determine the prompt based on checkbox selection
+            # Create Med-R1 compatible prompts (following official script format)
+            # Official script uses: "First output the thinking process in <think> </think> and final choice"
             if identify_anomalies:
-                prompt = ("Analyze this brain MRI scan for any abnormal findings. "
-                         "Identify any lesions, masses, hemorrhages, infarcts, or other pathological changes. "
-                         "Describe the location, size, and characteristics of any abnormalities found. "
-                         "If no abnormalities are detected, state that the scan appears normal.")
+                base_prompt = ("Analyze this brain MRI scan for any abnormal findings. "
+                              "Identify any lesions, masses, hemorrhages, infarcts, or other pathological changes. "
+                              "Describe the location, size, and characteristics of any abnormalities found. "
+                              "If no abnormalities are detected, state that the scan appears normal.")
+                prompt = f"{base_prompt} First output your thinking process in <think> </think> tags and then provide your final analysis."
             elif describe_slice:
-                prompt = ("Provide a detailed medical analysis of this brain MRI slice. "
-                         "Describe the anatomical structures visible, imaging quality, "
-                         "slice level, and any notable features or findings. "
-                         "Include information about brain symmetry, ventricles, and tissue contrast.")
+                base_prompt = ("Provide a detailed medical analysis of this brain MRI slice. "
+                              "Describe the anatomical structures visible, imaging quality, "
+                              "slice level, and any notable features or findings. "
+                              "Include information about brain symmetry, ventricles, and tissue contrast.")
+                prompt = f"{base_prompt} First output your thinking process in <think> </think> tags and then provide your final analysis."
             else:
                 # Fallback prompt if neither is selected
-                prompt = ("Analyze this medical brain MRI image. "
-                         "Describe the visible anatomical structures and any notable findings.")
+                base_prompt = ("Analyze this medical brain MRI image. "
+                              "Describe the visible anatomical structures and any notable findings.")
+                prompt = f"{base_prompt} First output your thinking process in <think> </think> tags and then provide your final analysis."
             
             logger.info(f"Running Med-R1 inference with prompt: {prompt[:50]}...")
             logger.info(f"Image shape: {image_array.shape}")
@@ -295,16 +266,13 @@ class MedR1Handlers:
             '''
             
             prompt = (
-    f"<think>\n"
     f"This is a brain MRI image with {len(boxes)} bounding box annotation(s), each highlighting a region of interest. "
-    f"The image includes visible overlays. Your task is to identify what structure, tissue, or abnormality is inside each box.\n\n"
+    f"The image includes visible overlays. Your task is to identify what structure, tissue, or abnormality is inside each box. "
     f"For each region, suggest a single semantic label such as an anatomical part (e.g., eye, ventricle, corpus callosum), "
-    f"a pathology (e.g., tumor, hemorrhage, lesion), or a tissue type (e.g., gray matter, white matter, CSF).\n\n"
-    f"Use standard medical terminology and format your response like this:\n"
-    f"Region 1: [label]\n"
-    f"Region 2: [label]\n"
-    f"...\n"
-    f"</think>"
+    f"a pathology (e.g., tumor, hemorrhage, lesion), or a tissue type (e.g., gray matter, white matter, CSF). "
+    f"Use standard medical terminology and format your response like this: "
+    f"Region 1: [label], Region 2: [label], etc. "
+    f"First output the thinking process in <think> </think> and final choice in <answer> </answer> tags."
 )
 
 

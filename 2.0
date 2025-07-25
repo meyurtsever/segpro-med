@@ -1,0 +1,10 @@
+Looking in indexes: https://pypi.org/simple, https://pypi.ngc.nvidia.com
+Requirement already satisfied: charset-normalizer in c:\users\yurtsever\downloads\segpro-med\.conda\lib\site-packages (3.3.2)
+Collecting chardet
+  Downloading chardet-5.2.0-py3-none-any.whl.metadata (3.4 kB)
+Requirement already satisfied: pydantic in c:\users\yurtsever\downloads\segpro-med\.conda\lib\site-packages (1.10.22)
+Requirement already satisfied: typing-extensions>=4.2.0 in c:\users\yurtsever\downloads\segpro-med\.conda\lib\site-packages (from pydantic) (4.14.1)
+Downloading chardet-5.2.0-py3-none-any.whl (199 kB)
+   ---------------------------------------- 199.4/199.4 kB 3.1 MB/s eta 0:00:00
+Installing collected packages: chardet
+Successfully installed chardet-5.2.0
