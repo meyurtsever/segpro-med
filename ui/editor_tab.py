@@ -2,27 +2,7 @@
 SegMed-Pro Editor Tab UI Components
 
 This module contains the UI layout for the Editor tab,
-including data loading, visualization with advanced annotation capabilities,
-AI annotation tools usi            for mask_file in mask_files:
-                filename = os.path.basename(mask_file)
-                # Extract slice number from filename
-                if filename.sta    # Fi    valid_masks = {k: v for k, v in masks.items() if np.any(v > 0)}
-    
-    if not valid_masks:
-        threshold_msg = f" (score threshold: {score_threshold})" if score_threshold else ""
-        return create_empty_3d_plot(f"No valid mask data found{threshold_msg}") masks to only include those that actually have annotation data
-    # This ensures we don't create empty 3D visualizations
-    valid_masks = {k: v for k, v in masks.items() if np.any(v > 0)}
-    
-    if not valid_masks:
-        threshold_msg = f" (score threshold: {score_threshold})" if score_threshold else ""
-        return create_empty_3d_plot(f"No valid mask data found{threshold_msg}")h("slice_") and filename.endswith("_mask.npy"):
-                    slice_num_str = filename[6:-9]  # Remove "slice_" and "_mask.npy"
-                    try:
-                        slice_num = int(slice_num_str)
-                        detected_indices.append(slice_num)
-                    except ValueError:
-                        continueimage_annotation, and 3D visualization.
+including data loading, visualization with advanced annotation capabilities
 """
 
 import gradio as gr
@@ -39,9 +19,15 @@ from scipy import ndimage
 from skimage import measure
 import cv2
 import nibabel as nib  # Import nibabel for NIfTI file handling
+import PIL.Image
+import PIL.ImageDraw
+import PIL.ImageFont
 
 # Set up logger for this module
 logger = logging.getLogger(__name__)
+
+# Global dictionary to store slice-specific suggested labels
+SLICE_SUGGESTED_LABELS = {}
 
 def load_annotation_data(output_dir="brain_target_results"):
     """Load annotation data from the results directory"""
@@ -606,6 +592,203 @@ def create_empty_3d_plot(message="No 3D data available"):
     )
     return fig
 
+def extract_current_labels_from_annotator(image_annotator_value):
+    """Extract current label names from image_annotator shapes"""
+    current_labels = []
+    try:
+        if image_annotator_value:
+            logger.info(f"Extracting labels from image_annotator: {type(image_annotator_value)}")
+            
+            # Handle different possible structures of image_annotator_value
+            annotations = None
+            if isinstance(image_annotator_value, dict):
+                # Try different possible keys
+                annotations = (image_annotator_value.get('annotations') or 
+                             image_annotator_value.get('shapes') or 
+                             image_annotator_value.get('boxes') or [])
+                logger.info(f"Found annotations in dict: {len(annotations) if annotations else 0}")
+            elif isinstance(image_annotator_value, list):
+                annotations = image_annotator_value
+                logger.info(f"Image annotator value is list with {len(annotations)} items")
+            
+            if annotations:
+                for i, shape in enumerate(annotations):
+                    logger.info(f"Processing shape {i}: {type(shape)}")
+                    if isinstance(shape, dict):
+                        # Try different possible label keys
+                        label = (shape.get('label') or 
+                                shape.get('name') or 
+                                shape.get('class_name') or 
+                                shape.get('type'))
+                        logger.info(f"Shape {i} label: {label}")
+                        if label and str(label).strip() and label not in current_labels:
+                            current_labels.append(str(label).strip())
+                    
+        logger.info(f"Extracted {len(current_labels)} unique labels: {current_labels}")
+        return current_labels
+    except Exception as e:
+        logger.error(f"Error extracting labels from image_annotator: {e}")
+        return []
+
+def create_labels_dataset_samples(labels):
+    """Create samples for gr.Dataset displaying labels as clickable items"""
+    if not labels:
+        logger.info("No labels provided, returning empty samples")
+        return []
+    
+    # gr.Dataset with empty components still expects samples as list of lists
+    # Each inner list represents one row, with one element per row for labels
+    samples = []
+    for label in labels:
+        clean_label = str(label).strip()
+        if clean_label:
+            samples.append([clean_label])  # Wrapped in list for Dataset format
+    
+    logger.info(f"Created {len(samples)} dataset samples: {[s[0] for s in samples]}")
+    return samples
+
+def get_suggested_labels_for_slice(slice_index):
+    """Get suggested labels for a specific slice"""
+    global SLICE_SUGGESTED_LABELS
+    slice_key = str(slice_index)
+    if slice_key in SLICE_SUGGESTED_LABELS:
+        logger.info(f"Retrieved {len(SLICE_SUGGESTED_LABELS[slice_key])} suggested labels for slice {slice_index}")
+        return create_labels_dataset_samples(SLICE_SUGGESTED_LABELS[slice_key])
+    else:
+        logger.info(f"No suggested labels found for slice {slice_index}")
+        return []
+
+def store_suggested_labels_for_slice(slice_index, labels):
+    """Store suggested labels for a specific slice"""
+    global SLICE_SUGGESTED_LABELS
+    slice_key = str(slice_index)
+    SLICE_SUGGESTED_LABELS[slice_key] = labels
+    logger.info(f"Stored {len(labels)} suggested labels for slice {slice_index}: {labels}")
+
+def create_medgemma_label_suggestions(image_annotator_value, slice_index=None):
+    """Generate label suggestions using MedGemma and return as dataset samples"""
+    try:
+        # Import the MedGemma handlers
+        from .medgemma_handlers import MedGemmaHandlers
+        from .state import AppState
+        
+        # Create a temporary state and handler for the suggestion
+        temp_state = AppState()
+        medgemma_handler = MedGemmaHandlers(temp_state)
+        
+        # Get label suggestions using MedGemma
+        suggestions_text = medgemma_handler.suggest_labels_for_annotations(image_annotator_value)
+        
+        # Parse the suggestions text to extract individual labels
+        suggestions = []
+        if suggestions_text and ("MedGemma" in suggestions_text or "label" in suggestions_text.lower()):
+            # Extract the actual suggestions part
+            content = suggestions_text.replace("MedGemma Label Suggestions:", "").strip()
+            content = content.replace("MedGemma could not generate", "").strip()
+            
+            # Split by common delimiters and clean up
+            potential_labels = []
+            for delimiter in [',', ';', '\n', '\t']:
+                if delimiter in content:
+                    potential_labels.extend([label.strip() for label in content.split(delimiter)])
+                    break
+            else:
+                # If no delimiters found, split by spaces and look for likely labels
+                potential_labels = content.split()
+            
+            # Clean and filter the labels
+            for label in potential_labels:
+                cleaned_label = label.strip('.,;()[]{}"\' \n\t')
+                if (cleaned_label and 
+                    len(cleaned_label) > 1 and 
+                    len(cleaned_label) < 20 and 
+                    cleaned_label.lower() not in ['the', 'and', 'or', 'in', 'on', 'at', 'to', 'for', 'of', 'with']):
+                    suggestions.append(cleaned_label)
+        
+        # Limit to 10 suggestions and create dataset samples
+        final_suggestions = suggestions[:10]
+        
+        # Store suggestions for this slice if slice_index is provided
+        if slice_index is not None:
+            store_suggested_labels_for_slice(slice_index, final_suggestions)
+        
+        return create_labels_dataset_samples(final_suggestions)
+        
+    except Exception as e:
+        logger.error(f"Error generating MedGemma label suggestions: {e}")
+        return []
+
+def create_other_vlm_label_suggestions(vlm_model, image_annotator_value, slice_index=None):
+    """Generate label suggestions using other VLM models and return as dataset samples"""
+    try:
+        suggestions = []
+        
+        if vlm_model == "SmolVLM":
+            from .smolvlm_handlers import SmolVLMHandlers
+            from .state import AppState
+            temp_state = AppState()
+            handler = SmolVLMHandlers(temp_state)
+            # SmolVLM doesn't have specific label suggestion method, use general inference
+            response = handler.run_vlm_inference(image_annotator_value, True, False)
+            
+        elif vlm_model == "Med-R1":
+            from .med_r1_handlers import MedR1Handlers
+            from .state import AppState
+            temp_state = AppState()
+            handler = MedR1Handlers(temp_state)
+            response = handler.suggest_labels_for_annotations(image_annotator_value)
+            
+        else:
+            return []
+        
+        # Parse response for potential labels
+        if response:
+            # Look for common medical terms and anatomical structures
+            medical_terms = [
+                'eye', 'tumor', 'lesion', 'ventricle', 'lvent', 'rvent', 'tvent', 
+                'cortex', 'cerebellum', 'brainstem', 'hippocampus', 'thalamus',
+                'skull', 'csf', 'white matter', 'gray matter', 'edema', 'hemorrhage'
+            ]
+            
+            response_lower = response.lower()
+            for term in medical_terms:
+                if term in response_lower and term not in suggestions:
+                    suggestions.append(term)
+                    
+            # Also try to extract labels from the response text more intelligently
+            # Split by common delimiters and clean up
+            potential_labels = []
+            for delimiter in [',', ';', '\n', '\t']:
+                if delimiter in response:
+                    potential_labels.extend([label.strip() for label in response.split(delimiter)])
+                    break
+            else:
+                # If no delimiters found, split by spaces and look for likely labels
+                potential_labels = response.split()
+            
+            # Clean and filter additional labels
+            for label in potential_labels:
+                cleaned_label = label.strip('.,;()[]{}"\' \n\t')
+                if (cleaned_label and 
+                    len(cleaned_label) > 2 and 
+                    len(cleaned_label) < 15 and 
+                    cleaned_label.lower() not in ['the', 'and', 'or', 'in', 'on', 'at', 'to', 'for', 'of', 'with'] and
+                    cleaned_label not in suggestions):
+                    suggestions.append(cleaned_label)
+        
+        # Limit to 8 suggestions and create dataset samples
+        final_suggestions = suggestions[:8]
+        
+        # Store suggestions for this slice if slice_index is provided
+        if slice_index is not None:
+            store_suggested_labels_for_slice(slice_index, final_suggestions)
+        
+        return create_labels_dataset_samples(final_suggestions)
+        
+    except Exception as e:
+        logger.error(f"Error generating {vlm_model} label suggestions: {e}")
+        return []
+
 def create_editor_tab() -> dict:
     """Create the complete editor tab layout"""
     with gr.TabItem("Editor"):
@@ -704,7 +887,48 @@ def create_editor_tab() -> dict:
                     next_btn = gr.Button("Next")
                 with gr.Row():
                     slice_text = gr.Textbox(label="Slice", interactive=False, visible=False)
-                    crosshair_info = gr.Textbox(label="Crosshair", interactive=True, visible=False)                # VLM (Visual Language Model) Tools Section
+                    crosshair_info = gr.Textbox(label="Crosshair", interactive=True, visible=False)
+                
+                # Label Management Section
+                with gr.Accordion("Label Management", open=True):
+                    # Current Labels Section
+                    # gr.Markdown("**Current Labels**")
+                    with gr.Row():
+                        current_labels_dataset = gr.Dataset(
+                            label="Current Labels",
+                            components=[gr.Text(visible=False)],  # Simple text component for displaying labels
+                            samples=[],
+                            type="index",
+                            samples_per_page=10
+                        )
+                    
+                    # Suggested Labels Section
+                    gr.Markdown("**Suggested Labels**")
+                    
+                    with gr.Row():
+                        suggested_labels_dataset = gr.Dataset(
+                            label="Suggested Labels",
+                            components=[gr.Text(visible=False)],  # Simple text component for displaying labels
+                            samples=[],
+                            type="index",
+                            samples_per_page=10
+                        )  
+                        
+                    with gr.Row():
+                        suggested_vlm_selector = gr.Dropdown(
+                            choices=["SmolVLM", "Med-R1", "MedGemma-4B"],
+                            value="MedGemma-4B",  # Default selected value
+                            label="VLM for Label Suggestions",
+                            scale=2
+                        )
+                        suggest_labels_btn = gr.Button(
+                            "🏷️ Suggest Labels using VLM", 
+                            variant="primary", 
+                            size="lg",
+                            scale=1
+                        )                       
+                        
+                        # VLM (Visual Language Model) Tools Section
                 #gr.Markdown("### VLM Tools")
                 with gr.Accordion("VLM Tools", open=False):
                     with gr.Row(elem_classes="vlm-row"):
@@ -761,7 +985,7 @@ def create_editor_tab() -> dict:
                 with gr.Accordion("Metadata", open=False):
                     metadata_display = gr.JSON(label=None, visible=True)
                 
-                col2 = (error_display, metadata_display, view_selector, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, vlm_model_selector, vlm_run_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn)
+                col2 = (error_display, metadata_display, view_selector, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, current_labels_dataset, suggested_vlm_selector, suggest_labels_btn, suggested_labels_dataset, vlm_model_selector, vlm_run_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn)
             
             # Column 3: Annotate with AI Models
             with gr.Column(scale=1):
