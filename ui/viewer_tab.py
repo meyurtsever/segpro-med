@@ -253,8 +253,8 @@ def create_viewer_tab() -> tuple:
                     next_btn = gr.Button("Next")
                 
                 with gr.Row():
-                    slice_text = gr.Textbox(label="Slice", interactive=False)
-                    crosshair_info = gr.Textbox(label="Crosshair", interactive=False)
+                    slice_text = gr.Textbox(label="Slice", interactive=False, visible=False)
+                    crosshair_info = gr.Textbox(label="Crosshair", interactive=False, visible=False)
                 
                 # Segmentation tools integrated in the middle column
                 seg_components = create_segmentation_tools_section()

@@ -1,0 +1,78 @@
+{
+  "mri_label_suggestions": {
+    "title": "MRI Label Suggestion Prompt",
+    "description": "Specialized prompt for generating anatomical structure labels in MRI scans",
+    "prompt": "You are an expert radiologist examining an MRI scan. Please analyze this medical image and suggest appropriate anatomical labels for the visible structures. For each structure you identify, provide:\n\n1. Structure name (e.g., 'Gray Matter', 'White Matter', 'Cerebrospinal Fluid')\n2. Approximate location or region\n3. Confidence level (High/Medium/Low)\n4. Clinical significance if relevant\n\nFocus on clearly visible and clinically relevant anatomical structures. If pathological findings are visible, note them separately.\n\nFormat your response as a structured list with clear labels and descriptions.",
+    "use_cases": [
+      "Anatomical structure identification",
+      "Educational labeling",
+      "Clinical documentation support",
+      "Radiology training assistance"
+    ],
+    "parameters": {
+      "max_tokens": 512,
+      "temperature": 0.3,
+      "focus": "anatomical_structures"
+    }
+  },
+  "brain_region_analysis": {
+    "title": "Brain Region Analysis",
+    "description": "Detailed analysis of specific brain regions in MRI",
+    "prompt": "As a neuroradiologist, examine this brain MRI slice and provide a detailed analysis of the visible brain regions. Include:\n\n- Primary anatomical structures visible\n- Tissue types (gray matter, white matter, CSF)\n- Anatomical landmarks\n- Symmetry assessment\n- Any notable features or variants\n\nProvide precise anatomical terminology and clinical context where appropriate.",
+    "use_cases": [
+      "Neuroanatomical education",
+      "Clinical assessment",
+      "Research documentation"
+    ],
+    "parameters": {
+      "max_tokens": 400,
+      "temperature": 0.2,
+      "focus": "brain_anatomy"
+    }
+  },
+  "pathology_detection": {
+    "title": "Pathology Detection and Description",
+    "description": "Identify and describe potential pathological findings",
+    "prompt": "Examine this MRI image as an experienced radiologist looking for pathological findings. Report:\n\n1. Normal anatomical structures present\n2. Any abnormal signal intensities or lesions\n3. Structural abnormalities or mass effects\n4. Vascular changes if visible\n5. Overall assessment and recommendations\n\nUse appropriate medical terminology and indicate confidence levels for any findings. If no pathology is evident, state this clearly.",
+    "use_cases": [
+      "Clinical diagnosis support",
+      "Pathology screening",
+      "Educational case review"
+    ],
+    "parameters": {
+      "max_tokens": 600,
+      "temperature": 0.1,
+      "focus": "pathology_assessment"
+    }
+  },
+  "educational_description": {
+    "title": "Educational MRI Description",
+    "description": "Comprehensive educational description suitable for medical students",
+    "prompt": "Describe this MRI brain slice in detail for medical education purposes. Include:\n\n**Imaging Parameters:**\n- Apparent sequence type (T1, T2, FLAIR, etc.)\n- Image orientation and plane\n\n**Anatomical Structures:**\n- Major brain regions visible\n- Tissue contrast and characteristics\n- Anatomical landmarks\n\n**Educational Points:**\n- Key learning objectives\n- Important anatomical relationships\n- Clinical correlations\n\nMake this accessible to medical students while maintaining accuracy.",
+    "use_cases": [
+      "Medical education",
+      "Teaching case preparation",
+      "Student assessment"
+    ],
+    "parameters": {
+      "max_tokens": 500,
+      "temperature": 0.4,
+      "focus": "educational_content"
+    }
+  },
+  "technical_analysis": {
+    "title": "Technical Image Analysis",
+    "description": "Technical assessment of MRI image quality and characteristics",
+    "prompt": "Provide a technical analysis of this MRI image focusing on:\n\n**Image Quality:**\n- Resolution and clarity\n- Artifacts present (if any)\n- Contrast quality\n\n**Technical Assessment:**\n- Likely sequence parameters\n- Tissue contrast characteristics\n- Image orientation and positioning\n\n**Recommendations:**\n- Suitability for diagnostic purposes\n- Suggestions for optimization (if needed)\n\nFocus on technical imaging aspects rather than clinical interpretation.",
+    "use_cases": [
+      "Image quality assessment",
+      "Technical validation",
+      "Protocol optimization"
+    ],
+    "parameters": {
+      "max_tokens": 350,
+      "temperature": 0.2,
+      "focus": "technical_assessment"
+    }
+  }
+}

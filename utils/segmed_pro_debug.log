@@ -8690,3 +8690,205 @@ ValueError: No DICOM files found in directory: E:\Gazi\TR_TBP_Anonymised_enc\Ano
 2025-07-25 15:29:04,563 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
 2025-07-25 15:29:04,564 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm
 2025-07-25 15:29:04,565 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm
+2025-07-25 15:42:30,097 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-07-25 15:42:30,099 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-07-25 15:42:30,100 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-07-25 15:42:30,100 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-07-25 15:42:30,101 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-07-25 15:42:30,102 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-07-25 15:42:30,103 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-07-25 15:42:30,104 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-07-25 15:42:30,104 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-07-25 15:42:30,105 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341775486333211_MR.dcm
+2025-07-25 15:42:30,106 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-07-25 15:42:30,107 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-07-25 15:42:30,108 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-07-25 15:42:30,108 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-07-25 15:42:30,109 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-07-25 15:42:30,110 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-07-25 15:42:30,111 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-07-25 15:42:30,111 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
+2025-07-25 15:42:30,112 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm
+2025-07-25 15:42:30,113 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm
+2025-07-25 15:48:06,980 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-07-25 15:48:06,982 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-07-25 15:48:06,984 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-07-25 15:48:06,985 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-07-25 15:48:06,986 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-07-25 15:48:06,987 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-07-25 15:48:06,988 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-07-25 15:48:06,989 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-07-25 15:48:06,990 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-07-25 15:48:06,991 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341775486333211_MR.dcm
+2025-07-25 15:48:06,992 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-07-25 15:48:06,993 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-07-25 15:48:06,995 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-07-25 15:48:06,996 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-07-25 15:48:06,997 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-07-25 15:48:06,998 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-07-25 15:48:07,000 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-07-25 15:48:07,000 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
+2025-07-25 15:48:07,002 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm
+2025-07-25 15:48:07,002 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm
+2025-07-25 15:48:42,973 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (50)\flair\1.3.12.2.1107.5.2.36.40496.2019082819562899161340784_MR.dcm
+2025-07-25 15:48:42,982 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (50)\flair\1.3.12.2.1107.5.2.36.40496.2019082819562913056140789_MR.dcm
+2025-07-25 15:48:42,988 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (50)\flair\1.3.12.2.1107.5.2.36.40496.2019082819562927545240795_MR.dcm
+2025-07-25 15:48:42,994 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (50)\flair\1.3.12.2.1107.5.2.36.40496.2019082819562941182240800_MR.dcm
+2025-07-25 15:48:43,000 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (50)\flair\1.3.12.2.1107.5.2.36.40496.2019082819562956420940805_MR.dcm
+2025-07-25 15:48:43,005 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (50)\flair\1.3.12.2.1107.5.2.36.40496.2019082819562970785940810_MR.dcm
+2025-07-25 15:48:43,011 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (50)\flair\1.3.12.2.1107.5.2.36.40496.2019082819562984848140815_MR.dcm
+2025-07-25 15:48:43,018 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (50)\flair\1.3.12.2.1107.5.2.36.40496.2019082819562998977640820_MR.dcm
+2025-07-25 15:48:43,025 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (50)\flair\1.3.12.2.1107.5.2.36.40496.2019082819563013901940825_MR.dcm
+2025-07-25 15:48:43,032 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (50)\flair\1.3.12.2.1107.5.2.36.40496.2019082819563027979740830_MR.dcm
+2025-07-25 15:48:43,038 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (50)\flair\1.3.12.2.1107.5.2.36.40496.2019082819563041576240835_MR.dcm
+2025-07-25 15:48:43,044 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (50)\flair\1.3.12.2.1107.5.2.36.40496.2019082819574098185540840_MR.dcm
+2025-07-25 15:48:43,050 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (50)\flair\1.3.12.2.1107.5.2.36.40496.2019082819574112643940845_MR.dcm
+2025-07-25 15:48:43,056 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (50)\flair\1.3.12.2.1107.5.2.36.40496.2019082819574127013240850_MR.dcm
+2025-07-25 15:48:43,061 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (50)\flair\1.3.12.2.1107.5.2.36.40496.2019082819574141486040855_MR.dcm
+2025-07-25 15:48:43,067 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (50)\flair\1.3.12.2.1107.5.2.36.40496.2019082819574155357140860_MR.dcm
+2025-07-25 15:48:43,072 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (50)\flair\1.3.12.2.1107.5.2.36.40496.2019082819574170141540865_MR.dcm
+2025-07-25 15:48:43,078 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (50)\flair\1.3.12.2.1107.5.2.36.40496.2019082819574184035340870_MR.dcm
+2025-07-25 15:48:43,083 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (50)\flair\1.3.12.2.1107.5.2.36.40496.2019082819574198965540875_MR.dcm
+2025-07-25 15:48:43,089 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (50)\flair\1.3.12.2.1107.5.2.36.40496.2019082819574212898340880_MR.dcm
+2025-07-25 15:48:43,095 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (50)\flair\1.3.12.2.1107.5.2.36.40496.2019082819574227651940885_MR.dcm
+2025-07-25 15:48:43,100 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (50)\flair\1.3.12.2.1107.5.2.36.40496.2019082819574241639140890_MR.dcm
+2025-07-25 15:48:50,317 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (26)\flair\1.3.12.2.1107.5.2.18.42451.2018122120252063965447016_MR.dcm
+2025-07-25 15:48:50,324 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (26)\flair\1.3.12.2.1107.5.2.18.42451.2018122120252064102347017_MR.dcm
+2025-07-25 15:48:50,331 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (26)\flair\1.3.12.2.1107.5.2.18.42451.2018122120252064436947020_MR.dcm
+2025-07-25 15:48:50,337 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (26)\flair\1.3.12.2.1107.5.2.18.42451.2018122120252064671347021_MR.dcm
+2025-07-25 15:48:50,342 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (26)\flair\1.3.12.2.1107.5.2.18.42451.2018122120252065208347028_MR.dcm
+2025-07-25 15:48:50,347 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (26)\flair\1.3.12.2.1107.5.2.18.42451.2018122120252065359047029_MR.dcm
+2025-07-25 15:48:50,352 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (26)\flair\1.3.12.2.1107.5.2.18.42451.2018122120252065856647030_MR.dcm
+2025-07-25 15:48:50,357 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (26)\flair\1.3.12.2.1107.5.2.18.42451.2018122120252066116047033_MR.dcm
+2025-07-25 15:48:50,363 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (26)\flair\1.3.12.2.1107.5.2.18.42451.2018122120252066226847034_MR.dcm
+2025-07-25 15:48:50,369 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (26)\flair\1.3.12.2.1107.5.2.18.42451.2018122120252067148047035_MR.dcm
+2025-07-25 15:48:50,374 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (26)\flair\1.3.12.2.1107.5.2.18.42451.2018122120263983921347045_MR.dcm
+2025-07-25 15:48:50,380 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (26)\flair\1.3.12.2.1107.5.2.18.42451.20181221202640158747050_MR.dcm
+2025-07-25 15:48:50,385 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (26)\flair\1.3.12.2.1107.5.2.18.42451.2018122120264018213947055_MR.dcm
+2025-07-25 15:48:50,389 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (26)\flair\1.3.12.2.1107.5.2.18.42451.2018122120264036083547060_MR.dcm
+2025-07-25 15:48:50,395 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (26)\flair\1.3.12.2.1107.5.2.18.42451.2018122120264057809147065_MR.dcm
+2025-07-25 15:48:50,400 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (26)\flair\1.3.12.2.1107.5.2.18.42451.2018122120264073471347070_MR.dcm
+2025-07-25 15:48:50,404 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (26)\flair\1.3.12.2.1107.5.2.18.42451.2018122120264091659047075_MR.dcm
+2025-07-25 15:48:50,410 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (26)\flair\1.3.12.2.1107.5.2.18.42451.2018122120264126492947083_MR.dcm
+2025-07-25 15:48:50,415 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (26)\flair\1.3.12.2.1107.5.2.18.42451.2018122120264147266247086_MR.dcm
+2025-07-25 15:48:50,421 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (26)\flair\1.3.12.2.1107.5.2.18.42451.201812212026418510747080_MR.dcm
+2025-07-25 15:54:01,351 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-07-25 15:54:01,354 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-07-25 15:54:01,355 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-07-25 15:54:01,357 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-07-25 15:54:01,358 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-07-25 15:54:01,359 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-07-25 15:54:01,361 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-07-25 15:54:01,362 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-07-25 15:54:01,364 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-07-25 15:54:01,365 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341775486333211_MR.dcm
+2025-07-25 15:54:01,366 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-07-25 15:54:01,368 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-07-25 15:54:01,369 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-07-25 15:54:01,370 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-07-25 15:54:01,372 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-07-25 15:54:01,373 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-07-25 15:54:01,374 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-07-25 15:54:01,375 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
+2025-07-25 15:54:01,377 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm
+2025-07-25 15:54:01,378 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm
+2025-07-25 15:57:00,343 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-07-25 15:57:00,345 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-07-25 15:57:00,346 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-07-25 15:57:00,347 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-07-25 15:57:00,348 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-07-25 15:57:00,348 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-07-25 15:57:00,349 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-07-25 15:57:00,350 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-07-25 15:57:00,351 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-07-25 15:57:00,352 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341775486333211_MR.dcm
+2025-07-25 15:57:00,353 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-07-25 15:57:00,354 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-07-25 15:57:00,354 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-07-25 15:57:00,355 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-07-25 15:57:00,356 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-07-25 15:57:00,356 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-07-25 15:57:00,357 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-07-25 15:57:00,358 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
+2025-07-25 15:57:00,359 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm
+2025-07-25 15:57:00,360 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm
+2025-07-25 16:04:45,568 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-07-25 16:04:45,570 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-07-25 16:04:45,571 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-07-25 16:04:45,572 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-07-25 16:04:45,573 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-07-25 16:04:45,573 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-07-25 16:04:45,574 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-07-25 16:04:45,575 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-07-25 16:04:45,576 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-07-25 16:04:45,577 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341775486333211_MR.dcm
+2025-07-25 16:04:45,578 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-07-25 16:04:45,579 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-07-25 16:04:45,580 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-07-25 16:04:45,581 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-07-25 16:04:45,581 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-07-25 16:04:45,582 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-07-25 16:04:45,583 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-07-25 16:04:45,584 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
+2025-07-25 16:04:45,585 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm
+2025-07-25 16:04:45,586 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm
+2025-07-25 17:10:28,048 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-07-25 17:10:28,052 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-07-25 17:10:28,055 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-07-25 17:10:28,058 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-07-25 17:10:28,061 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-07-25 17:10:28,063 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-07-25 17:10:28,064 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-07-25 17:10:28,066 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-07-25 17:10:28,067 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-07-25 17:10:28,068 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341775486333211_MR.dcm
+2025-07-25 17:10:28,069 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-07-25 17:10:28,071 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-07-25 17:10:28,072 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-07-25 17:10:28,074 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-07-25 17:10:28,075 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-07-25 17:10:28,077 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-07-25 17:10:28,079 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-07-25 17:10:28,080 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
+2025-07-25 17:10:28,082 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm
+2025-07-25 17:10:28,083 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm
+2025-07-25 17:14:22,779 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-07-25 17:14:22,781 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-07-25 17:14:22,782 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-07-25 17:14:22,784 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-07-25 17:14:22,785 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-07-25 17:14:22,786 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-07-25 17:14:22,787 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-07-25 17:14:22,789 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-07-25 17:14:22,790 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-07-25 17:14:22,791 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341775486333211_MR.dcm
+2025-07-25 17:14:22,792 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-07-25 17:14:22,793 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-07-25 17:14:22,794 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-07-25 17:14:22,796 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-07-25 17:14:22,797 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-07-25 17:14:22,798 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-07-25 17:14:22,799 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-07-25 17:14:22,800 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
+2025-07-25 17:14:22,801 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm
+2025-07-25 17:14:22,802 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm
+2025-07-25 17:18:14,563 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-07-25 17:18:14,564 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-07-25 17:18:14,566 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-07-25 17:18:14,566 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-07-25 17:18:14,567 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-07-25 17:18:14,568 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-07-25 17:18:14,569 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-07-25 17:18:14,570 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-07-25 17:18:14,571 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-07-25 17:18:14,571 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341775486333211_MR.dcm
+2025-07-25 17:18:14,572 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-07-25 17:18:14,573 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-07-25 17:18:14,574 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-07-25 17:18:14,574 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-07-25 17:18:14,575 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-07-25 17:18:14,576 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-07-25 17:18:14,577 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-07-25 17:18:14,577 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
+2025-07-25 17:18:14,578 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm
+2025-07-25 17:18:14,579 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm

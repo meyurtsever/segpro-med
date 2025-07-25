@@ -81,6 +81,8 @@ from ui.medsam2_handlers import MEDSAM2Handlers
 from ui.custom_annotator_handlers import CustomAnnotatorHandlers
 from ui.smolvlm_handlers import SmolVLMHandlers
 from ui.med_r1_handlers import MedR1Handlers
+from ui.medgemma_handlers import MedGemmaHandlers
+from ui.medgemma_handlers import MedGemmaHandlers
 from ui.patient_retrieval_handlers import PatientRetrievalHandlers
 
 
@@ -109,6 +111,8 @@ class SegMedPro:
         self.editor_medsam2_handlers = MEDSAM2Handlers(self.state)
         self.editor_smolvlm_handlers = SmolVLMHandlers(self.state)
         self.editor_med_r1_handlers = MedR1Handlers(self.state)
+        self.editor_medgemma_handlers = MedGemmaHandlers(self.state)
+        self.editor_medgemma_handlers = MedGemmaHandlers(self.state)
         
         # Connect editor-specific handlers (only editor tab gets AI functionality)
         self.editor_image_handlers.medsam2_handlers = self.editor_medsam2_handlers
@@ -120,6 +124,7 @@ class SegMedPro:
         self.medsam2_handlers = self.editor_medsam2_handlers
         self.smolvlm_handlers = self.editor_smolvlm_handlers
         self.med_r1_handlers = self.editor_med_r1_handlers
+        self.medgemma_handlers = self.editor_medgemma_handlers
         
         # Preload SmolVLM service in background for instant availability
         self._preload_vlm_service()
@@ -675,7 +680,7 @@ class SegMedPro:
         # Unpack components
         (file_input, dir_input, load_btn, reset_dir_btn, file_browser, label_file,
          metadata_display_dl, error_display_dl, window_level, window_width, apply_window_btn, debug_btn) = data_loading
-        (error_display, metadata_display, view_selector, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, vlm_btn, vlm_med_r1_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn) = visualization        
+        (error_display, metadata_display, view_selector, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, vlm_model_selector, vlm_run_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn) = visualization        
         (point_prompt_checkbox, box_prompt_checkbox, coordinates_text, clear_coords_btn, ai_model_selector, 
          processing_mode, score_threshold,
          output_dir, save_visualizations, device_selector, 
@@ -1007,15 +1012,31 @@ class SegMedPro:
             fn=handle_annotation_workflow,
             inputs=[output_dir, save_visualizations, device_selector, processing_mode, score_threshold, image_display],
             outputs=[annotation_status, image_display, viewer_3d]
-        )          # VLM button handler for slice captioning (EDITOR-SPECIFIC)
-        vlm_btn.click(
-            fn=self.editor_smolvlm_handlers.run_vlm_inference,
-            inputs=[image_display, vlm_prompt_anomalies, vlm_prompt_describe],
-            outputs=[vlm_caption]
-        )        # Med-R1 button handler for medical image analysis (EDITOR-SPECIFIC)
-        vlm_med_r1_btn.click(
-            fn=self.editor_med_r1_handlers.run_med_r1_inference,
-            inputs=[image_display, vlm_prompt_anomalies, vlm_prompt_describe],
+        )          # Unified VLM handler for all models (EDITOR-SPECIFIC)
+        def handle_vlm_inference(vlm_model, image_display, identify_anomalies, describe_slice):
+            """Handle VLM inference based on selected model"""
+            try:
+                if vlm_model == "SmolVLM":
+                    return self.editor_smolvlm_handlers.run_vlm_inference(
+                        image_display, identify_anomalies, describe_slice
+                    )
+                elif vlm_model == "Med-R1":
+                    return self.editor_med_r1_handlers.run_med_r1_inference(
+                        image_display, identify_anomalies, describe_slice
+                    )
+                elif vlm_model == "MedGemma-4B":
+                    return self.editor_medgemma_handlers.run_vlm_inference(
+                        image_display, identify_anomalies, describe_slice
+                    )
+                else:
+                    return f"Unknown VLM model: {vlm_model}"
+            except Exception as e:
+                logger.error(f"Error in VLM inference: {e}")
+                return f"Error during VLM analysis: {str(e)}"
+
+        vlm_run_btn.click(
+            fn=handle_vlm_inference,
+            inputs=[vlm_model_selector, image_display, vlm_prompt_anomalies, vlm_prompt_describe],
             outputs=[vlm_caption]
         )
         

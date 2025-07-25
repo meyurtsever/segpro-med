@@ -703,43 +703,54 @@ def create_editor_tab() -> dict:
                     )
                     next_btn = gr.Button("Next")
                 with gr.Row():
-                    slice_text = gr.Textbox(label="Slice", interactive=False)
-                    crosshair_info = gr.Textbox(label="Crosshair", interactive=True)                # VLM (Visual Language Model) for Slice Captioning
-                with gr.Row(elem_classes="vlm-row"):
-                    vlm_btn = gr.Button("Run SmolVLM", variant="primary", size="lg", scale=1)
-                    vlm_med_r1_btn = gr.Button("Run Med-R1 VLM", variant="secondary", size="lg", scale=1)
-                    vlm_prompt_anomalies = gr.Checkbox(
-                        label="Identify Anomalies",
-                        value=True,  # Default selected
-                        info="Focus on identifying abnormal regions",
-                        scale=1
-                    )
-                    vlm_prompt_describe = gr.Checkbox(
-                        label="Describe MRI Slice", 
-                        value=False,
-                        info="General description of anatomical structures",
-                        scale=1
-                    )
-                
-                # VLM Label Suggestion for Annotations
-                with gr.Row(elem_classes="vlm-row"):
-                    vlm_suggest_labels_btn = gr.Button(                        "🏷️ Suggest Labels (VLM)", 
-                        variant="secondary", 
-                        size="lg", 
-                        scale=2,
-                        #info="Analyze annotations and suggest semantic labels"
-                    )
-                    gr.HTML("<div style='flex: 1;'></div>")  # Spacer to maintain layout
+                    slice_text = gr.Textbox(label="Slice", interactive=False, visible=False)
+                    crosshair_info = gr.Textbox(label="Crosshair", interactive=True, visible=False)                # VLM (Visual Language Model) Tools Section
+                #gr.Markdown("### VLM Tools")
+                with gr.Accordion("VLM Tools", open=False):
+                    with gr.Row(elem_classes="vlm-row"):
+                        vlm_model_selector = gr.Dropdown(
+                            choices=["SmolVLM", "Med-R1", "MedGemma-4B"],
+                            value="MedGemma-4B",  # Default selected value
+                            label="VLM Model",
+                            scale=1
+                        )
+                        with gr.Row(elem_classes="vlm-options-row"):
+                            vlm_prompt_anomalies = gr.Checkbox(
+                                label="Identify Anomalies",
+                                value=True,  # Default selected
+                                info="Focus on identifying abnormal regions",
+                                scale=2
+                            )
+                            vlm_prompt_describe = gr.Checkbox(
+                                label="Describe MRI Slice", 
+                                value=False,
+                                info="General description of anatomical structures",
+                                scale=2
+                            )
+                        vlm_run_btn = gr.Button("🔍 Get Medical Analysis", variant="primary", size="lg", scale=1)
+                        
                     
-                with gr.Row():
-                    vlm_caption = gr.Textbox(
-                        label="VLM Analysis",
-                        interactive=False,
-                        placeholder="Click 'Run SmolVLM', 'Run Med-R1 VLM', or 'Suggest Labels (VLM)' to generate analysis...",
-                        scale=1,
-                        elem_classes="vlm-caption-text",
-                        lines=4
-                    )
+                    
+                    # VLM Label Suggestion for Annotations
+                    with gr.Row(elem_classes="vlm-row"):
+                        vlm_suggest_labels_btn = gr.Button(                        "🏷️ Suggest Labels (VLM)", 
+                            variant="secondary", 
+                            size="lg", 
+                            scale=2,
+                            #info="Analyze annotations and suggest semantic labels"
+                            visible=False
+                        )
+                        gr.HTML("<div style='flex: 1;'></div>")  # Spacer to maintain layout
+                        
+                    with gr.Row():
+                        vlm_caption = gr.Textbox(
+                            label="VLM Analysis",
+                            interactive=False,
+                            placeholder="Click 'Get Medical Analysis' or 'Suggest Labels (VLM)' to generate analysis...",
+                            scale=1,
+                            elem_classes="vlm-caption-text",
+                            lines=4
+                        )
                 
                 # VLM Prompt Selection
                 #with gr.Row():
@@ -750,7 +761,7 @@ def create_editor_tab() -> dict:
                 with gr.Accordion("Metadata", open=False):
                     metadata_display = gr.JSON(label=None, visible=True)
                 
-                col2 = (error_display, metadata_display, view_selector, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, vlm_btn, vlm_med_r1_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn)
+                col2 = (error_display, metadata_display, view_selector, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, vlm_model_selector, vlm_run_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn)
             
             # Column 3: Annotate with AI Models
             with gr.Column(scale=1):
