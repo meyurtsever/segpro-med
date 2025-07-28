@@ -1,0 +1,5 @@
+id,password,role,expert_score
+admin1,adminpass,admin,5.0
+john_doe,pass123,expert,4.2
+jane_smith,expert456,expert,4.5
+mike_wilson,mike789,expert,3.8

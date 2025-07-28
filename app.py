@@ -11,6 +11,10 @@ import os
 import sys
 import threading
 
+# ===== CROWDSOURCING CONFIGURATION =====
+ENABLE_AUTH = True  # Set to False to disable authentication and crowdsourcing features
+# =======================================
+
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -87,6 +91,12 @@ from ui.medgemma_handlers import MedGemmaHandlers
 from ui.medgemma_handlers import MedGemmaHandlers
 from ui.patient_retrieval_handlers import PatientRetrievalHandlers
 
+# Crowdsourcing imports (only imported if authentication is enabled)
+if ENABLE_AUTH:
+    from ui.login_tab import create_login_interface
+    from ui.management_tab import create_management_tab
+    from ui.contribute_tab import create_contribute_tab
+
 
 class SegMedPro:
     """Main application class for SegMed-Pro"""
@@ -95,8 +105,15 @@ class SegMedPro:
         """Initialize the application"""
         # Initialize application state
         self.state = AppState()
-          # Initialize checkbox state tracking
-        self._point_checkbox_state = False        # Initialize SHARED handlers that can be used across tabs without interference
+        
+        # Crowdsourcing state
+        self.current_user = None
+        self.crowdsourcing_mode = False
+        
+        # Initialize checkbox state tracking
+        self._point_checkbox_state = False
+        
+        # Initialize SHARED handlers that can be used across tabs without interference
         self.data_handlers = DataLoadingHandlers(self.state)
         self.conversion_handlers = ConversionHandlers(self.state)
         self.label_manager_handlers = LabelManagerHandlers(self.state)
@@ -139,6 +156,273 @@ class SegMedPro:
         
     def build_interface(self):
         """Build the complete Gradio interface"""
+        if ENABLE_AUTH:
+            return self._build_authenticated_interface()
+        else:
+            return self._build_standard_interface()
+    
+    def _build_authenticated_interface(self):
+        """Build interface with authentication and crowdsourcing features"""
+        custom_css = """
+        .vlm-caption-text textarea {
+            font-size: 16px !important;
+            line-height: 1.4 !important;
+        }
+        /* Ensure consistent heights for VLM row components */
+        .vlm-row {
+            align-items: stretch !important;
+        }
+        .vlm-row > * {
+            height: 100% !important;
+        }
+        /* Make button match other component heights */
+        .vlm-row button {
+            height: auto !important;
+            min-height: 42px !important;
+        }
+        /* Ensure checkboxes align properly */
+        .vlm-row .gr-checkbox {
+            display: flex !important;
+            align-items: center !important;
+            height: 100% !important;
+        }
+        /* Style for logout button to match tab height and be red */
+        .logout-btn {
+            background-color: #dc3545 !important;
+            border-color: #dc3545 !important;
+            color: white !important;
+            height: 42px !important;
+            padding: 8px 16px !important;
+            font-size: 14px !important;
+            border-radius: 6px !important;
+        }
+        .logout-btn:hover {
+            background-color: #c82333 !important;
+            border-color: #bd2130 !important;
+        }
+        /* Align user info and logout button to the right */
+        .user-controls {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: flex-end !important;
+            gap: 12px !important;
+            padding: 8px 0 !important;
+        }
+        """
+        
+        with gr.Blocks(title="SegMed-Pro", css=custom_css) as app:
+            # Authentication state
+            is_logged_in = gr.State(False)
+            current_user_state = gr.State(None)
+            
+            # Login interface (shown initially)
+            with gr.Column(visible=True) as login_interface:
+                with gr.Row():
+                    with gr.Column(scale=1):
+                        pass  # Empty column for centering
+                    
+                    with gr.Column(scale=2):
+                        gr.Markdown("# SegMed-Pro: Medical Imaging Annotation Tool")
+                        gr.Markdown("## Please login to continue")
+                        
+                        username_input = gr.Textbox(
+                            label="Username",
+                            placeholder="Enter your username",
+                            interactive=True
+                        )
+                        
+                        password_input = gr.Textbox(
+                            label="Password",
+                            placeholder="Enter your password",
+                            type="password",
+                            interactive=True
+                        )
+                        
+                        login_btn = gr.Button("Login", variant="primary", size="lg")
+                        
+                        login_status = gr.Markdown("", visible=False)
+                        
+                        # Demo credentials info
+                        gr.Markdown("""
+                        ### Demo Credentials:
+                        **Admin:** username: `admin1`, password: `adminpass`  
+                        **Expert:** username: `john_doe`, password: `pass123`  
+                        **Expert:** username: `jane_smith`, password: `expert456`
+                        """)
+                    
+                    with gr.Column(scale=1):
+                        pass  # Empty column for centering
+            
+            # Main application interface (hidden initially)
+            with gr.Column(visible=False) as main_interface:
+                # Header with user info and logout aligned to the right
+                with gr.Row():
+                    with gr.Column(scale=8):
+                        gr.Markdown("# SegMed-Pro: Medical Imaging Annotation Tool")
+                    
+                    with gr.Column(scale=4, min_width=300, elem_classes=["user-controls"]):
+                        with gr.Row():
+                            user_info = gr.HTML(
+                                value="<span style='color: orange; font-weight: bold; font-size: 14px;'></span>",
+                                container=False
+                            )
+                            logout_btn = gr.Button(
+                                "Logout", 
+                                variant="stop",  # This gives a red button
+                                size="sm",
+                                scale=0,
+                                min_width=80,
+                                elem_classes=["logout-btn"]
+                            )
+                
+                with gr.Tabs() as tabs:
+                    # Standard tabs - revert back to normal tab creation functions
+                    viewer_components = create_viewer_tab()
+                    editor_components = create_editor_tab()
+                    conversion_components = create_conversion_tab()
+                    label_manager_components = create_label_manager_tab()
+                    
+                    # Admin-only Management tab
+                    with gr.Tab("Management", visible=False) as management_tab:
+                        management_components = create_management_tab()
+                    
+                    # Expert-only Contribute tab
+                    with gr.Tab("Contribute", visible=False) as contribute_tab:
+                        contribute_components = create_contribute_tab()
+            
+            # Login handler
+            def handle_login(username, password):
+                """Handle login and switch to main app"""
+                from auth.auth_manager import AuthManager
+                auth_manager = AuthManager()
+                
+                user_data = auth_manager.authenticate(username, password)
+                if user_data:
+                    self.current_user = user_data
+                    
+                    # Show appropriate tabs based on role
+                    management_visible = user_data['role'] == 'admin'
+                    contribute_visible = user_data['role'] == 'expert'
+                    
+                    # Create styled user display HTML
+                    user_display = f"<div style='text-align: right; padding: 8px 0;'><span style='color: orange; font-weight: bold; font-size: 14px;'>Logged in as: {username} ({user_data['role']})</span></div>"
+                    
+                    return (
+                        True,  # is_logged_in
+                        user_data,  # current_user_state
+                        gr.update(visible=False),  # Hide login interface
+                        gr.update(visible=True),   # Show main interface
+                        user_display,  # Update user info
+                        gr.update(visible=management_visible),  # Management tab
+                        gr.update(visible=contribute_visible),  # Contribute tab
+                        user_data['user_id'],  # Update contribute tab user state
+                        "Login successful!"  # Login status message
+                    )
+                else:
+                    return (
+                        False,  # is_logged_in
+                        None,   # current_user_state
+                        gr.update(visible=True),   # Keep login interface visible
+                        gr.update(visible=False),  # Keep main interface hidden
+                        "",     # user_info
+                        gr.update(visible=False),  # Management tab
+                        gr.update(visible=False),  # Contribute tab
+                        "",     # contribute user state
+                        "❌ Invalid username or password"  # Login status message
+                    )
+            
+            # Logout handler
+            def handle_logout():
+                """Handle logout and return to login screen"""
+                self.current_user = None
+                return (
+                    False,  # is_logged_in
+                    None,   # current_user_state
+                    gr.update(visible=True),   # Show login interface
+                    gr.update(visible=False),  # Hide main interface
+                    "",     # Clear user info
+                    gr.update(visible=False),  # Hide management tab
+                    gr.update(visible=False),  # Hide contribute tab
+                    "",     # Clear contribute user state
+                    "",     # Clear username
+                    "",     # Clear password
+                    ""      # Clear login status
+                )
+            
+            # Connect login
+            login_btn.click(
+                fn=handle_login,
+                inputs=[username_input, password_input],
+                outputs=[
+                    is_logged_in,
+                    current_user_state,
+                    login_interface,
+                    main_interface,
+                    user_info,
+                    management_tab,
+                    contribute_tab,
+                    contribute_components['current_user_state'],
+                    login_status
+                ]
+            ).then(
+                fn=lambda msg: gr.update(value=msg, visible=True),
+                inputs=[login_status],
+                outputs=[login_status]
+            )
+            
+            # Allow Enter key to trigger login
+            password_input.submit(
+                fn=handle_login,
+                inputs=[username_input, password_input],
+                outputs=[
+                    is_logged_in,
+                    current_user_state,
+                    login_interface,
+                    main_interface,
+                    user_info,
+                    management_tab,
+                    contribute_tab,
+                    contribute_components['current_user_state'],
+                    login_status
+                ]
+            ).then(
+                fn=lambda msg: gr.update(value=msg, visible=True),
+                inputs=[login_status],
+                outputs=[login_status]
+            )
+            
+            # Connect logout
+            logout_btn.click(
+                fn=handle_logout,
+                outputs=[
+                    is_logged_in,
+                    current_user_state,
+                    login_interface,
+                    main_interface,
+                    user_info,
+                    management_tab,
+                    contribute_tab,
+                    contribute_components['current_user_state'],
+                    username_input,
+                    password_input,
+                    login_status
+                ]
+            )
+            
+            # Connect standard handlers
+            self._connect_viewer_handlers(viewer_components)
+            self._connect_editor_handlers(editor_components)
+            self._connect_conversion_handlers(conversion_components)
+            self._connect_label_manager_handlers(label_manager_components)
+            
+            # Connect crowdsourcing handlers if contribute tab exists
+            if contribute_components:
+                self._connect_contribute_handlers(contribute_components, editor_components)
+            
+            return app
+    
+    def _build_standard_interface(self):
+        """Build standard interface without authentication"""
         custom_css = """
         .vlm-caption-text textarea {
             font-size: 16px !important;
@@ -176,7 +460,9 @@ class SegMedPro:
                 # Create label manager tab
                 label_manager_components = create_label_manager_tab()
                 # Create custom annotator tab - HIDDEN
-                # custom_annotator_components = create_custom_annotator_tab()            # Connect event handlers for viewer tab
+                # custom_annotator_components = create_custom_annotator_tab()
+            
+            # Connect event handlers for viewer tab
             self._connect_viewer_handlers(viewer_components)
             # Connect event handlers for editor tab
             self._connect_editor_handlers(editor_components)
@@ -185,7 +471,8 @@ class SegMedPro:
             # Connect event handlers for label manager tab
             self._connect_label_manager_handlers(label_manager_components)
             # Connect event handlers for custom annotator tab - HIDDEN
-            # self._connect_custom_annotator_handlers(custom_annotator_components)            
+            # self._connect_custom_annotator_handlers(custom_annotator_components)
+            
             return app
     
     def _preload_vlm_service(self):
@@ -686,7 +973,8 @@ class SegMedPro:
         (point_prompt_checkbox, box_prompt_checkbox, coordinates_text, clear_coords_btn, ai_model_selector, 
          processing_mode, score_threshold,
          output_dir, save_visualizations, device_selector, 
-         auto_brain_annotate_btn, annotate_btn, annotation_status) = ai_tools
+         auto_brain_annotate_btn, annotate_btn, annotation_status,
+         crowdsourcing_accordion, submit_annotation_btn, send_for_review_btn, crowdsourcing_status) = ai_tools
         
         # Get layout functions
         layout_functions = components.get('layout_functions', {})
@@ -1532,6 +1820,92 @@ class SegMedPro:
             value="🚀 **SAM2 FAST MASKING MODE**: Click 'Run SAM2 Fast Masking' for automatic brain structure segmentation",
             visible=True        )
 '''
+    
+    def _connect_contribute_handlers(self, contribute_components, editor_components):
+        """Connect event handlers for the contribute tab"""
+        if not contribute_components or not ENABLE_AUTH:
+            return
+        
+        # Update the user state in contribute tab when user changes
+        def update_contribute_user_state():
+            if self.current_user:
+                return self.current_user['user_id']
+            return ""
+        
+        # Connect dataset loading from contribute tab to editor tab
+        def load_dataset_from_contribute(dataset_path, crowdsourcing_mode):
+            """Load dataset from contribute tab into editor tab"""
+            if not dataset_path or not crowdsourcing_mode:
+                return "No dataset selected", gr.update()
+            
+            try:
+                # Use the existing data loading handler to load the dataset
+                result = self.data_handlers.load_data(dataset_path)
+                
+                if "successfully" in result.lower():
+                    self.crowdsourcing_mode = True
+                    # Show crowdsourcing controls in editor tab
+                    return result, gr.update(visible=True)
+                else:
+                    return result, gr.update(visible=False)
+                    
+            except Exception as e:
+                logger.error(f"Error loading dataset from contribute tab: {e}")
+                return f"Error loading dataset: {str(e)}", gr.update(visible=False)
+        
+        # Handle annotation submission
+        def handle_submit_annotation(task_selection, user_id):
+            """Handle annotation submission from editor tab"""
+            if not task_selection or not user_id:
+                return "Please select a task and ensure you're logged in"
+            
+            try:
+                campaign_id, patient_id, _ = task_selection.split('|')
+                from crowdsourcing.campaign_manager import CrowdsourcingManager
+                crowdsourcing_manager = CrowdsourcingManager()
+                success = crowdsourcing_manager.mark_completed(campaign_id, user_id, patient_id)
+                
+                if success:
+                    return f"✅ Annotation for patient {patient_id} submitted successfully!"
+                else:
+                    return "❌ Failed to submit annotation"
+                    
+            except Exception as e:
+                logger.error(f"Error submitting annotation: {e}")
+                return f"❌ Error submitting annotation: {str(e)}"
+        
+        # Handle review request
+        def handle_send_for_review():
+            """Handle send for review request"""
+            return "📤 Review functionality will be implemented in future versions"
+        
+        # Connect the dataset loading
+        if ('selected_dataset_path' in contribute_components and 
+            'crowdsourcing_mode' in contribute_components and
+            'crowdsourcing' in editor_components):
+            
+            contribute_components['selected_dataset_path'].change(
+                fn=load_dataset_from_contribute,
+                inputs=[contribute_components['selected_dataset_path'], contribute_components['crowdsourcing_mode']],
+                outputs=[contribute_components['load_status'], editor_components['crowdsourcing']['accordion']]
+            )
+            
+            # Connect crowdsourcing controls in editor tab
+            editor_components['crowdsourcing']['submit_btn'].click(
+                fn=handle_submit_annotation,
+                inputs=[contribute_components['task_dropdown'], contribute_components['current_user_state']],
+                outputs=[editor_components['crowdsourcing']['status']]
+            )
+            
+            editor_components['crowdsourcing']['review_btn'].click(
+                fn=handle_send_for_review,
+                outputs=[editor_components['crowdsourcing']['status']]
+            )
+        
+        # Update user state periodically
+        if 'current_user_state' in contribute_components:
+            contribute_components['current_user_state'].value = update_contribute_user_state()
+
 # Initialize and launch the application
 if __name__ == "__main__":
     logger.info("Starting SegMed-Pro application")

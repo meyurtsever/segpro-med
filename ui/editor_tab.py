@@ -1344,12 +1344,45 @@ def create_editor_tab() -> dict:
                 annotation_status = gr.Textbox(
                     label="Annotation Status", 
                     interactive=False,
-                    value="Ready to annotate"                )
+                    value="Ready to annotate"
+                )
+                
+                # Crowdsourcing Controls (hidden by default, shown when in crowdsourcing mode)
+                with gr.Accordion("Crowdsourcing Controls", open=True, visible=False) as crowdsourcing_accordion:
+                    gr.Markdown("**Annotation Task Controls**")
+                    gr.Markdown("Complete your annotation work and submit using the controls below.")
+                    
+                    with gr.Row():
+                        submit_annotation_btn = gr.Button(
+                            "✅ Submit Annotation",
+                            variant="primary",
+                            size="lg"
+                        )
+                        send_for_review_btn = gr.Button(
+                            "📤 Send for Review",
+                            variant="secondary",
+                            size="lg"
+                        )
+                    
+                    crowdsourcing_status = gr.Textbox(
+                        label="Submission Status",
+                        interactive=False,
+                        value="Complete your annotation work above, then submit."
+                    )
+                    
+                    gr.Markdown("""
+                    **Instructions:**
+                    1. Use the annotation tools above to complete your work
+                    2. Review your annotations carefully
+                    3. Click 'Submit Annotation' when finished
+                    4. Use 'Send for Review' if you need supervisor feedback
+                    """)
                 
                 col3 = (point_prompt_checkbox, box_prompt_checkbox, coordinates_text, clear_coords_btn, ai_model_selector, 
                         processing_mode, score_threshold,
                         output_dir, save_visualizations, device_selector, 
-                        auto_brain_annotate_btn, annotate_btn, annotation_status)    # Helper functions for 3D viewer interactions and layout switching
+                        auto_brain_annotate_btn, annotate_btn, annotation_status,
+                        crowdsourcing_accordion, submit_annotation_btn, send_for_review_btn, crowdsourcing_status)    # Helper functions for 3D viewer interactions and layout switching
     def toggle_layout_for_processing_mode(processing_mode):
         """Switch between full-width and split layout based on processing mode"""
         if processing_mode == "All Records":
@@ -1407,6 +1440,12 @@ def create_editor_tab() -> dict:
         'data_loading': col1,
         'visualization': col2,
         'ai_tools': col3,
+        'crowdsourcing': {
+            'accordion': crowdsourcing_accordion,
+            'submit_btn': submit_annotation_btn,
+            'review_btn': send_for_review_btn,
+            'status': crowdsourcing_status
+        },
         '3d_viewer_functions': {
             'toggle_visibility': toggle_3d_viewer_visibility,
             'refresh_view': refresh_3d_view,
