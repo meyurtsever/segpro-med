@@ -50,7 +50,7 @@ class AuthManager:
     
     def get_experts(self):
         """Get list of all expert users"""
-        return {
-            user_id: user_data for user_id, user_data in self.users.items()
+        return [
+            user_id for user_id, user_data in self.users.items()
             if user_data['role'] == 'expert'
-        }
+        ]

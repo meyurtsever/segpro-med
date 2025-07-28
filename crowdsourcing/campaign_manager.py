@@ -63,112 +63,125 @@ class CrowdsourcingManager:
             logger.error(f"Error scanning dataset {dataset_path}: {e}")
             return 0, []
     
-    def create_campaign(self, campaign_name, dataset_path):
+    def create_campaign(self, campaign_name, dataset_path, description=""):
         """Create a new crowdsourcing campaign"""
-        campaign_id = f"campaign_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-        
+        if not campaign_name or not dataset_path:
+            return False
+            
         total_patients, patient_list = self.scan_dataset(dataset_path)
+        if total_patients == 0:
+            return False
         
-        self.assignments[campaign_id] = {
+        self.assignments[campaign_name] = {
             'name': campaign_name,
             'dataset_path': dataset_path,
+            'description': description,
             'created_at': datetime.now().isoformat(),
             'total_patients': total_patients,
-            'patient_list': patient_list,
+            'patients': patient_list,
             'assigned': {},
             'completed': {},
             'reviewed': {}
         }
         
         self._save_assignments()
-        logger.info(f"Created campaign {campaign_id} with {total_patients} patients")
-        return campaign_id
+        logger.info(f"Created campaign {campaign_name} with {total_patients} patients")
+        return True
     
-    def assign_patients(self, campaign_id, expert_id, patient_ids):
+    def assign_patients(self, campaign_name, expert_id, patient_ids):
         """Assign patients to an expert"""
-        if campaign_id not in self.assignments:
+        if campaign_name not in self.assignments:
             return False
         
-        if expert_id not in self.assignments[campaign_id]['assigned']:
-            self.assignments[campaign_id]['assigned'][expert_id] = []
+        # Validate that all patient_ids exist in the campaign
+        campaign_patients = self.assignments[campaign_name]['patients']
+        for patient_id in patient_ids:
+            if patient_id not in campaign_patients:
+                return False
+        
+        if expert_id not in self.assignments[campaign_name]['assigned']:
+            self.assignments[campaign_name]['assigned'][expert_id] = []
         
         # Add new assignments (avoid duplicates)
         for patient_id in patient_ids:
-            if patient_id not in self.assignments[campaign_id]['assigned'][expert_id]:
-                self.assignments[campaign_id]['assigned'][expert_id].append(patient_id)
+            if patient_id not in self.assignments[campaign_name]['assigned'][expert_id]:
+                self.assignments[campaign_name]['assigned'][expert_id].append(patient_id)
         
         self._save_assignments()
-        logger.info(f"Assigned {len(patient_ids)} patients to {expert_id} in {campaign_id}")
+        logger.info(f"Assigned {len(patient_ids)} patients to {expert_id} in {campaign_name}")
         return True
     
-    def get_assigned_patients(self, expert_id):
-        """Get all patients assigned to a specific expert across all campaigns"""
+    def get_assigned_tasks(self, expert_id):
+        """Get all tasks assigned to a specific expert across all campaigns"""
         assigned = []
-        for campaign_id, campaign_data in self.assignments.items():
+        for campaign_name, campaign_data in self.assignments.items():
             if expert_id in campaign_data.get('assigned', {}):
                 for patient_id in campaign_data['assigned'][expert_id]:
                     assigned.append({
-                        'campaign_id': campaign_id,
-                        'campaign_name': campaign_data['name'],
+                        'campaign': campaign_name,
                         'patient_id': patient_id,
                         'dataset_path': campaign_data['dataset_path']
                     })
         return assigned
     
-    def get_campaign_progress(self, campaign_id):
+    def get_campaign_progress(self, campaign_name):
         """Get progress statistics for a campaign"""
-        if campaign_id not in self.assignments:
+        if campaign_name not in self.assignments:
             return None
         
-        campaign = self.assignments[campaign_id]
-        total = campaign['total_patients']
+        campaign = self.assignments[campaign_name]
+        total_patients = campaign['total_patients']
         
         # Count assigned patients
         assigned_patients = set()
         for expert_assignments in campaign.get('assigned', {}).values():
             assigned_patients.update(expert_assignments)
-        assigned = len(assigned_patients)
+        assigned_count = len(assigned_patients)
         
         # Count completed patients
         completed_patients = set()
         for expert_completions in campaign.get('completed', {}).values():
             completed_patients.update(expert_completions)
-        completed = len(completed_patients)
+        completed_count = len(completed_patients)
         
         # Count reviewed patients
         reviewed_patients = set()
         for expert_reviews in campaign.get('reviewed', {}).values():
             reviewed_patients.update(expert_reviews)
-        reviewed = len(reviewed_patients)
+        reviewed_count = len(reviewed_patients)
+        
+        # Calculate unassigned
+        unassigned_count = total_patients - assigned_count
         
         return {
-            'total': total,
-            'assigned': assigned,
-            'completed': completed,
-            'reviewed': reviewed
+            'total_patients': total_patients,
+            'assigned_patients': assigned_count,
+            'completed': completed_count,
+            'reviewed': reviewed_count,
+            'unassigned_patients': unassigned_count
         }
     
-    def mark_completed(self, campaign_id, expert_id, patient_id):
+    def mark_completed(self, campaign_name, expert_id, patient_id):
         """Mark a patient as completed by an expert"""
-        if campaign_id not in self.assignments:
+        if campaign_name not in self.assignments:
             return False
         
-        if expert_id not in self.assignments[campaign_id]['completed']:
-            self.assignments[campaign_id]['completed'][expert_id] = []
+        if expert_id not in self.assignments[campaign_name]['completed']:
+            self.assignments[campaign_name]['completed'][expert_id] = []
         
-        if patient_id not in self.assignments[campaign_id]['completed'][expert_id]:
-            self.assignments[campaign_id]['completed'][expert_id].append(patient_id)
+        if patient_id not in self.assignments[campaign_name]['completed'][expert_id]:
+            self.assignments[campaign_name]['completed'][expert_id].append(patient_id)
         
         self._save_assignments()
         return True
     
-    def get_unassigned_patients(self, campaign_id):
+    def get_unassigned_patients(self, campaign_name):
         """Get list of unassigned patients for a campaign"""
-        if campaign_id not in self.assignments:
+        if campaign_name not in self.assignments:
             return []
         
-        campaign = self.assignments[campaign_id]
-        all_patients = set(campaign['patient_list'])
+        campaign = self.assignments[campaign_name]
+        all_patients = set(campaign['patients'])
         
         # Get all assigned patients
         assigned_patients = set()
