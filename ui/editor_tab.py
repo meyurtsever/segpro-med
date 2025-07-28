@@ -29,6 +29,9 @@ logger = logging.getLogger(__name__)
 # Global dictionary to store slice-specific suggested labels
 SLICE_SUGGESTED_LABELS = {}
 
+# Global dictionary to track selected suggested labels (slice_index -> list of selected labels)
+SELECTED_SUGGESTED_LABELS = {}
+
 def load_annotation_data(output_dir="brain_target_results"):
     """Load annotation data from the results directory"""
     try:
@@ -659,15 +662,204 @@ def get_suggested_labels_for_slice(slice_index):
         return []
 
 def store_suggested_labels_for_slice(slice_index, labels):
-    """Store suggested labels for a specific slice"""
+    """Store suggested labels for a specific slice - filter duplicates and existing labels"""
     global SLICE_SUGGESTED_LABELS
     slice_key = str(slice_index)
-    SLICE_SUGGESTED_LABELS[slice_key] = labels
-    logger.info(f"Stored {len(labels)} suggested labels for slice {slice_index}: {labels}")
+    
+    # Remove duplicates while preserving order (case-insensitive)
+    seen = set()
+    unique_labels = []
+    for label in labels:
+        label_lower = str(label).lower().strip()
+        if label_lower and label_lower not in seen:
+            seen.add(label_lower)
+            unique_labels.append(str(label).strip())
+    
+    # Additional filtering: check against existing suggested labels for this slice
+    existing_labels = SLICE_SUGGESTED_LABELS.get(slice_key, [])
+    existing_labels_lower = [label.lower() for label in existing_labels]
+    
+    # Filter out labels that already exist in suggestions
+    filtered_labels = []
+    for label in unique_labels:
+        if label.lower() not in existing_labels_lower:
+            filtered_labels.append(label)
+    
+    # Store the filtered, unique labels (append to existing, don't replace)
+    if slice_key not in SLICE_SUGGESTED_LABELS:
+        SLICE_SUGGESTED_LABELS[slice_key] = []
+    
+    # Add new labels to existing ones (avoiding duplicates)
+    for label in filtered_labels:
+        if label not in SLICE_SUGGESTED_LABELS[slice_key]:
+            SLICE_SUGGESTED_LABELS[slice_key].append(label)
+    
+    total_stored = len(SLICE_SUGGESTED_LABELS[slice_key])
+    logger.info(f"Stored {len(filtered_labels)} new suggested labels for slice {slice_index} (total: {total_stored}): {SLICE_SUGGESTED_LABELS[slice_key]}")
 
-def create_medgemma_label_suggestions(image_annotator_value, slice_index=None):
+def filter_suggestions_against_current_labels(suggestions, current_labels):
+    """Filter suggested labels against current labels to avoid duplicates"""
+    try:
+        if not current_labels:
+            return suggestions
+            
+        # Create lowercase set for comparison
+        current_labels_lower = set(label.lower() for label in current_labels)
+        
+        # Filter suggestions
+        filtered_suggestions = []
+        for suggestion in suggestions:
+            if suggestion.lower() not in current_labels_lower:
+                filtered_suggestions.append(suggestion)
+        
+        logger.info(f"Filtered {len(suggestions)} suggestions against {len(current_labels)} current labels: {len(filtered_suggestions)} remaining")
+        return filtered_suggestions
+        
+    except Exception as e:
+        logger.error(f"Error filtering suggestions against current labels: {e}")
+        return suggestions  # Return original suggestions if filtering fails
+
+def get_selected_suggested_labels_for_slice(slice_index):
+    """Get selected suggested labels for a specific slice"""
+    global SELECTED_SUGGESTED_LABELS
+    slice_key = str(slice_index)
+    return SELECTED_SUGGESTED_LABELS.get(slice_key, [])
+
+def toggle_suggested_label_selection(slice_index, label_text):
+    """Toggle selection of a suggested label for a specific slice"""
+    global SELECTED_SUGGESTED_LABELS
+    slice_key = str(slice_index)
+    
+    if slice_key not in SELECTED_SUGGESTED_LABELS:
+        SELECTED_SUGGESTED_LABELS[slice_key] = []
+    
+    # Clean the label text (remove any selection indicators)
+    clean_label = label_text.replace("✅ ", "").strip()
+    
+    if clean_label in SELECTED_SUGGESTED_LABELS[slice_key]:
+        SELECTED_SUGGESTED_LABELS[slice_key].remove(clean_label)
+        logger.info(f"Deselected suggested label '{clean_label}' for slice {slice_index}")
+    else:
+        SELECTED_SUGGESTED_LABELS[slice_key].append(clean_label)
+        logger.info(f"Selected suggested label '{clean_label}' for slice {slice_index}")
+    
+    return SELECTED_SUGGESTED_LABELS[slice_key]
+
+def clear_selected_suggested_labels_for_slice(slice_index):
+    """Clear all selected suggested labels for a specific slice"""
+    global SELECTED_SUGGESTED_LABELS
+    slice_key = str(slice_index)
+    SELECTED_SUGGESTED_LABELS[slice_key] = []
+    logger.info(f"Cleared all selected suggested labels for slice {slice_index}")
+
+def remove_labels_from_suggested_for_slice(slice_index, labels_to_remove):
+    """Remove labels from suggested labels list for a specific slice (they've been accepted)"""
+    global SLICE_SUGGESTED_LABELS
+    slice_key = str(slice_index)
+    
+    if slice_key in SLICE_SUGGESTED_LABELS:
+        original_count = len(SLICE_SUGGESTED_LABELS[slice_key])
+        # Remove accepted labels from suggested labels
+        SLICE_SUGGESTED_LABELS[slice_key] = [
+            label for label in SLICE_SUGGESTED_LABELS[slice_key] 
+            if label not in labels_to_remove
+        ]
+        removed_count = original_count - len(SLICE_SUGGESTED_LABELS[slice_key])
+        logger.info(f"Removed {removed_count} accepted labels from suggested list for slice {slice_index}: {labels_to_remove}")
+        return SLICE_SUGGESTED_LABELS[slice_key]
+    else:
+        return []
+
+def save_labels_to_file(data_directory, slice_index, labels):
+    """Save labels to a labels.txt file in the data directory - APPEND new labels to existing ones"""
+    try:
+        labels_file_path = os.path.join(data_directory, "labels.txt")
+        
+        # Read existing labels if file exists
+        existing_labels = {}
+        if os.path.exists(labels_file_path):
+            with open(labels_file_path, 'r') as f:
+                for line in f:
+                    line = line.strip()
+                    if line and ':' in line:
+                        slice_str, labels_str = line.split(':', 1)
+                        try:
+                            slice_num = int(slice_str.strip())
+                            # Clean up labels and remove any extra whitespace/newlines
+                            labels_list = []
+                            for label in labels_str.split(','):
+                                clean_label = ' '.join(label.strip().split())  # Remove extra whitespace/newlines
+                                if clean_label:
+                                    labels_list.append(clean_label)
+                            existing_labels[slice_num] = labels_list
+                        except ValueError:
+                            continue
+        
+        # APPEND new labels to existing labels for the current slice (avoid duplicates)
+        current_slice_labels = existing_labels.get(slice_index, [])
+        for new_label in labels:
+            # Clean the new label to remove any extra whitespace/newlines
+            clean_new_label = ' '.join(str(new_label).strip().split())
+            if clean_new_label and clean_new_label not in current_slice_labels:
+                current_slice_labels.append(clean_new_label)
+        
+        existing_labels[slice_index] = current_slice_labels
+        
+        # Write updated labels back to file with proper formatting
+        with open(labels_file_path, 'w') as f:
+            for slice_num in sorted(existing_labels.keys()):
+                if existing_labels[slice_num]:  # Only write slices that have labels
+                    # Ensure all labels are clean and properly formatted
+                    clean_labels = [' '.join(str(label).strip().split()) for label in existing_labels[slice_num] if str(label).strip()]
+                    labels_str = ', '.join(clean_labels)
+                    f.write(f"{slice_num}: {labels_str}\n")
+        
+        logger.info(f"APPENDED {len(labels)} new labels to slice {slice_index} (total: {len(current_slice_labels)} labels): {current_slice_labels}")
+        return f"Added {len(labels)} labels to slice {slice_index} (total: {len(current_slice_labels)})"
+        
+    except Exception as e:
+        logger.error(f"Error saving labels to file: {e}")
+        return f"Error saving labels: {str(e)}"
+
+def load_labels_from_file(data_directory, slice_index):
+    """Load labels for a specific slice from labels.txt file"""
+    try:
+        labels_file_path = os.path.join(data_directory, "labels.txt")
+        
+        if not os.path.exists(labels_file_path):
+            return []
+        
+        with open(labels_file_path, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if line and ':' in line:
+                    slice_str, labels_str = line.split(':', 1)
+                    try:
+                        slice_num = int(slice_str.strip())
+                        if slice_num == slice_index:
+                            # Clean up labels and remove any extra whitespace/newlines
+                            labels_list = []
+                            for label in labels_str.split(','):
+                                clean_label = ' '.join(label.strip().split())  # Remove extra whitespace/newlines
+                                if clean_label:
+                                    labels_list.append(clean_label)
+                            logger.info(f"Loaded {len(labels_list)} saved labels for slice {slice_index}: {labels_list}")
+                            return labels_list
+                    except ValueError:
+                        continue
+        
+        return []  # No labels found for this slice
+        
+    except Exception as e:
+        logger.error(f"Error loading labels from file: {e}")
+        return []
+
+def create_medgemma_label_suggestions(image_annotator_value, slice_index=None, current_labels=None):
     """Generate label suggestions using MedGemma and return as dataset samples"""
     try:
+        if current_labels is None:
+            current_labels = []
+            
         # Import the MedGemma handlers
         from .medgemma_handlers import MedGemmaHandlers
         from .state import AppState
@@ -686,27 +878,56 @@ def create_medgemma_label_suggestions(image_annotator_value, slice_index=None):
             content = suggestions_text.replace("MedGemma Label Suggestions:", "").strip()
             content = content.replace("MedGemma could not generate", "").strip()
             
-            # Split by common delimiters and clean up
+            # Split by common delimiters and clean up - PRESERVE multi-word labels
             potential_labels = []
             for delimiter in [',', ';', '\n', '\t']:
                 if delimiter in content:
                     potential_labels.extend([label.strip() for label in content.split(delimiter)])
                     break
             else:
-                # If no delimiters found, split by spaces and look for likely labels
-                potential_labels = content.split()
+                # If no delimiters found, try to extract phrases instead of individual words
+                # Look for meaningful medical phrases first
+                import re
+                # Match common medical phrase patterns (2-3 words)
+                phrase_patterns = [
+                    r'\b(?:white|gray|grey)\s+matter\b',
+                    r'\b(?:left|right)\s+\w+\b',
+                    r'\b\w+\s+(?:tumor|lesion|mass|cyst)\b',
+                    r'\b\w+\s+(?:ventricle|cortex|lobe)\b',
+                ]
+                
+                for pattern in phrase_patterns:
+                    matches = re.findall(pattern, content, re.IGNORECASE)
+                    potential_labels.extend(matches)
+                
+                # Also extract individual words as fallback
+                individual_words = content.split()
+                potential_labels.extend(individual_words)
             
-            # Clean and filter the labels
+            # Clean and filter the labels - PRESERVE multi-word labels
             for label in potential_labels:
                 cleaned_label = label.strip('.,;()[]{}"\' \n\t')
                 if (cleaned_label and 
                     len(cleaned_label) > 1 and 
-                    len(cleaned_label) < 20 and 
-                    cleaned_label.lower() not in ['the', 'and', 'or', 'in', 'on', 'at', 'to', 'for', 'of', 'with']):
+                    len(cleaned_label) < 25 and  # Increased length for multi-word
+                    cleaned_label.lower() not in ['the', 'and', 'or', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'a', 'an', 'is', 'are', 'was', 'were']):
                     suggestions.append(cleaned_label)
         
+        # Remove duplicates while preserving order (case-insensitive)
+        seen = set()
+        unique_suggestions = []
+        for suggestion in suggestions:
+            suggestion_lower = suggestion.lower()
+            if suggestion_lower not in seen:
+                seen.add(suggestion_lower)
+                unique_suggestions.append(suggestion)
+        
         # Limit to 10 suggestions and create dataset samples
-        final_suggestions = suggestions[:10]
+        final_suggestions = unique_suggestions[:10]
+        
+        # Filter against current labels if provided
+        if current_labels:
+            final_suggestions = filter_suggestions_against_current_labels(final_suggestions, current_labels)
         
         # Store suggestions for this slice if slice_index is provided
         if slice_index is not None:
@@ -718,9 +939,12 @@ def create_medgemma_label_suggestions(image_annotator_value, slice_index=None):
         logger.error(f"Error generating MedGemma label suggestions: {e}")
         return []
 
-def create_other_vlm_label_suggestions(vlm_model, image_annotator_value, slice_index=None):
+def create_other_vlm_label_suggestions(vlm_model, image_annotator_value, slice_index=None, current_labels=None):
     """Generate label suggestions using other VLM models and return as dataset samples"""
     try:
+        if current_labels is None:
+            current_labels = []
+            
         suggestions = []
         
         if vlm_model == "SmolVLM":
@@ -743,41 +967,72 @@ def create_other_vlm_label_suggestions(vlm_model, image_annotator_value, slice_i
         
         # Parse response for potential labels
         if response:
-            # Look for common medical terms and anatomical structures
+            # Look for common medical terms and anatomical structures (including multi-word)
             medical_terms = [
                 'eye', 'tumor', 'lesion', 'ventricle', 'lvent', 'rvent', 'tvent', 
                 'cortex', 'cerebellum', 'brainstem', 'hippocampus', 'thalamus',
-                'skull', 'csf', 'white matter', 'gray matter', 'edema', 'hemorrhage'
+                'skull', 'csf', 'white matter', 'gray matter', 'edema', 'hemorrhage',
+                'frontal lobe', 'parietal lobe', 'temporal lobe', 'occipital lobe',
+                'left ventricle', 'right ventricle', 'third ventricle', 'fourth ventricle'
             ]
             
             response_lower = response.lower()
-            for term in medical_terms:
+            # Check for multi-word terms first (longer matches take priority)
+            for term in sorted(medical_terms, key=len, reverse=True):
                 if term in response_lower and term not in suggestions:
                     suggestions.append(term)
                     
             # Also try to extract labels from the response text more intelligently
-            # Split by common delimiters and clean up
+            # Split by common delimiters and clean up - PRESERVE multi-word labels
             potential_labels = []
             for delimiter in [',', ';', '\n', '\t']:
                 if delimiter in response:
                     potential_labels.extend([label.strip() for label in response.split(delimiter)])
                     break
             else:
-                # If no delimiters found, split by spaces and look for likely labels
-                potential_labels = response.split()
+                # If no delimiters found, try to extract phrases instead of individual words
+                import re
+                # Match common medical phrase patterns (2-3 words)
+                phrase_patterns = [
+                    r'\b(?:white|gray|grey)\s+matter\b',
+                    r'\b(?:left|right)\s+\w+\b',
+                    r'\b\w+\s+(?:tumor|lesion|mass|cyst)\b',
+                    r'\b\w+\s+(?:ventricle|cortex|lobe)\b',
+                ]
+                
+                for pattern in phrase_patterns:
+                    matches = re.findall(pattern, response, re.IGNORECASE)
+                    potential_labels.extend(matches)
+                
+                # Also extract individual words as fallback
+                individual_words = response.split()
+                potential_labels.extend(individual_words)
             
-            # Clean and filter additional labels
+            # Clean and filter additional labels - PRESERVE multi-word labels
             for label in potential_labels:
                 cleaned_label = label.strip('.,;()[]{}"\' \n\t')
                 if (cleaned_label and 
                     len(cleaned_label) > 2 and 
-                    len(cleaned_label) < 15 and 
-                    cleaned_label.lower() not in ['the', 'and', 'or', 'in', 'on', 'at', 'to', 'for', 'of', 'with'] and
+                    len(cleaned_label) < 25 and  # Increased length for multi-word
+                    cleaned_label.lower() not in ['the', 'and', 'or', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'a', 'an', 'is', 'are', 'was', 'were'] and
                     cleaned_label not in suggestions):
                     suggestions.append(cleaned_label)
         
+        # Remove duplicates while preserving order (case-insensitive)
+        seen = set()
+        unique_suggestions = []
+        for suggestion in suggestions:
+            suggestion_lower = suggestion.lower()
+            if suggestion_lower not in seen:
+                seen.add(suggestion_lower)
+                unique_suggestions.append(suggestion)
+        
         # Limit to 8 suggestions and create dataset samples
-        final_suggestions = suggestions[:8]
+        final_suggestions = unique_suggestions[:8]
+        
+        # Filter against current labels if provided
+        if current_labels:
+            final_suggestions = filter_suggestions_against_current_labels(final_suggestions, current_labels)
         
         # Store suggestions for this slice if slice_index is provided
         if slice_index is not None:
@@ -913,23 +1168,34 @@ def create_editor_tab() -> dict:
                             type="index",
                             samples_per_page=10
                         )  
+                    
+                    # Accept suggestions button - initially hidden
+                    with gr.Row():
+                        accept_suggestions_btn = gr.Button(
+                            "✅ Accept Selected Suggestions",
+                            variant="primary",
+                            size="lg",
+                            visible=False,  # Initially hidden until suggestions are selected
+                            scale=1
+                        )
                         
                     with gr.Row():
                         suggested_vlm_selector = gr.Dropdown(
                             choices=["SmolVLM", "Med-R1", "MedGemma-4B"],
                             value="MedGemma-4B",  # Default selected value
-                            label="VLM for Label Suggestions",
-                            scale=2
+                            label="Select VLM to Suggest Labels",
+                            scale=1,
+                            container=False  # Remove extra container padding
                         )
                         suggest_labels_btn = gr.Button(
-                            "🏷️ Suggest Labels using VLM", 
+                            "🏷️ Suggest Labels", 
                             variant="primary", 
-                            size="lg",
-                            scale=1
+                            size="lg",  # Keep small size for better height matching
+                            scale=1,  # Reduced scale to make button narrower
+                            min_width=120  # Set minimum width to prevent button from being too narrow
                         )                       
                         
-                        # VLM (Visual Language Model) Tools Section
-                #gr.Markdown("### VLM Tools")
+                # VLM (Visual Language Model) Tools Section
                 with gr.Accordion("VLM Tools", open=False):
                     with gr.Row(elem_classes="vlm-row"):
                         vlm_model_selector = gr.Dropdown(
@@ -985,7 +1251,7 @@ def create_editor_tab() -> dict:
                 with gr.Accordion("Metadata", open=False):
                     metadata_display = gr.JSON(label=None, visible=True)
                 
-                col2 = (error_display, metadata_display, view_selector, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, current_labels_dataset, suggested_vlm_selector, suggest_labels_btn, suggested_labels_dataset, vlm_model_selector, vlm_run_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn)
+                col2 = (error_display, metadata_display, view_selector, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, current_labels_dataset, suggested_vlm_selector, suggest_labels_btn, suggested_labels_dataset, accept_suggestions_btn, vlm_model_selector, vlm_run_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn)
             
             # Column 3: Annotate with AI Models
             with gr.Column(scale=1):

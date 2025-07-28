@@ -254,12 +254,16 @@ class DataLoadingHandlers:
         # Determine input source
         if directory:
             path = directory
+            self.state.current_directory = directory  # Store the directory path
             self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path)
         else:
             # Load single file by extension
             path = file_obj.name if file_obj else None
             if not path or not os.path.exists(path):
                 return None, gr.Dropdown(choices=[]), {}, gr.Slider(visible=False), "0/0", "x: 0, y: 0, z: 0", "No data loaded", 500, 1000
+            
+            # Store the directory of the single file
+            self.state.current_directory = os.path.dirname(path)
             
             ext = os.path.splitext(path)[1].lower()
             if ext in ['.dcm']:

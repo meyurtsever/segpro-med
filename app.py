@@ -682,7 +682,7 @@ class SegMedPro:
         # Unpack components
         (file_input, dir_input, load_btn, reset_dir_btn, file_browser, label_file,
          metadata_display_dl, error_display_dl, window_level, window_width, apply_window_btn, debug_btn) = data_loading
-        (error_display, metadata_display, view_selector, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, current_labels_dataset, suggested_vlm_selector, suggest_labels_btn, suggested_labels_dataset, vlm_model_selector, vlm_run_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn) = visualization        
+        (error_display, metadata_display, view_selector, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, current_labels_dataset, suggested_vlm_selector, suggest_labels_btn, suggested_labels_dataset, accept_suggestions_btn, vlm_model_selector, vlm_run_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn) = visualization        
         (point_prompt_checkbox, box_prompt_checkbox, coordinates_text, clear_coords_btn, ai_model_selector, 
          processing_mode, score_threshold,
          output_dir, save_visualizations, device_selector, 
@@ -737,31 +737,55 @@ class SegMedPro:
             result = self.editor_image_handlers.handle_annotator_slider_change(slice_value, image_annotator_value)
             # result contains: (image_display, slice_text, crosshair_info, metadata_display, window_level, window_width)
             
-            # Extract current labels from the updated image
-            from ui.editor_tab import extract_current_labels_from_annotator, create_labels_dataset_samples, get_suggested_labels_for_slice
+            # Extract current labels from the updated image and load saved labels
+            from ui.editor_tab import (extract_current_labels_from_annotator, create_labels_dataset_samples, 
+                                     get_suggested_labels_for_slice, clear_selected_suggested_labels_for_slice,
+                                     load_labels_from_file)
             try:
                 # Use the first element of result which should be the updated image_display
                 updated_image = result[0] if result else image_annotator_value
-                labels = extract_current_labels_from_annotator(updated_image)
-                labels_samples = create_labels_dataset_samples(labels)
+                
+                # Extract labels from the image annotator
+                annotator_labels = extract_current_labels_from_annotator(updated_image)
+                
+                # Load saved labels from file if we have a data directory
+                saved_labels = []
+                data_directory = getattr(self.state, 'current_directory', None)
+                if data_directory:
+                    saved_labels = load_labels_from_file(data_directory, slice_value)
+                
+                # Combine annotator labels and saved labels (avoid duplicates)
+                all_labels = list(annotator_labels)
+                for label in saved_labels:
+                    if label not in all_labels:
+                        all_labels.append(label)
+                
+                labels_samples = create_labels_dataset_samples(all_labels)
                 current_labels_dataset = gr.Dataset(samples=labels_samples)
                 
-                # Get suggested labels for this slice
+                # Get suggested labels for this slice (without selection indicators)
                 suggested_samples = get_suggested_labels_for_slice(slice_value)
                 suggested_labels_dataset = gr.Dataset(samples=suggested_samples)
+                
+                # Clear any previous selections when changing slices
+                clear_selected_suggested_labels_for_slice(slice_value)
+                accept_btn_hidden = gr.update(visible=False)
+                
+                logger.info(f"Slice {slice_value} labels: {len(annotator_labels)} from annotator + {len(saved_labels)} saved = {len(all_labels)} total")
                 
             except Exception as e:
                 logger.error(f"Error updating labels on slice change: {e}")
                 current_labels_dataset = gr.Dataset(samples=[])
                 suggested_labels_dataset = gr.Dataset(samples=[])
+                accept_btn_hidden = gr.update(visible=False)
             
-            # Return original result plus both label datasets
-            return result + (current_labels_dataset, suggested_labels_dataset)
+            # Return original result plus both label datasets and hidden accept button
+            return result + (current_labels_dataset, suggested_labels_dataset, accept_btn_hidden)
         
         slice_slider.change(
             fn=handle_slice_change_with_labels,
             inputs=[slice_slider, image_display],
-            outputs=[image_display, slice_text, crosshair_info, metadata_display, window_level, window_width, current_labels_dataset, suggested_labels_dataset]
+            outputs=[image_display, slice_text, crosshair_info, metadata_display, window_level, window_width, current_labels_dataset, suggested_labels_dataset, accept_suggestions_btn]
         )
         def handle_view_change_with_labels(view_value):
             """Handle view selector change and update current labels and suggested labels"""
@@ -769,32 +793,56 @@ class SegMedPro:
             result = self.editor_image_handlers.change_view_for_annotator(view_value)
             # result contains: (slice_slider, slice_text, image_display)
             
-            # Extract current labels from the updated image
-            from ui.editor_tab import extract_current_labels_from_annotator, create_labels_dataset_samples, get_suggested_labels_for_slice
+            # Extract current labels from the updated image and load saved labels
+            from ui.editor_tab import (extract_current_labels_from_annotator, create_labels_dataset_samples, 
+                                     get_suggested_labels_for_slice, clear_selected_suggested_labels_for_slice,
+                                     load_labels_from_file)
             try:
                 # Use the third element of result which should be the updated image_display
                 updated_image = result[2] if len(result) > 2 else None
-                labels = extract_current_labels_from_annotator(updated_image)
-                labels_samples = create_labels_dataset_samples(labels)
+                
+                # Extract labels from the image annotator
+                annotator_labels = extract_current_labels_from_annotator(updated_image)
+                
+                # Load saved labels from file if we have a data directory
+                saved_labels = []
+                data_directory = getattr(self.state, 'current_directory', None)
+                current_slice_idx = self.state.current_slice_idx
+                if data_directory:
+                    saved_labels = load_labels_from_file(data_directory, current_slice_idx)
+                
+                # Combine annotator labels and saved labels (avoid duplicates)
+                all_labels = list(annotator_labels)
+                for label in saved_labels:
+                    if label not in all_labels:
+                        all_labels.append(label)
+                
+                labels_samples = create_labels_dataset_samples(all_labels)
                 current_labels_dataset = gr.Dataset(samples=labels_samples)
                 
-                # Get current slice index and suggested labels
-                current_slice_idx = self.state.current_slice_idx
+                # Get suggested labels for current slice
                 suggested_samples = get_suggested_labels_for_slice(current_slice_idx)
                 suggested_labels_dataset = gr.Dataset(samples=suggested_samples)
+                
+                # Clear selections when changing views
+                clear_selected_suggested_labels_for_slice(current_slice_idx)
+                accept_btn_hidden = gr.update(visible=False)
+                
+                logger.info(f"View change - Slice {current_slice_idx} labels: {len(annotator_labels)} from annotator + {len(saved_labels)} saved = {len(all_labels)} total")
                 
             except Exception as e:
                 logger.error(f"Error updating labels on view change: {e}")
                 current_labels_dataset = gr.Dataset(samples=[])
                 suggested_labels_dataset = gr.Dataset(samples=[])
+                accept_btn_hidden = gr.update(visible=False)
             
-            # Return original result plus both label datasets
-            return result + (current_labels_dataset, suggested_labels_dataset)
+            # Return original result plus both label datasets and hidden accept button
+            return result + (current_labels_dataset, suggested_labels_dataset, accept_btn_hidden)
         
         view_selector.change(
             fn=handle_view_change_with_labels,
             inputs=[view_selector],
-            outputs=[slice_slider, slice_text, image_display, current_labels_dataset, suggested_labels_dataset]
+            outputs=[slice_slider, slice_text, image_display, current_labels_dataset, suggested_labels_dataset, accept_suggestions_btn]
         )
         apply_window_btn.click(
             fn=self.editor_image_handlers.update_window_level_for_annotator,
@@ -814,22 +862,47 @@ class SegMedPro:
             # result_tuple contains: (image_display, slice_text, crosshair_info, metadata, window_level, window_width)
             
             # Extract current labels from the updated image and get suggested labels
-            from ui.editor_tab import extract_current_labels_from_annotator, create_labels_dataset_samples, get_suggested_labels_for_slice
+            from ui.editor_tab import (extract_current_labels_from_annotator, create_labels_dataset_samples, 
+                                     get_suggested_labels_for_slice, clear_selected_suggested_labels_for_slice,
+                                     load_labels_from_file)
             try:
                 updated_image = result_tuple[0] if result_tuple else current_annotated_value
-                labels = extract_current_labels_from_annotator(updated_image)
-                labels_samples = create_labels_dataset_samples(labels)
+                
+                # Extract labels from the image annotator
+                annotator_labels = extract_current_labels_from_annotator(updated_image)
+                
+                # Load saved labels from file if we have a data directory
+                saved_labels = []
+                data_directory = getattr(self.state, 'current_directory', None)
+                if data_directory:
+                    saved_labels = load_labels_from_file(data_directory, new_slider_value)
+                
+                # Combine annotator labels and saved labels (avoid duplicates)
+                all_labels = list(annotator_labels)
+                for label in saved_labels:
+                    if label not in all_labels:
+                        all_labels.append(label)
+                
+                labels_samples = create_labels_dataset_samples(all_labels)
                 current_labels_dataset = gr.Dataset(samples=labels_samples)
                 
                 # Get suggested labels for the new slice
                 suggested_samples = get_suggested_labels_for_slice(new_slider_value)
                 suggested_labels_dataset = gr.Dataset(samples=suggested_samples)
+                
+                # Clear selections when navigating
+                clear_selected_suggested_labels_for_slice(new_slider_value)
+                accept_btn_hidden = gr.update(visible=False)
+                
+                logger.info(f"Prev navigation - Slice {new_slider_value} labels: {len(annotator_labels)} from annotator + {len(saved_labels)} saved = {len(all_labels)} total")
+                
             except Exception as e:
                 logger.error(f"Error updating labels on prev navigation: {e}")
                 current_labels_dataset = gr.Dataset(samples=[])
                 suggested_labels_dataset = gr.Dataset(samples=[])
+                accept_btn_hidden = gr.update(visible=False)
             
-            return result_tuple + (new_slider_value, current_labels_dataset, suggested_labels_dataset)
+            return result_tuple + (new_slider_value, current_labels_dataset, suggested_labels_dataset, accept_btn_hidden)
         
         def handle_next_navigation(current_slider_value, current_annotated_value):
             """Handle next button click with annotation saving (EDITOR-SPECIFIC)"""  
@@ -839,31 +912,56 @@ class SegMedPro:
             # result_tuple contains: (image_display, slice_text, crosshair_info, metadata, window_level, window_width)
             
             # Extract current labels from the updated image and get suggested labels
-            from ui.editor_tab import extract_current_labels_from_annotator, create_labels_dataset_samples, get_suggested_labels_for_slice
+            from ui.editor_tab import (extract_current_labels_from_annotator, create_labels_dataset_samples, 
+                                     get_suggested_labels_for_slice, clear_selected_suggested_labels_for_slice,
+                                     load_labels_from_file)
             try:
                 updated_image = result_tuple[0] if result_tuple else current_annotated_value
-                labels = extract_current_labels_from_annotator(updated_image)
-                labels_samples = create_labels_dataset_samples(labels)
+                
+                # Extract labels from the image annotator
+                annotator_labels = extract_current_labels_from_annotator(updated_image)
+                
+                # Load saved labels from file if we have a data directory
+                saved_labels = []
+                data_directory = getattr(self.state, 'current_directory', None)
+                if data_directory:
+                    saved_labels = load_labels_from_file(data_directory, new_slider_value)
+                
+                # Combine annotator labels and saved labels (avoid duplicates)
+                all_labels = list(annotator_labels)
+                for label in saved_labels:
+                    if label not in all_labels:
+                        all_labels.append(label)
+                
+                labels_samples = create_labels_dataset_samples(all_labels)
                 current_labels_dataset = gr.Dataset(samples=labels_samples)
                 
                 # Get suggested labels for the new slice
                 suggested_samples = get_suggested_labels_for_slice(new_slider_value)
                 suggested_labels_dataset = gr.Dataset(samples=suggested_samples)
+                
+                # Clear selections when navigating
+                clear_selected_suggested_labels_for_slice(new_slider_value)
+                accept_btn_hidden = gr.update(visible=False)
+                
+                logger.info(f"Next navigation - Slice {new_slider_value} labels: {len(annotator_labels)} from annotator + {len(saved_labels)} saved = {len(all_labels)} total")
+                
             except Exception as e:
                 logger.error(f"Error updating labels on next navigation: {e}")
                 current_labels_dataset = gr.Dataset(samples=[])
                 suggested_labels_dataset = gr.Dataset(samples=[])
+                accept_btn_hidden = gr.update(visible=False)
             
-            return result_tuple + (new_slider_value, current_labels_dataset, suggested_labels_dataset)
+            return result_tuple + (new_slider_value, current_labels_dataset, suggested_labels_dataset, accept_btn_hidden)
         
         prev_btn.click(
             fn=handle_prev_navigation,
             inputs=[slice_slider, image_display],
-            outputs=[image_display, slice_text, crosshair_info, metadata_display, window_level, window_width, slice_slider, current_labels_dataset, suggested_labels_dataset]
+            outputs=[image_display, slice_text, crosshair_info, metadata_display, window_level, window_width, slice_slider, current_labels_dataset, suggested_labels_dataset, accept_suggestions_btn]
         )
         
         next_btn.click(            fn=handle_next_navigation,            inputs=[slice_slider, image_display],
-            outputs=[image_display, slice_text, crosshair_info, metadata_display, window_level, window_width, slice_slider, current_labels_dataset, suggested_labels_dataset]
+            outputs=[image_display, slice_text, crosshair_info, metadata_display, window_level, window_width, slice_slider, current_labels_dataset, suggested_labels_dataset, accept_suggestions_btn]
         )
           # Connect processing mode change event with layout switching
         def handle_processing_mode_change(mode):
@@ -1035,34 +1133,32 @@ class SegMedPro:
                     status_msg = self.editor_medsam2_handlers.handle_box_annotation(annotated_image_value)
                     logger.info(f"Annotation Status: Box annotation handled - {status_msg}")
                 
-                # Update current labels dataset with extensive DEBUG logging
-                from ui.editor_tab import extract_current_labels_from_annotator, create_labels_dataset_samples
+                # Update current labels dataset - combine annotator labels with saved labels
+                from ui.editor_tab import (extract_current_labels_from_annotator, create_labels_dataset_samples,
+                                         load_labels_from_file)
                 
-                # DEBUG: Log the annotated_image_value structure
-                logger.info(f"DEBUG handle_image_annotation_change: annotated_image_value type = {type(annotated_image_value)}")
-                logger.info(f"DEBUG handle_image_annotation_change: annotated_image_value = {annotated_image_value}")
+                # Extract labels from the image annotator
+                annotator_labels = extract_current_labels_from_annotator(annotated_image_value)
                 
-                # Extract labels with debug logging
-                labels = extract_current_labels_from_annotator(annotated_image_value)
-                logger.info(f"DEBUG handle_image_annotation_change: extracted labels = {labels}")
-                logger.info(f"DEBUG handle_image_annotation_change: labels type = {type(labels)}")
-                logger.info(f"DEBUG handle_image_annotation_change: labels length = {len(labels) if labels else 'None'}")
+                # Load saved labels from file if we have a data directory
+                saved_labels = []
+                data_directory = getattr(self.state, 'current_directory', None)
+                current_slice_idx = getattr(self.state, 'current_slice_idx', 0)
+                if data_directory:
+                    saved_labels = load_labels_from_file(data_directory, current_slice_idx)
                 
-                # Create dataset samples with debug logging
-                samples = create_labels_dataset_samples(labels)
-                logger.info(f"DEBUG handle_image_annotation_change: created samples = {samples}")
-                logger.info(f"DEBUG handle_image_annotation_change: samples type = {type(samples)}")
-                logger.info(f"DEBUG handle_image_annotation_change: samples length = {len(samples) if samples else 'None'}")
+                # Combine annotator labels and saved labels (avoid duplicates)
+                all_labels = list(annotator_labels)
+                for label in saved_labels:
+                    if label not in all_labels:
+                        all_labels.append(label)
                 
-                # Additional debug: check if samples are in correct format for Dataset
-                if samples:
-                    logger.info(f"DEBUG handle_image_annotation_change: first sample = {samples[0]}")
-                    logger.info(f"DEBUG handle_image_annotation_change: first sample type = {type(samples[0])}")
+                # Create dataset samples with combined labels
+                samples = create_labels_dataset_samples(all_labels)
                 
-                logger.info(f"Current labels update: {len(labels) if labels else 0} labels -> {len(samples) if samples else 0} samples")
-                logger.info(f"DEBUG handle_image_annotation_change: About to return samples to current_labels_dataset")
+                logger.info(f"Annotation change - Slice {current_slice_idx} labels: {len(annotator_labels)} from annotator + {len(saved_labels)} saved = {len(all_labels)} total")
                 
-                # Return gr.Dataset update instead of just samples (based on Gradio docs)
+                # Return gr.Dataset update with combined labels
                 return gr.Dataset(samples=samples)
             except Exception as e:
                 logger.error(f"Error handling image annotation change: {str(e)}")
@@ -1177,15 +1273,21 @@ class SegMedPro:
             """Handle VLM label suggestions using the selected model with loading feedback and slice-specific storage"""
             try:
                 logger.info(f"VLM label suggestions called with model: {vlm_model}")
-                from ui.editor_tab import create_medgemma_label_suggestions, create_other_vlm_label_suggestions
+                from ui.editor_tab import create_medgemma_label_suggestions, create_other_vlm_label_suggestions, load_labels_from_file
                 
                 # Get current slice index for slice-specific storage
                 current_slice_idx = self.state.current_slice_idx
                 
+                # Get current labels for this slice to filter duplicates
+                current_labels = []
+                if self.state.current_directory:
+                    saved_labels = load_labels_from_file(self.state.current_directory, current_slice_idx)
+                    current_labels = saved_labels if saved_labels else []
+                
                 if vlm_model == "MedGemma-4B":
-                    result_samples = create_medgemma_label_suggestions(image_annotator_value, current_slice_idx)
+                    result_samples = create_medgemma_label_suggestions(image_annotator_value, current_slice_idx, current_labels)
                 else:
-                    result_samples = create_other_vlm_label_suggestions(vlm_model, image_annotator_value, current_slice_idx)
+                    result_samples = create_other_vlm_label_suggestions(vlm_model, image_annotator_value, current_slice_idx, current_labels)
                 
                 logger.info(f"VLM suggestions result: {len(result_samples)} samples for slice {current_slice_idx}")
                 return gr.Dataset(samples=result_samples)
@@ -1222,14 +1324,54 @@ class SegMedPro:
                 return "Error selecting label"
         
         def handle_suggested_label_selection(evt: gr.SelectData):
-            """Handle selection from suggested labels dataset"""
+            """Handle toggle selection from suggested labels dataset"""
             try:
-                # evt.index gives us the index of the selected item
-                # We can use this to get the label name from the dataset
-                return f"Selected suggested label: {evt.value}" if evt.value else "No label selected"
+                from ui.editor_tab import toggle_suggested_label_selection, get_selected_suggested_labels_for_slice, get_suggested_labels_for_slice
+                
+                # Get current slice index and the label that was clicked
+                current_slice_idx = self.state.current_slice_idx
+                
+                # Handle both string and list values from dataset selection
+                if isinstance(evt.value, list) and len(evt.value) > 0:
+                    label_text = str(evt.value[0]).strip()
+                elif isinstance(evt.value, str):
+                    label_text = str(evt.value).strip()
+                else:
+                    label_text = ""
+                
+                if not label_text or label_text.startswith("⏳"):
+                    return gr.update(), gr.update(visible=False)  # Ignore loading or empty labels
+                
+                # Clean the label text (remove selection indicators if present)
+                clean_label_text = label_text.replace("✅ ", "").strip()
+                
+                # Toggle the selection
+                selected_labels = toggle_suggested_label_selection(current_slice_idx, clean_label_text)
+                
+                # Show/hide accept button based on whether anything is selected
+                accept_btn_visible = len(selected_labels) > 0
+                
+                # Update the suggested labels dataset to show selection state
+                all_suggestions = get_suggested_labels_for_slice(current_slice_idx)
+                if all_suggestions:
+                    # Convert raw samples to label strings
+                    all_suggestion_labels = [sample[0] for sample in all_suggestions]
+                    
+                    # Create new samples with selection indicators
+                    updated_samples = []
+                    for suggestion_label in all_suggestion_labels:
+                        if suggestion_label in selected_labels:
+                            updated_samples.append([f"✅ {suggestion_label}"])  # Selected
+                        else:
+                            updated_samples.append([suggestion_label])  # Not selected
+                    
+                    return gr.Dataset(samples=updated_samples), gr.update(visible=accept_btn_visible)
+                else:
+                    return gr.update(), gr.update(visible=accept_btn_visible)
+                    
             except Exception as e:
                 logger.error(f"Error handling suggested label selection: {e}")
-                return "Error selecting label"
+                return gr.update(), gr.update(visible=False)
         
         # Connect dataset selection handlers
         current_labels_dataset.select(
@@ -1241,7 +1383,78 @@ class SegMedPro:
         suggested_labels_dataset.select(
             fn=handle_suggested_label_selection,
             inputs=[],
-            outputs=[annotation_status]
+            outputs=[suggested_labels_dataset, accept_suggestions_btn]
+        )
+        
+        # Handle accepting suggested labels
+        def handle_accept_suggestions():
+            """Accept selected suggested labels and APPEND them to current labels"""
+            try:
+                from ui.editor_tab import (get_selected_suggested_labels_for_slice, 
+                                         clear_selected_suggested_labels_for_slice,
+                                         save_labels_to_file, extract_current_labels_from_annotator,
+                                         create_labels_dataset_samples, load_labels_from_file,
+                                         remove_labels_from_suggested_for_slice, get_suggested_labels_for_slice)
+                
+                current_slice_idx = self.state.current_slice_idx
+                selected_labels = get_selected_suggested_labels_for_slice(current_slice_idx)
+                
+                if not selected_labels:
+                    return gr.update(), gr.update(visible=False), gr.update(), "No labels selected"
+                
+                # Get current data directory for saving labels
+                data_directory = getattr(self.state, 'current_directory', None)
+                if not data_directory:
+                    return gr.update(), gr.update(visible=False), gr.update(), "Error: No data directory available"
+                
+                # Clean labels (remove selection indicators)
+                clean_labels = []
+                for label in selected_labels:
+                    clean_label = label.replace("✅ ", "").strip()
+                    if clean_label:
+                        clean_labels.append(clean_label)
+                
+                # APPEND to labels.txt file (new save function handles appending)
+                save_result = save_labels_to_file(data_directory, current_slice_idx, clean_labels)
+                
+                # Get current labels from image annotator
+                current_image = getattr(self.state, 'image_annotator_state', None)
+                annotator_labels = extract_current_labels_from_annotator(current_image)
+                
+                # Load ALL saved labels from file (includes the ones we just appended)
+                saved_labels = load_labels_from_file(data_directory, current_slice_idx)
+                
+                # Combine annotator labels and saved labels (avoid duplicates)
+                all_labels = list(annotator_labels)
+                for label in saved_labels:
+                    if label not in all_labels:
+                        all_labels.append(label)
+                
+                # Create updated current labels dataset
+                current_labels_samples = create_labels_dataset_samples(all_labels)
+                updated_current_labels = gr.Dataset(samples=current_labels_samples)
+                
+                # Remove accepted labels from suggested labels list (so they don't appear again)
+                remaining_suggestions = remove_labels_from_suggested_for_slice(current_slice_idx, clean_labels)
+                updated_suggested_labels = gr.Dataset(samples=create_labels_dataset_samples(remaining_suggestions))
+                
+                # Clear selected suggestions and hide accept button
+                clear_selected_suggested_labels_for_slice(current_slice_idx)
+                
+                logger.info(f"APPENDED {len(clean_labels)} suggestions to slice {current_slice_idx}: {clean_labels}")
+                logger.info(f"Total labels for slice {current_slice_idx}: {len(all_labels)} - {all_labels}")
+                logger.info(f"Remaining suggestions for slice {current_slice_idx}: {len(remaining_suggestions)} - {remaining_suggestions}")
+                
+                return updated_current_labels, gr.update(visible=False), updated_suggested_labels, save_result
+                
+            except Exception as e:
+                logger.error(f"Error accepting suggestions: {e}")
+                return gr.update(), gr.update(visible=False), gr.update(), f"Error: {str(e)}"
+        
+        accept_suggestions_btn.click(
+            fn=handle_accept_suggestions,
+            inputs=[],
+            outputs=[current_labels_dataset, accept_suggestions_btn, suggested_labels_dataset, annotation_status]
         )
           # Auto-brain annotation handler - Updated to use SAM2 Fast Masking Pipeline (EDITOR-SPECIFIC)
         def handle_auto_brain_annotation(output_dir, save_visualizations, device_selector, processing_mode, score_threshold, dir_input_value):
@@ -1315,11 +1528,10 @@ class SegMedPro:
                     value="🚀 **SAM2 FAST MASKING MODE**: Click 'Run SAM2 Fast Masking' for automatic brain structure segmentation",
                     visible=True
                 )        # Add instruction text component
-        instruction_text = gr.Markdown(
+        '''instruction_text = gr.Markdown(
             value="🚀 **SAM2 FAST MASKING MODE**: Click 'Run SAM2 Fast Masking' for automatic brain structure segmentation",
             visible=True        )
-
-
+'''
 # Initialize and launch the application
 if __name__ == "__main__":
     logger.info("Starting SegMed-Pro application")
