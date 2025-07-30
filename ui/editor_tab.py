@@ -1046,7 +1046,69 @@ def create_other_vlm_label_suggestions(vlm_model, image_annotator_value, slice_i
 
 def create_editor_tab() -> dict:
     """Create the complete editor tab layout"""
-    with gr.TabItem("Editor"):
+    with gr.TabItem("Editor", id=1):
+        # Welcome Guide for Expert Users - Using Accordion as Modal Alternative
+        with gr.Accordion("Crowdsourcing", open=False, visible=False) as welcome_guide:
+            welcome_guide_content = gr.HTML("""
+            <div style='padding: 15px; background: #1f2937; border-radius: 8px; color: white;'>
+                <div style='background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); padding: 20px; border-radius: 8px; margin-bottom: 15px; text-align: center;'>
+                    <h2 style='color: white; margin: 0 0 8px 0; font-size: 20px; font-weight: bold;'>
+                        🎯 Ready to Start Annotating!
+                    </h2>
+                    <p style='color: rgba(255,255,255,0.9); margin: 0; font-size: 14px;'>
+                        Your dataset has been loaded and annotation tools are active
+                    </p>
+                </div>
+                
+                <div style='background: #374151; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #10b981;'>
+                    <h3 style='color: #10b981; margin: 0 0 8px 0; font-size: 16px;'>📊 Current Assignment</h3>
+                    <div style='color: #d1d5db; font-size: 14px; line-height: 1.4;'>
+                        <p style='margin: 4px 0;'><strong>Campaign:</strong> Loading...</p>
+                        <p style='margin: 4px 0;'><strong>Patient:</strong> Loading...</p>
+                        <p style='margin: 4px 0;'><strong>Modality:</strong> Loading...</p>
+                        <p style='margin: 4px 0;'><strong>Dataset:</strong> Loading...</p>
+                    </div>
+                </div>
+                
+                <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;'>
+                    <div style='background: #374151; padding: 12px; border-radius: 6px; border-left: 3px solid #3b82f6;'>
+                        <h4 style='color: #3b82f6; margin: 0 0 6px 0; font-size: 14px;'>🖱️ Annotate</h4>
+                        <p style='color: #d1d5db; margin: 0; font-size: 12px; line-height: 1.3;'>
+                            Click and drag to create annotations
+                        </p>
+                    </div>
+                    <div style='background: #374151; padding: 12px; border-radius: 6px; border-left: 3px solid #10b981;'>
+                        <h4 style='color: #10b981; margin: 0 0 6px 0; font-size: 14px;'>🔍 Navigate</h4>
+                        <p style='color: #d1d5db; margin: 0; font-size: 12px; line-height: 1.3;'>
+                            Use slider or Prev/Next buttons
+                        </p>
+                    </div>
+                    <div style='background: #374151; padding: 12px; border-radius: 6px; border-left: 3px solid #f59e0b;'>
+                        <h4 style='color: #f59e0b; margin: 0 0 6px 0; font-size: 14px;'>🤖 AI Help</h4>
+                        <p style='color: #d1d5db; margin: 0; font-size: 12px; line-height: 1.3;'>
+                            Use VLM Tools for suggestions
+                        </p>
+                    </div>
+                    <div style='background: #374151; padding: 12px; border-radius: 6px; border-left: 3px solid #ef4444;'>
+                        <h4 style='color: #ef4444; margin: 0 0 6px 0; font-size: 14px;'>💾 Submit</h4>
+                        <p style='color: #d1d5db; margin: 0; font-size: 12px; line-height: 1.3;'>
+                            Scroll down to submit work
+                        </p>
+                    </div>
+                </div>
+                
+                <div style='background: #065f46; padding: 12px; border-radius: 6px; text-align: center;'>
+                    <p style='margin: 0; color: #d1fae5; font-size: 13px; font-weight: 500;'>
+                        ✨ <strong>Pro Tip:</strong> Annotations are saved automatically as you work
+                    </p>
+                </div>
+            </div>
+            """)
+            
+            # Close button
+            with gr.Row():
+                welcome_guide_close = gr.Button("🚀 Got it! Start Annotating", variant="primary", size="sm")
+        
         with gr.Row():
             # Column 1: All components (data loading, controls, etc.) except Metadata, Status/Errors, and Image Adjustments moved as specified
             with gr.Column(scale=1):
@@ -1145,7 +1207,7 @@ def create_editor_tab() -> dict:
                     crosshair_info = gr.Textbox(label="Crosshair", interactive=True, visible=False)
                 
                 # Label Management Section
-                with gr.Accordion("Label Management", open=True):
+                with gr.Accordion("Label Management using VLMs", open=True):
                     # Current Labels Section
                     # gr.Markdown("**Current Labels**")
                     with gr.Row():
@@ -1445,6 +1507,11 @@ def create_editor_tab() -> dict:
             'submit_btn': submit_annotation_btn,
             'review_btn': send_for_review_btn,
             'status': crowdsourcing_status
+        },
+        'welcome_modal': {
+            'guide': welcome_guide,
+            'content': welcome_guide_content,
+            'close_btn': welcome_guide_close
         },
         '3d_viewer_functions': {
             'toggle_visibility': toggle_3d_viewer_visibility,

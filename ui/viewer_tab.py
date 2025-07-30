@@ -225,7 +225,7 @@ def create_viewer_controls_section() -> tuple:
 
 def create_viewer_tab() -> tuple:
     """Create the complete viewer tab layout"""
-    with gr.TabItem("Viewer"):
+    with gr.TabItem("Viewer", id=0):
         with gr.Row():
             # Left column: Data loading and controls
             data_loading_components = create_data_loading_section()

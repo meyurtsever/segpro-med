@@ -287,12 +287,20 @@ class SegMedPro:
                     label_manager_components = create_label_manager_tab()
                     
                     # Admin-only Management tab
-                    with gr.Tab("Management", visible=False) as management_tab:
+                    with gr.Tab("Management", visible=False, id=4) as management_tab:
                         management_components = create_management_tab()
                     
                     # Expert-only Contribute tab
-                    with gr.Tab("Contribute", visible=False) as contribute_tab:
+                    with gr.Tab("Contribute", visible=False, id=5) as contribute_tab:
                         contribute_components = create_contribute_tab()
+                
+                # Hidden state variable to track active tab (for programmatic tab switching)
+                active_tab_state = gr.State(value=0)  # Default to Viewer tab (id=0)
+            
+            # Tab switching function (similar to the demo)
+            def change_tab(tab_id):
+                """Change to the specified tab"""
+                return gr.Tabs(selected=tab_id)
             
             # Login handler
             def handle_login(username, password):
@@ -421,7 +429,7 @@ class SegMedPro:
             
             # Connect crowdsourcing handlers if contribute tab exists
             if contribute_components:
-                self._connect_contribute_handlers(contribute_components, editor_components)
+                self._connect_contribute_handlers(contribute_components, editor_components, tabs, active_tab_state, change_tab)
             
             return app
     
@@ -1825,7 +1833,7 @@ class SegMedPro:
             visible=True        )
 '''
     
-    def _connect_contribute_handlers(self, contribute_components, editor_components):
+    def _connect_contribute_handlers(self, contribute_components, editor_components, tabs, active_tab_state, change_tab):
         """Connect event handlers for the contribute tab"""
         if not contribute_components or not ENABLE_AUTH:
             return
@@ -1840,7 +1848,7 @@ class SegMedPro:
         def load_dataset_from_contribute(dataset_path, crowdsourcing_mode):
             """Load dataset from contribute tab into editor tab"""
             if not dataset_path or not crowdsourcing_mode:
-                return "No dataset selected", gr.update()
+                return "No dataset selected", gr.update(), None, None, None, None, None, None, None
             
             try:
                 # Use the existing data loading handler to load the dataset
@@ -1848,21 +1856,53 @@ class SegMedPro:
                 result = self.data_handlers.load_data(None, dataset_path)
                 
                 # result is a tuple: (image, dropdown, metadata, slider, slice_info, crosshair_text, status_message, window_level, window_width)
-                # The status message is at index 6
-                if result and len(result) > 6:
-                    status_message = result[6]
+                if result and len(result) >= 9:
+                    image, dropdown, metadata, slider, slice_info, crosshair_text, status_message, window_level, window_width = result
+                    
                     if isinstance(status_message, str) and "loaded" in status_message.lower():
                         self.crowdsourcing_mode = True
-                        # Show crowdsourcing controls in editor tab
-                        return status_message, gr.update(visible=True)
+                        
+                        # Format image for image annotator if it's a PIL Image
+                        formatted_image = image
+                        if hasattr(image, 'save'):  # PIL Image
+                            # Convert PIL Image to the format expected by image_annotator
+                            formatted_image = {
+                                "image": image,
+                                "boxes": []  # Empty annotations initially
+                            }
+                        
+                        # Return complete initialization data for editor tab
+                        return (
+                            "Dataset loaded successfully!",  # Simple success message for contribute tab
+                            gr.update(visible=True),          # Show crowdsourcing controls
+                            formatted_image,                   # Initialize image display (properly formatted)
+                            metadata,                          # Initialize metadata
+                            slider,                            # Initialize slider
+                            slice_info,                        # Initialize slice info
+                            crosshair_text,                    # Initialize crosshair text
+                            window_level,                      # Initialize window level
+                            window_width                       # Initialize window width
+                        )
                     else:
-                        return status_message if isinstance(status_message, str) else "Failed to load dataset", gr.update(visible=False)
+                        return (
+                            status_message if isinstance(status_message, str) else "Failed to load dataset",
+                            gr.update(visible=False),
+                            None, None, None, None, None, None, None
+                        )
                 else:
-                    return "Failed to load dataset", gr.update(visible=False)
+                    return (
+                        "Failed to load dataset",
+                        gr.update(visible=False),
+                        None, None, None, None, None, None, None
+                    )
                     
             except Exception as e:
                 logger.error(f"Error loading dataset from contribute tab: {e}")
-                return f"Error loading dataset: {str(e)}", gr.update(visible=False)
+                return (
+                    f"Error loading dataset: {str(e)}",
+                    gr.update(visible=False),
+                    None, None, None, None, None, None, None
+                )
         
         # Handle annotation submission
         def handle_submit_annotation(task_selection, user_id, image_annotator_data):
@@ -2029,7 +2069,7 @@ class SegMedPro:
             """Handle send for review request"""
             return "📤 Review functionality will be implemented in future versions"
         
-        # Connect the dataset loading
+        # Connect the dataset loading with auto-switch to Editor tab
         if ('selected_dataset_path' in contribute_components and 
             'crowdsourcing_mode' in contribute_components and
             'crowdsourcing' in editor_components):
@@ -2037,7 +2077,31 @@ class SegMedPro:
             contribute_components['selected_dataset_path'].change(
                 fn=load_dataset_from_contribute,
                 inputs=[contribute_components['selected_dataset_path'], contribute_components['crowdsourcing_mode']],
-                outputs=[contribute_components['load_status'], editor_components['crowdsourcing']['accordion']]
+                outputs=[
+                    contribute_components['load_status'],           # Status message
+                    editor_components['crowdsourcing']['accordion'], # Show crowdsourcing controls
+                    editor_components['visualization'][3],          # image_display
+                    editor_components['visualization'][1],          # metadata_display  
+                    editor_components['visualization'][7],          # slice_slider
+                    editor_components['visualization'][9],          # slice_text
+                    editor_components['visualization'][10],         # crosshair_info
+                    # Window level and width are in data_loading section
+                    editor_components['data_loading'][8],           # window_level
+                    editor_components['data_loading'][9]            # window_width
+                ]
+            ).then(
+                # Auto-switch to Editor tab after successful loading
+                fn=lambda: change_tab(1),  # Editor tab has id=1
+                outputs=[tabs]
+            ).then(
+                # Show welcome guide when switching to Editor tab after dataset loading
+                fn=self._populate_welcome_guide_info,
+                inputs=[contribute_components['task_dropdown']],
+                outputs=[editor_components['welcome_modal']['content']]
+            ).then(
+                # Show the accordion after content is populated
+                fn=lambda: gr.update(visible=True, open=True),
+                outputs=[editor_components['welcome_modal']['guide']]
             )
             
             # Connect crowdsourcing controls in editor tab
@@ -2051,10 +2115,134 @@ class SegMedPro:
                 fn=handle_send_for_review,
                 outputs=[editor_components['crowdsourcing']['status']]
             )
+            
+            # Connect welcome guide close button
+            editor_components['welcome_modal']['close_btn'].click(
+                fn=lambda: gr.update(visible=False, open=False),
+                outputs=[editor_components['welcome_modal']['guide']]
+            )
         
         # Update user state periodically
         if 'current_user_state' in contribute_components:
             contribute_components['current_user_state'].value = update_contribute_user_state()
+    
+    def _populate_welcome_guide_info(self, task_selection):
+        """Populate the welcome guide with campaign and dataset information"""
+        try:
+            # Extract campaign and patient info from task selection
+            campaign_id = "Loading..."
+            patient_id = "Loading..."
+            modality_type = "Loading..."
+            dataset_path = "Loading..."
+            
+            if task_selection and '|' in task_selection:
+                parts = task_selection.split('|')
+                if len(parts) >= 3:
+                    campaign_id = parts[0].strip()
+                    patient_id = parts[1].strip()
+                    dataset_path = parts[2].strip()  # Get dataset path directly from task selection
+                    
+                    # Try to extract modality from dataset path
+                    if dataset_path:
+                        path_lower = dataset_path.lower()
+                        logger.info(f"Analyzing dataset path for modality: {dataset_path}")
+                        
+                        if 'flair' in path_lower:
+                            modality_type = "FLAIR MRI"
+                        elif 't1' in path_lower and 'flair' not in path_lower:
+                            modality_type = "T1-weighted MRI"
+                        elif 't2' in path_lower:
+                            modality_type = "T2-weighted MRI"
+                        elif 't1c' in path_lower:
+                            modality_type = "T1 Contrast-enhanced MRI"
+                        elif 'dwi' in path_lower:
+                            modality_type = "Diffusion-weighted MRI"
+                        else:
+                            # Try to extract from the last part of the path
+                            path_parts = dataset_path.replace('\\', '/').split('/')
+                            if path_parts:
+                                last_part = path_parts[-1].lower()
+                                logger.info(f"Checking last part of path: {last_part}")
+                                if 'flair' in last_part:
+                                    modality_type = "FLAIR MRI"
+                                elif any(mod in last_part for mod in ['t1', 't2', 'dwi']):
+                                    modality_type = f"MRI ({last_part.upper()})"
+                                else:
+                                    modality_type = "Medical Image"
+                        
+                        logger.info(f"Detected modality: {modality_type} from path: {dataset_path}")
+                    else:
+                        dataset_path = "Path not available"
+                        modality_type = "Unknown"
+            
+            # Generate updated HTML with the actual values
+            updated_html = f"""
+            <div style='padding: 15px; background: #1f2937; border-radius: 8px; color: white;'>
+                <div style='background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); padding: 20px; border-radius: 8px; margin-bottom: 15px; text-align: center;'>
+                    <h2 style='color: white; margin: 0 0 8px 0; font-size: 20px; font-weight: bold;'>
+                        🎯 All Set!
+                    </h2>
+                    <p style='color: rgba(255,255,255,0.9); margin: 0; font-size: 14px;'>
+                        Your dataset has been loaded and annotation tools are active
+                    </p>
+                </div>
+                
+                <div style='background: #374151; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #10b981;'>
+                    <h3 style='color: #10b981; margin: 0 0 8px 0; font-size: 16px;'>📊 Current Assignment</h3>
+                    <div style='color: #d1d5db; font-size: 14px; line-height: 1.4;'>
+                        <p style='margin: 4px 0;'><strong>Campaign:</strong> {campaign_id}</p>
+                        <p style='margin: 4px 0;'><strong>Patient:</strong> {patient_id}</p>
+                        <p style='margin: 4px 0;'><strong>Modality:</strong> {modality_type}</p>                      
+                    </div>
+                </div>
+                
+                <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;'>
+                    <div style='background: #374151; padding: 12px; border-radius: 6px; border-left: 3px solid #3b82f6;'>
+                        <h4 style='color: #3b82f6; margin: 0 0 6px 0; font-size: 14px;'>🖱️ Annotate</h4>
+                        <p style='color: #d1d5db; margin: 0; font-size: 12px; line-height: 1.3;'>
+                            Click and drag to create annotations
+                        </p>
+                    </div>
+                    <div style='background: #374151; padding: 12px; border-radius: 6px; border-left: 3px solid #10b981;'>
+                        <h4 style='color: #10b981; margin: 0 0 6px 0; font-size: 14px;'>🔍 Navigate</h4>
+                        <p style='color: #d1d5db; margin: 0; font-size: 12px; line-height: 1.3;'>
+                            Use slider or Prev/Next buttons
+                        </p>
+                    </div>
+                    <div style='background: #374151; padding: 12px; border-radius: 6px; border-left: 3px solid #f59e0b;'>
+                        <h4 style='color: #f59e0b; margin: 0 0 6px 0; font-size: 14px;'>🤖 AI Help</h4>
+                        <p style='color: #d1d5db; margin: 0; font-size: 12px; line-height: 1.3;'>
+                            Use VLM Tools for suggestions, SAM models for segmtentation
+                        </p>
+                    </div>
+                    <div style='background: #374151; padding: 12px; border-radius: 6px; border-left: 3px solid #ef4444;'>
+                        <h4 style='color: #ef4444; margin: 0 0 6px 0; font-size: 14px;'>💾 Submit</h4>
+                        <p style='color: #d1d5db; margin: 0; font-size: 12px; line-height: 1.3;'>
+                            Scroll down to submit work
+                        </p>
+                    </div>
+                </div>
+                
+                <div style='background: #065f46; padding: 12px; border-radius: 6px; text-align: center;'>
+                    <p style='margin: 0; color: #d1fae5; font-size: 13px; font-weight: 500;'>
+                        ⚠️ <strong>Caution:</strong> Annotations are NOT saved automatically as you work. 
+                    </p>
+                </div>
+            </div>
+            """
+            
+            return updated_html
+            
+        except Exception as e:
+            logger.error(f"Error populating welcome guide info: {e}")
+            return """
+            <div style='padding: 15px; background: #1f2937; border-radius: 8px; color: white;'>
+                <div style='text-align: center;'>
+                    <h2 style='color: white; margin: 0 0 8px 0; font-size: 20px;'>🎯 Welcome to the Editor</h2>
+                    <p style='color: rgba(255,255,255,0.9); margin: 0;'>Ready to start annotating!</p>
+                </div>
+            </div>
+            """
 
 # Initialize and launch the application
 if __name__ == "__main__":

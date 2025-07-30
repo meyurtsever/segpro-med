@@ -9,7 +9,7 @@ import gradio as gr
 
 
 def create_label_manager_tab():
-    with gr.TabItem("Label Manager"):
+    with gr.TabItem("Label Manager", id=3):
         gr.Markdown("## Label Manager: Edit and Manage Label Sets")
         
         # Main 3-column layout

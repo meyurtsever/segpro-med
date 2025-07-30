@@ -107,7 +107,8 @@ def create_contribute_tab():
                 )
                 
                 load_task_button = gr.Button("Load Task in Editor", variant="primary")
-                load_status = gr.Markdown("")
+                with gr.Row():
+                    load_status = gr.HTML("")  # Use HTML for better formatting
                 
                 # Hidden state for task management
                 selected_dataset_path = gr.State("")

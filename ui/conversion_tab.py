@@ -10,7 +10,7 @@ import gradio as gr
 
 def create_conversion_tab() -> tuple:
     """Create the conversion tab layout"""
-    with gr.TabItem("Conversion"):
+    with gr.TabItem("Conversion", id=2):
         with gr.Row():
             with gr.Column():
                 gr.Markdown("## Format Conversion")
