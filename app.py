@@ -233,8 +233,8 @@ class SegMedPro:
                         username_input = gr.Textbox(
                             label="Username",
                             placeholder="Enter your username",
-                            #value="admin1",
-                            value="jane_smith",
+                            value="admin1",
+                            #value="jane_smith",
                             interactive=True
                         )
                         
@@ -242,8 +242,8 @@ class SegMedPro:
                             label="Password",
                             placeholder="Enter your password",
                             type="password",
-                            #value="adminpass",
-                            value="expert456",
+                            value="adminpass",
+                            #value="expert456",
                             interactive=True
                         )
                         
