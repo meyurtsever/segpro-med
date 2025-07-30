@@ -109,7 +109,13 @@
         "normal (37)"
       ]
     },
-    "completed": {},
+    "completed": {
+      "jane_smith": [
+        "normal (60)",
+        "normal (37)",
+        "normal (54)"
+      ]
+    },
     "reviewed": {}
   }
 }

@@ -17,22 +17,22 @@ def create_contribute_tab():
     def get_assigned_tasks(user_id):
         """Get assigned tasks for the current expert"""
         if not user_id:
-            return [], "Please log in first"
+            return gr.update(choices=[], value=None), "Please log in first"
         
-        assigned = crowdsourcing_manager.get_assigned_patients(user_id)
+        assigned = crowdsourcing_manager.get_assigned_tasks(user_id)
         
         if not assigned:
-            return [], "No tasks assigned to you yet."
+            return gr.update(choices=[], value=None), "No tasks assigned to you yet."
         
         # Create choices for dropdown
         choices = []
         for task in assigned:
-            choice_label = f"{task['campaign_name']} - {task['patient_id']}"
-            choice_value = f"{task['campaign_id']}|{task['patient_id']}|{task['dataset_path']}"
+            choice_label = f"{task['campaign']} - {task['patient_id']}"
+            choice_value = f"{task['campaign']}|{task['patient_id']}|{task['dataset_path']}"
             choices.append((choice_label, choice_value))
         
         status = f"You have {len(assigned)} assigned tasks."
-        return choices, status
+        return gr.update(choices=choices, value=None), status
     
     def load_selected_task(task_selection, user_id):
         """Load the selected task into the editor"""
@@ -46,8 +46,21 @@ def create_contribute_tab():
             if not os.path.exists(patient_path):
                 return f"❌ Patient data not found: {patient_path}", "", False
             
-            status = f"✅ Loaded patient {patient_id} from campaign {campaign_id}"
-            return status, patient_path, True
+            # Find the first available modality directory
+            valid_modalities = ['flair', 't1', 't1c', 't2']
+            modality_path = None
+            
+            for modality in valid_modalities:
+                potential_path = os.path.join(patient_path, modality)
+                if os.path.exists(potential_path) and os.path.isdir(potential_path):
+                    modality_path = potential_path
+                    break
+            
+            if not modality_path:
+                return f"❌ No valid modality found for patient {patient_id}", "", False
+            
+            status = f"✅ Loaded patient {patient_id} from campaign {campaign_id} (modality: {os.path.basename(modality_path)})"
+            return status, modality_path, True
             
         except Exception as e:
             logger.error(f"Error loading task: {e}")
@@ -85,7 +98,7 @@ def create_contribute_tab():
                 
                 refresh_tasks_button = gr.Button("Refresh Tasks", variant="secondary")
                 
-                task_status = gr.Markdown("Click 'Refresh Tasks' to load your assignments.")
+                task_status = gr.Markdown("Loading your assignments...")
                 
                 task_dropdown = gr.Dropdown(
                     label="Select Task",
@@ -125,6 +138,13 @@ def create_contribute_tab():
         
         # Event handlers
         refresh_tasks_button.click(
+            fn=get_assigned_tasks,
+            inputs=[current_user_state],
+            outputs=[task_dropdown, task_status]
+        )
+        
+        # Auto-refresh tasks when user state changes (when user logs in)
+        current_user_state.change(
             fn=get_assigned_tasks,
             inputs=[current_user_state],
             outputs=[task_dropdown, task_status]

@@ -228,7 +228,8 @@ class SegMedPro:
                         username_input = gr.Textbox(
                             label="Username",
                             placeholder="Enter your username",
-                            value="admin1",
+                            #value="admin1",
+                            value="jane_smith",
                             interactive=True
                         )
                         
@@ -236,7 +237,8 @@ class SegMedPro:
                             label="Password",
                             placeholder="Enter your password",
                             type="password",
-                            value="adminpass",
+                            #value="adminpass",
+                            value="expert456",
                             interactive=True
                         )
                         
@@ -1842,22 +1844,29 @@ class SegMedPro:
             
             try:
                 # Use the existing data loading handler to load the dataset
-                result = self.data_handlers.load_data(dataset_path)
+                # Pass None for file_obj since we're loading from directory
+                result = self.data_handlers.load_data(None, dataset_path)
                 
-                if "successfully" in result.lower():
-                    self.crowdsourcing_mode = True
-                    # Show crowdsourcing controls in editor tab
-                    return result, gr.update(visible=True)
+                # result is a tuple: (image, dropdown, metadata, slider, slice_info, crosshair_text, status_message, window_level, window_width)
+                # The status message is at index 6
+                if result and len(result) > 6:
+                    status_message = result[6]
+                    if isinstance(status_message, str) and "loaded" in status_message.lower():
+                        self.crowdsourcing_mode = True
+                        # Show crowdsourcing controls in editor tab
+                        return status_message, gr.update(visible=True)
+                    else:
+                        return status_message if isinstance(status_message, str) else "Failed to load dataset", gr.update(visible=False)
                 else:
-                    return result, gr.update(visible=False)
+                    return "Failed to load dataset", gr.update(visible=False)
                     
             except Exception as e:
                 logger.error(f"Error loading dataset from contribute tab: {e}")
                 return f"Error loading dataset: {str(e)}", gr.update(visible=False)
         
         # Handle annotation submission
-        def handle_submit_annotation(task_selection, user_id):
-            """Handle annotation submission from editor tab"""
+        def handle_submit_annotation(task_selection, user_id, image_annotator_data):
+            """Handle annotation submission from editor tab with annotation data"""
             if not task_selection or not user_id:
                 return "Please select a task and ensure you're logged in"
             
@@ -1865,10 +1874,149 @@ class SegMedPro:
                 campaign_id, patient_id, _ = task_selection.split('|')
                 from crowdsourcing.campaign_manager import CrowdsourcingManager
                 crowdsourcing_manager = CrowdsourcingManager()
-                success = crowdsourcing_manager.mark_completed(campaign_id, user_id, patient_id)
+                
+                # Prepare annotation data for saving
+                annotation_data = None
+                if image_annotator_data:
+                    try:
+                        # Extract annotation information from image annotator
+                        annotations = []
+                        labels = []
+                        
+                        logger.info(f"Processing image_annotator_data type: {type(image_annotator_data)}")
+                        
+                        # Handle different image annotator data structures
+                        if isinstance(image_annotator_data, dict):
+                            # Get annotations from image annotator - try multiple possible keys
+                            raw_annotations = (image_annotator_data.get('boxes', []) or 
+                                             image_annotator_data.get('annotations', []) or 
+                                             image_annotator_data.get('shapes', []))
+                            
+                            logger.info(f"Found {len(raw_annotations)} raw annotations to process")
+                            
+                            for i, annotation in enumerate(raw_annotations):
+                                logger.info(f"Processing annotation {i}: {type(annotation)} - {annotation}")
+                                
+                                if isinstance(annotation, dict):
+                                    # Extract shape type
+                                    shape_type = annotation.get('type', 'box')
+                                    label = annotation.get('label', '')
+                                    
+                                    # Initialize annotation info
+                                    ann_info = {
+                                        'annotation_id': i,
+                                        'type': shape_type,
+                                        'label': label,
+                                        'coordinates': [],
+                                        'bbox': [],
+                                        'area': 0,
+                                        'points': []
+                                    }
+                                    
+                                    # Extract coordinates based on shape type
+                                    if shape_type == 'polygon' and 'points' in annotation:
+                                        # Polygon shapes store coordinates as points
+                                        points = annotation['points']
+                                        if isinstance(points, list):
+                                            coordinates = []
+                                            for point in points:
+                                                if isinstance(point, dict) and 'x' in point and 'y' in point:
+                                                    coordinates.append([point['x'], point['y']])
+                                            ann_info['coordinates'] = coordinates
+                                            ann_info['points'] = coordinates
+                                            
+                                            # Calculate bbox for polygon
+                                            if coordinates:
+                                                x_coords = [p[0] for p in coordinates]
+                                                y_coords = [p[1] for p in coordinates]
+                                                ann_info['bbox'] = [min(x_coords), min(y_coords), max(x_coords), max(y_coords)]
+                                                
+                                                # Calculate approximate area using shoelace formula
+                                                area = 0
+                                                n = len(coordinates)
+                                                for j in range(n):
+                                                    k = (j + 1) % n
+                                                    area += coordinates[j][0] * coordinates[k][1]
+                                                    area -= coordinates[k][0] * coordinates[j][1]
+                                                ann_info['area'] = abs(area) / 2
+                                    
+                                    elif shape_type == 'freehand' and 'points' in annotation:
+                                        # Freehand shapes also store coordinates as points
+                                        points = annotation['points']
+                                        if isinstance(points, list):
+                                            coordinates = []
+                                            for point in points:
+                                                if isinstance(point, dict) and 'x' in point and 'y' in point:
+                                                    coordinates.append([point['x'], point['y']])
+                                            ann_info['coordinates'] = coordinates
+                                            ann_info['points'] = coordinates
+                                            
+                                            # Calculate bbox for freehand
+                                            if coordinates:
+                                                x_coords = [p[0] for p in coordinates]
+                                                y_coords = [p[1] for p in coordinates]
+                                                ann_info['bbox'] = [min(x_coords), min(y_coords), max(x_coords), max(y_coords)]
+                                                ann_info['area'] = len(coordinates)  # Approximation for freehand
+                                    
+                                    elif 'xmin' in annotation and 'ymin' in annotation and 'xmax' in annotation and 'ymax' in annotation:
+                                        # Box/rectangle shapes
+                                        xmin, ymin, xmax, ymax = annotation['xmin'], annotation['ymin'], annotation['xmax'], annotation['ymax']
+                                        ann_info['bbox'] = [xmin, ymin, xmax, ymax]
+                                        ann_info['coordinates'] = [[xmin, ymin], [xmax, ymin], [xmax, ymax], [xmin, ymax]]  # Rectangle corners
+                                        ann_info['area'] = (xmax - xmin) * (ymax - ymin)
+                                    
+                                    elif 'x' in annotation and 'y' in annotation and 'width' in annotation and 'height' in annotation:
+                                        # Alternative box format
+                                        x, y, width, height = annotation['x'], annotation['y'], annotation['width'], annotation['height']
+                                        ann_info['bbox'] = [x, y, x + width, y + height]
+                                        ann_info['coordinates'] = [[x, y], [x + width, y], [x + width, y + height], [x, y + height]]
+                                        ann_info['area'] = width * height
+                                    
+                                    else:
+                                        # Fallback for unknown formats
+                                        logger.warning(f"Unknown annotation format for annotation {i}: {annotation}")
+                                        # Try to extract any coordinate data
+                                        if 'coordinates' in annotation:
+                                            ann_info['coordinates'] = annotation['coordinates']
+                                        if 'bbox' in annotation:
+                                            ann_info['bbox'] = annotation['bbox']
+                                        if 'area' in annotation:
+                                            ann_info['area'] = annotation['area']
+                                    
+                                    annotations.append(ann_info)
+                                    
+                                    # Collect labels
+                                    if ann_info['label'] and ann_info['label'] not in labels:
+                                        labels.append(ann_info['label'])
+                            
+                            annotation_data = {
+                                'annotations': annotations,
+                                'labels': labels,
+                                'image': image_annotator_data.get('image'),
+                                'total_annotations': len(annotations),
+                                'submission_time': None  # Will be set by campaign manager
+                            }
+                            
+                            logger.info(f"Submitting annotation with {len(annotations)} annotations and {len(labels)} unique labels")
+                        else:
+                            logger.warning(f"Unexpected image_annotator_data type: {type(image_annotator_data)}")
+                            annotation_data = {
+                                'annotations': [],
+                                'labels': [],
+                                'total_annotations': 0,
+                                'error': f"Unexpected data type: {type(image_annotator_data)}"
+                            }
+                        
+                    except Exception as e:
+                        logger.warning(f"Error processing annotation data: {e}")
+                        annotation_data = None
+                
+                # Submit with annotation data
+                success = crowdsourcing_manager.mark_completed(campaign_id, user_id, patient_id, annotation_data)
                 
                 if success:
-                    return f"✅ Annotation for patient {patient_id} submitted successfully!"
+                    annotation_count = len(annotation_data.get('annotations', [])) if annotation_data else 0
+                    return f"✅ Annotation for patient {patient_id} submitted successfully! ({annotation_count} annotations saved)"
                 else:
                     return "❌ Failed to submit annotation"
                     
@@ -1895,7 +2043,7 @@ class SegMedPro:
             # Connect crowdsourcing controls in editor tab
             editor_components['crowdsourcing']['submit_btn'].click(
                 fn=handle_submit_annotation,
-                inputs=[contribute_components['task_dropdown'], contribute_components['current_user_state']],
+                inputs=[contribute_components['task_dropdown'], contribute_components['current_user_state'], editor_components['visualization'][3]],  # image_display is at index 3 in visualization
                 outputs=[editor_components['crowdsourcing']['status']]
             )
             
