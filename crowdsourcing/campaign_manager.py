@@ -191,7 +191,13 @@ class CrowdsourcingManager:
         # Count reviewed patients
         reviewed_patients = set()
         for expert_reviews in campaign.get('reviewed', {}).values():
-            reviewed_patients.update(expert_reviews)
+            for review_item in expert_reviews:
+                if isinstance(review_item, dict) and 'patient_id' in review_item:
+                    # Extract patient_id from review object
+                    reviewed_patients.add(review_item['patient_id'])
+                elif isinstance(review_item, str):
+                    # Handle old format where it was just patient ID strings
+                    reviewed_patients.add(review_item)
         reviewed_count = len(reviewed_patients)
         
         # Calculate unassigned
