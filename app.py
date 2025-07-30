@@ -2222,7 +2222,7 @@ class SegMedPro:
                     gr.update(),  # welcome_guide_content
                     gr.update(),  # assignments_remaining
                     gr.update(),  # next_assignment_btn
-                    gr.update(),  # task_dropdown
+                    gr.update(),  # selected_task_info
                 ]
             
             try:
@@ -2247,7 +2247,7 @@ class SegMedPro:
                         gr.update(),  # welcome_guide_content
                         gr.update(value="🎉 All assignments completed!", visible=True),  # assignments_remaining
                         gr.update(visible=False),  # next_assignment_btn
-                        gr.update(),  # task_dropdown
+                        gr.update(),  # selected_task_info
                     ]
                 
                 # Get the next specific task assigned to this user
@@ -2280,7 +2280,7 @@ class SegMedPro:
                         gr.update(),  # welcome_guide_content
                         gr.update(),  # assignments_remaining
                         gr.update(),  # next_assignment_btn
-                        gr.update(),  # task_dropdown
+                        gr.update(),  # selected_task_info
                     ]
                 
                 # Find the first available modality directory
@@ -2309,7 +2309,7 @@ class SegMedPro:
                         gr.update(),  # welcome_guide_content
                         gr.update(),  # assignments_remaining
                         gr.update(),  # next_assignment_btn
-                        gr.update(),  # task_dropdown
+                        gr.update(),  # selected_task_info
                     ]
                 
                 # Update current directory in state
@@ -2342,7 +2342,7 @@ class SegMedPro:
                             gr.update(),  # welcome_guide_content
                             gr.update(),  # assignments_remaining
                             gr.update(),  # next_assignment_btn
-                            gr.update(),  # task_dropdown
+                            gr.update(),  # selected_task_info
                         ]
                     
                     # Extract the data (annotated_value is already in correct format)
@@ -2415,7 +2415,7 @@ class SegMedPro:
                         self._populate_welcome_guide_info(task_selection),  # welcome_guide_content
                         gr.update(value=progress_html, visible=True),  # assignments_remaining - SHOW with progress
                         gr.update(visible=remaining_after > 0),  # next_assignment_btn
-                        gr.update(value=task_selection),  # task_dropdown - UPDATE with new task selection
+                        gr.update(value=task_selection),  # selected_task_info - UPDATE with new task selection
                     ]
                         
                 except Exception as load_error:
@@ -2434,7 +2434,7 @@ class SegMedPro:
                         gr.update(),  # welcome_guide_content
                         gr.update(),  # assignments_remaining
                         gr.update(),  # next_assignment_btn
-                        gr.update(),  # task_dropdown
+                        gr.update(),  # selected_task_info
                     ]
                     
             except Exception as e:
@@ -2453,7 +2453,7 @@ class SegMedPro:
                     gr.update(),  # welcome_guide_content
                     gr.update(),  # assignments_remaining
                     gr.update(),  # next_assignment_btn
-                    gr.update(),  # task_dropdown
+                    gr.update(),  # selected_task_info
                 ]
         
         # Connect the dataset loading with auto-switch to Editor tab
@@ -2483,7 +2483,7 @@ class SegMedPro:
             ).then(
                 # Show welcome guide when switching to Editor tab after dataset loading
                 fn=self._populate_welcome_guide_info,
-                inputs=[contribute_components['task_dropdown']],
+                inputs=[contribute_components['selected_task_info']],
                 outputs=[editor_components['welcome_modal']['content']]
             ).then(
                 # Show the accordion after content is populated
@@ -2494,7 +2494,7 @@ class SegMedPro:
             # Connect crowdsourcing controls in editor tab
             editor_components['crowdsourcing']['submit_btn'].click(
                 fn=handle_submit_and_clear,
-                inputs=[contribute_components['task_dropdown'], contribute_components['current_user_state'], editor_components['visualization'][3]],  # image_display is at index 3 in visualization
+                inputs=[contribute_components['selected_task_info'], contribute_components['current_user_state'], editor_components['visualization'][3]],  # image_display is at index 3 in visualization
                 outputs=[editor_components['crowdsourcing']['status'], editor_components['visualization'][3]]  # Also update image_annotator to clear overlays
             ).then(
                 # Update assignment progress after submission and control button visibility - hide submit button
@@ -2505,11 +2505,100 @@ class SegMedPro:
                     editor_components['crowdsourcing']['next_assignment_btn'],
                     editor_components['crowdsourcing']['submit_btn']
                 ]
+            ).then(
+                # Refresh Contribute tab table after submission
+                fn=contribute_components['refresh_assignments_after_submission'],
+                inputs=[contribute_components['current_user_state']],
+                outputs=[
+                    contribute_components['assignments_table'],
+                    contribute_components['task_selection_radio'],
+                    contribute_components['load_status']
+                ]
             )
             
-            # Connect next assignment button
+            # Connect next assignment button - use the new load_next_assignment from contribute tab
+            def handle_next_assignment_wrapper(user_id):
+                """Wrapper to handle next assignment loading and update both editor and contribute tabs"""
+                # Load the next assignment using contribute tab's function
+                load_status, dataset_path, success, task_info = contribute_components['load_next_assignment'](user_id)
+                
+                if success and dataset_path:
+                    # Load the dataset into editor
+                    try:
+                        result = self.data_handlers.load_data_for_annotator(None, dataset_path)
+                        if result and len(result) >= 9:
+                            annotated_value, dropdown, metadata, slider, slice_info, crosshair_text, status_message, window_level, window_width = result
+                            
+                            # Update contribute tab dataset to show current status
+                            contribute_dataset, contribute_status = contribute_components['get_assigned_tasks_dataset'](user_id)
+                            
+                            # Prepare remaining assignments info
+                            from crowdsourcing.campaign_manager import CrowdsourcingManager
+                            cm = CrowdsourcingManager()
+                            remaining = cm.get_remaining_assignments_for_user(user_id)
+                            remaining_count = len(remaining) - 1  # Subtract 1 because we just loaded one
+                            
+                            # Create assignments remaining display
+                            if remaining_count > 0:
+                                assignments_display = f"""
+                                <div style='padding: 12px; background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-radius: 8px; border: 1px solid #3b82f6; margin: 8px 0;'>
+                                    <div style='color: #1e40af; font-weight: 600; font-size: 13px; text-align: center;'>
+                                        📋 {remaining_count} assignments remaining after this one
+                                    </div>
+                                </div>
+                                """
+                            else:
+                                assignments_display = f"""
+                                <div style='padding: 12px; background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); border-radius: 8px; border: 1px solid #10b981; margin: 8px 0;'>
+                                    <div style='color: #047857; font-weight: 600; font-size: 13px; text-align: center;'>
+                                        🎉 This is your final assignment!
+                                    </div>
+                                </div>
+                                """
+                            
+                            return [
+                                gr.update(selected=1),  # Switch to Editor tab
+                                gr.update(),  # dicom_viewer
+                                annotated_value,  # image_display
+                                slider,  # slice_slider  
+                                gr.update(visible=True),  # prev_slice_btn
+                                gr.update(visible=True),  # next_slice_btn
+                                metadata,  # metadata_display
+                                gr.update(visible=True),  # submit_btn
+                                gr.update(value=load_status, visible=True),  # submission_status
+                                gr.update(visible=True, open=True),  # welcome_guide
+                                self._populate_welcome_guide_info(task_info),  # welcome_guide_content
+                                gr.update(value=assignments_display, visible=True),  # assignments_remaining
+                                gr.update(visible=remaining_count > 0),  # next_assignment_btn
+                                task_info,  # selected_task_info
+                                contribute_dataset,  # Update contribute tab dataset
+                                contribute_status,  # Update contribute tab status
+                            ]
+                    except Exception as e:
+                        logger.error(f"Error loading next assignment data: {e}")
+                
+                # Failed to load - return error states
+                return [
+                    gr.update(),  # tabs (no change)
+                    gr.update(),  # dicom_viewer
+                    gr.update(),  # image_display
+                    gr.update(),  # slice_slider
+                    gr.update(),  # prev_slice_btn
+                    gr.update(),  # next_slice_btn
+                    gr.update(),  # metadata_display
+                    gr.update(),  # submit_btn
+                    gr.update(value=load_status, visible=True),  # submission_status (show error)
+                    gr.update(),  # welcome_guide
+                    gr.update(),  # welcome_guide_content
+                    gr.update(),  # assignments_remaining
+                    gr.update(),  # next_assignment_btn
+                    "",  # selected_task_info
+                    gr.update(),  # contribute tab dataset
+                    gr.update(),  # contribute tab status
+                ]
+            
             editor_components['crowdsourcing']['next_assignment_btn'].click(
-                fn=load_next_assignment,
+                fn=handle_next_assignment_wrapper,
                 inputs=[contribute_components['current_user_state']],
                 outputs=[
                     tabs,  # tabs
@@ -2525,7 +2614,9 @@ class SegMedPro:
                     editor_components['welcome_modal']['content'],               # welcome_guide_content
                     editor_components['crowdsourcing']['assignments_remaining'], # assignments_remaining
                     editor_components['crowdsourcing']['next_assignment_btn'],   # next_assignment_btn
-                    contribute_components['task_dropdown'],                      # task_dropdown - UPDATE this for correct submission
+                    contribute_components['selected_task_info'],                 # selected_task_info
+                    contribute_components['tasks_dataset'],                      # contribute tab dataset
+                    contribute_components['task_status'],                        # contribute tab status
                 ]
             )
             
@@ -2533,6 +2624,29 @@ class SegMedPro:
             editor_components['welcome_modal']['close_btn'].click(
                 fn=lambda: gr.update(visible=False, open=False),
                 outputs=[editor_components['welcome_modal']['guide']]
+            )
+        
+        # Auto-refresh contribute tab when tab becomes visible
+        def handle_tab_change(tab_id):
+            """Handle tab change and auto-refresh contribute tab when selected"""
+            if tab_id == 5:  # Contribute tab has id=5
+                # Auto-refresh the tasks when contribute tab is selected
+                user_id = update_contribute_user_state()
+                if user_id and 'get_assigned_tasks_dataset' in contribute_components:
+                    try:
+                        dataset, status = contribute_components['get_assigned_tasks_dataset'](user_id)
+                        return dataset, status
+                    except Exception as e:
+                        logger.error(f"Error auto-refreshing contribute tab: {e}")
+                        return gr.update(), "Error loading assignments"
+            return gr.update(), gr.update()
+        
+        # Connect tab change to auto-refresh
+        if hasattr(tabs, 'change'):
+            tabs.change(
+                fn=handle_tab_change,
+                inputs=[active_tab_state],
+                outputs=[contribute_components['tasks_dataset'], contribute_components['task_status']]
             )
         
         # Update user state periodically

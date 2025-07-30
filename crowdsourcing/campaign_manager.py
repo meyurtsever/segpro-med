@@ -28,6 +28,11 @@ class CrowdsourcingManager:
         except Exception as e:
             logger.error(f"Error loading assignments: {e}")
             return {}
+
+    def load_assignments(self):
+        """Public method to reload assignments from file"""
+        self.assignments = self._load_assignments()
+        return self.assignments
     
     def _save_assignments(self):
         """Save assignments to JSON file"""
@@ -115,13 +120,29 @@ class CrowdsourcingManager:
         """Get all tasks assigned to a specific expert across all campaigns"""
         assigned = []
         for campaign_name, campaign_data in self.assignments.items():
-            if expert_id in campaign_data.get('assigned', {}):
-                for patient_id in campaign_data['assigned'][expert_id]:
+            assigned_experts = campaign_data.get('assigned', {})
+            
+            # Check both exact match and case-insensitive match
+            expert_key = None
+            if expert_id in assigned_experts:
+                expert_key = expert_id
+            else:
+                # Try case-insensitive match
+                for key in assigned_experts.keys():
+                    if key.lower() == expert_id.lower():
+                        expert_key = key
+                        break
+            
+            if expert_key:
+                assigned_patients = assigned_experts[expert_key]
+                
+                for patient_id in assigned_patients:
                     assigned.append({
                         'campaign': campaign_name,
                         'patient_id': patient_id,
                         'dataset_path': campaign_data['dataset_path']
                     })
+        
         return assigned
     
     def get_remaining_assignments_for_user(self, expert_id):
