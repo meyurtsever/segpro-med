@@ -15,23 +15,24 @@ def create_contribute_tab():
     crowdsourcing_manager = CrowdsourcingManager()
     
     def get_assigned_tasks(user_id):
-        """Get assigned tasks for the current expert"""
+        """Get assigned tasks for the current expert (excluding completed ones)"""
         if not user_id:
             return gr.update(choices=[], value=None), "Please log in first"
         
-        assigned = crowdsourcing_manager.get_assigned_tasks(user_id)
+        # Get remaining assignments (excludes completed tasks)
+        remaining = crowdsourcing_manager.get_remaining_assignments_for_user(user_id)
         
-        if not assigned:
-            return gr.update(choices=[], value=None), "No tasks assigned to you yet."
+        if not remaining:
+            return gr.update(choices=[], value=None), "No remaining tasks assigned to you."
         
         # Create choices for dropdown
         choices = []
-        for task in assigned:
-            choice_label = f"{task['campaign']} - {task['patient_id']}"
-            choice_value = f"{task['campaign']}|{task['patient_id']}|{task['dataset_path']}"
+        for task in remaining:
+            choice_label = f"{task['campaign_id']} - {task['patient_id']}"
+            choice_value = f"{task['campaign_id']}|{task['patient_id']}|{task['dataset_path']}"
             choices.append((choice_label, choice_value))
         
-        status = f"You have {len(assigned)} assigned tasks."
+        status = f"You have {len(remaining)} remaining assigned tasks."
         return gr.update(choices=choices, value=None), status
     
     def load_selected_task(task_selection, user_id):

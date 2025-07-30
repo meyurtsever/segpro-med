@@ -1208,8 +1208,20 @@ def create_editor_tab() -> dict:
                 
                 # Crowdsourcing Controls (moved up and enhanced)
                 with gr.Accordion("Crowdsourcing Controls", open=True, visible=False) as crowdsourcing_accordion:
-                    gr.Markdown("**Annotation Task Controls**")
-                    gr.Markdown("Complete your annotation work and submit using the controls below.")
+                    #gr.Markdown("**Annotation Task Controls**")
+                    
+                    crowdsourcing_status = gr.HTML(
+                        value="""
+                        <div style='padding: 16px; background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%); border-radius: 12px; border: 1px solid #d1d5db; margin: 8px 0;'>
+                            <div style='display: flex; align-items: center; gap: 12px;'>
+                                <div style='width: 12px; height: 12px; background: #6b7280; border-radius: 50%; flex-shrink: 0;'></div>
+                                <div style='color: #374151; font-weight: 500; font-size: 14px;'>
+                                    Complete your annotation work and submit using the controls below.
+                                </div>
+                            </div>
+                        </div>
+                        """
+                    )
                     
                     with gr.Row():
                         submit_annotation_btn = gr.Button(
@@ -1217,17 +1229,10 @@ def create_editor_tab() -> dict:
                             variant="primary",
                             size="lg"
                         )
-                        send_for_review_btn = gr.Button(
-                            "📤 Send for Review",
-                            variant="secondary",
-                            size="lg"
-                        )
                     
-                    # Assignment progress and next task controls
+                    # Assignment progress and next task controls with Next.js style
                     with gr.Row():
-                        assignments_remaining = gr.Textbox(
-                            label="Assignment Progress",
-                            interactive=False,
+                        assignments_remaining = gr.HTML(
                             value="",
                             visible=False
                         )
@@ -1240,19 +1245,22 @@ def create_editor_tab() -> dict:
                             visible=False
                         )
                     
-                    crowdsourcing_status = gr.Textbox(
-                        label="Submission Status",
-                        interactive=False,
-                        value="Complete your annotation work above, then submit."
-                    )
-                    
-                    gr.Markdown("""
-                    **Instructions:**
-                    1. Use the annotation tools above to complete your work
-                    2. Review your annotations carefully
-                    3. Click 'Submit Annotation' when finished
-                    4. Use 'Send for Review' if you need supervisor feedback
-                    5. Click 'Load Next Assignment' to continue with remaining tasks
+                    # Instructions with Next.js styling
+                    gr.HTML("""
+                    <div style='padding: 16px; background: linear-gradient(135deg, #374151 0%, #4b5563 100%); border-radius: 12px; border: 1px solid #6b7280; margin: 8px 0;'>
+                        <div style='display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px;'>
+                            <div style='width: 12px; height: 12px; background: #3b82f6; border-radius: 50%; flex-shrink: 0; margin-top: 4px;'></div>
+                            <div style='color: #f9fafb; font-weight: 600; font-size: 14px;'>
+                                Instructions:
+                            </div>
+                        </div>
+                        <div style='color: #d1d5db; font-size: 13px; line-height: 1.6; margin-left: 24px;'>
+                            <div style='margin-bottom: 6px;'><strong>1.</strong> Use the annotation tools above to complete your work</div>
+                            <div style='margin-bottom: 6px;'><strong>2.</strong> Review your annotations carefully</div>
+                            <div style='margin-bottom: 6px;'><strong>3.</strong> Click 'Submit Annotation' when finished</div>
+                            <div style='margin-bottom: 0;'><strong>4.</strong> Click 'Load Next Assignment' to continue with remaining tasks</div>
+                        </div>
+                    </div>
                     """)
                 
                 # Label Management Section (moved down and set to closed)
@@ -1363,7 +1371,7 @@ def create_editor_tab() -> dict:
                     metadata_display = gr.JSON(label=None, visible=True)
                 
                 col2 = (error_display, metadata_display, view_selector, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, 
-                        crowdsourcing_accordion, submit_annotation_btn, send_for_review_btn, assignments_remaining, next_assignment_btn, crowdsourcing_status,
+                        crowdsourcing_accordion, submit_annotation_btn, assignments_remaining, next_assignment_btn, crowdsourcing_status,
                         current_labels_dataset, suggested_vlm_selector, suggest_labels_btn, suggested_labels_dataset, accept_suggestions_btn, vlm_model_selector, vlm_run_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn)
             
             # Column 3: Annotate with AI Models
@@ -1524,7 +1532,6 @@ def create_editor_tab() -> dict:
         'crowdsourcing': {
             'accordion': crowdsourcing_accordion,
             'submit_btn': submit_annotation_btn,
-            'review_btn': send_for_review_btn,
             'status': crowdsourcing_status,
             'assignments_remaining': assignments_remaining,
             'next_assignment_btn': next_assignment_btn

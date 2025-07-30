@@ -987,7 +987,7 @@ class SegMedPro:
         (file_input, dir_input, load_btn, reset_dir_btn, file_browser, label_file,
          metadata_display_dl, error_display_dl, window_level, window_width, apply_window_btn, debug_btn) = data_loading
         (error_display, metadata_display, view_selector, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, 
-         crowdsourcing_accordion, submit_annotation_btn, send_for_review_btn, assignments_remaining, next_assignment_btn, crowdsourcing_status,
+         crowdsourcing_accordion, submit_annotation_btn, assignments_remaining, next_assignment_btn, crowdsourcing_status,
          current_labels_dataset, suggested_vlm_selector, suggest_labels_btn, suggested_labels_dataset, accept_suggestions_btn, vlm_model_selector, vlm_run_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn) = visualization        
         (point_prompt_checkbox, box_prompt_checkbox, coordinates_text, clear_coords_btn, ai_model_selector, 
          processing_mode, score_threshold,
@@ -1917,6 +1917,53 @@ class SegMedPro:
                     None, None, None, None, None, None, None
                 )
         
+        # Wrapper function to handle submission and clearing overlays
+        def handle_submit_and_clear(task_selection, user_id, image_annotator_data):
+            """Handle annotation submission and clear overlays after successful submission"""
+            # First handle the submission
+            status_message = handle_submit_annotation(task_selection, user_id, image_annotator_data)
+            
+            # Check if submission was successful
+            if status_message.startswith("✅"):
+                # Create Next.js styled success message
+                styled_message = f"""
+                <div style='padding: 16px; background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); border-radius: 12px; border: 1px solid #10b981; margin: 8px 0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);'>
+                    <div style='display: flex; align-items: center; gap: 12px;'>
+                        <div style='width: 12px; height: 12px; background: #10b981; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3);'></div>
+                        <div style='color: #047857; font-weight: 500; font-size: 14px; line-height: 1.5;'>
+                            {status_message.replace('✅', '')}
+                        </div>
+                    </div>
+                </div>
+                """
+                
+                # Successful submission - clear overlays
+                if isinstance(image_annotator_data, dict) and 'image' in image_annotator_data:
+                    # Create cleared image_annotator data (keep image, clear overlays)
+                    cleared_data = {
+                        'image': image_annotator_data['image'],
+                        'boxes': [],  # Clear all overlays
+                        'orientation': image_annotator_data.get('orientation', 0)
+                    }
+                    return styled_message, cleared_data
+                else:
+                    # If no image data, just return update
+                    return styled_message, gr.update()
+            else:
+                # Create Next.js styled error message
+                styled_message = f"""
+                <div style='padding: 16px; background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border-radius: 12px; border: 1px solid #ef4444; margin: 8px 0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);'>
+                    <div style='display: flex; align-items: center; gap: 12px;'>
+                        <div style='width: 12px; height: 12px; background: #ef4444; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3);'></div>
+                        <div style='color: #dc2626; font-weight: 500; font-size: 14px; line-height: 1.5;'>
+                            {status_message.replace('❌', '')}
+                        </div>
+                    </div>
+                </div>
+                """
+                # Failed submission - don't clear overlays
+                return styled_message, gr.update()
+        
         # Handle annotation submission
         def handle_submit_annotation(task_selection, user_id, image_annotator_data):
             """Handle annotation submission from editor tab with annotation data"""
@@ -2077,7 +2124,7 @@ class SegMedPro:
                     success_msg = f"✅ Annotation for patient {patient_id} submitted successfully! ({annotation_count} annotations saved)"
                     
                     if remaining_count > 0:
-                        success_msg += f"\n\n🎯 You have {remaining_count} assignment{'s' if remaining_count != 1 else ''} remaining. Click 'Load Next Assignment' to continue."
+                        success_msg += f"\n\n🎯 You have {remaining_count} assignment{'s' if remaining_count != 1 else ''} remaining. \n\nClick 'Load Next Assignment' to continue."
                     else:
                         success_msg += f"\n\n🎉 Congratulations! You have completed all your assignments."
                     
@@ -2095,10 +2142,14 @@ class SegMedPro:
             return "📤 Review functionality will be implemented in future versions"
         
         # Get remaining assignments count for current user
-        def get_remaining_assignments_info(user_id):
-            """Get information about remaining assignments for the current user"""
+        def get_remaining_assignments_info(user_id, hide_submit_btn=False):
+            """Get information about remaining assignments for the current user with Next.js styling"""
             if not user_id:
-                return gr.update(value="", visible=False), gr.update(visible=False)
+                return (
+                    gr.update(value="", visible=False),  # assignments_remaining
+                    gr.update(visible=False),            # next_assignment_btn
+                    gr.update(visible=False)             # submit_btn
+                )
             
             try:
                 from crowdsourcing.campaign_manager import CrowdsourcingManager
@@ -2109,14 +2160,47 @@ class SegMedPro:
                 remaining_count = len(remaining_tasks)
                 
                 if remaining_count > 0:
-                    progress_text = f"📊 {remaining_count} assignment{'s' if remaining_count != 1 else ''} remaining"
-                    return gr.update(value=progress_text, visible=True), gr.update(visible=True)
+                    # Next.js style progress display
+                    progress_html = f"""
+                    <div style='padding: 16px; background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-radius: 12px; border: 1px solid #3b82f6; margin: 8px 0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);'>
+                        <div style='display: flex; align-items: center; gap: 12px;'>
+                            <div style='width: 12px; height: 12px; background: #3b82f6; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);'></div>
+                            <div style='color: #1e40af; font-weight: 600; font-size: 14px;'>
+                                📊 {remaining_count} assignment{'s' if remaining_count != 1 else ''} remaining
+                            </div>
+                        </div>
+                    </div>
+                    """
+                    return (
+                        gr.update(value=progress_html, visible=True),  # assignments_remaining
+                        gr.update(visible=True),                       # next_assignment_btn
+                        gr.update(visible=not hide_submit_btn)         # submit_btn - Hide if requested
+                    )
                 else:
-                    return gr.update(value="🎉 All assignments completed!", visible=True), gr.update(visible=False)
+                    # Next.js style completion display
+                    completion_html = f"""
+                    <div style='padding: 16px; background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); border-radius: 12px; border: 1px solid #10b981; margin: 8px 0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);'>
+                        <div style='display: flex; align-items: center; gap: 12px;'>
+                            <div style='width: 12px; height: 12px; background: #10b981; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3);'></div>
+                            <div style='color: #047857; font-weight: 600; font-size: 14px;'>
+                                🎉 All assignments completed!
+                            </div>
+                        </div>
+                    </div>
+                    """
+                    return (
+                        gr.update(value=completion_html, visible=True),  # assignments_remaining
+                        gr.update(visible=False),                        # next_assignment_btn
+                        gr.update(visible=False)                         # submit_btn - Hide when no more tasks
+                    )
                     
             except Exception as e:
                 logger.error(f"Error getting remaining assignments: {e}")
-                return gr.update(value="", visible=False), gr.update(visible=False)
+                return (
+                    gr.update(value="", visible=False),  # assignments_remaining
+                    gr.update(visible=False),            # next_assignment_btn
+                    gr.update(visible=True)              # submit_btn
+                )
         
         # Load next assignment for current user
         def load_next_assignment(user_id):
@@ -2279,9 +2363,44 @@ class SegMedPro:
                     
                     # Get updated assignment info
                     remaining_after = len(remaining_tasks) - 1
-                    progress_text = f"📊 {remaining_after} assignment{'s' if remaining_after != 1 else ''} remaining" if remaining_after > 0 else "🎉 This is your last assignment!"
                     
-                    # Return updates - minimal changes, no tab switching, RESET UI to default state
+                    # Create Next.js styled assignment progress
+                    if remaining_after > 0:
+                        progress_html = f"""
+                        <div style='padding: 16px; background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-radius: 12px; border: 1px solid #3b82f6; margin: 8px 0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);'>
+                            <div style='display: flex; align-items: center; gap: 12px;'>
+                                <div style='width: 12px; height: 12px; background: #3b82f6; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);'></div>
+                                <div style='color: #1e40af; font-weight: 600; font-size: 14px;'>
+                                    📊 {remaining_after} assignment{'s' if remaining_after != 1 else ''} remaining
+                                </div>
+                            </div>
+                        </div>
+                        """
+                    else:
+                        progress_html = f"""
+                        <div style='padding: 16px; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 12px; border: 1px solid #f59e0b; margin: 8px 0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);'>
+                            <div style='display: flex; align-items: center; gap: 12px;'>
+                                <div style='width: 12px; height: 12px; background: #f59e0b; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.3);'></div>
+                                <div style='color: #92400e; font-weight: 600; font-size: 14px;'>
+                                    🎉 This is your last assignment!
+                                </div>
+                            </div>
+                        </div>
+                        """
+                    
+                    # Create Next.js styled submission status (ready to work)
+                    ready_status_html = f"""
+                    <div style='padding: 16px; background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%); border-radius: 12px; border: 1px solid #6b7280; margin: 8px 0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);'>
+                        <div style='display: flex; align-items: center; gap: 12px;'>
+                            <div style='width: 12px; height: 12px; background: #6b7280; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.3);'></div>
+                            <div style='color: #374151; font-weight: 500; font-size: 14px;'>
+                                ✅ Assignment loaded successfully! Complete your annotation work above, then submit.
+                            </div>
+                        </div>
+                    </div>
+                    """
+                    
+                    # Return updates - minimal changes, no tab switching, SHOW PROGRESS AND STATUS
                     return [
                         gr.update(),  # tabs (stay where we are)
                         gr.update(visible=False),  # hide dicom_viewer 
@@ -2291,10 +2410,10 @@ class SegMedPro:
                         gr.update(visible=True),  # next_slice_btn
                         metadata,  # metadata_display - use loaded metadata
                         gr.update(visible=True),  # submit_btn
-                        gr.update(value="", visible=False),  # submission_status - RESET to hidden
+                        gr.update(value=ready_status_html, visible=True),  # submission_status - SHOW with ready message
                         gr.update(visible=True, open=True),  # welcome_guide
                         self._populate_welcome_guide_info(task_selection),  # welcome_guide_content
-                        gr.update(value="", visible=False),  # assignments_remaining - RESET to hidden initially
+                        gr.update(value=progress_html, visible=True),  # assignments_remaining - SHOW with progress
                         gr.update(visible=remaining_after > 0),  # next_assignment_btn
                         gr.update(value=task_selection),  # task_dropdown - UPDATE with new task selection
                     ]
@@ -2374,14 +2493,18 @@ class SegMedPro:
             
             # Connect crowdsourcing controls in editor tab
             editor_components['crowdsourcing']['submit_btn'].click(
-                fn=handle_submit_annotation,
+                fn=handle_submit_and_clear,
                 inputs=[contribute_components['task_dropdown'], contribute_components['current_user_state'], editor_components['visualization'][3]],  # image_display is at index 3 in visualization
-                outputs=[editor_components['crowdsourcing']['status']]
+                outputs=[editor_components['crowdsourcing']['status'], editor_components['visualization'][3]]  # Also update image_annotator to clear overlays
             ).then(
-                # Update assignment progress after submission
-                fn=get_remaining_assignments_info,
+                # Update assignment progress after submission and control button visibility - hide submit button
+                fn=lambda user_id: get_remaining_assignments_info(user_id, hide_submit_btn=True),
                 inputs=[contribute_components['current_user_state']],
-                outputs=[editor_components['crowdsourcing']['assignments_remaining'], editor_components['crowdsourcing']['next_assignment_btn']]
+                outputs=[
+                    editor_components['crowdsourcing']['assignments_remaining'], 
+                    editor_components['crowdsourcing']['next_assignment_btn'],
+                    editor_components['crowdsourcing']['submit_btn']
+                ]
             )
             
             # Connect next assignment button
@@ -2404,11 +2527,6 @@ class SegMedPro:
                     editor_components['crowdsourcing']['next_assignment_btn'],   # next_assignment_btn
                     contribute_components['task_dropdown'],                      # task_dropdown - UPDATE this for correct submission
                 ]
-            )
-            
-            editor_components['crowdsourcing']['review_btn'].click(
-                fn=handle_send_for_review,
-                outputs=[editor_components['crowdsourcing']['status']]
             )
             
             # Connect welcome guide close button
