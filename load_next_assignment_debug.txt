@@ -1,0 +1,105 @@
+INFO:__main__:Loading next assignment for user jane_smith: campaign='GaziBrains 2025 Crowdsourcing T', patient='normal (60)'
+INFO:__main__:DEBUG: Calling load_dataset_from_contribute with modality_path: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair
+INFO:__main__:DEBUG: load_dataset_from_contribute called with dataset_path: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair, crowdsourcing_mode: True
+INFO:__main__:DEBUG: Calling self.data_handlers.load_data_for_annotator with dataset_path: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair
+DEBUG:segmed_pro:Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair\1.3.12.2.1107.5.2.36.40820.2018112109175381506849810_MR.dcm
+DEBUG:segmed_pro:Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair\1.3.12.2.1107.5.2.36.40820.2018112109175424640149821_MR.dcm
+DEBUG:segmed_pro:Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair\1.3.12.2.1107.5.2.36.40820.201811210917543139949816_MR.dcm
+DEBUG:segmed_pro:Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair\1.3.12.2.1107.5.2.36.40820.2018112109175446303449824_MR.dcm
+DEBUG:segmed_pro:Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair\1.3.12.2.1107.5.2.36.40820.2018112109175468814749831_MR.dcm
+DEBUG:segmed_pro:Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair\1.3.12.2.1107.5.2.36.40820.2018112109175489989249834_MR.dcm
+DEBUG:segmed_pro:Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair\1.3.12.2.1107.5.2.36.40820.2018112109175513543949841_MR.dcm
+DEBUG:segmed_pro:Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair\1.3.12.2.1107.5.2.36.40820.2018112109175533510349844_MR.dcm
+DEBUG:segmed_pro:Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair\1.3.12.2.1107.5.2.36.40820.2018112109175556111649851_MR.dcm
+DEBUG:segmed_pro:Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair\1.3.12.2.1107.5.2.36.40820.2018112109175577402149854_MR.dcm
+DEBUG:segmed_pro:Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair\1.3.12.2.1107.5.2.36.40820.2018112109191479731849859_MR.dcm
+DEBUG:segmed_pro:Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair\1.3.12.2.1107.5.2.36.40820.2018112109191524353349869_MR.dcm
+DEBUG:segmed_pro:Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair\1.3.12.2.1107.5.2.36.40820.201811210919154284549866_MR.dcm
+DEBUG:segmed_pro:Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair\1.3.12.2.1107.5.2.36.40820.2018112109191546439649876_MR.dcm
+DEBUG:segmed_pro:Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair\1.3.12.2.1107.5.2.36.40820.2018112109191568147249881_MR.dcm
+DEBUG:segmed_pro:Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair\1.3.12.2.1107.5.2.36.40820.2018112109191589510449884_MR.dcm
+DEBUG:segmed_pro:Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair\1.3.12.2.1107.5.2.36.40820.2018112109191612141449891_MR.dcm
+DEBUG:segmed_pro:Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair\1.3.12.2.1107.5.2.36.40820.2018112109191633345249894_MR.dcm
+DEBUG:segmed_pro:Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair\1.3.12.2.1107.5.2.36.40820.2018112109191656054849901_MR.dcm
+DEBUG:segmed_pro:Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair\1.3.12.2.1107.5.2.36.40820.2018112109191676217149904_MR.dcm
+INFO:__main__:DEBUG: load_data_for_annotator returned type: <class 'tuple'>, length: 9
+INFO:__main__:DEBUG: Extracted annotated_value type: <class 'dict'>
+INFO:__main__:DEBUG: annotated_value keys: ['image', 'boxes', 'orientation']
+INFO:__main__:DEBUG: load_dataset_from_contribute returning success with annotated_value type: <class 'dict'>
+INFO:__main__:DEBUG: load_dataset_from_contribute returned type: <class 'tuple'>, length: 9
+INFO:__main__:DEBUG: annotated_value type: <class 'dict'>
+INFO:__main__:DEBUG: annotated_value keys: ['image', 'boxes', 'orientation']
+INFO:__main__:DEBUG: annotated_value['image'] type: <class 'numpy.ndarray'>
+INFO:__main__:DEBUG: annotated_value type: <class 'dict'>
+INFO:__main__:DEBUG: annotated_value keys: ['image', 'boxes', 'orientation']
+INFO:__main__:DEBUG: image type in annotated_value: <class 'numpy.ndarray'>
+INFO:__main__:DEBUG: Preparing updates list with annotated_value type: <class 'dict'>
+INFO:__main__:DEBUG: annotated_value for image_annotator: {'image': array([[[0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        ...,
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0]],
+
+       [[0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        ...,
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0]],
+
+       [[0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        ...,
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0]],
+
+       ...,
+
+       [[0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        ...,
+        [6, 6, 6],
+        [5, 5, 5],
+        [2, 2, 2]],
+
+       [[0, 0, 0],
+        [1, 1, 1],
+        [1, 1, 1],
+        ...,
+        [4, 4, 4],
+        [2, 2, 2],
+        [1, 1, 1]],
+
+       [[0, 0, 0],
+        [1, 1, 1],
+        [0, 0, 0],
+        ...,
+        [4, 4, 4],
+        [3, 3, 3],
+        [2, 2, 2]]], dtype=uint8), 'boxes': [], 'orientation': 0}
+INFO:__main__:DEBUG: Returning updates list with image_annotator value at index 6: <class 'dict'>
+Traceback (most recent call last):
+  File "C:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\gradio\queueing.py", line 625, in process_events   
+    response = await route_utils.call_process_api(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\gradio\route_utils.py", line 322, in call_process_api
+    output = await app.get_blocks().process_api(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\gradio\blocks.py", line 2230, in process_api       
+    data = await self.postprocess_data(block_fn, result["prediction"], state)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\gradio\blocks.py", line 1996, in postprocess_data  
+    prediction_value = postprocess_update_dict(
+                       ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\gradio\blocks.py", line 695, in postprocess_update_dict
+    update_dict["value"] = block.postprocess(value)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Yurtsever\Downloads\segpro-med\.conda\Lib\site-packages\gradio_image_annotation\image_annotator.py", line 346, in postprocess
+    raise ValueError(f"``value`` must be a dict. Got {type(value)}")
+ValueError: ``value`` must be a dict. Got <class 'str'>

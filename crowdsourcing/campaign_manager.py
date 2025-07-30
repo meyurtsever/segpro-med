@@ -124,6 +124,29 @@ class CrowdsourcingManager:
                     })
         return assigned
     
+    def get_remaining_assignments_for_user(self, expert_id):
+        """Get remaining (uncompleted) assignments for a specific expert"""
+        remaining = []
+        for campaign_name, campaign_data in self.assignments.items():
+            if expert_id in campaign_data.get('assigned', {}):
+                # Get assigned patients for this expert
+                assigned_patients = campaign_data['assigned'][expert_id]
+                
+                # Get completed patients for this expert
+                completed_patients = campaign_data.get('completed', {}).get(expert_id, [])
+                
+                # Find remaining patients (assigned but not completed)
+                for patient_id in assigned_patients:
+                    if patient_id not in completed_patients:
+                        remaining.append({
+                            'campaign_id': campaign_name,
+                            'patient_id': patient_id,
+                            'dataset_path': campaign_data['dataset_path']
+                        })
+        
+        logger.info(f"Found {len(remaining)} remaining assignments for expert {expert_id}")
+        return remaining
+    
     def get_campaign_progress(self, campaign_name):
         """Get progress statistics for a campaign"""
         if campaign_name not in self.assignments:

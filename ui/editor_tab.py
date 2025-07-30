@@ -1206,8 +1206,57 @@ def create_editor_tab() -> dict:
                     slice_text = gr.Textbox(label="Slice", interactive=False, visible=False)
                     crosshair_info = gr.Textbox(label="Crosshair", interactive=True, visible=False)
                 
-                # Label Management Section
-                with gr.Accordion("Label Management using VLMs", open=True):
+                # Crowdsourcing Controls (moved up and enhanced)
+                with gr.Accordion("Crowdsourcing Controls", open=True, visible=False) as crowdsourcing_accordion:
+                    gr.Markdown("**Annotation Task Controls**")
+                    gr.Markdown("Complete your annotation work and submit using the controls below.")
+                    
+                    with gr.Row():
+                        submit_annotation_btn = gr.Button(
+                            "✅ Submit Annotation",
+                            variant="primary",
+                            size="lg"
+                        )
+                        send_for_review_btn = gr.Button(
+                            "📤 Send for Review",
+                            variant="secondary",
+                            size="lg"
+                        )
+                    
+                    # Assignment progress and next task controls
+                    with gr.Row():
+                        assignments_remaining = gr.Textbox(
+                            label="Assignment Progress",
+                            interactive=False,
+                            value="",
+                            visible=False
+                        )
+                    
+                    with gr.Row():
+                        next_assignment_btn = gr.Button(
+                            "➡️ Load Next Assignment",
+                            variant="primary",
+                            size="lg",
+                            visible=False
+                        )
+                    
+                    crowdsourcing_status = gr.Textbox(
+                        label="Submission Status",
+                        interactive=False,
+                        value="Complete your annotation work above, then submit."
+                    )
+                    
+                    gr.Markdown("""
+                    **Instructions:**
+                    1. Use the annotation tools above to complete your work
+                    2. Review your annotations carefully
+                    3. Click 'Submit Annotation' when finished
+                    4. Use 'Send for Review' if you need supervisor feedback
+                    5. Click 'Load Next Assignment' to continue with remaining tasks
+                    """)
+                
+                # Label Management Section (moved down and set to closed)
+                with gr.Accordion("Label Management using VLMs", open=False):
                     # Current Labels Section
                     # gr.Markdown("**Current Labels**")
                     with gr.Row():
@@ -1313,7 +1362,9 @@ def create_editor_tab() -> dict:
                 with gr.Accordion("Metadata", open=False):
                     metadata_display = gr.JSON(label=None, visible=True)
                 
-                col2 = (error_display, metadata_display, view_selector, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, current_labels_dataset, suggested_vlm_selector, suggest_labels_btn, suggested_labels_dataset, accept_suggestions_btn, vlm_model_selector, vlm_run_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn)
+                col2 = (error_display, metadata_display, view_selector, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, 
+                        crowdsourcing_accordion, submit_annotation_btn, send_for_review_btn, assignments_remaining, next_assignment_btn, crowdsourcing_status,
+                        current_labels_dataset, suggested_vlm_selector, suggest_labels_btn, suggested_labels_dataset, accept_suggestions_btn, vlm_model_selector, vlm_run_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn)
             
             # Column 3: Annotate with AI Models
             with gr.Column(scale=1):
@@ -1409,42 +1460,10 @@ def create_editor_tab() -> dict:
                     value="Ready to annotate"
                 )
                 
-                # Crowdsourcing Controls (hidden by default, shown when in crowdsourcing mode)
-                with gr.Accordion("Crowdsourcing Controls", open=True, visible=False) as crowdsourcing_accordion:
-                    gr.Markdown("**Annotation Task Controls**")
-                    gr.Markdown("Complete your annotation work and submit using the controls below.")
-                    
-                    with gr.Row():
-                        submit_annotation_btn = gr.Button(
-                            "✅ Submit Annotation",
-                            variant="primary",
-                            size="lg"
-                        )
-                        send_for_review_btn = gr.Button(
-                            "📤 Send for Review",
-                            variant="secondary",
-                            size="lg"
-                        )
-                    
-                    crowdsourcing_status = gr.Textbox(
-                        label="Submission Status",
-                        interactive=False,
-                        value="Complete your annotation work above, then submit."
-                    )
-                    
-                    gr.Markdown("""
-                    **Instructions:**
-                    1. Use the annotation tools above to complete your work
-                    2. Review your annotations carefully
-                    3. Click 'Submit Annotation' when finished
-                    4. Use 'Send for Review' if you need supervisor feedback
-                    """)
-                
                 col3 = (point_prompt_checkbox, box_prompt_checkbox, coordinates_text, clear_coords_btn, ai_model_selector, 
                         processing_mode, score_threshold,
                         output_dir, save_visualizations, device_selector, 
-                        auto_brain_annotate_btn, annotate_btn, annotation_status,
-                        crowdsourcing_accordion, submit_annotation_btn, send_for_review_btn, crowdsourcing_status)    # Helper functions for 3D viewer interactions and layout switching
+                        auto_brain_annotate_btn, annotate_btn, annotation_status)    # Helper functions for 3D viewer interactions and layout switching
     def toggle_layout_for_processing_mode(processing_mode):
         """Switch between full-width and split layout based on processing mode"""
         if processing_mode == "All Records":
@@ -1506,7 +1525,9 @@ def create_editor_tab() -> dict:
             'accordion': crowdsourcing_accordion,
             'submit_btn': submit_annotation_btn,
             'review_btn': send_for_review_btn,
-            'status': crowdsourcing_status
+            'status': crowdsourcing_status,
+            'assignments_remaining': assignments_remaining,
+            'next_assignment_btn': next_assignment_btn
         },
         'welcome_modal': {
             'guide': welcome_guide,

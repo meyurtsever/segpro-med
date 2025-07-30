@@ -276,8 +276,57 @@ def load_dicom_series(directory):
                 raise ValueError(f"Could not process pixel data from first slice: {str(e)}")
     
     # Stack all the pixel arrays into a 3D volume
-    volume = np.stack(pixel_arrays)
-    logger.info(f"Created 3D volume with shape {volume.shape}")
+    try:
+        volume = np.stack(pixel_arrays)
+        logger.info(f"Created 3D volume with shape {volume.shape}")
+    except ValueError as e:
+        logger.error(f"Error stacking pixel arrays: {str(e)}")
+        # Check if all arrays have the same shape
+        shapes = [arr.shape for arr in pixel_arrays]
+        unique_shapes = list(set(shapes))
+        
+        if len(unique_shapes) > 1:
+            logger.error(f"Found {len(unique_shapes)} different slice shapes: {unique_shapes}")
+            logger.info("Attempting to resize slices to match the most common shape...")
+            
+            # Find the most common shape
+            from collections import Counter
+            shape_counts = Counter(shapes)
+            target_shape = shape_counts.most_common(1)[0][0]
+            logger.info(f"Resizing all slices to target shape: {target_shape}")
+            
+            # Resize all slices to the target shape
+            resized_arrays = []
+            for i, arr in enumerate(pixel_arrays):
+                if arr.shape != target_shape:
+                    logger.warning(f"Resizing slice {i} from {arr.shape} to {target_shape}")
+                    # Use skimage resize if available, otherwise use basic numpy interpolation
+                    try:
+                        from skimage.transform import resize
+                        resized_arr = resize(arr, target_shape, preserve_range=True, anti_aliasing=False)
+                        resized_arrays.append(resized_arr.astype(arr.dtype))
+                    except ImportError:
+                        # Fallback: use basic numpy interpolation
+                        logger.warning("skimage not available, using basic resize")
+                        # For now, pad or crop to match target shape
+                        if arr.shape[0] < target_shape[0] or arr.shape[1] < target_shape[1]:
+                            # Pad with zeros
+                            padded = np.zeros(target_shape, dtype=arr.dtype)
+                            padded[:min(arr.shape[0], target_shape[0]), :min(arr.shape[1], target_shape[1])] = arr[:target_shape[0], :target_shape[1]]
+                            resized_arrays.append(padded)
+                        else:
+                            # Crop to target shape
+                            cropped = arr[:target_shape[0], :target_shape[1]]
+                            resized_arrays.append(cropped)
+                else:
+                    resized_arrays.append(arr)
+            
+            # Try stacking again with resized arrays
+            volume = np.stack(resized_arrays)
+            logger.info(f"Successfully created 3D volume with shape {volume.shape} after resizing")
+        else:
+            # Re-raise the original error if shapes are the same
+            raise e
     
     # Get metadata from the first slice
     metadata = get_dicom_metadata(ordered_files[0])

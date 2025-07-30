@@ -32,6 +32,11 @@ class DebugFilter(logging.Filter):
                 "Annotation Status:",  # For annotation status messages
                 "DEBUG",  # For debug messages
                 "Current labels update",  # For label update messages
+                "Loading next assignment",  # For next assignment debugging
+                "annotated_value",  # For image format debugging
+                "load_dataset_from_contribute",  # For dataset loading debugging
+                "image_annotator",  # For image annotator debugging
+                "Patient ID from task",  # For patient ID debugging
             ]
             message = record.getMessage()
             return any(keyword in message for keyword in allowed_keywords)
@@ -981,12 +986,13 @@ class SegMedPro:
         # Unpack components
         (file_input, dir_input, load_btn, reset_dir_btn, file_browser, label_file,
          metadata_display_dl, error_display_dl, window_level, window_width, apply_window_btn, debug_btn) = data_loading
-        (error_display, metadata_display, view_selector, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, current_labels_dataset, suggested_vlm_selector, suggest_labels_btn, suggested_labels_dataset, accept_suggestions_btn, vlm_model_selector, vlm_run_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn) = visualization        
+        (error_display, metadata_display, view_selector, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, 
+         crowdsourcing_accordion, submit_annotation_btn, send_for_review_btn, assignments_remaining, next_assignment_btn, crowdsourcing_status,
+         current_labels_dataset, suggested_vlm_selector, suggest_labels_btn, suggested_labels_dataset, accept_suggestions_btn, vlm_model_selector, vlm_run_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn) = visualization        
         (point_prompt_checkbox, box_prompt_checkbox, coordinates_text, clear_coords_btn, ai_model_selector, 
          processing_mode, score_threshold,
          output_dir, save_visualizations, device_selector, 
-         auto_brain_annotate_btn, annotate_btn, annotation_status,
-         crowdsourcing_accordion, submit_annotation_btn, send_for_review_btn, crowdsourcing_status) = ai_tools
+         auto_brain_annotate_btn, annotate_btn, annotation_status) = ai_tools
         
         # Get layout functions
         layout_functions = components.get('layout_functions', {})
@@ -1847,35 +1853,40 @@ class SegMedPro:
         # Connect dataset loading from contribute tab to editor tab
         def load_dataset_from_contribute(dataset_path, crowdsourcing_mode):
             """Load dataset from contribute tab into editor tab"""
+            logger.info(f"DEBUG: load_dataset_from_contribute called with dataset_path: {dataset_path}, crowdsourcing_mode: {crowdsourcing_mode}")
+            
             if not dataset_path or not crowdsourcing_mode:
+                logger.info(f"DEBUG: load_dataset_from_contribute early return - no dataset selected")
                 return "No dataset selected", gr.update(), None, None, None, None, None, None, None
             
             try:
-                # Use the existing data loading handler to load the dataset
-                # Pass None for file_obj since we're loading from directory
-                result = self.data_handlers.load_data(None, dataset_path)
+                # Use the existing data loading handler that returns annotated format
+                # Use load_data_for_annotator instead of load_data to get the proper format for image_annotator
+                logger.info(f"DEBUG: Calling self.data_handlers.load_data_for_annotator with dataset_path: {dataset_path}")
+                result = self.data_handlers.load_data_for_annotator(None, dataset_path)
+                logger.info(f"DEBUG: load_data_for_annotator returned type: {type(result)}, length: {len(result) if result else 'None'}")
                 
-                # result is a tuple: (image, dropdown, metadata, slider, slice_info, crosshair_text, status_message, window_level, window_width)
+                # result is a tuple: (annotated_value, dropdown, metadata, slider, slice_info, crosshair_text, status_message, window_level, window_width)
                 if result and len(result) >= 9:
-                    image, dropdown, metadata, slider, slice_info, crosshair_text, status_message, window_level, window_width = result
+                    annotated_value, dropdown, metadata, slider, slice_info, crosshair_text, status_message, window_level, window_width = result
+                    logger.info(f"DEBUG: Extracted annotated_value type: {type(annotated_value)}")
+                    if isinstance(annotated_value, dict):
+                        logger.info(f"DEBUG: annotated_value keys: {list(annotated_value.keys())}")
+                    else:
+                        logger.info(f"DEBUG: annotated_value is not a dict! Value: {annotated_value}")
                     
                     if isinstance(status_message, str) and "loaded" in status_message.lower():
                         self.crowdsourcing_mode = True
                         
-                        # Format image for image annotator if it's a PIL Image
-                        formatted_image = image
-                        if hasattr(image, 'save'):  # PIL Image
-                            # Convert PIL Image to the format expected by image_annotator
-                            formatted_image = {
-                                "image": image,
-                                "boxes": []  # Empty annotations initially
-                            }
+                        # annotated_value is already in the correct format from load_data_for_annotator
+                        # It's a dict with {"image": img_rgb, "boxes": [], "orientation": 0}
+                        logger.info(f"DEBUG: load_dataset_from_contribute returning success with annotated_value type: {type(annotated_value)}")
                         
                         # Return complete initialization data for editor tab
                         return (
                             "Dataset loaded successfully!",  # Simple success message for contribute tab
                             gr.update(visible=True),          # Show crowdsourcing controls
-                            formatted_image,                   # Initialize image display (properly formatted)
+                            annotated_value,                   # Initialize image display (already properly formatted)
                             metadata,                          # Initialize metadata
                             slider,                            # Initialize slider
                             slice_info,                        # Initialize slice info
@@ -1884,12 +1895,14 @@ class SegMedPro:
                             window_width                       # Initialize window width
                         )
                     else:
+                        logger.info(f"DEBUG: load_dataset_from_contribute status check failed: {status_message}")
                         return (
                             status_message if isinstance(status_message, str) else "Failed to load dataset",
                             gr.update(visible=False),
                             None, None, None, None, None, None, None
                         )
                 else:
+                    logger.info(f"DEBUG: load_dataset_from_contribute invalid result length or None")
                     return (
                         "Failed to load dataset",
                         gr.update(visible=False),
@@ -1911,7 +1924,7 @@ class SegMedPro:
                 return "Please select a task and ensure you're logged in"
             
             try:
-                campaign_id, patient_id, _ = task_selection.split('|')
+                campaign_id, patient_id, _ = [x.strip() for x in task_selection.split('|')]
                 from crowdsourcing.campaign_manager import CrowdsourcingManager
                 crowdsourcing_manager = CrowdsourcingManager()
                 
@@ -2056,7 +2069,19 @@ class SegMedPro:
                 
                 if success:
                     annotation_count = len(annotation_data.get('annotations', [])) if annotation_data else 0
-                    return f"✅ Annotation for patient {patient_id} submitted successfully! ({annotation_count} annotations saved)"
+                    
+                    # Get remaining assignments for this user
+                    remaining_tasks = crowdsourcing_manager.get_remaining_assignments_for_user(user_id)
+                    remaining_count = len(remaining_tasks)
+                    
+                    success_msg = f"✅ Annotation for patient {patient_id} submitted successfully! ({annotation_count} annotations saved)"
+                    
+                    if remaining_count > 0:
+                        success_msg += f"\n\n🎯 You have {remaining_count} assignment{'s' if remaining_count != 1 else ''} remaining. Click 'Load Next Assignment' to continue."
+                    else:
+                        success_msg += f"\n\n🎉 Congratulations! You have completed all your assignments."
+                    
+                    return success_msg
                 else:
                     return "❌ Failed to submit annotation"
                     
@@ -2068,6 +2093,249 @@ class SegMedPro:
         def handle_send_for_review():
             """Handle send for review request"""
             return "📤 Review functionality will be implemented in future versions"
+        
+        # Get remaining assignments count for current user
+        def get_remaining_assignments_info(user_id):
+            """Get information about remaining assignments for the current user"""
+            if not user_id:
+                return gr.update(value="", visible=False), gr.update(visible=False)
+            
+            try:
+                from crowdsourcing.campaign_manager import CrowdsourcingManager
+                crowdsourcing_manager = CrowdsourcingManager()
+                
+                # Get remaining assignments for this user
+                remaining_tasks = crowdsourcing_manager.get_remaining_assignments_for_user(user_id)
+                remaining_count = len(remaining_tasks)
+                
+                if remaining_count > 0:
+                    progress_text = f"📊 {remaining_count} assignment{'s' if remaining_count != 1 else ''} remaining"
+                    return gr.update(value=progress_text, visible=True), gr.update(visible=True)
+                else:
+                    return gr.update(value="🎉 All assignments completed!", visible=True), gr.update(visible=False)
+                    
+            except Exception as e:
+                logger.error(f"Error getting remaining assignments: {e}")
+                return gr.update(value="", visible=False), gr.update(visible=False)
+        
+        # Load next assignment for current user
+        def load_next_assignment(user_id):
+            """Load the next available assignment for the current user - simplified direct loading"""
+            import os  # Import os for path operations
+            
+            if not user_id:
+                return [
+                    gr.update(),  # tabs (no change)
+                    gr.update(),  # dicom_viewer
+                    gr.update(),  # image_annotator
+                    gr.update(),  # slice_slider
+                    gr.update(),  # prev_slice_btn
+                    gr.update(),  # next_slice_btn
+                    gr.update(),  # metadata_display
+                    gr.update(),  # submit_btn
+                    gr.update(value="❌ Please log in first", visible=True),  # submission_status
+                    gr.update(),  # welcome_guide
+                    gr.update(),  # welcome_guide_content
+                    gr.update(),  # assignments_remaining
+                    gr.update(),  # next_assignment_btn
+                    gr.update(),  # task_dropdown
+                ]
+            
+            try:
+                from crowdsourcing.campaign_manager import CrowdsourcingManager
+                crowdsourcing_manager = CrowdsourcingManager()
+                
+                # Get remaining assignments for this user
+                remaining_tasks = crowdsourcing_manager.get_remaining_assignments_for_user(user_id)
+                
+                if not remaining_tasks:
+                    return [
+                        gr.update(),  # tabs (no change)
+                        gr.update(),  # dicom_viewer
+                        gr.update(),  # image_annotator
+                        gr.update(),  # slice_slider
+                        gr.update(),  # prev_slice_btn
+                        gr.update(),  # next_slice_btn
+                        gr.update(),  # metadata_display
+                        gr.update(),  # submit_btn
+                        gr.update(value="🎉 No more assignments available. You've completed all your tasks!", visible=True),  # submission_status
+                        gr.update(),  # welcome_guide
+                        gr.update(),  # welcome_guide_content
+                        gr.update(value="🎉 All assignments completed!", visible=True),  # assignments_remaining
+                        gr.update(visible=False),  # next_assignment_btn
+                        gr.update(),  # task_dropdown
+                    ]
+                
+                # Get the next specific task assigned to this user
+                next_task = remaining_tasks[0]
+                
+                # Use the task data directly
+                campaign_id = next_task['campaign_id']
+                patient_id = next_task['patient_id'].strip()  # Strip any whitespace
+                dataset_path = next_task['dataset_path']
+                
+                logger.info(f"Loading next assignment for user {user_id}: campaign='{campaign_id}', patient='{patient_id}'")
+                
+                # Build patient path and find modality (same as Load Task in Editor)
+                patient_path = os.path.join(dataset_path, patient_id)
+                
+                # Verify that the patient path exists
+                if not os.path.exists(patient_path):
+                    logger.error(f"Patient path does not exist: {patient_path}")
+                    return [
+                        gr.update(),  # tabs (no change)
+                        gr.update(),  # dicom_viewer
+                        gr.update(),  # image_annotator
+                        gr.update(),  # slice_slider
+                        gr.update(),  # prev_slice_btn
+                        gr.update(),  # next_slice_btn
+                        gr.update(),  # metadata_display
+                        gr.update(),  # submit_btn
+                        gr.update(value=f"❌ Error: Patient directory not found: {patient_path}", visible=True),  # submission_status
+                        gr.update(),  # welcome_guide
+                        gr.update(),  # welcome_guide_content
+                        gr.update(),  # assignments_remaining
+                        gr.update(),  # next_assignment_btn
+                        gr.update(),  # task_dropdown
+                    ]
+                
+                # Find the first available modality directory
+                valid_modalities = ['flair', 't1', 't1c', 't2']
+                modality_path = None
+                
+                for modality in valid_modalities:
+                    potential_path = os.path.join(patient_path, modality)
+                    if os.path.exists(potential_path) and os.path.isdir(potential_path):
+                        modality_path = potential_path
+                        break
+                
+                if not modality_path:
+                    logger.error(f"No valid modality found for patient {patient_id}")
+                    return [
+                        gr.update(),  # tabs (no change)
+                        gr.update(),  # dicom_viewer
+                        gr.update(),  # image_annotator
+                        gr.update(),  # slice_slider
+                        gr.update(),  # prev_slice_btn
+                        gr.update(),  # next_slice_btn
+                        gr.update(),  # metadata_display
+                        gr.update(),  # submit_btn
+                        gr.update(value=f"❌ Error: No valid modality found for patient {patient_id}", visible=True),  # submission_status
+                        gr.update(),  # welcome_guide
+                        gr.update(),  # welcome_guide_content
+                        gr.update(),  # assignments_remaining
+                        gr.update(),  # next_assignment_btn
+                        gr.update(),  # task_dropdown
+                    ]
+                
+                # Update current directory in state
+                self.state.current_directory = modality_path
+                
+                # Create task_selection for the welcome guide - ensure format matches dropdown choices
+                # The dropdown choices use the exact format from the database, so we need to match that
+                task_selection = f"{campaign_id}|{patient_id}|{dataset_path}"
+                
+                # Direct data loading - replicate the exact logic from "Load Task in Editor"
+                try:
+                    logger.info(f"DEBUG: Direct loading DICOM data from: {modality_path}")
+                    
+                    # Call load_data_for_annotator directly and get the properly formatted result
+                    result = self.data_handlers.load_data_for_annotator(None, modality_path)
+                    
+                    if not result or len(result) < 9:
+                        logger.error(f"Failed to load assignment: Invalid result")
+                        return [
+                            gr.update(),  # tabs (no change)
+                            gr.update(),  # dicom_viewer
+                            gr.update(),  # image_annotator
+                            gr.update(),  # slice_slider
+                            gr.update(),  # prev_slice_btn
+                            gr.update(),  # next_slice_btn
+                            gr.update(),  # metadata_display
+                            gr.update(),  # submit_btn
+                            gr.update(value=f"❌ Error loading assignment data", visible=True),  # submission_status
+                            gr.update(),  # welcome_guide
+                            gr.update(),  # welcome_guide_content
+                            gr.update(),  # assignments_remaining
+                            gr.update(),  # next_assignment_btn
+                            gr.update(),  # task_dropdown
+                        ]
+                    
+                    # Extract the data (annotated_value is already in correct format)
+                    annotated_value, dropdown, metadata, slider, slice_info, crosshair_text, status_message, window_level, window_width = result
+                    
+                    logger.info(f"DEBUG: Loaded annotated_value type: {type(annotated_value)}")
+                    if isinstance(annotated_value, dict):
+                        logger.info(f"DEBUG: annotated_value keys: {list(annotated_value.keys())}")
+                    
+                    # Enable crowdsourcing mode
+                    self.crowdsourcing_mode = True
+                    
+                    # Clear any previous annotation state to prevent old data persistence
+                    if hasattr(self.state, 'image_annotator_state'):
+                        self.state.image_annotator_state = None
+                    if hasattr(self, 'current_annotations'):
+                        self.current_annotations = []
+                    
+                    # Get updated assignment info
+                    remaining_after = len(remaining_tasks) - 1
+                    progress_text = f"📊 {remaining_after} assignment{'s' if remaining_after != 1 else ''} remaining" if remaining_after > 0 else "🎉 This is your last assignment!"
+                    
+                    # Return updates - minimal changes, no tab switching, RESET UI to default state
+                    return [
+                        gr.update(),  # tabs (stay where we are)
+                        gr.update(visible=False),  # hide dicom_viewer 
+                        annotated_value,  # image_annotator - direct value, no gr.update()
+                        slider,  # slice_slider - use loaded slider
+                        gr.update(visible=True),  # prev_slice_btn
+                        gr.update(visible=True),  # next_slice_btn
+                        metadata,  # metadata_display - use loaded metadata
+                        gr.update(visible=True),  # submit_btn
+                        gr.update(value="", visible=False),  # submission_status - RESET to hidden
+                        gr.update(visible=True, open=True),  # welcome_guide
+                        self._populate_welcome_guide_info(task_selection),  # welcome_guide_content
+                        gr.update(value="", visible=False),  # assignments_remaining - RESET to hidden initially
+                        gr.update(visible=remaining_after > 0),  # next_assignment_btn
+                        gr.update(value=task_selection),  # task_dropdown - UPDATE with new task selection
+                    ]
+                        
+                except Exception as load_error:
+                    logger.error(f"Error loading DICOM data: {load_error}")
+                    return [
+                        gr.update(),  # tabs (no change)
+                        gr.update(),  # dicom_viewer
+                        gr.update(),  # image_annotator
+                        gr.update(),  # slice_slider
+                        gr.update(),  # prev_slice_btn
+                        gr.update(),  # next_slice_btn
+                        gr.update(),  # metadata_display
+                        gr.update(),  # submit_btn
+                        gr.update(value=f"❌ Error loading DICOM data: {str(load_error)}", visible=True),  # submission_status
+                        gr.update(),  # welcome_guide
+                        gr.update(),  # welcome_guide_content
+                        gr.update(),  # assignments_remaining
+                        gr.update(),  # next_assignment_btn
+                        gr.update(),  # task_dropdown
+                    ]
+                    
+            except Exception as e:
+                logger.error(f"Error loading next assignment: {e}")
+                return [
+                    gr.update(),  # tabs (no change)
+                    gr.update(),  # dicom_viewer
+                    gr.update(),  # image_annotator
+                    gr.update(),  # slice_slider
+                    gr.update(),  # prev_slice_btn
+                    gr.update(),  # next_slice_btn
+                    gr.update(),  # metadata_display
+                    gr.update(),  # submit_btn
+                    gr.update(value=f"❌ Error loading next assignment: {str(e)}", visible=True),  # submission_status
+                    gr.update(),  # welcome_guide
+                    gr.update(),  # welcome_guide_content
+                    gr.update(),  # assignments_remaining
+                    gr.update(),  # next_assignment_btn
+                    gr.update(),  # task_dropdown
+                ]
         
         # Connect the dataset loading with auto-switch to Editor tab
         if ('selected_dataset_path' in contribute_components and 
@@ -2109,6 +2377,33 @@ class SegMedPro:
                 fn=handle_submit_annotation,
                 inputs=[contribute_components['task_dropdown'], contribute_components['current_user_state'], editor_components['visualization'][3]],  # image_display is at index 3 in visualization
                 outputs=[editor_components['crowdsourcing']['status']]
+            ).then(
+                # Update assignment progress after submission
+                fn=get_remaining_assignments_info,
+                inputs=[contribute_components['current_user_state']],
+                outputs=[editor_components['crowdsourcing']['assignments_remaining'], editor_components['crowdsourcing']['next_assignment_btn']]
+            )
+            
+            # Connect next assignment button
+            editor_components['crowdsourcing']['next_assignment_btn'].click(
+                fn=load_next_assignment,
+                inputs=[contribute_components['current_user_state']],
+                outputs=[
+                    tabs,  # tabs
+                    editor_components['visualization'][0],                       # dicom_viewer
+                    editor_components['visualization'][3],                       # image_display (this is the image_annotator)
+                    editor_components['visualization'][7],                       # slice_slider
+                    editor_components['visualization'][6],                       # prev_slice_btn
+                    editor_components['visualization'][8],                       # next_slice_btn
+                    editor_components['visualization'][1],                       # metadata_display
+                    editor_components['crowdsourcing']['submit_btn'],            # submit_btn
+                    editor_components['crowdsourcing']['status'],                # submission_status
+                    editor_components['welcome_modal']['guide'],                 # welcome_guide
+                    editor_components['welcome_modal']['content'],               # welcome_guide_content
+                    editor_components['crowdsourcing']['assignments_remaining'], # assignments_remaining
+                    editor_components['crowdsourcing']['next_assignment_btn'],   # next_assignment_btn
+                    contribute_components['task_dropdown'],                      # task_dropdown - UPDATE this for correct submission
+                ]
             )
             
             editor_components['crowdsourcing']['review_btn'].click(
