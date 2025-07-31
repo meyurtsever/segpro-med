@@ -8,6 +8,7 @@ import logging
 import os
 import json
 import pandas as pd
+import numpy as np
 from datetime import datetime
 from crowdsourcing.campaign_manager import CrowdsourcingManager
 from auth.auth_manager import AuthManager
@@ -241,24 +242,119 @@ def create_management_tab():
                     img_rgb = (img_rgb * 255).astype(np.uint8)
                 
                 # Load saved annotations if they exist
-                annotation_dir = f"db/submitted_annotations/{campaign_name}_{expert_id}_{patient_id}"
+                submission_dir = f"db/submitted_annotations/{campaign_name}/{expert_id}/{patient_id}"
                 boxes = []
                 annotation_info = {}
                 
-                if os.path.exists(annotation_dir):
+                if os.path.exists(submission_dir):
                     # Look for annotation files
-                    for file in os.listdir(annotation_dir):
-                        if file.endswith('.json'):
-                            annotation_file = os.path.join(annotation_dir, file)
-                            try:
-                                with open(annotation_file, 'r') as f:
-                                    annotation_data = json.load(f)
-                                    if 'boxes' in annotation_data:
-                                        boxes = annotation_data['boxes']
-                                    annotation_info = annotation_data
-                                    break
-                            except Exception as e:
-                                logger.error(f"Error loading annotation file {annotation_file}: {e}")
+                    annotation_file = os.path.join(submission_dir, "annotation_data.json")
+                    if os.path.exists(annotation_file):
+                        try:
+                            with open(annotation_file, 'r') as f:
+                                annotation_data = json.load(f)
+                                
+                                # Process annotations with slice information
+                                annotations = annotation_data.get('annotations', [])
+                                labels_data = annotation_data.get('labels', [])
+                                
+                                # Create label to color mapping from labels data
+                                label_color_map = {}
+                                for label_item in labels_data:
+                                    if isinstance(label_item, dict):
+                                        label_name = label_item.get('label', '')
+                                        color_data = label_item.get('color', None)
+                                        if color_data and isinstance(color_data, list) and len(color_data) >= 3:
+                                            label_color_map[label_name] = tuple(color_data[:3])  # Convert [R,G,B] to (R,G,B)
+                                
+                                if annotations:
+                                    # Convert annotations to boxes format for slice 0 (default display)
+                                    for ann in annotations:
+                                        slice_idx = ann.get('slice_index', 0)
+                                        if slice_idx == 0:  # Only show annotations for the first slice initially
+                                            # Convert annotation to box format for image_annotator
+                                            box = {}
+                                            
+                                            # Get label and corresponding color
+                                            label = ann.get('label', '')
+                                            box_color = label_color_map.get(label, None)
+                                            
+                                            # Handle different annotation types
+                                            if ann.get('bbox') and len(ann['bbox']) >= 4:
+                                                # Box format - check if we have original coordinates for non-box types
+                                                bbox = ann['bbox']
+                                                annotation_type = ann.get('type', 'box')
+                                                
+                                                if annotation_type in ['box', 'rectangle']:
+                                                    # Standard box annotation
+                                                    box = {
+                                                        'xmin': bbox[0],
+                                                        'ymin': bbox[1], 
+                                                        'xmax': bbox[2],
+                                                        'ymax': bbox[3],
+                                                        'label': label,
+                                                        'type': 'box'
+                                                    }
+                                                    if box_color:
+                                                        box['color'] = box_color
+                                                elif ann.get('coordinates') or ann.get('points'):
+                                                    # We have original coordinates - use them instead of bbox
+                                                    coords = ann.get('coordinates') or ann.get('points')
+                                                    if coords and len(coords) > 0:
+                                                        points = []
+                                                        for coord in coords:
+                                                            if len(coord) >= 2:
+                                                                points.append({'x': coord[0], 'y': coord[1]})
+                                                        
+                                                        box = {
+                                                            'points': points,
+                                                            'label': label,
+                                                            'type': annotation_type
+                                                        }
+                                                        if box_color:
+                                                            box['color'] = box_color
+                                                else:
+                                                    # Only bbox available for non-box type - convert to points as fallback
+                                                    box = {
+                                                        'points': [
+                                                            {'x': bbox[0], 'y': bbox[1]},
+                                                            {'x': bbox[2], 'y': bbox[1]},
+                                                            {'x': bbox[2], 'y': bbox[3]},
+                                                            {'x': bbox[0], 'y': bbox[3]}
+                                                        ],
+                                                        'label': label,
+                                                        'type': annotation_type
+                                                    }
+                                                    if box_color:
+                                                        box['color'] = box_color
+                                            elif ann.get('coordinates') or ann.get('points'):
+                                                # Polygon/freehand format with original coordinates
+                                                coords = ann.get('coordinates') or ann.get('points')
+                                                if coords and len(coords) > 0:
+                                                    # Convert coordinates to points format for image_annotator
+                                                    points = []
+                                                    for coord in coords:
+                                                        if len(coord) >= 2:
+                                                            points.append({'x': coord[0], 'y': coord[1]})
+                                                    
+                                                    box = {
+                                                        'points': points,
+                                                        'label': label,
+                                                        'type': ann.get('type', 'polygon')
+                                                    }
+                                                    if box_color:
+                                                        box['color'] = box_color
+                                            
+                                            if box:
+                                                boxes.append(box)
+                                
+                                annotation_info = annotation_data
+                                logger.info(f"Loaded {len(boxes)} annotations for slice 0 from {len(annotations)} total annotations")
+                                
+                        except Exception as e:
+                            logger.error(f"Error loading annotation file {annotation_file}: {e}")
+                else:
+                    logger.warning(f"Annotation directory not found: {submission_dir}")
                 
                 # Create AnnotatedImageValue format with saved annotations
                 annotated_value = {
@@ -275,7 +371,7 @@ def create_management_tab():
                     'current_slice': 0,
                     'patient_dir': patient_dir,
                     'flair_dir': flair_dir,  # Store FLAIR directory path
-                    'annotation_dir': annotation_dir,
+                    'submission_dir': submission_dir,  # Fixed variable name
                     'window_center': window_center,
                     'window_width': window_width,
                     'record_key': record_key,
@@ -355,7 +451,7 @@ def create_management_tab():
             dicom_data = current_review_state['dicom_data']
             window_center = current_review_state['window_center']
             window_width = current_review_state['window_width']
-            boxes = current_review_state['boxes']
+            annotation_info = current_review_state.get('annotation_info', {})
             
             slice_idx = int(slider_value)
             current_review_state['current_slice'] = slice_idx
@@ -379,15 +475,112 @@ def create_management_tab():
             if img_rgb.dtype != np.uint8:
                 img_rgb = (img_rgb * 255).astype(np.uint8)
             
-            # Create annotated value with existing boxes
+            # Load annotations for the current slice
+            boxes = []
+            if annotation_info and 'annotations' in annotation_info:
+                annotations = annotation_info['annotations']
+                labels_data = annotation_info.get('labels', [])
+                
+                # Create label to color mapping from labels data
+                label_color_map = {}
+                for label_item in labels_data:
+                    if isinstance(label_item, dict):
+                        label_name = label_item.get('label', '')
+                        color_data = label_item.get('color', None)
+                        if color_data and isinstance(color_data, list) and len(color_data) >= 3:
+                            label_color_map[label_name] = tuple(color_data[:3])  # Convert [R,G,B] to (R,G,B)
+                
+                for ann in annotations:
+                    ann_slice_idx = ann.get('slice_index', 0)
+                    if ann_slice_idx == slice_idx:  # Only show annotations for current slice
+                        # Convert annotation to box format for image_annotator
+                        box = {}
+                        
+                        # Get label and corresponding color
+                        label = ann.get('label', '')
+                        box_color = label_color_map.get(label, None)
+                        
+                        # Handle different annotation types
+                        if ann.get('bbox') and len(ann['bbox']) >= 4:
+                            # Box format - check if we have original coordinates for non-box types
+                            bbox = ann['bbox']
+                            annotation_type = ann.get('type', 'box')
+                            
+                            if annotation_type in ['box', 'rectangle']:
+                                # Standard box annotation
+                                box = {
+                                    'xmin': bbox[0],
+                                    'ymin': bbox[1], 
+                                    'xmax': bbox[2],
+                                    'ymax': bbox[3],
+                                    'label': label,
+                                    'type': 'box'
+                                }
+                                if box_color:
+                                    box['color'] = box_color
+                            elif ann.get('coordinates') or ann.get('points'):
+                                # We have original coordinates - use them instead of bbox
+                                coords = ann.get('coordinates') or ann.get('points')
+                                if coords and len(coords) > 0:
+                                    points = []
+                                    for coord in coords:
+                                        if len(coord) >= 2:
+                                            points.append({'x': coord[0], 'y': coord[1]})
+                                    
+                                    box = {
+                                        'points': points,
+                                        'label': label,
+                                        'type': annotation_type
+                                    }
+                                    if box_color:
+                                        box['color'] = box_color
+                            else:
+                                # Only bbox available for non-box type - convert to points as fallback
+                                box = {
+                                    'points': [
+                                        {'x': bbox[0], 'y': bbox[1]},
+                                        {'x': bbox[2], 'y': bbox[1]},
+                                        {'x': bbox[2], 'y': bbox[3]},
+                                        {'x': bbox[0], 'y': bbox[3]}
+                                    ],
+                                    'label': label,
+                                    'type': annotation_type
+                                }
+                                if box_color:
+                                    box['color'] = box_color
+                        elif ann.get('coordinates') or ann.get('points'):
+                            # Polygon/freehand format with original coordinates
+                            coords = ann.get('coordinates') or ann.get('points')
+                            if coords and len(coords) > 0:
+                                # Convert coordinates to points format for image_annotator
+                                points = []
+                                for coord in coords:
+                                    if len(coord) >= 2:
+                                        points.append({'x': coord[0], 'y': coord[1]})
+                                
+                                box = {
+                                    'points': points,
+                                    'label': label,
+                                    'type': ann.get('type', 'polygon')
+                                }
+                                if box_color:
+                                    box['color'] = box_color
+                        
+                        if box:
+                            boxes.append(box)
+            
+            # Create annotated value with slice-specific boxes
             annotated_value = {
                 "image": img_rgb,
-                "boxes": boxes,  # Keep the same boxes for all slices
+                "boxes": boxes,
                 "orientation": 0
             }
             
             slice_text = f"{slice_idx}/{dicom_data.shape[0]-1}"
-            crosshair_text = f"Slice: {slice_idx}, View: {view_type}"
+            crosshair_text = f"Slice: {slice_idx}, View: {view_type}, Annotations: {len(boxes)}"
+            
+            # Update the stored boxes for current slice
+            current_review_state['boxes'] = boxes
             
             return annotated_value, slice_text, crosshair_text, current_review_state['dicom_metadata']
             

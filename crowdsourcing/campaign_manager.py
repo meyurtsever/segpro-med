@@ -281,24 +281,61 @@ class CrowdsourcingManager:
                 annotations = annotation_data.get('annotations', [])
                 for idx, annotation in enumerate(annotations):
                     ann_data = {
-                        "annotation_id": idx,
+                        "annotation_id": annotation.get('annotation_id', f"ann_{idx}"),
+                        "slice_index": annotation.get('slice_index', 0),  # Include slice information
+                        "view_type": annotation.get('view_type', 'axial'),  # Include view information  
                         "type": annotation.get('type', 'unknown'),
                         "label": annotation.get('label', ''),
                         "coordinates": annotation.get('coordinates', []),
                         "bbox": annotation.get('bbox', []),
-                        "area": annotation.get('area', 0)
+                        "area": annotation.get('area', 0),
+                        "points": annotation.get('points', [])
                     }
                     annotation_info["annotations"].append(ann_data)
-                    
-                    # Collect unique labels
-                    if ann_data["label"] and ann_data["label"] not in annotation_info["labels"]:
-                        annotation_info["labels"].append(ann_data["label"])
+                
+                # Process labels with slice information and RGB colors
+                labels_data = annotation_data.get('labels', [])
+                for label_item in labels_data:
+                    if isinstance(label_item, dict):
+                        # Label with slice information
+                        label_data = {
+                            "label": label_item.get('label', ''),
+                            "slice_index": label_item.get('slice_index', 0),
+                            "view_type": label_item.get('view_type', 'axial'),
+                            "color": label_item.get('color', None)  # Include RGB color
+                        }
+                        annotation_info["labels"].append(label_data)
+                    else:
+                        # Legacy format - label without slice info
+                        label_data = {
+                            "label": str(label_item),
+                            "slice_index": 0,  # Default slice
+                            "view_type": 'axial',  # Default view
+                            "color": None  # No color info available
+                        }
+                        annotation_info["labels"].append(label_data)
                 
                 annotation_info["total_annotations"] = len(annotations)
                 
-                # Save annotated image if available
-                if 'image' in annotation_data:
-                    self._save_annotated_image(patient_dir, annotation_data['image'], submission_metadata["submission_id"], annotation_data)
+                # Save annotated images for each slice that has annotations
+                if 'images' in annotation_data and isinstance(annotation_data['images'], dict):
+                    # Multiple slice images
+                    for slice_idx, slice_image in annotation_data['images'].items():
+                        slice_annotations = [ann for ann in annotations if ann.get('slice_index', 0) == int(slice_idx)]
+                        if slice_annotations:  # Only save if this slice has annotations
+                            self._save_annotated_image(patient_dir, slice_image, submission_metadata["submission_id"], 
+                                                     {'annotations': slice_annotations, 'labels': labels_data}, slice_idx=int(slice_idx))
+                elif 'image' in annotation_data:
+                    # Single image - determine which slice it represents
+                    slice_idx = 0  # Default to slice 0
+                    if annotations:
+                        # Try to determine slice from first annotation
+                        slice_idx = annotations[0].get('slice_index', 0)
+                    
+                    slice_annotations = [ann for ann in annotations if ann.get('slice_index', 0) == slice_idx]
+                    if slice_annotations:  # Only save if this slice has annotations
+                        self._save_annotated_image(patient_dir, annotation_data['image'], submission_metadata["submission_id"], 
+                                                 {'annotations': slice_annotations, 'labels': labels_data}, slice_idx=slice_idx)
             
             # Save annotation data to JSON
             with open(annotation_file, 'w', encoding='utf-8') as f:
@@ -309,8 +346,8 @@ class CrowdsourcingManager:
         except Exception as e:
             logger.error(f"Error saving annotation submission: {e}")
     
-    def _save_annotated_image(self, patient_dir, image_data, submission_id, annotation_data=None):
-        """Save annotated image as PNG with overlays drawn from annotation data"""
+    def _save_annotated_image(self, patient_dir, image_data, submission_id, annotation_data=None, slice_idx=0):
+        """Save annotated image as PNG with overlays drawn from annotation data for specific slice"""
         try:
             import base64
             from PIL import Image, ImageDraw, ImageFont
@@ -351,18 +388,22 @@ class CrowdsourcingManager:
             
             # Create annotated version if annotation data is available
             if annotation_data and annotation_data.get('annotations'):
-                image = self._draw_annotations_on_image(image, annotation_data['annotations'])
+                # Filter annotations for this specific slice
+                slice_annotations = [ann for ann in annotation_data['annotations'] 
+                                   if ann.get('slice_index', 0) == slice_idx]
+                if slice_annotations:
+                    image = self._draw_annotations_on_image(image, slice_annotations, annotation_data.get('labels', []))
             
-            # Save as PNG
-            image_file = os.path.join(patient_dir, f"annotated_slice_{submission_id}.png")
+            # Save as PNG with slice number in filename
+            image_file = os.path.join(patient_dir, f"annotated_slice_{slice_idx:03d}_{submission_id}.png")
             image.save(image_file, 'PNG')
-            logger.info(f"Saved annotated image with {len(annotation_data.get('annotations', [])) if annotation_data else 0} overlays: {image_file}")
+            logger.info(f"Saved annotated image for slice {slice_idx} with {len(slice_annotations) if 'slice_annotations' in locals() else 0} overlays: {image_file}")
             
         except Exception as e:
-            logger.error(f"Error saving annotated image: {e}")
+            logger.error(f"Error saving annotated image for slice {slice_idx}: {e}")
     
-    def _draw_annotations_on_image(self, image, annotations):
-        """Draw annotations on the image using coordinates, bbox, and labels"""
+    def _draw_annotations_on_image(self, image, annotations, labels_data=None):
+        """Draw annotations on the image using coordinates, bbox, labels and their RGB colors"""
         try:
             from PIL import Image, ImageDraw, ImageFont
             
@@ -385,8 +426,41 @@ class CrowdsourcingManager:
                 except:
                     font = ImageFont.load_default()
             
-            # Color palette for different annotations
-            colors = [
+            # Create color mapping from labels data
+            label_color_map = {}
+            if labels_data:
+                for label_item in labels_data:
+                    if isinstance(label_item, dict):
+                        label_name = label_item.get('label', '')
+                        color_info = label_item.get('color', None)
+                        if color_info and label_name:
+                            # Handle different color formats
+                            if isinstance(color_info, str) and color_info.startswith('#'):
+                                # Hex color
+                                color_info = color_info.lstrip('#')
+                                color = tuple(int(color_info[i:i+2], 16) for i in (0, 2, 4))
+                            elif isinstance(color_info, (list, tuple)) and len(color_info) >= 3:
+                                # RGB tuple/list
+                                color = tuple(int(c) for c in color_info[:3])
+                            else:
+                                color = None
+                            
+                            if color:
+                                label_color_map[label_name] = color
+            
+            # Default label colors from the review_image_annotator component
+            # These match the label_colors parameter: [(0, 255, 0), (255, 0, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255)]
+            default_label_colors = {
+                "Normal Tissue": (0, 255, 0),    # Green
+                "Tumor": (255, 0, 0),            # Red  
+                "Organ": (0, 0, 255),            # Blue
+                "Lesion": (255, 255, 0),         # Yellow
+                "ROI": (255, 0, 255),            # Magenta
+                "Other": (0, 255, 255),          # Cyan
+            }
+            
+            # Fallback color palette for annotations without specific colors
+            fallback_colors = [
                 (255, 0, 0),    # Red
                 (0, 255, 0),    # Green
                 (0, 0, 255),    # Blue
@@ -405,11 +479,24 @@ class CrowdsourcingManager:
                     coordinates = annotation.get('coordinates', [])
                     bbox = annotation.get('bbox', [])
                     
-                    # Select color based on annotation index
-                    color = colors[idx % len(colors)]
+                    # Get color for this annotation
+                    color = None
+                    
+                    # First, try to get color from label color mapping (from labels data)
+                    if label in label_color_map:
+                        color = label_color_map[label]
+                    
+                    # Second, try default label colors (matching review_image_annotator)
+                    elif label in default_label_colors:
+                        color = default_label_colors[label]
+                    
+                    # Fallback to indexed color palette
+                    else:
+                        color = fallback_colors[idx % len(fallback_colors)]
+                    
                     fill_color = color + (128,)  # Semi-transparent
                     
-                    logger.info(f"Drawing annotation {idx}: type={ann_type}, label={label}, coords={len(coordinates)}, bbox={bbox}")
+                    logger.info(f"Drawing annotation {idx}: type={ann_type}, label={label}, color={color}, coords={len(coordinates)}, bbox={bbox}")
                     
                     # Draw based on annotation type and available data
                     if ann_type in ['polygon', 'freehand'] and coordinates:

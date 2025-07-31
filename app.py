@@ -37,6 +37,17 @@ class DebugFilter(logging.Filter):
                 "load_dataset_from_contribute",  # For dataset loading debugging
                 "image_annotator",  # For image annotator debugging
                 "Patient ID from task",  # For patient ID debugging
+                # Annotation submission debugging
+                "Processing image_annotator_data",  # For annotation data processing
+                "Saving current slice annotations",  # For annotation saving
+                "Found user_annotations storage",  # For user annotation storage
+                "Available slice annotations",  # For slice annotation debugging
+                "Processing slice",  # For slice processing
+                "No stored user_annotations found",  # For annotation storage debugging
+                "Processing current image_annotator_data",  # For fallback processing
+                "Found",  # For "Found X raw annotations to process"
+                "Final annotation collection",  # For final annotation count
+                "Submitting annotation with",  # For submission summary
             ]
             message = record.getMessage()
             return any(keyword in message for keyword in allowed_keywords)
@@ -1985,8 +1996,134 @@ class SegMedPro:
                         
                         logger.info(f"Processing image_annotator_data type: {type(image_annotator_data)}")
                         
-                        # Handle different image annotator data structures
-                        if isinstance(image_annotator_data, dict):
+                        # Get current slice information from the state first
+                        current_slice = 0  # Default slice
+                        if hasattr(self.state, 'current_slice_idx'):
+                            current_slice = self.state.current_slice_idx
+                        
+                        # First, ensure current slice annotations are saved before processing
+                        if hasattr(self, 'editor_image_handlers') and image_annotator_data:
+                            logger.info(f"Saving current slice annotations before submission for slice {current_slice}")
+                            self.editor_image_handlers.save_user_annotations(image_annotator_data, current_slice)
+                        
+                        # Collect annotations from all slices, not just current
+                        all_slice_annotations = []
+                        all_slice_labels = []
+                        
+                        # Check if we have saved annotations for multiple slices
+                        # Look in the image handlers' user_annotations storage where slice navigation saves them
+                        if hasattr(self, 'editor_image_handlers') and hasattr(self.editor_image_handlers, 'user_annotations') and self.editor_image_handlers.user_annotations:
+                            logger.info(f"Found user_annotations storage with {len(self.editor_image_handlers.user_annotations)} slices")
+                            logger.info(f"Available slice annotations: {list(self.editor_image_handlers.user_annotations.keys())}")
+                            # Process all slices with user annotations
+                            for slice_idx, user_annotations in self.editor_image_handlers.user_annotations.items():
+                                if isinstance(user_annotations, list) and user_annotations:
+                                    logger.info(f"Processing slice {slice_idx} with {len(user_annotations)} user annotations")
+                                    # Get current view type (default to axial)
+                                    view_type = getattr(self.state, 'current_view', 'axial')
+                                    
+                                    # Process annotations for this slice
+                                    for i, user_annotation in enumerate(user_annotations):
+                                        # Extract the actual annotation data
+                                        if isinstance(user_annotation, dict) and 'data' in user_annotation:
+                                            annotation = user_annotation['data']
+                                        else:
+                                            annotation = user_annotation
+                                        
+                                        if isinstance(annotation, dict):
+                                            # Add slice information to annotation
+                                            ann_info = {
+                                                'annotation_id': f"slice_{slice_idx}_ann_{i}",
+                                                'slice_index': slice_idx,
+                                                'view_type': view_type,
+                                                'type': annotation.get('type', 'box'),
+                                                'label': annotation.get('label', ''),
+                                                'coordinates': [],
+                                                'bbox': [],
+                                                'area': 0,
+                                                'points': [],
+                                                'color': annotation.get('color', None)  # Extract color from annotation
+                                            }
+                                            
+                                            # Extract coordinates based on shape type
+                                            shape_type = ann_info['type']
+                                            if shape_type == 'polygon' and 'points' in annotation:
+                                                # Polygon shapes store coordinates as points
+                                                points = annotation['points']
+                                                if isinstance(points, list):
+                                                    coordinates = []
+                                                    for point in points:
+                                                        if isinstance(point, dict) and 'x' in point and 'y' in point:
+                                                            coordinates.append([point['x'], point['y']])
+                                                    ann_info['coordinates'] = coordinates
+                                                    ann_info['points'] = coordinates
+                                                    
+                                                    # Calculate bbox for polygon
+                                                    if coordinates:
+                                                        x_coords = [p[0] for p in coordinates]
+                                                        y_coords = [p[1] for p in coordinates]
+                                                        ann_info['bbox'] = [min(x_coords), min(y_coords), max(x_coords), max(y_coords)]
+                                                        
+                                                        # Calculate approximate area using shoelace formula
+                                                        area = 0
+                                                        n = len(coordinates)
+                                                        for j in range(n):
+                                                            k = (j + 1) % n
+                                                            area += coordinates[j][0] * coordinates[k][1]
+                                                            area -= coordinates[k][0] * coordinates[j][1]
+                                                        ann_info['area'] = abs(area) / 2
+                                            
+                                            elif shape_type == 'freehand' and 'points' in annotation:
+                                                # Freehand shapes also store coordinates as points
+                                                points = annotation['points']
+                                                if isinstance(points, list):
+                                                    coordinates = []
+                                                    for point in points:
+                                                        if isinstance(point, dict) and 'x' in point and 'y' in point:
+                                                            coordinates.append([point['x'], point['y']])
+                                                    ann_info['coordinates'] = coordinates
+                                                    ann_info['points'] = coordinates
+                                                    
+                                                    # Calculate bbox for freehand
+                                                    if coordinates:
+                                                        x_coords = [p[0] for p in coordinates]
+                                                        y_coords = [p[1] for p in coordinates]
+                                                        ann_info['bbox'] = [min(x_coords), min(y_coords), max(x_coords), max(y_coords)]
+                                                        ann_info['area'] = len(coordinates)  # Approximation for freehand
+                                            
+                                            elif 'xmin' in annotation and 'ymin' in annotation and 'xmax' in annotation and 'ymax' in annotation:
+                                                # Box/rectangle shapes
+                                                xmin, ymin, xmax, ymax = annotation['xmin'], annotation['ymin'], annotation['xmax'], annotation['ymax']
+                                                ann_info['bbox'] = [xmin, ymin, xmax, ymax]
+                                                ann_info['coordinates'] = [[xmin, ymin], [xmax, ymin], [xmax, ymax], [xmin, ymax]]  # Rectangle corners
+                                                ann_info['area'] = (xmax - xmin) * (ymax - ymin)
+                                            
+                                            elif 'x' in annotation and 'y' in annotation and 'width' in annotation and 'height' in annotation:
+                                                # Alternative box format
+                                                x, y, width, height = annotation['x'], annotation['y'], annotation['width'], annotation['height']
+                                                ann_info['bbox'] = [x, y, x + width, y + height]
+                                                ann_info['coordinates'] = [[x, y], [x + width, y], [x + width, y + height], [x, y + height]]
+                                                ann_info['area'] = width * height
+                                            
+                                            all_slice_annotations.append(ann_info)
+                                            
+                                            # Collect labels with slice information and RGB colors
+                                            if ann_info['label']:
+                                                label_with_slice = {
+                                                    'label': ann_info['label'],
+                                                    'slice_index': slice_idx,
+                                                    'view_type': view_type,
+                                                    'color': ann_info.get('color', None)  # Include color from annotation
+                                                }
+                                                if label_with_slice not in all_slice_labels:
+                                                    all_slice_labels.append(label_with_slice)
+                        else:
+                            logger.info("No stored user_annotations found - checking for current image data only")
+                        
+                        # Fallback: if no multi-slice data, process current image_annotator_data
+                        if not all_slice_annotations and isinstance(image_annotator_data, dict):
+                            logger.info(f"Processing current image_annotator_data as fallback")
+                            logger.info(f"image_annotator_data keys: {list(image_annotator_data.keys())}")
                             # Get annotations from image annotator - try multiple possible keys
                             raw_annotations = (image_annotator_data.get('boxes', []) or 
                                              image_annotator_data.get('annotations', []) or 
@@ -2002,18 +2139,21 @@ class SegMedPro:
                                     shape_type = annotation.get('type', 'box')
                                     label = annotation.get('label', '')
                                     
-                                    # Initialize annotation info
+                                    # Initialize annotation info with slice information
                                     ann_info = {
-                                        'annotation_id': i,
+                                        'annotation_id': f"slice_{current_slice}_ann_{i}",
+                                        'slice_index': current_slice,
+                                        'view_type': 'axial',  # Default view
                                         'type': shape_type,
                                         'label': label,
                                         'coordinates': [],
                                         'bbox': [],
                                         'area': 0,
-                                        'points': []
+                                        'points': [],
+                                        'color': annotation.get('color', None)  # Extract color from annotation
                                     }
                                     
-                                    # Extract coordinates based on shape type
+                                    # Extract coordinates based on shape type (same logic as before)
                                     if shape_type == 'polygon' and 'points' in annotation:
                                         # Polygon shapes store coordinates as points
                                         points = annotation['points']
@@ -2083,33 +2223,43 @@ class SegMedPro:
                                         if 'area' in annotation:
                                             ann_info['area'] = annotation['area']
                                     
-                                    annotations.append(ann_info)
+                                    all_slice_annotations.append(ann_info)
                                     
-                                    # Collect labels
-                                    if ann_info['label'] and ann_info['label'] not in labels:
-                                        labels.append(ann_info['label'])
-                            
-                            annotation_data = {
-                                'annotations': annotations,
-                                'labels': labels,
-                                'image': image_annotator_data.get('image'),
-                                'total_annotations': len(annotations),
-                                'submission_time': None  # Will be set by campaign manager
-                            }
-                            
-                            logger.info(f"Submitting annotation with {len(annotations)} annotations and {len(labels)} unique labels")
-                        else:
-                            logger.warning(f"Unexpected image_annotator_data type: {type(image_annotator_data)}")
-                            annotation_data = {
-                                'annotations': [],
-                                'labels': [],
-                                'total_annotations': 0,
-                                'error': f"Unexpected data type: {type(image_annotator_data)}"
-                            }
+                                    # Collect labels with slice info and RGB colors
+                                    if ann_info['label']:
+                                        label_with_slice = {
+                                            'label': ann_info['label'],
+                                            'slice_index': current_slice,
+                                            'view_type': 'axial',
+                                            'color': ann_info.get('color', None)  # Include color from annotation
+                                        }
+                                        if label_with_slice not in all_slice_labels:
+                                            all_slice_labels.append(label_with_slice)
+                        
+                        # Use all collected annotations
+                        annotations = all_slice_annotations
+                        labels = all_slice_labels
+                        
+                        logger.info(f"Final annotation collection: {len(annotations)} annotations from {len(set(ann.get('slice_index', 0) for ann in annotations))} unique slices")
+                        
+                        annotation_data = {
+                            'annotations': annotations,
+                            'labels': labels,
+                            'image': image_annotator_data.get('image') if isinstance(image_annotator_data, dict) else None,
+                            'total_annotations': len(annotations),
+                            'submission_time': None  # Will be set by campaign manager
+                        }
+                        
+                        logger.info(f"Submitting annotation with {len(annotations)} annotations across multiple slices and {len(labels)} unique labels")
                         
                     except Exception as e:
                         logger.warning(f"Error processing annotation data: {e}")
-                        annotation_data = None
+                        annotation_data = {
+                            'annotations': [],
+                            'labels': [],
+                            'total_annotations': 0,
+                            'error': f"Error processing annotations: {str(e)}"
+                        }
                 
                 # Submit with annotation data
                 success = crowdsourcing_manager.mark_completed(campaign_id, user_id, patient_id, annotation_data)
