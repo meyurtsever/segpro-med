@@ -42,6 +42,12 @@ share/python-wheels/
 *.egg
 MANIFEST
 
+# Testing outputs
+automatic_*/
+
+# Testing db files
+db/
+
 # PyInstaller
 *.manifest
 *.spec

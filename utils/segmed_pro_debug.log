@@ -17658,3 +17658,506 @@ ValueError: all input arrays must have the same shape
 2025-07-31 13:16:32,926 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202086094667022_MR.dcm
 2025-07-31 13:16:32,928 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202124309767030_MR.dcm
 2025-07-31 13:16:32,929 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.201801070920215605567027_MR.dcm
+2025-07-31 13:43:35,840 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510225940999782250_MR.dcm
+2025-07-31 13:43:35,841 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510225941380782253_MR.dcm
+2025-07-31 13:43:35,843 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510225941533482254_MR.dcm
+2025-07-31 13:43:35,845 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510225941887382255_MR.dcm
+2025-07-31 13:43:35,846 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510225941935882256_MR.dcm
+2025-07-31 13:43:35,849 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510225942637982257_MR.dcm
+2025-07-31 13:43:35,850 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510225943826182262_MR.dcm
+2025-07-31 13:43:35,852 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510225944164582263_MR.dcm
+2025-07-31 13:43:35,853 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510225953088582267_MR.dcm
+2025-07-31 13:43:35,855 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510225954594682270_MR.dcm
+2025-07-31 13:43:35,856 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510241858116882279_MR.dcm
+2025-07-31 13:43:35,857 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510241879795182284_MR.dcm
+2025-07-31 13:43:35,859 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510241895439082289_MR.dcm
+2025-07-31 13:43:35,860 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510241912939882294_MR.dcm
+2025-07-31 13:43:35,861 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510241934338182299_MR.dcm
+2025-07-31 13:43:35,863 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510241949154382304_MR.dcm
+2025-07-31 13:43:35,865 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510241967064782309_MR.dcm
+2025-07-31 13:43:35,867 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510241985086382314_MR.dcm
+2025-07-31 13:43:35,868 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510242021686982320_MR.dcm
+2025-07-31 13:43:35,870 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.201903051024203598382317_MR.dcm
+2025-07-31 13:43:41,111 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200432752399370_MR.dcm
+2025-07-31 13:43:41,113 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200432796599371_MR.dcm
+2025-07-31 13:43:41,115 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200433686999376_MR.dcm
+2025-07-31 13:43:41,117 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200433955999377_MR.dcm
+2025-07-31 13:43:41,119 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200434225099378_MR.dcm
+2025-07-31 13:43:41,121 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200435721799385_MR.dcm
+2025-07-31 13:43:41,123 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200436654999386_MR.dcm
+2025-07-31 13:43:41,124 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200449275799390_MR.dcm
+2025-07-31 13:43:41,125 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200473494599395_MR.dcm
+2025-07-31 13:43:41,127 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200499927399400_MR.dcm
+2025-07-31 13:43:41,128 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200526558999403_MR.dcm
+2025-07-31 13:43:41,130 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205870865299410_MR.dcm
+2025-07-31 13:43:41,132 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205894206199415_MR.dcm
+2025-07-31 13:43:41,134 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205917664599420_MR.dcm
+2025-07-31 13:43:41,135 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205945202999425_MR.dcm
+2025-07-31 13:43:41,137 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205969447299430_MR.dcm
+2025-07-31 13:43:41,140 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205994721299435_MR.dcm
+2025-07-31 13:43:41,141 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602210021596499440_MR.dcm
+2025-07-31 13:43:41,142 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602210048547899445_MR.dcm
+2025-07-31 13:43:41,144 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602210075769399450_MR.dcm
+2025-07-31 13:43:41,145 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602210099858099455_MR.dcm
+2025-07-31 13:43:41,146 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602210125632099458_MR.dcm
+2025-07-31 13:43:46,536 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016320866959_MR.dcm
+2025-07-31 13:43:46,538 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016356166960_MR.dcm
+2025-07-31 13:43:46,539 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016387966961_MR.dcm
+2025-07-31 13:43:46,541 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016583066964_MR.dcm
+2025-07-31 13:43:46,543 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016602166965_MR.dcm
+2025-07-31 13:43:46,545 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016723766966_MR.dcm
+2025-07-31 13:43:46,546 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190017602566969_MR.dcm
+2025-07-31 13:43:46,548 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190018110066972_MR.dcm
+2025-07-31 13:43:46,549 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190018883466973_MR.dcm
+2025-07-31 13:43:46,551 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190025402566977_MR.dcm
+2025-07-31 13:43:46,552 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190043763066980_MR.dcm
+2025-07-31 13:43:46,554 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709201958356966987_MR.dcm
+2025-07-31 13:43:46,555 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709201976549166992_MR.dcm
+2025-07-31 13:43:46,556 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709201994843466997_MR.dcm
+2025-07-31 13:43:46,558 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202013579667002_MR.dcm
+2025-07-31 13:43:46,559 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202034081667007_MR.dcm
+2025-07-31 13:43:46,560 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202049079867012_MR.dcm
+2025-07-31 13:43:46,562 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202067522867017_MR.dcm
+2025-07-31 13:43:46,563 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202086094667022_MR.dcm
+2025-07-31 13:43:46,565 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202124309767030_MR.dcm
+2025-07-31 13:43:46,566 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.201801070920215605567027_MR.dcm
+2025-07-31 13:44:11,516 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200432752399370_MR.dcm
+2025-07-31 13:44:11,518 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200432796599371_MR.dcm
+2025-07-31 13:44:11,520 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200433686999376_MR.dcm
+2025-07-31 13:44:11,522 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200433955999377_MR.dcm
+2025-07-31 13:44:11,524 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200434225099378_MR.dcm
+2025-07-31 13:44:11,525 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200435721799385_MR.dcm
+2025-07-31 13:44:11,527 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200436654999386_MR.dcm
+2025-07-31 13:44:11,528 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200449275799390_MR.dcm
+2025-07-31 13:44:11,530 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200473494599395_MR.dcm
+2025-07-31 13:44:11,532 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200499927399400_MR.dcm
+2025-07-31 13:44:11,534 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200526558999403_MR.dcm
+2025-07-31 13:44:11,536 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205870865299410_MR.dcm
+2025-07-31 13:44:11,538 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205894206199415_MR.dcm
+2025-07-31 13:44:11,540 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205917664599420_MR.dcm
+2025-07-31 13:44:11,541 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205945202999425_MR.dcm
+2025-07-31 13:44:11,543 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205969447299430_MR.dcm
+2025-07-31 13:44:11,545 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205994721299435_MR.dcm
+2025-07-31 13:44:11,547 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602210021596499440_MR.dcm
+2025-07-31 13:44:11,549 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602210048547899445_MR.dcm
+2025-07-31 13:44:11,551 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602210075769399450_MR.dcm
+2025-07-31 13:44:11,553 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602210099858099455_MR.dcm
+2025-07-31 13:44:11,554 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602210125632099458_MR.dcm
+2025-07-31 13:44:13,250 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016320866959_MR.dcm
+2025-07-31 13:44:13,252 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016356166960_MR.dcm
+2025-07-31 13:44:13,253 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016387966961_MR.dcm
+2025-07-31 13:44:13,255 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016583066964_MR.dcm
+2025-07-31 13:44:13,256 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016602166965_MR.dcm
+2025-07-31 13:44:13,258 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016723766966_MR.dcm
+2025-07-31 13:44:13,260 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190017602566969_MR.dcm
+2025-07-31 13:44:13,261 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190018110066972_MR.dcm
+2025-07-31 13:44:13,263 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190018883466973_MR.dcm
+2025-07-31 13:44:13,265 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190025402566977_MR.dcm
+2025-07-31 13:44:13,267 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190043763066980_MR.dcm
+2025-07-31 13:44:13,268 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709201958356966987_MR.dcm
+2025-07-31 13:44:13,270 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709201976549166992_MR.dcm
+2025-07-31 13:44:13,271 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709201994843466997_MR.dcm
+2025-07-31 13:44:13,273 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202013579667002_MR.dcm
+2025-07-31 13:44:13,274 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202034081667007_MR.dcm
+2025-07-31 13:44:13,275 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202049079867012_MR.dcm
+2025-07-31 13:44:13,276 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202067522867017_MR.dcm
+2025-07-31 13:44:13,277 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202086094667022_MR.dcm
+2025-07-31 13:44:13,278 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202124309767030_MR.dcm
+2025-07-31 13:44:13,279 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.201801070920215605567027_MR.dcm
+2025-07-31 13:44:14,103 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016320866959_MR.dcm
+2025-07-31 13:44:14,105 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016356166960_MR.dcm
+2025-07-31 13:44:14,107 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016387966961_MR.dcm
+2025-07-31 13:44:14,109 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016583066964_MR.dcm
+2025-07-31 13:44:14,110 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016602166965_MR.dcm
+2025-07-31 13:44:14,112 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016723766966_MR.dcm
+2025-07-31 13:44:14,114 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190017602566969_MR.dcm
+2025-07-31 13:44:14,116 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190018110066972_MR.dcm
+2025-07-31 13:44:14,117 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190018883466973_MR.dcm
+2025-07-31 13:44:14,119 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190025402566977_MR.dcm
+2025-07-31 13:44:14,120 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190043763066980_MR.dcm
+2025-07-31 13:44:14,122 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709201958356966987_MR.dcm
+2025-07-31 13:44:14,123 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709201976549166992_MR.dcm
+2025-07-31 13:44:14,124 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709201994843466997_MR.dcm
+2025-07-31 13:44:14,125 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202013579667002_MR.dcm
+2025-07-31 13:44:14,126 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202034081667007_MR.dcm
+2025-07-31 13:44:14,127 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202049079867012_MR.dcm
+2025-07-31 13:44:14,128 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202067522867017_MR.dcm
+2025-07-31 13:44:14,129 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202086094667022_MR.dcm
+2025-07-31 13:44:14,130 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202124309767030_MR.dcm
+2025-07-31 13:44:14,132 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.201801070920215605567027_MR.dcm
+2025-07-31 13:44:15,048 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200432752399370_MR.dcm
+2025-07-31 13:44:15,050 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200432796599371_MR.dcm
+2025-07-31 13:44:15,052 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200433686999376_MR.dcm
+2025-07-31 13:44:15,054 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200433955999377_MR.dcm
+2025-07-31 13:44:15,055 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200434225099378_MR.dcm
+2025-07-31 13:44:15,056 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200435721799385_MR.dcm
+2025-07-31 13:44:15,057 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200436654999386_MR.dcm
+2025-07-31 13:44:15,058 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200449275799390_MR.dcm
+2025-07-31 13:44:15,060 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200473494599395_MR.dcm
+2025-07-31 13:44:15,061 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200499927399400_MR.dcm
+2025-07-31 13:44:15,062 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200526558999403_MR.dcm
+2025-07-31 13:44:15,064 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205870865299410_MR.dcm
+2025-07-31 13:44:15,065 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205894206199415_MR.dcm
+2025-07-31 13:44:15,066 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205917664599420_MR.dcm
+2025-07-31 13:44:15,067 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205945202999425_MR.dcm
+2025-07-31 13:44:15,068 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205969447299430_MR.dcm
+2025-07-31 13:44:15,070 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205994721299435_MR.dcm
+2025-07-31 13:44:15,071 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602210021596499440_MR.dcm
+2025-07-31 13:44:15,073 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602210048547899445_MR.dcm
+2025-07-31 13:44:15,074 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602210075769399450_MR.dcm
+2025-07-31 13:44:15,075 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602210099858099455_MR.dcm
+2025-07-31 13:44:15,076 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602210125632099458_MR.dcm
+2025-07-31 13:44:15,803 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016320866959_MR.dcm
+2025-07-31 13:44:15,804 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016356166960_MR.dcm
+2025-07-31 13:44:15,806 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016387966961_MR.dcm
+2025-07-31 13:44:15,807 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016583066964_MR.dcm
+2025-07-31 13:44:15,808 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016602166965_MR.dcm
+2025-07-31 13:44:15,810 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016723766966_MR.dcm
+2025-07-31 13:44:15,811 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190017602566969_MR.dcm
+2025-07-31 13:44:15,812 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190018110066972_MR.dcm
+2025-07-31 13:44:15,813 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190018883466973_MR.dcm
+2025-07-31 13:44:15,815 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190025402566977_MR.dcm
+2025-07-31 13:44:15,816 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190043763066980_MR.dcm
+2025-07-31 13:44:15,817 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709201958356966987_MR.dcm
+2025-07-31 13:44:15,818 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709201976549166992_MR.dcm
+2025-07-31 13:44:15,819 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709201994843466997_MR.dcm
+2025-07-31 13:44:15,820 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202013579667002_MR.dcm
+2025-07-31 13:44:15,822 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202034081667007_MR.dcm
+2025-07-31 13:44:15,823 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202049079867012_MR.dcm
+2025-07-31 13:44:15,824 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202067522867017_MR.dcm
+2025-07-31 13:44:15,826 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202086094667022_MR.dcm
+2025-07-31 13:44:15,827 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202124309767030_MR.dcm
+2025-07-31 13:44:15,829 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.201801070920215605567027_MR.dcm
+2025-07-31 13:44:42,492 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-07-31 13:44:42,501 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-07-31 13:44:42,508 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-07-31 13:44:42,514 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-07-31 13:44:42,521 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-07-31 13:44:42,528 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-07-31 13:44:42,534 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-07-31 13:44:42,541 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-07-31 13:44:42,548 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-07-31 13:44:42,556 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341775486333211_MR.dcm
+2025-07-31 13:44:42,562 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-07-31 13:44:42,569 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-07-31 13:44:42,575 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-07-31 13:44:42,582 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-07-31 13:44:42,593 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-07-31 13:44:42,599 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-07-31 13:44:42,606 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-07-31 13:44:42,613 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
+2025-07-31 13:44:42,619 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm
+2025-07-31 13:44:42,626 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm
+2025-07-31 13:49:27,911 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200432752399370_MR.dcm
+2025-07-31 13:49:27,914 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200432796599371_MR.dcm
+2025-07-31 13:49:27,916 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200433686999376_MR.dcm
+2025-07-31 13:49:27,918 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200433955999377_MR.dcm
+2025-07-31 13:49:27,921 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200434225099378_MR.dcm
+2025-07-31 13:49:27,923 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200435721799385_MR.dcm
+2025-07-31 13:49:27,925 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200436654999386_MR.dcm
+2025-07-31 13:49:27,927 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200449275799390_MR.dcm
+2025-07-31 13:49:27,928 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200473494599395_MR.dcm
+2025-07-31 13:49:27,930 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200499927399400_MR.dcm
+2025-07-31 13:49:27,931 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200526558999403_MR.dcm
+2025-07-31 13:49:27,933 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205870865299410_MR.dcm
+2025-07-31 13:49:27,934 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205894206199415_MR.dcm
+2025-07-31 13:49:27,935 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205917664599420_MR.dcm
+2025-07-31 13:49:27,937 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205945202999425_MR.dcm
+2025-07-31 13:49:27,938 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205969447299430_MR.dcm
+2025-07-31 13:49:27,940 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205994721299435_MR.dcm
+2025-07-31 13:49:27,941 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602210021596499440_MR.dcm
+2025-07-31 13:49:27,942 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602210048547899445_MR.dcm
+2025-07-31 13:49:27,944 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602210075769399450_MR.dcm
+2025-07-31 13:49:27,945 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602210099858099455_MR.dcm
+2025-07-31 13:49:27,946 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602210125632099458_MR.dcm
+2025-07-31 13:49:29,058 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016320866959_MR.dcm
+2025-07-31 13:49:29,060 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016356166960_MR.dcm
+2025-07-31 13:49:29,062 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016387966961_MR.dcm
+2025-07-31 13:49:29,064 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016583066964_MR.dcm
+2025-07-31 13:49:29,066 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016602166965_MR.dcm
+2025-07-31 13:49:29,067 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016723766966_MR.dcm
+2025-07-31 13:49:29,069 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190017602566969_MR.dcm
+2025-07-31 13:49:29,070 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190018110066972_MR.dcm
+2025-07-31 13:49:29,072 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190018883466973_MR.dcm
+2025-07-31 13:49:29,073 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190025402566977_MR.dcm
+2025-07-31 13:49:29,074 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190043763066980_MR.dcm
+2025-07-31 13:49:29,075 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709201958356966987_MR.dcm
+2025-07-31 13:49:29,076 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709201976549166992_MR.dcm
+2025-07-31 13:49:29,077 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709201994843466997_MR.dcm
+2025-07-31 13:49:29,078 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202013579667002_MR.dcm
+2025-07-31 13:49:29,079 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202034081667007_MR.dcm
+2025-07-31 13:49:29,080 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202049079867012_MR.dcm
+2025-07-31 13:49:29,081 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202067522867017_MR.dcm
+2025-07-31 13:49:29,082 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202086094667022_MR.dcm
+2025-07-31 13:49:29,084 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202124309767030_MR.dcm
+2025-07-31 13:49:29,085 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.201801070920215605567027_MR.dcm
+2025-07-31 13:49:43,358 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200432752399370_MR.dcm
+2025-07-31 13:49:43,359 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200432796599371_MR.dcm
+2025-07-31 13:49:43,362 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200433686999376_MR.dcm
+2025-07-31 13:49:43,364 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200433955999377_MR.dcm
+2025-07-31 13:49:43,366 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200434225099378_MR.dcm
+2025-07-31 13:49:43,368 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200435721799385_MR.dcm
+2025-07-31 13:49:43,371 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200436654999386_MR.dcm
+2025-07-31 13:49:43,373 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200449275799390_MR.dcm
+2025-07-31 13:49:43,375 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200473494599395_MR.dcm
+2025-07-31 13:49:43,377 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200499927399400_MR.dcm
+2025-07-31 13:49:43,379 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200526558999403_MR.dcm
+2025-07-31 13:49:43,380 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205870865299410_MR.dcm
+2025-07-31 13:49:43,381 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205894206199415_MR.dcm
+2025-07-31 13:49:43,383 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205917664599420_MR.dcm
+2025-07-31 13:49:43,384 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205945202999425_MR.dcm
+2025-07-31 13:49:43,386 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205969447299430_MR.dcm
+2025-07-31 13:49:43,387 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205994721299435_MR.dcm
+2025-07-31 13:49:43,389 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602210021596499440_MR.dcm
+2025-07-31 13:49:43,390 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602210048547899445_MR.dcm
+2025-07-31 13:49:43,391 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602210075769399450_MR.dcm
+2025-07-31 13:49:43,393 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602210099858099455_MR.dcm
+2025-07-31 13:49:43,394 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602210125632099458_MR.dcm
+2025-07-31 13:49:44,088 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510225940999782250_MR.dcm
+2025-07-31 13:49:44,090 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510225941380782253_MR.dcm
+2025-07-31 13:49:44,092 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510225941533482254_MR.dcm
+2025-07-31 13:49:44,094 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510225941887382255_MR.dcm
+2025-07-31 13:49:44,095 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510225941935882256_MR.dcm
+2025-07-31 13:49:44,097 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510225942637982257_MR.dcm
+2025-07-31 13:49:44,099 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510225943826182262_MR.dcm
+2025-07-31 13:49:44,101 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510225944164582263_MR.dcm
+2025-07-31 13:49:44,102 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510225953088582267_MR.dcm
+2025-07-31 13:49:44,104 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510225954594682270_MR.dcm
+2025-07-31 13:49:44,106 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510241858116882279_MR.dcm
+2025-07-31 13:49:44,108 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510241879795182284_MR.dcm
+2025-07-31 13:49:44,109 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510241895439082289_MR.dcm
+2025-07-31 13:49:44,110 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510241912939882294_MR.dcm
+2025-07-31 13:49:44,111 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510241934338182299_MR.dcm
+2025-07-31 13:49:44,113 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510241949154382304_MR.dcm
+2025-07-31 13:49:44,114 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510241967064782309_MR.dcm
+2025-07-31 13:49:44,116 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510241985086382314_MR.dcm
+2025-07-31 13:49:44,117 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510242021686982320_MR.dcm
+2025-07-31 13:49:44,118 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.201903051024203598382317_MR.dcm
+2025-07-31 13:57:10,174 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510225940999782250_MR.dcm
+2025-07-31 13:57:10,176 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510225941380782253_MR.dcm
+2025-07-31 13:57:10,178 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510225941533482254_MR.dcm
+2025-07-31 13:57:10,179 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510225941887382255_MR.dcm
+2025-07-31 13:57:10,181 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510225941935882256_MR.dcm
+2025-07-31 13:57:10,182 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510225942637982257_MR.dcm
+2025-07-31 13:57:10,183 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510225943826182262_MR.dcm
+2025-07-31 13:57:10,185 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510225944164582263_MR.dcm
+2025-07-31 13:57:10,187 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510225953088582267_MR.dcm
+2025-07-31 13:57:10,188 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510225954594682270_MR.dcm
+2025-07-31 13:57:10,190 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510241858116882279_MR.dcm
+2025-07-31 13:57:10,192 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510241879795182284_MR.dcm
+2025-07-31 13:57:10,193 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510241895439082289_MR.dcm
+2025-07-31 13:57:10,196 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510241912939882294_MR.dcm
+2025-07-31 13:57:10,198 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510241934338182299_MR.dcm
+2025-07-31 13:57:10,199 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510241949154382304_MR.dcm
+2025-07-31 13:57:10,201 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510241967064782309_MR.dcm
+2025-07-31 13:57:10,202 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510241985086382314_MR.dcm
+2025-07-31 13:57:10,204 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510242021686982320_MR.dcm
+2025-07-31 13:57:10,205 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.201903051024203598382317_MR.dcm
+2025-07-31 13:57:14,186 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-07-31 13:57:14,187 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-07-31 13:57:14,190 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-07-31 13:57:14,191 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-07-31 13:57:14,193 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-07-31 13:57:14,194 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-07-31 13:57:14,196 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-07-31 13:57:14,198 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-07-31 13:57:14,200 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-07-31 13:57:14,202 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341775486333211_MR.dcm
+2025-07-31 13:57:14,203 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-07-31 13:57:14,204 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-07-31 13:57:14,206 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-07-31 13:57:14,207 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-07-31 13:57:14,209 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-07-31 13:57:14,210 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-07-31 13:57:14,211 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-07-31 13:57:14,213 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
+2025-07-31 13:57:14,214 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm
+2025-07-31 13:57:14,216 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm
+2025-07-31 13:57:41,417 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair\1.3.12.2.1107.5.2.36.40820.2018112109175381506849810_MR.dcm
+2025-07-31 13:57:41,419 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair\1.3.12.2.1107.5.2.36.40820.2018112109175424640149821_MR.dcm
+2025-07-31 13:57:41,420 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair\1.3.12.2.1107.5.2.36.40820.201811210917543139949816_MR.dcm
+2025-07-31 13:57:41,421 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair\1.3.12.2.1107.5.2.36.40820.2018112109175446303449824_MR.dcm
+2025-07-31 13:57:41,422 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair\1.3.12.2.1107.5.2.36.40820.2018112109175468814749831_MR.dcm
+2025-07-31 13:57:41,422 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair\1.3.12.2.1107.5.2.36.40820.2018112109175489989249834_MR.dcm
+2025-07-31 13:57:41,423 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair\1.3.12.2.1107.5.2.36.40820.2018112109175513543949841_MR.dcm
+2025-07-31 13:57:41,424 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair\1.3.12.2.1107.5.2.36.40820.2018112109175533510349844_MR.dcm
+2025-07-31 13:57:41,424 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair\1.3.12.2.1107.5.2.36.40820.2018112109175556111649851_MR.dcm
+2025-07-31 13:57:41,425 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair\1.3.12.2.1107.5.2.36.40820.2018112109175577402149854_MR.dcm
+2025-07-31 13:57:41,426 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair\1.3.12.2.1107.5.2.36.40820.2018112109191479731849859_MR.dcm
+2025-07-31 13:57:41,427 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair\1.3.12.2.1107.5.2.36.40820.2018112109191524353349869_MR.dcm
+2025-07-31 13:57:41,427 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair\1.3.12.2.1107.5.2.36.40820.201811210919154284549866_MR.dcm
+2025-07-31 13:57:41,428 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair\1.3.12.2.1107.5.2.36.40820.2018112109191546439649876_MR.dcm
+2025-07-31 13:57:41,430 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair\1.3.12.2.1107.5.2.36.40820.2018112109191568147249881_MR.dcm
+2025-07-31 13:57:41,430 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair\1.3.12.2.1107.5.2.36.40820.2018112109191589510449884_MR.dcm
+2025-07-31 13:57:41,431 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair\1.3.12.2.1107.5.2.36.40820.2018112109191612141449891_MR.dcm
+2025-07-31 13:57:41,432 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair\1.3.12.2.1107.5.2.36.40820.2018112109191633345249894_MR.dcm
+2025-07-31 13:57:41,433 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair\1.3.12.2.1107.5.2.36.40820.2018112109191656054849901_MR.dcm
+2025-07-31 13:57:41,433 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (60)\flair\1.3.12.2.1107.5.2.36.40820.2018112109191676217149904_MR.dcm
+2025-07-31 14:05:46,987 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-07-31 14:05:47,003 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-07-31 14:05:47,005 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-07-31 14:05:47,007 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-07-31 14:05:47,014 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-07-31 14:05:47,017 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-07-31 14:05:47,027 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-07-31 14:05:47,033 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-07-31 14:05:47,051 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-07-31 14:05:47,058 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512341775486333211_MR.dcm
+2025-07-31 14:05:47,060 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-07-31 14:05:47,064 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-07-31 14:05:47,070 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-07-31 14:05:47,072 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-07-31 14:05:47,075 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-07-31 14:05:47,078 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-07-31 14:05:47,081 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-07-31 14:05:47,084 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
+2025-07-31 14:05:47,087 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm
+2025-07-31 14:05:47,093 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm
+2025-07-31 14:06:53,068 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200432752399370_MR.dcm
+2025-07-31 14:06:53,073 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200432796599371_MR.dcm
+2025-07-31 14:06:53,074 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200433686999376_MR.dcm
+2025-07-31 14:06:53,076 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200433955999377_MR.dcm
+2025-07-31 14:06:53,078 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200434225099378_MR.dcm
+2025-07-31 14:06:53,080 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200435721799385_MR.dcm
+2025-07-31 14:06:53,082 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200436654999386_MR.dcm
+2025-07-31 14:06:53,083 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200449275799390_MR.dcm
+2025-07-31 14:06:53,085 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200473494599395_MR.dcm
+2025-07-31 14:06:53,087 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200499927399400_MR.dcm
+2025-07-31 14:06:53,088 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200526558999403_MR.dcm
+2025-07-31 14:06:53,090 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205870865299410_MR.dcm
+2025-07-31 14:06:53,092 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205894206199415_MR.dcm
+2025-07-31 14:06:53,094 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205917664599420_MR.dcm
+2025-07-31 14:06:53,096 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205945202999425_MR.dcm
+2025-07-31 14:06:53,097 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205969447299430_MR.dcm
+2025-07-31 14:06:53,099 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205994721299435_MR.dcm
+2025-07-31 14:06:53,100 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602210021596499440_MR.dcm
+2025-07-31 14:06:53,101 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602210048547899445_MR.dcm
+2025-07-31 14:06:53,103 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602210075769399450_MR.dcm
+2025-07-31 14:06:53,105 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602210099858099455_MR.dcm
+2025-07-31 14:06:53,106 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602210125632099458_MR.dcm
+2025-07-31 14:06:54,905 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510225940999782250_MR.dcm
+2025-07-31 14:06:54,908 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510225941380782253_MR.dcm
+2025-07-31 14:06:54,910 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510225941533482254_MR.dcm
+2025-07-31 14:06:54,912 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510225941887382255_MR.dcm
+2025-07-31 14:06:54,914 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510225941935882256_MR.dcm
+2025-07-31 14:06:54,916 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510225942637982257_MR.dcm
+2025-07-31 14:06:54,918 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510225943826182262_MR.dcm
+2025-07-31 14:06:54,920 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510225944164582263_MR.dcm
+2025-07-31 14:06:54,922 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510225953088582267_MR.dcm
+2025-07-31 14:06:54,924 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510225954594682270_MR.dcm
+2025-07-31 14:06:54,926 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510241858116882279_MR.dcm
+2025-07-31 14:06:54,928 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510241879795182284_MR.dcm
+2025-07-31 14:06:54,930 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510241895439082289_MR.dcm
+2025-07-31 14:06:54,932 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510241912939882294_MR.dcm
+2025-07-31 14:06:54,934 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510241934338182299_MR.dcm
+2025-07-31 14:06:54,936 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510241949154382304_MR.dcm
+2025-07-31 14:06:54,938 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510241967064782309_MR.dcm
+2025-07-31 14:06:54,939 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510241985086382314_MR.dcm
+2025-07-31 14:06:54,941 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.2019030510242021686982320_MR.dcm
+2025-07-31 14:06:54,942 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (12)\flair\1.3.12.2.1107.5.2.18.42451.201903051024203598382317_MR.dcm
+2025-07-31 14:07:24,259 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016320866959_MR.dcm
+2025-07-31 14:07:24,261 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016356166960_MR.dcm
+2025-07-31 14:07:24,263 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016387966961_MR.dcm
+2025-07-31 14:07:24,265 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016583066964_MR.dcm
+2025-07-31 14:07:24,267 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016602166965_MR.dcm
+2025-07-31 14:07:24,269 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016723766966_MR.dcm
+2025-07-31 14:07:24,271 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190017602566969_MR.dcm
+2025-07-31 14:07:24,273 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190018110066972_MR.dcm
+2025-07-31 14:07:24,275 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190018883466973_MR.dcm
+2025-07-31 14:07:24,277 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190025402566977_MR.dcm
+2025-07-31 14:07:24,279 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190043763066980_MR.dcm
+2025-07-31 14:07:24,281 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709201958356966987_MR.dcm
+2025-07-31 14:07:24,283 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709201976549166992_MR.dcm
+2025-07-31 14:07:24,284 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709201994843466997_MR.dcm
+2025-07-31 14:07:24,287 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202013579667002_MR.dcm
+2025-07-31 14:07:24,289 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202034081667007_MR.dcm
+2025-07-31 14:07:24,291 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202049079867012_MR.dcm
+2025-07-31 14:07:24,293 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202067522867017_MR.dcm
+2025-07-31 14:07:24,295 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202086094667022_MR.dcm
+2025-07-31 14:07:24,297 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202124309767030_MR.dcm
+2025-07-31 14:07:24,298 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.201801070920215605567027_MR.dcm
+2025-07-31 14:07:44,454 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016320866959_MR.dcm
+2025-07-31 14:07:44,456 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016356166960_MR.dcm
+2025-07-31 14:07:44,458 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016387966961_MR.dcm
+2025-07-31 14:07:44,459 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016583066964_MR.dcm
+2025-07-31 14:07:44,461 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016602166965_MR.dcm
+2025-07-31 14:07:44,463 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016723766966_MR.dcm
+2025-07-31 14:07:44,465 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190017602566969_MR.dcm
+2025-07-31 14:07:44,467 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190018110066972_MR.dcm
+2025-07-31 14:07:44,468 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190018883466973_MR.dcm
+2025-07-31 14:07:44,470 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190025402566977_MR.dcm
+2025-07-31 14:07:44,472 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190043763066980_MR.dcm
+2025-07-31 14:07:44,474 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709201958356966987_MR.dcm
+2025-07-31 14:07:44,475 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709201976549166992_MR.dcm
+2025-07-31 14:07:44,477 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709201994843466997_MR.dcm
+2025-07-31 14:07:44,479 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202013579667002_MR.dcm
+2025-07-31 14:07:44,481 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202034081667007_MR.dcm
+2025-07-31 14:07:44,483 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202049079867012_MR.dcm
+2025-07-31 14:07:44,485 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202067522867017_MR.dcm
+2025-07-31 14:07:44,487 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202086094667022_MR.dcm
+2025-07-31 14:07:44,489 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202124309767030_MR.dcm
+2025-07-31 14:07:44,490 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.201801070920215605567027_MR.dcm
+2025-07-31 14:09:14,337 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016320866959_MR.dcm
+2025-07-31 14:09:14,338 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016356166960_MR.dcm
+2025-07-31 14:09:14,339 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016387966961_MR.dcm
+2025-07-31 14:09:14,340 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016583066964_MR.dcm
+2025-07-31 14:09:14,341 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016602166965_MR.dcm
+2025-07-31 14:09:14,341 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016723766966_MR.dcm
+2025-07-31 14:09:14,342 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190017602566969_MR.dcm
+2025-07-31 14:09:14,343 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190018110066972_MR.dcm
+2025-07-31 14:09:14,343 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190018883466973_MR.dcm
+2025-07-31 14:09:14,344 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190025402566977_MR.dcm
+2025-07-31 14:09:14,344 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190043763066980_MR.dcm
+2025-07-31 14:09:14,345 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709201958356966987_MR.dcm
+2025-07-31 14:09:14,346 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709201976549166992_MR.dcm
+2025-07-31 14:09:14,346 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709201994843466997_MR.dcm
+2025-07-31 14:09:14,347 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202013579667002_MR.dcm
+2025-07-31 14:09:14,348 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202034081667007_MR.dcm
+2025-07-31 14:09:14,348 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202049079867012_MR.dcm
+2025-07-31 14:09:14,349 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202067522867017_MR.dcm
+2025-07-31 14:09:14,350 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202086094667022_MR.dcm
+2025-07-31 14:09:14,350 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202124309767030_MR.dcm
+2025-07-31 14:09:14,351 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.201801070920215605567027_MR.dcm
+2025-07-31 14:09:58,748 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200432752399370_MR.dcm
+2025-07-31 14:09:58,749 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200432796599371_MR.dcm
+2025-07-31 14:09:58,750 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200433686999376_MR.dcm
+2025-07-31 14:09:58,751 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200433955999377_MR.dcm
+2025-07-31 14:09:58,751 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200434225099378_MR.dcm
+2025-07-31 14:09:58,752 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200435721799385_MR.dcm
+2025-07-31 14:09:58,753 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200436654999386_MR.dcm
+2025-07-31 14:09:58,753 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200449275799390_MR.dcm
+2025-07-31 14:09:58,754 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200473494599395_MR.dcm
+2025-07-31 14:09:58,755 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200499927399400_MR.dcm
+2025-07-31 14:09:58,755 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602200526558999403_MR.dcm
+2025-07-31 14:09:58,756 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205870865299410_MR.dcm
+2025-07-31 14:09:58,757 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205894206199415_MR.dcm
+2025-07-31 14:09:58,757 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205917664599420_MR.dcm
+2025-07-31 14:09:58,758 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205945202999425_MR.dcm
+2025-07-31 14:09:58,759 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205969447299430_MR.dcm
+2025-07-31 14:09:58,760 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602205994721299435_MR.dcm
+2025-07-31 14:09:58,760 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602210021596499440_MR.dcm
+2025-07-31 14:09:58,761 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602210048547899445_MR.dcm
+2025-07-31 14:09:58,761 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602210075769399450_MR.dcm
+2025-07-31 14:09:58,762 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602210099858099455_MR.dcm
+2025-07-31 14:09:58,763 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (55)\flair\1.3.12.2.1107.5.2.18.42451.2018112602210125632099458_MR.dcm
+2025-07-31 14:09:59,725 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016320866959_MR.dcm
+2025-07-31 14:09:59,726 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016356166960_MR.dcm
+2025-07-31 14:09:59,726 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016387966961_MR.dcm
+2025-07-31 14:09:59,727 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016583066964_MR.dcm
+2025-07-31 14:09:59,727 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016602166965_MR.dcm
+2025-07-31 14:09:59,728 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190016723766966_MR.dcm
+2025-07-31 14:09:59,729 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190017602566969_MR.dcm
+2025-07-31 14:09:59,729 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190018110066972_MR.dcm
+2025-07-31 14:09:59,730 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190018883466973_MR.dcm
+2025-07-31 14:09:59,731 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190025402566977_MR.dcm
+2025-07-31 14:09:59,731 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709190043763066980_MR.dcm
+2025-07-31 14:09:59,732 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709201958356966987_MR.dcm
+2025-07-31 14:09:59,733 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709201976549166992_MR.dcm
+2025-07-31 14:09:59,733 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709201994843466997_MR.dcm
+2025-07-31 14:09:59,734 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202013579667002_MR.dcm
+2025-07-31 14:09:59,734 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202034081667007_MR.dcm
+2025-07-31 14:09:59,735 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202049079867012_MR.dcm
+2025-07-31 14:09:59,735 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202067522867017_MR.dcm
+2025-07-31 14:09:59,736 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202086094667022_MR.dcm
+2025-07-31 14:09:59,737 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202124309767030_MR.dcm
+2025-07-31 14:09:59,737 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.201801070920215605567027_MR.dcm
