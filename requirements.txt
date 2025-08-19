@@ -13,8 +13,11 @@ opencv-python>=4.7.0
 scikit-image>=0.20.0
 plotly>=5.15.0
 
-# MedGemma-4B dependencies
+# Speech-to-text dependencies
+openai-whisper>=20231117
 torch>=2.0.0
+
+# MedGemma-4B dependencies
 transformers>=4.36.0
 accelerate>=0.24.0
 bitsandbytes>=0.41.0

@@ -1323,7 +1323,26 @@ def create_editor_tab() -> dict:
                             label="VLM Model",
                             scale=1
                         )
-                        with gr.Row(elem_classes="vlm-options-row"):
+                    
+                    # Voice Input Section
+                    with gr.Row(elem_classes="voice-input-row"):
+                        voice_audio_input = gr.Audio(
+                            label="Record Voice Input",
+                            sources=["microphone"],
+                            type="numpy",
+                            scale=3,
+                            interactive=True
+                        )
+                        voice_prompt_text = gr.Textbox(
+                            label="Voice Prompt",
+                            placeholder="Record your voice above or type here...",
+                            scale=4,
+                            lines=1,
+                            interactive=True
+                        )
+                        
+                    
+                    with gr.Row(elem_classes="vlm-options-row"):
                             vlm_prompt_anomalies = gr.Checkbox(
                                 label="Identify Anomalies",
                                 value=True,  # Default selected
@@ -1336,6 +1355,8 @@ def create_editor_tab() -> dict:
                                 info="General description of anatomical structures",
                                 scale=2
                             )
+                    
+                    with gr.Row():
                         vlm_run_btn = gr.Button("🔍 Get Medical Analysis", variant="primary", size="lg", scale=1)
                         
                     
@@ -1372,7 +1393,7 @@ def create_editor_tab() -> dict:
                 
                 col2 = (error_display, metadata_display, view_selector, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, 
                         crowdsourcing_accordion, submit_annotation_btn, assignments_remaining, next_assignment_btn, crowdsourcing_status,
-                        current_labels_dataset, suggested_vlm_selector, suggest_labels_btn, suggested_labels_dataset, accept_suggestions_btn, vlm_model_selector, vlm_run_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn)
+                        current_labels_dataset, suggested_vlm_selector, suggest_labels_btn, suggested_labels_dataset, accept_suggestions_btn, vlm_model_selector, vlm_run_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn, voice_prompt_text, voice_audio_input)
             
             # Column 3: Annotate with AI Models
             with gr.Column(scale=1):

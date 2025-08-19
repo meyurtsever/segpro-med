@@ -7,6 +7,7 @@ following Gradio best practices for modular application structure.
 
 import gradio as gr
 import logging
+import numpy as np
 import os
 import sys
 import threading
@@ -106,6 +107,7 @@ from ui.med_r1_handlers import MedR1Handlers
 from ui.medgemma_handlers import MedGemmaHandlers
 from ui.medgemma_handlers import MedGemmaHandlers
 from ui.patient_retrieval_handlers import PatientRetrievalHandlers
+from utils.voice_input import transcribe_voice_input
 
 # Crowdsourcing imports (only imported if authentication is enabled)
 if ENABLE_AUTH:
@@ -223,6 +225,26 @@ class SegMedPro:
             justify-content: flex-end !important;
             gap: 12px !important;
             padding: 8px 0 !important;
+        }
+        /* Voice input styling */
+        .voice-input-row {
+            align-items: center !important;
+            gap: 8px !important;
+        }
+        .voice-input-row button {
+            min-width: 50px !important;
+            height: 42px !important;
+            font-size: 18px !important;
+            border-radius: 50% !important;
+            padding: 8px !important;
+        }
+        .voice-input-row button:hover {
+            background-color: #f0f0f0 !important;
+            transform: scale(1.05) !important;
+            transition: all 0.2s ease !important;
+        }
+        .voice-input-row .gr-textbox {
+            flex: 4 !important;
         }
         """
         
@@ -473,6 +495,26 @@ class SegMedPro:
             display: flex !important;
             align-items: center !important;
             height: 100% !important;
+        }
+        /* Voice input styling */
+        .voice-input-row {
+            align-items: center !important;
+            gap: 8px !important;
+        }
+        .voice-input-row button {
+            min-width: 50px !important;
+            height: 42px !important;
+            font-size: 18px !important;
+            border-radius: 50% !important;
+            padding: 8px !important;
+        }
+        .voice-input-row button:hover {
+            background-color: #f0f0f0 !important;
+            transform: scale(1.05) !important;
+            transition: all 0.2s ease !important;
+        }
+        .voice-input-row .gr-textbox {
+            flex: 4 !important;
         }
         """
         
@@ -999,7 +1041,7 @@ class SegMedPro:
          metadata_display_dl, error_display_dl, window_level, window_width, apply_window_btn, debug_btn) = data_loading
         (error_display, metadata_display, view_selector, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, 
          crowdsourcing_accordion, submit_annotation_btn, assignments_remaining, next_assignment_btn, crowdsourcing_status,
-         current_labels_dataset, suggested_vlm_selector, suggest_labels_btn, suggested_labels_dataset, accept_suggestions_btn, vlm_model_selector, vlm_run_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn) = visualization        
+         current_labels_dataset, suggested_vlm_selector, suggest_labels_btn, suggested_labels_dataset, accept_suggestions_btn, vlm_model_selector, vlm_run_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn, voice_prompt_text, voice_audio_input) = visualization        
         (point_prompt_checkbox, box_prompt_checkbox, coordinates_text, clear_coords_btn, ai_model_selector, 
          processing_mode, score_threshold,
          output_dir, save_visualizations, device_selector, 
@@ -1569,16 +1611,92 @@ class SegMedPro:
                 logger.error(f"Error in VLM inference: {e}")
                 return f"Error during VLM analysis: {str(e)}"
 
-        vlm_run_btn.click(
-            fn=handle_vlm_inference,
-            inputs=[vlm_model_selector, image_display, vlm_prompt_anomalies, vlm_prompt_describe],
-            outputs=[vlm_caption]
-        )
-        
         # Med-R1 label suggestion button handler for annotated shapes (EDITOR-SPECIFIC)
         vlm_suggest_labels_btn.click(
             fn=self.editor_med_r1_handlers.suggest_labels_for_annotations,
             inputs=[image_display],
+            outputs=[vlm_caption]
+        )
+        
+        # Voice Input Handlers
+        def handle_voice_transcription(audio_data):
+            """Handle voice transcription from recorded audio - optimized for English speech"""
+            try:
+                if audio_data is None:
+                    return "No audio recorded"
+                
+                # Debug audio data format
+                if isinstance(audio_data, tuple) and len(audio_data) == 2:
+                    sample_rate, audio_array = audio_data
+                    logger.info(f"Voice input debug: sample_rate={sample_rate}, audio_shape={audio_array.shape if audio_array is not None else 'None'}, audio_dtype={audio_array.dtype if audio_array is not None else 'None'}")
+                    if audio_array is not None and len(audio_array) > 0:
+                        logger.info(f"Audio stats: min={np.min(audio_array):.6f}, max={np.max(audio_array):.6f}, duration={len(audio_array)/sample_rate:.2f}s")
+                elif isinstance(audio_data, str):
+                    logger.info(f"Voice input debug: file_path={audio_data}")
+                else:
+                    logger.info(f"Voice input debug: unexpected format={type(audio_data)}")
+                
+                transcribed_text, success = transcribe_voice_input(audio_data)
+                if success:
+                    logger.info(f"Voice transcription successful: '{transcribed_text}'")
+                    return transcribed_text
+                else:
+                    logger.error(f"Voice transcription failed: {transcribed_text}")
+                    return f"Transcription failed: {transcribed_text}"
+            except Exception as e:
+                logger.error(f"Error in voice transcription: {str(e)}")
+                return f"Error: {str(e)}"
+        
+        def handle_voice_analysis(voice_text, vlm_model, image_display, identify_anomalies, describe_slice):
+            """Handle VLM analysis with voice input instead of checkboxes"""
+            try:
+                if not voice_text or voice_text.strip() == "":
+                    return "No voice prompt provided"
+                
+                # Override checkbox values based on voice input content
+                voice_lower = voice_text.lower()
+                
+                # Analyze voice input to determine intent
+                if any(keyword in voice_lower for keyword in ["anomaly", "abnormal", "lesion", "tumor", "pathology", "disease"]):
+                    identify_anomalies = True
+                if any(keyword in voice_lower for keyword in ["describe", "anatomy", "structure", "region", "what is", "what do you see"]):
+                    describe_slice = True
+                
+                # If no specific intent detected, default to both
+                if not identify_anomalies and not describe_slice:
+                    identify_anomalies = True
+                    describe_slice = True
+                
+                logger.info(f"Voice analysis with intent - anomalies: {identify_anomalies}, describe: {describe_slice}")
+                
+                # Call the existing VLM inference handler
+                return handle_vlm_inference(vlm_model, image_display, identify_anomalies, describe_slice)
+                
+            except Exception as e:
+                logger.error(f"Error in voice analysis: {str(e)}")
+                return f"Error: {str(e)}"
+        
+        # Voice input event handlers - Direct audio recording
+        voice_audio_input.change(
+            fn=handle_voice_transcription,
+            inputs=[voice_audio_input],
+            outputs=[voice_prompt_text]
+        )
+        
+        # Updated VLM run button to use voice input if available
+        def enhanced_vlm_inference(vlm_model, image_display, voice_text, identify_anomalies, describe_slice):
+            """Enhanced VLM inference that prioritizes voice input"""
+            if voice_text and voice_text.strip():
+                # Use voice analysis if voice text is available
+                return handle_voice_analysis(voice_text, vlm_model, image_display, identify_anomalies, describe_slice)
+            else:
+                # Fall back to original checkbox-based analysis
+                return handle_vlm_inference(vlm_model, image_display, identify_anomalies, describe_slice)
+        
+        # Update the VLM run button to include voice input
+        vlm_run_btn.click(
+            fn=enhanced_vlm_inference,
+            inputs=[vlm_model_selector, image_display, voice_prompt_text, vlm_prompt_anomalies, vlm_prompt_describe],
             outputs=[vlm_caption]
         )
         
