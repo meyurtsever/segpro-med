@@ -607,7 +607,7 @@ class SegMedPro:
         
         # Connect data loading handlers
         load_btn.click(
-            fn=self.data_handlers.load_data_for_annotator,
+            fn=lambda file_obj, dir_input: self.data_handlers.load_data_for_annotator(file_obj, dir_input, False),
             inputs=[file_input, dir_input],
             outputs=[
                 image_display, file_browser, metadata_display,
@@ -658,7 +658,7 @@ class SegMedPro:
             outputs=[image_display, seg_status]
         )        # Auto-trigger load_data on file selection
         file_input.change(
-            fn=self.data_handlers.load_data_for_annotator,
+            fn=lambda file_obj, dir_input: self.data_handlers.load_data_for_annotator(file_obj, dir_input, False),
             inputs=[file_input, dir_input],
             outputs=[
                 image_display, file_browser, metadata_display,
@@ -890,7 +890,7 @@ class SegMedPro:
         
         # Connect data loading handlers
         load_btn.click(
-            fn=self.custom_annotator_handlers.load_data_for_annotator,
+            fn=lambda file_obj, dir_input: self.custom_annotator_handlers.load_data_for_annotator(file_obj, dir_input, False),
             inputs=[file_input, dir_input],
             outputs=[
                 annotator, error_display, metadata_display, 
@@ -906,7 +906,7 @@ class SegMedPro:
         
         # Auto-trigger load_data on file selection
         file_input.change(
-            fn=self.custom_annotator_handlers.load_data_for_annotator,
+            fn=lambda file_obj, dir_input: self.custom_annotator_handlers.load_data_for_annotator(file_obj, dir_input, False),
             inputs=[file_input, dir_input],
             outputs=[
                 annotator, error_display, metadata_display, 
@@ -1039,9 +1039,9 @@ class SegMedPro:
         # Unpack components
         (file_input, dir_input, load_btn, reset_dir_btn, file_browser, label_file,
          metadata_display_dl, error_display_dl, window_level, window_width, apply_window_btn, debug_btn) = data_loading
-        (error_display, metadata_display, view_selector, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, 
+        (error_display, metadata_display, view_selector, deidentification_checkbox, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, 
          crowdsourcing_accordion, submit_annotation_btn, assignments_remaining, next_assignment_btn, crowdsourcing_status,
-         current_labels_dataset, suggested_vlm_selector, suggest_labels_btn, suggested_labels_dataset, accept_suggestions_btn, vlm_model_selector, vlm_run_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn, voice_prompt_text, voice_audio_input) = visualization        
+         current_labels_dataset, suggested_vlm_selector, suggest_labels_btn, suggested_labels_dataset, accept_suggestions_btn, vlm_model_selector, vlm_run_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn, voice_prompt_text, voice_audio_input, voice_analysis_row, voice_analysis_controls, voice_analysis_audio, voice_analysis_text, save_to_analysis_btn) = visualization        
         (point_prompt_checkbox, box_prompt_checkbox, coordinates_text, clear_coords_btn, ai_model_selector, 
          processing_mode, score_threshold,
          output_dir, save_visualizations, device_selector, 
@@ -1054,7 +1054,7 @@ class SegMedPro:
           # Data loading handlers (updated for annotator compatibility)
         load_btn.click(
             fn=self.data_handlers.load_data_for_annotator,
-            inputs=[file_input, dir_input],
+            inputs=[file_input, dir_input, deidentification_checkbox],
             outputs=[
                 image_display, file_browser, metadata_display,
                 slice_slider, slice_text, crosshair_info, error_display,
@@ -1068,7 +1068,7 @@ class SegMedPro:
         )
         file_input.change(
             fn=self.data_handlers.load_data_for_annotator,
-            inputs=[file_input, dir_input],
+            inputs=[file_input, dir_input, deidentification_checkbox],
             outputs=[
                 image_display, file_browser, metadata_display,
                 slice_slider, slice_text, crosshair_info, error_display,
@@ -1091,15 +1091,15 @@ class SegMedPro:
         
         # Viewer handlers (using annotator-specific methods) (EDITOR-SPECIFIC)
         def handle_slice_change_with_labels(slice_value, image_annotator_value):
-            """Handle slice slider change and update current labels and suggested labels"""
+            """Handle slice slider change and update current labels, suggested labels, and VLM analysis"""
             # Get the main slider change result
             result = self.editor_image_handlers.handle_annotator_slider_change(slice_value, image_annotator_value)
             # result contains: (image_display, slice_text, crosshair_info, metadata_display, window_level, window_width)
             
-            # Extract current labels from the updated image and load saved labels
+            # Extract current labels from the updated image and load saved labels and VLM analysis
             from ui.editor_tab import (extract_current_labels_from_annotator, create_labels_dataset_samples, 
                                      get_suggested_labels_for_slice, clear_selected_suggested_labels_for_slice,
-                                     load_labels_from_file)
+                                     load_labels_from_file, load_vlm_analysis_from_file)
             try:
                 # Use the first element of result which should be the updated image_display
                 updated_image = result[0] if result else image_annotator_value
@@ -1107,11 +1107,13 @@ class SegMedPro:
                 # Extract labels from the image annotator
                 annotator_labels = extract_current_labels_from_annotator(updated_image)
                 
-                # Load saved labels from file if we have a data directory
+                # Load saved labels and VLM analysis from file if we have a data directory
                 saved_labels = []
+                saved_vlm_analysis = ""
                 data_directory = getattr(self.state, 'current_directory', None)
                 if data_directory:
                     saved_labels = load_labels_from_file(data_directory, slice_value)
+                    saved_vlm_analysis = load_vlm_analysis_from_file(data_directory, slice_value)
                 
                 # Combine annotator labels and saved labels (avoid duplicates)
                 all_labels = list(annotator_labels)
@@ -1130,32 +1132,40 @@ class SegMedPro:
                 clear_selected_suggested_labels_for_slice(slice_value)
                 accept_btn_hidden = gr.update(visible=False)
                 
+                # Hide voice analysis components when changing slices (will show after new VLM analysis)
+                voice_row_hidden = gr.update(visible=False)
+                voice_controls_hidden = gr.update(visible=False)
+                
                 logger.info(f"Slice {slice_value} labels: {len(annotator_labels)} from annotator + {len(saved_labels)} saved = {len(all_labels)} total")
+                logger.info(f"Slice {slice_value} VLM analysis: {len(saved_vlm_analysis)} chars loaded")
                 
             except Exception as e:
-                logger.error(f"Error updating labels on slice change: {e}")
+                logger.error(f"Error updating labels/analysis on slice change: {e}")
                 current_labels_dataset = gr.Dataset(samples=[])
                 suggested_labels_dataset = gr.Dataset(samples=[])
                 accept_btn_hidden = gr.update(visible=False)
+                saved_vlm_analysis = ""
+                voice_row_hidden = gr.update(visible=False)
+                voice_controls_hidden = gr.update(visible=False)
             
-            # Return original result plus both label datasets and hidden accept button
-            return result + (current_labels_dataset, suggested_labels_dataset, accept_btn_hidden)
+            # Return original result plus label datasets, hidden accept button, VLM analysis, and voice components
+            return result + (current_labels_dataset, suggested_labels_dataset, accept_btn_hidden, saved_vlm_analysis, voice_row_hidden, voice_controls_hidden)
         
         slice_slider.change(
             fn=handle_slice_change_with_labels,
             inputs=[slice_slider, image_display],
-            outputs=[image_display, slice_text, crosshair_info, metadata_display, window_level, window_width, current_labels_dataset, suggested_labels_dataset, accept_suggestions_btn]
+            outputs=[image_display, slice_text, crosshair_info, metadata_display, window_level, window_width, current_labels_dataset, suggested_labels_dataset, accept_suggestions_btn, vlm_caption, voice_analysis_row, voice_analysis_controls]
         )
         def handle_view_change_with_labels(view_value):
-            """Handle view selector change and update current labels and suggested labels"""
+            """Handle view selector change and update current labels, suggested labels, and VLM analysis"""
             # Get the main view change result
             result = self.editor_image_handlers.change_view_for_annotator(view_value)
             # result contains: (slice_slider, slice_text, image_display)
             
-            # Extract current labels from the updated image and load saved labels
+            # Extract current labels from the updated image and load saved labels and VLM analysis
             from ui.editor_tab import (extract_current_labels_from_annotator, create_labels_dataset_samples, 
                                      get_suggested_labels_for_slice, clear_selected_suggested_labels_for_slice,
-                                     load_labels_from_file)
+                                     load_labels_from_file, load_vlm_analysis_from_file)
             try:
                 # Use the third element of result which should be the updated image_display
                 updated_image = result[2] if len(result) > 2 else None
@@ -1163,12 +1173,14 @@ class SegMedPro:
                 # Extract labels from the image annotator
                 annotator_labels = extract_current_labels_from_annotator(updated_image)
                 
-                # Load saved labels from file if we have a data directory
+                # Load saved labels and VLM analysis from file if we have a data directory
                 saved_labels = []
+                saved_vlm_analysis = ""
                 data_directory = getattr(self.state, 'current_directory', None)
                 current_slice_idx = self.state.current_slice_idx
                 if data_directory:
                     saved_labels = load_labels_from_file(data_directory, current_slice_idx)
+                    saved_vlm_analysis = load_vlm_analysis_from_file(data_directory, current_slice_idx)
                 
                 # Combine annotator labels and saved labels (avoid duplicates)
                 all_labels = list(annotator_labels)
@@ -1187,21 +1199,29 @@ class SegMedPro:
                 clear_selected_suggested_labels_for_slice(current_slice_idx)
                 accept_btn_hidden = gr.update(visible=False)
                 
+                # Hide voice analysis components when changing views (will show after new VLM analysis)
+                voice_row_hidden = gr.update(visible=False)
+                voice_controls_hidden = gr.update(visible=False)
+                
                 logger.info(f"View change - Slice {current_slice_idx} labels: {len(annotator_labels)} from annotator + {len(saved_labels)} saved = {len(all_labels)} total")
+                logger.info(f"View change - Slice {current_slice_idx} VLM analysis: {len(saved_vlm_analysis)} chars loaded")
                 
             except Exception as e:
-                logger.error(f"Error updating labels on view change: {e}")
+                logger.error(f"Error updating labels/analysis on view change: {e}")
                 current_labels_dataset = gr.Dataset(samples=[])
                 suggested_labels_dataset = gr.Dataset(samples=[])
                 accept_btn_hidden = gr.update(visible=False)
+                saved_vlm_analysis = ""
+                voice_row_hidden = gr.update(visible=False)
+                voice_controls_hidden = gr.update(visible=False)
             
-            # Return original result plus both label datasets and hidden accept button
-            return result + (current_labels_dataset, suggested_labels_dataset, accept_btn_hidden)
+            # Return original result plus label datasets, hidden accept button, VLM analysis, and voice components
+            return result + (current_labels_dataset, suggested_labels_dataset, accept_btn_hidden, saved_vlm_analysis, voice_row_hidden, voice_controls_hidden)
         
         view_selector.change(
             fn=handle_view_change_with_labels,
             inputs=[view_selector],
-            outputs=[slice_slider, slice_text, image_display, current_labels_dataset, suggested_labels_dataset, accept_suggestions_btn]
+            outputs=[slice_slider, slice_text, image_display, current_labels_dataset, suggested_labels_dataset, accept_suggestions_btn, vlm_caption, voice_analysis_row, voice_analysis_controls]
         )
         apply_window_btn.click(
             fn=self.editor_image_handlers.update_window_level_for_annotator,
@@ -1636,8 +1656,8 @@ class SegMedPro:
                 else:
                     logger.info(f"Voice input debug: unexpected format={type(audio_data)}")
                 
-                transcribed_text, success = transcribe_voice_input(audio_data)
-                if success:
+                transcribed_text = transcribe_voice_input(audio_data)
+                if transcribed_text and not transcribed_text.startswith("Error"):
                     logger.info(f"Voice transcription successful: '{transcribed_text}'")
                     return transcribed_text
                 else:
@@ -1685,19 +1705,91 @@ class SegMedPro:
         
         # Updated VLM run button to use voice input if available
         def enhanced_vlm_inference(vlm_model, image_display, voice_text, identify_anomalies, describe_slice):
-            """Enhanced VLM inference that prioritizes voice input"""
-            if voice_text and voice_text.strip():
-                # Use voice analysis if voice text is available
-                return handle_voice_analysis(voice_text, vlm_model, image_display, identify_anomalies, describe_slice)
-            else:
-                # Fall back to original checkbox-based analysis
-                return handle_vlm_inference(vlm_model, image_display, identify_anomalies, describe_slice)
+            """Enhanced VLM inference that prioritizes voice input and saves to file"""
+            try:
+                if voice_text and voice_text.strip():
+                    # Use voice analysis if voice text is available
+                    result = handle_voice_analysis(voice_text, vlm_model, image_display, identify_anomalies, describe_slice)
+                else:
+                    # Fall back to original checkbox-based analysis
+                    result = handle_vlm_inference(vlm_model, image_display, identify_anomalies, describe_slice)
+                
+                # Save VLM analysis to file if we have a data directory and current slice
+                data_directory = getattr(self.state, 'current_directory', None)
+                current_slice_idx = getattr(self.state, 'current_slice_idx', None)
+                if data_directory and current_slice_idx is not None and result and not result.startswith("Error"):
+                    from ui.editor_tab import save_vlm_analysis_to_file
+                    save_result = save_vlm_analysis_to_file(data_directory, current_slice_idx, result)
+                    logger.info(f"VLM analysis saved to file: {save_result}")
+                
+                return result
+                
+            except Exception as e:
+                logger.error(f"Error in enhanced VLM inference: {str(e)}")
+                return f"Error: {str(e)}"
         
         # Update the VLM run button to include voice input
         vlm_run_btn.click(
             fn=enhanced_vlm_inference,
             inputs=[vlm_model_selector, image_display, voice_prompt_text, vlm_prompt_anomalies, vlm_prompt_describe],
             outputs=[vlm_caption]
+        ).then(
+            fn=lambda: (gr.update(visible=True), gr.update(visible=True)),  # Show voice analysis row and controls after VLM analysis
+            inputs=[],
+            outputs=[voice_analysis_row, voice_analysis_controls]
+        )
+        
+        # Voice Analysis Handlers (NEW)
+        def handle_voice_analysis_transcription(audio_data):
+            """Handle voice transcription for voice analysis audio input"""
+            return handle_voice_transcription(audio_data)
+        
+        def save_voice_to_analysis(current_analysis, voice_text):
+            """Append voice transcript to current VLM analysis and save to file"""
+            try:
+                if not voice_text or voice_text.strip() == "":
+                    return current_analysis  # No change if no voice text
+                
+                # Clean up the voice text
+                clean_voice_text = voice_text.strip()
+                
+                # Append to current analysis with proper formatting
+                if current_analysis and current_analysis.strip():
+                    updated_analysis = f"{current_analysis}\n\n📝 Voice Analysis Note:\n{clean_voice_text}"
+                else:
+                    updated_analysis = f"📝 Voice Analysis Note:\n{clean_voice_text}"
+                
+                # Save to file if we have a data directory and current slice
+                data_directory = getattr(self.state, 'current_directory', None)
+                current_slice_idx = getattr(self.state, 'current_slice_idx', None)
+                if data_directory and current_slice_idx is not None:
+                    from ui.editor_tab import save_vlm_analysis_to_file
+                    save_result = save_vlm_analysis_to_file(data_directory, current_slice_idx, updated_analysis)
+                    logger.info(f"VLM analysis saved to file: {save_result}")
+                
+                logger.info(f"Voice analysis appended to VLM analysis. Length: {len(clean_voice_text)} chars")
+                return updated_analysis
+                
+            except Exception as e:
+                logger.error(f"Error saving voice to analysis: {str(e)}")
+                return current_analysis  # Return original on error
+        
+        # Voice analysis audio transcription
+        voice_analysis_audio.change(
+            fn=handle_voice_analysis_transcription,
+            inputs=[voice_analysis_audio],
+            outputs=[voice_analysis_text]
+        )
+        
+        # Save to analysis button
+        save_to_analysis_btn.click(
+            fn=save_voice_to_analysis,
+            inputs=[vlm_caption, voice_analysis_text],
+            outputs=[vlm_caption]
+        ).then(
+            fn=lambda: ("", None),  # Clear voice text and audio after saving
+            inputs=[],
+            outputs=[voice_analysis_text, voice_analysis_audio]
         )
         
         # Label Management handlers (NEW)
@@ -1992,7 +2084,7 @@ class SegMedPro:
                 # Use the existing data loading handler that returns annotated format
                 # Use load_data_for_annotator instead of load_data to get the proper format for image_annotator
                 logger.info(f"DEBUG: Calling self.data_handlers.load_data_for_annotator with dataset_path: {dataset_path}")
-                result = self.data_handlers.load_data_for_annotator(None, dataset_path)
+                result = self.data_handlers.load_data_for_annotator(None, dataset_path, False)
                 logger.info(f"DEBUG: load_data_for_annotator returned type: {type(result)}, length: {len(result) if result else 'None'}")
                 
                 # result is a tuple: (annotated_value, dropdown, metadata, slider, slice_info, crosshair_text, status_message, window_level, window_width)
@@ -2592,7 +2684,7 @@ class SegMedPro:
                     logger.info(f"DEBUG: Direct loading DICOM data from: {modality_path}")
                     
                     # Call load_data_for_annotator directly and get the properly formatted result
-                    result = self.data_handlers.load_data_for_annotator(None, modality_path)
+                    result = self.data_handlers.load_data_for_annotator(None, modality_path, False)
                     
                     if not result or len(result) < 9:
                         logger.error(f"Failed to load assignment: Invalid result")
@@ -2793,7 +2885,7 @@ class SegMedPro:
                 if success and dataset_path:
                     # Load the dataset into editor
                     try:
-                        result = self.data_handlers.load_data_for_annotator(None, dataset_path)
+                        result = self.data_handlers.load_data_for_annotator(None, dataset_path, False)
                         if result and len(result) >= 9:
                             annotated_value, dropdown, metadata, slider, slice_info, crosshair_text, status_message, window_level, window_width = result
                             

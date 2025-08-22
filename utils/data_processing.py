@@ -3,11 +3,16 @@ import numpy as np
 import os
 from .metadata_extractor import extract_dicom_metadata
 from .logger import logger
+from .deidentification import apply_deidentification_to_slice, apply_deidentification_to_volume
 
-def load_dicom_file(file_path):
+def load_dicom_file(file_path, apply_deidentification=False):
     """
     Load a single DICOM file and convert it to a 3D numpy array
     Returns the array and a dictionary of metadata
+    
+    Args:
+        file_path: Path to the DICOM file
+        apply_deidentification: Whether to apply face removal using pydeface
     """
     try:
         ds = pydicom.dcmread(file_path)
@@ -22,6 +27,22 @@ def load_dicom_file(file_path):
         # Normalize the data if needed based on modality
         if hasattr(ds, 'RescaleSlope') and hasattr(ds, 'RescaleIntercept'):
             pixel_array = pixel_array * ds.RescaleSlope + ds.RescaleIntercept
+        
+        # Apply de-identification if requested
+        if apply_deidentification:
+            logger.info("Applying de-identification to DICOM data...")
+            try:
+                if len(pixel_array.shape) == 3 and pixel_array.shape[0] == 1:
+                    # Single slice
+                    deidentified_slice = apply_deidentification_to_slice(pixel_array[0])
+                    pixel_array = deidentified_slice[np.newaxis, :, :]
+                else:
+                    # Volume data
+                    pixel_array = apply_deidentification_to_volume(pixel_array)
+                logger.info("De-identification completed successfully")
+            except Exception as e:
+                logger.error(f"De-identification failed: {e}")
+                logger.warning("Continuing with original data...")
             
         # Extract and format metadata for display
         metadata = extract_dicom_metadata(ds)

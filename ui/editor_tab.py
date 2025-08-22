@@ -821,6 +821,86 @@ def save_labels_to_file(data_directory, slice_index, labels):
         logger.error(f"Error saving labels to file: {e}")
         return f"Error saving labels: {str(e)}"
 
+def save_vlm_analysis_to_file(data_directory, slice_index, analysis_text):
+    """Save VLM analysis to a vlm_analysis.txt file in the data directory - REPLACE analysis for the slice"""
+    try:
+        analysis_file_path = os.path.join(data_directory, "vlm_analysis.txt")
+        
+        # Read existing analyses if file exists
+        existing_analyses = {}
+        if os.path.exists(analysis_file_path):
+            with open(analysis_file_path, 'r', encoding='utf-8') as f:
+                current_slice = None
+                current_analysis = []
+                for line in f:
+                    line = line.rstrip('\n')
+                    if line.startswith('Slice ') and ':' in line:
+                        # Save previous slice analysis if exists
+                        if current_slice is not None and current_analysis:
+                            existing_analyses[current_slice] = '\n'.join(current_analysis)
+                        # Start new slice
+                        current_slice = int(line.split(':')[0].replace('Slice ', ''))
+                        current_analysis = []
+                    elif current_slice is not None:
+                        current_analysis.append(line)
+                # Save last slice
+                if current_slice is not None and current_analysis:
+                    existing_analyses[current_slice] = '\n'.join(current_analysis)
+        
+        # REPLACE analysis for the current slice (don't append)
+        clean_analysis = analysis_text.strip() if analysis_text else ""
+        if clean_analysis:
+            existing_analyses[slice_index] = clean_analysis
+        elif slice_index in existing_analyses:
+            # Remove empty analysis
+            del existing_analyses[slice_index]
+        
+        # Write updated analyses back to file with proper formatting
+        with open(analysis_file_path, 'w', encoding='utf-8') as f:
+            for slice_num in sorted(existing_analyses.keys()):
+                f.write(f"Slice {slice_num}:\n")
+                f.write(f"{existing_analyses[slice_num]}\n\n")
+        
+        logger.info(f"Saved VLM analysis for slice {slice_index} (length: {len(clean_analysis)} chars)")
+        return f"VLM analysis saved for slice {slice_index}"
+        
+    except Exception as e:
+        logger.error(f"Error saving VLM analysis to file: {e}")
+        return f"Error saving VLM analysis: {str(e)}"
+
+def load_vlm_analysis_from_file(data_directory, slice_index):
+    """Load VLM analysis for a specific slice from vlm_analysis.txt file"""
+    try:
+        analysis_file_path = os.path.join(data_directory, "vlm_analysis.txt")
+        
+        if not os.path.exists(analysis_file_path):
+            return ""
+        
+        with open(analysis_file_path, 'r', encoding='utf-8') as f:
+            current_slice = None
+            current_analysis = []
+            for line in f:
+                line = line.rstrip('\n')
+                if line.startswith('Slice ') and ':' in line:
+                    # Check if we found the target slice analysis
+                    if current_slice == slice_index and current_analysis:
+                        return '\n'.join(current_analysis).strip()
+                    # Start new slice
+                    current_slice = int(line.split(':')[0].replace('Slice ', ''))
+                    current_analysis = []
+                elif current_slice is not None:
+                    current_analysis.append(line)
+            
+            # Check last slice
+            if current_slice == slice_index and current_analysis:
+                return '\n'.join(current_analysis).strip()
+        
+        return ""  # No analysis found for this slice
+        
+    except Exception as e:
+        logger.error(f"Error loading VLM analysis from file: {e}")
+        return ""
+
 def load_labels_from_file(data_directory, slice_index):
     """Load labels for a specific slice from labels.txt file"""
     try:
@@ -1152,6 +1232,11 @@ def create_editor_tab() -> dict:
                         choices=["Axial", "Sagittal", "Coronal"],
                         value="Axial",
                         label="View Orientation"
+                    )
+                    deidentification_checkbox = gr.Checkbox(
+                        label="De Identification",
+                        value=True,
+                        info="Remove faces from DICOM images using pydeface"
                     )                # Image and 3D Viewer - dynamic layout based on processing mode
                 with gr.Row(equal_height=True) as main_viewer_row:
                     # Image annotator column - dynamic scaling
@@ -1381,6 +1466,40 @@ def create_editor_tab() -> dict:
                             elem_classes="vlm-caption-text",
                             lines=4
                         )
+                    
+                    # Voice Analysis Addition Section (appears after VLM analysis is complete)
+                    with gr.Row(elem_classes="voice-analysis-row", visible=False) as voice_analysis_row:
+                        gr.HTML("""
+                        <div style='padding: 8px; background: linear-gradient(135deg, #065f46 0%, #047857 100%); border-radius: 6px; margin-bottom: 8px; border-left: 3px solid #10b981;'>
+                            <div style='color: #d1fae5; font-size: 13px; font-weight: 600; margin-bottom: 2px;'>
+                                🎙️ Voice Analysis Notes
+                            </div>
+                            <div style='color: #a7f3d0; font-size: 11px; line-height: 1.3;'>
+                                Record additional voice analysis or type notes to append to the VLM analysis above
+                            </div>
+                        </div>
+                        """)
+                    with gr.Row(elem_classes="voice-analysis-controls", visible=False) as voice_analysis_controls:
+                        voice_analysis_audio = gr.Audio(
+                            label="Record Voice Analysis",
+                            sources=["microphone"],
+                            type="numpy",
+                            scale=3,
+                            interactive=True
+                        )
+                        voice_analysis_text = gr.Textbox(
+                            label="Voice Analysis Note",
+                            placeholder="Record your voice above or type additional analysis here...",
+                            scale=4,
+                            lines=1,
+                            interactive=True
+                        )
+                        save_to_analysis_btn = gr.Button(
+                            "Save to Analysis",
+                            variant="secondary",
+                            size="sm",
+                            scale=1
+                        )
                 
                 # VLM Prompt Selection
                 #with gr.Row():
@@ -1391,9 +1510,9 @@ def create_editor_tab() -> dict:
                 with gr.Accordion("Metadata", open=False):
                     metadata_display = gr.JSON(label=None, visible=True)
                 
-                col2 = (error_display, metadata_display, view_selector, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, 
+                col2 = (error_display, metadata_display, view_selector, deidentification_checkbox, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, 
                         crowdsourcing_accordion, submit_annotation_btn, assignments_remaining, next_assignment_btn, crowdsourcing_status,
-                        current_labels_dataset, suggested_vlm_selector, suggest_labels_btn, suggested_labels_dataset, accept_suggestions_btn, vlm_model_selector, vlm_run_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn, voice_prompt_text, voice_audio_input)
+                        current_labels_dataset, suggested_vlm_selector, suggest_labels_btn, suggested_labels_dataset, accept_suggestions_btn, vlm_model_selector, vlm_run_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn, voice_prompt_text, voice_audio_input, voice_analysis_row, voice_analysis_controls, voice_analysis_audio, voice_analysis_text, save_to_analysis_btn)
             
             # Column 3: Annotate with AI Models
             with gr.Column(scale=1):
@@ -1561,6 +1680,13 @@ def create_editor_tab() -> dict:
             'guide': welcome_guide,
             'content': welcome_guide_content,
             'close_btn': welcome_guide_close
+        },
+        'voice_analysis': {
+            'row': voice_analysis_row,
+            'controls': voice_analysis_controls,
+            'audio': voice_analysis_audio,
+            'text': voice_analysis_text,
+            'save_btn': save_to_analysis_btn
         },
         '3d_viewer_functions': {
             'toggle_visibility': toggle_3d_viewer_visibility,

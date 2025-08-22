@@ -36,16 +36,16 @@ class DataLoadingHandlers:
         self.state = state
     
     @log_exception
-    def load_data(self, file_obj, directory):
+    def load_data(self, file_obj, directory, apply_deidentification=False):
         """Load DICOM data from file or directory"""
-        logger.info(f"Loading data: file={file_obj}, directory={directory}")
+        logger.info(f"Loading data: file={file_obj}, directory={directory}, deidentification={apply_deidentification}")
         
         # Reset current data
         self.state.reset_data()
           # Determine input source
         if directory:
             path = directory
-            self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path)
+            self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
         else:
             # Load single file by extension
             path = file_obj.name if file_obj else None
@@ -54,7 +54,7 @@ class DataLoadingHandlers:
             
             ext = os.path.splitext(path)[1].lower()
             if ext in ['.dcm']:
-                self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path)
+                self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
             elif ext in ['.nii', '.gz']:
                 img3d, meta = load_nifti_file(path)
                 self.state.current_data = img3d
@@ -150,9 +150,9 @@ class DataLoadingHandlers:
             return "Please select a valid DICOM (.dcm) file to debug"
     
     @log_exception
-    def load_data_for_plot(self, file_obj, directory):
+    def load_data_for_plot(self, file_obj, directory, apply_deidentification=False):
         """Load DICOM data from file or directory and return plotly figure for gr.Plot component"""
-        logger.info(f"Loading data for plot: file={file_obj}, directory={directory}")
+        logger.info(f"Loading data for plot: file={file_obj}, directory={directory}, deidentification={apply_deidentification}")
         
         # Reset current data
         self.state.reset_data()
@@ -160,7 +160,7 @@ class DataLoadingHandlers:
         # Determine input source
         if directory:
             path = directory
-            self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path)
+            self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
         else:
             # Load single file by extension
             path = file_obj.name if file_obj else None
@@ -169,7 +169,7 @@ class DataLoadingHandlers:
             
             ext = os.path.splitext(path)[1].lower()
             if ext in ['.dcm']:
-                self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path)
+                self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
             elif ext in ['.nii', '.gz']:
                 img3d, meta = load_nifti_file(path)
                 self.state.current_data = img3d
@@ -244,9 +244,9 @@ class DataLoadingHandlers:
         )
     
     @log_exception
-    def load_data_for_annotator(self, file_obj, directory):
+    def load_data_for_annotator(self, file_obj, directory, apply_deidentification=False):
         """Load DICOM data from file or directory and return AnnotatedImageValue format for image_annotator"""
-        logger.info(f"Loading data for annotator: file={file_obj}, directory={directory}")
+        logger.info(f"Loading data for annotator: file={file_obj}, directory={directory}, deidentification={apply_deidentification}")
         
         # Reset current data
         self.state.reset_data()
@@ -255,7 +255,7 @@ class DataLoadingHandlers:
         if directory:
             path = directory
             self.state.current_directory = directory  # Store the directory path
-            self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path)
+            self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
         else:
             # Load single file by extension
             path = file_obj.name if file_obj else None
@@ -267,7 +267,7 @@ class DataLoadingHandlers:
             
             ext = os.path.splitext(path)[1].lower()
             if ext in ['.dcm']:
-                self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path)
+                self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
             elif ext in ['.nii', '.gz']:
                 img3d, meta = load_nifti_file(path)
                 self.state.current_data = img3d
@@ -1280,9 +1280,9 @@ class ConversionHandlers:
             return f"Error during conversion: {str(e)}", None
 
     @log_exception
-    def load_data_for_plot(self, file_obj, directory):
+    def load_data_for_plot(self, file_obj, directory, apply_deidentification=False):
         """Load DICOM data from file or directory and return plotly figure for gr.Plot component"""
-        logger.info(f"Loading data for plot: file={file_obj}, directory={directory}")
+        logger.info(f"Loading data for plot: file={file_obj}, directory={directory}, deidentification={apply_deidentification}")
         
         # Reset current data
         self.state.reset_data()
@@ -1290,7 +1290,7 @@ class ConversionHandlers:
         # Determine input source
         if directory:
             path = directory
-            self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path)
+            self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
         else:
             # Load single file by extension
             path = file_obj.name if file_obj else None
@@ -1299,7 +1299,7 @@ class ConversionHandlers:
             
             ext = os.path.splitext(path)[1].lower()
             if ext in ['.dcm']:
-                self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path)
+                self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
             elif ext in ['.nii', '.gz']:
                 img3d, meta = load_nifti_file(path)
                 self.state.current_data = img3d

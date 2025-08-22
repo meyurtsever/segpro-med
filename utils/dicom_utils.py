@@ -155,9 +155,13 @@ def configure_dicom_handlers():
     logger.info(f"Configured DICOM handlers: {', '.join(handlers_added)}")
     return handlers_added
 
-def load_single_dicom(file_path):
+def load_single_dicom(file_path, apply_deidentification=False):
     """
     Load a single DICOM file and return the pixel array and metadata
+    
+    Args:
+        file_path: Path to the DICOM file
+        apply_deidentification: Whether to apply face removal using pydeface
     """
     try:
         # Ensure DICOM handlers are configured
@@ -192,6 +196,23 @@ def load_single_dicom(file_path):
                 logger.error(f"Error applying rescale: {str(e)}")
                 # Continue without rescaling
         
+        # Apply de-identification if requested
+        if apply_deidentification:
+            logger.info("Applying de-identification to DICOM data...")
+            try:
+                from .deidentification import apply_deidentification_to_slice, apply_deidentification_to_volume
+                
+                if len(pixel_array.shape) == 2:
+                    # Single slice
+                    pixel_array = apply_deidentification_to_slice(pixel_array)
+                else:
+                    # Volume data
+                    pixel_array = apply_deidentification_to_volume(pixel_array)
+                logger.info("De-identification completed successfully")
+            except Exception as e:
+                logger.error(f"De-identification failed: {e}")
+                logger.warning("Continuing with original data...")
+        
         # Get metadata
         metadata = get_dicom_metadata(file_path)
         
@@ -201,12 +222,13 @@ def load_single_dicom(file_path):
         logger.error(f"Error loading DICOM file: {str(e)}")
         return None, {"error": str(e)}
 
-def load_dicom_series(directory):
+def load_dicom_series(directory, apply_deidentification=False):
     """
     Load a series of DICOM files from a directory
     
     Args:
         directory (str): Path to directory containing DICOM files
+        apply_deidentification: Whether to apply face removal using pydeface
         
     Returns:
         tuple: (3D volume as numpy array, metadata dict, list of file paths)
@@ -331,6 +353,17 @@ def load_dicom_series(directory):
     # Get metadata from the first slice
     metadata = get_dicom_metadata(ordered_files[0])
     logger.info("Extracted metadata from first slice")
+    
+    # Apply de-identification if requested
+    if apply_deidentification:
+        logger.info("Applying de-identification to DICOM series...")
+        try:
+            from .deidentification import apply_deidentification_to_volume
+            volume = apply_deidentification_to_volume(volume)
+            logger.info("De-identification completed successfully for series")
+        except Exception as e:
+            logger.error(f"De-identification failed for series: {e}")
+            logger.warning("Continuing with original data...")
     
     # Add series information to metadata
     metadata['SeriesInfo'] = {

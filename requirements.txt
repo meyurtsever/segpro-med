@@ -14,8 +14,16 @@ scikit-image>=0.20.0
 plotly>=5.15.0
 
 # Speech-to-text dependencies
-openai-whisper>=20231117
+transformers>=4.36.0
 torch>=2.0.0
+accelerate>=0.24.0
+librosa>=0.10.0
+transformers>=4.36.0
+librosa>=0.10.0
+accelerate>=0.24.0
+
+# De-identification dependencies
+pydeface>=2.0.0
 
 # MedGemma-4B dependencies
 transformers>=4.36.0

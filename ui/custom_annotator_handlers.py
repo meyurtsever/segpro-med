@@ -318,7 +318,7 @@ class CustomAnnotatorHandlers:
         except Exception as e:
             logger.error(f"Error handling annotation change: {e}")
     
-    def load_data_for_annotator(self, file_obj, dir_path):        
+    def load_data_for_annotator(self, file_obj, dir_path, apply_deidentification=False):        
         """Load data for the custom annotator tab, matching Editor tab output order"""
         try:
             # Initialize file_list to ensure it's always defined
@@ -343,7 +343,7 @@ class CustomAnnotatorHandlers:
                 try:
                     if path.lower().endswith('.dcm'):
                         # Load single DICOM file
-                        pixel_array, metadata = load_single_dicom(path)
+                        pixel_array, metadata = load_single_dicom(path, apply_deidentification=apply_deidentification)
                         if pixel_array is not None:
                             # Convert 2D image to 3D for consistency
                             if len(pixel_array.shape) == 2:
@@ -407,7 +407,7 @@ class CustomAnnotatorHandlers:
                     dicom_files = list_dicoms_in_directory(dir_path)
                     if dicom_files:
                         # Load the full DICOM series
-                        volume, metadata, ordered_files = load_dicom_series(dir_path)
+                        volume, metadata, ordered_files = load_dicom_series(dir_path, apply_deidentification=apply_deidentification)
                         
                         self.state.current_data = volume
                         self.state.current_metadata = metadata
