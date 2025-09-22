@@ -21,11 +21,12 @@ from .image_handlers import ImageViewerHandlers, ImagePlotToolHandlers
 from .segmentation_handlers import SegmentationHandlers
 from .label_manager_tab_new import create_label_manager_tab
 from .label_manager_handlers import LabelManagerHandlers
+from .info_components import create_info_message, create_vlm_label_management_info, create_vlm_tools_info, create_vlm_custom_prompt_info, create_custom_info_message
 
 __all__ = [
     'AppState',
     'create_viewer_tab',
-    'create_conversion_tab', 
+    'create_conversion_tab',
     'DataLoadingHandlers',
     'PlotViewerHandlers',
     'ImageViewerHandlers',
@@ -34,5 +35,10 @@ __all__ = [
     'ConversionHandlers',
     'SegmentationHandlers',
     'create_label_manager_tab',
-    'LabelManagerHandlers'
+    'LabelManagerHandlers',
+    'create_info_message',
+    'create_vlm_label_management_info',
+    'create_vlm_tools_info',
+    'create_vlm_custom_prompt_info',
+    'create_custom_info_message'
 ]

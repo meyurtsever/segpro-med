@@ -1350,6 +1350,10 @@ def create_editor_tab() -> dict:
                 
                 # Label Management Section (moved down and set to closed)
                 with gr.Accordion("Label Management using VLMs", open=False):
+                    # Info message for VLM Label Management
+                    from ui.info_components import create_vlm_label_management_info
+                    vlm_info_accordion = create_vlm_label_management_info()
+                    
                     # Current Labels Section
                     # gr.Markdown("**Current Labels**")
                     with gr.Row():
@@ -1401,11 +1405,15 @@ def create_editor_tab() -> dict:
                         
                 # VLM (Visual Language Model) Tools Section
                 with gr.Accordion("VLM Tools", open=False):
+                    # Info message for VLM Tools
+                    from ui.info_components import create_vlm_tools_info
+                    vlm_tools_info_accordion = create_vlm_tools_info()
+                    
                     with gr.Row(elem_classes="vlm-row"):
                         vlm_model_selector = gr.Dropdown(
                             choices=["SmolVLM", "Med-R1", "MedGemma-4B"],
                             value="MedGemma-4B",  # Default selected value
-                            label="VLM Model",
+                            label="Select VLM Model",
                             scale=1
                         )
                     
@@ -1426,6 +1434,9 @@ def create_editor_tab() -> dict:
                             interactive=True
                         )
                         
+                     # Info message for Custom Prompts
+                    from ui.info_components import create_vlm_custom_prompt_info
+                    vlm_custom_prompt_info_accordion = create_vlm_custom_prompt_info()
                     
                     with gr.Row(elem_classes="vlm-options-row"):
                             vlm_prompt_anomalies = gr.Checkbox(
@@ -1512,7 +1523,7 @@ def create_editor_tab() -> dict:
                 
                 col2 = (error_display, metadata_display, view_selector, deidentification_checkbox, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, 
                         crowdsourcing_accordion, submit_annotation_btn, assignments_remaining, next_assignment_btn, crowdsourcing_status,
-                        current_labels_dataset, suggested_vlm_selector, suggest_labels_btn, suggested_labels_dataset, accept_suggestions_btn, vlm_model_selector, vlm_run_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn, voice_prompt_text, voice_audio_input, voice_analysis_row, voice_analysis_controls, voice_analysis_audio, voice_analysis_text, save_to_analysis_btn)
+                        current_labels_dataset, suggested_vlm_selector, suggest_labels_btn, suggested_labels_dataset, accept_suggestions_btn, vlm_model_selector, vlm_run_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn, voice_prompt_text, voice_audio_input, voice_analysis_row, voice_analysis_controls, voice_analysis_audio, voice_analysis_text, save_to_analysis_btn, vlm_info_accordion, vlm_tools_info_accordion, vlm_custom_prompt_info_accordion)
             
             # Column 3: Annotate with AI Models
             with gr.Column(scale=1):
@@ -1696,5 +1707,10 @@ def create_editor_tab() -> dict:
         'layout_functions': {
             'toggle_layout': toggle_layout_for_processing_mode,
             'reset_layout': reset_layout_and_clear
+        },
+        'info_components': {
+            'vlm_info_accordion': vlm_info_accordion,
+            'vlm_tools_info_accordion': vlm_tools_info_accordion,
+            'vlm_custom_prompt_info_accordion': vlm_custom_prompt_info_accordion
         }
     }

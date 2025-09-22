@@ -246,6 +246,26 @@ class SegMedPro:
         .voice-input-row .gr-textbox {
             flex: 4 !important;
         }
+        /* Info message components styling */
+        .info-message-container {
+            margin: 8px 0 !important;
+        }
+        .info-close-btn {
+            background-color: rgba(255, 255, 255, 0.8) !important;
+            border: 1px solid rgba(0, 0, 0, 0.2) !important;
+            border-radius: 0 6px 6px 0 !important;
+            min-width: 30px !important;
+            max-width: 30px !important;
+            height: 100% !important;
+            font-size: 16px !important;
+            font-weight: bold !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        .info-close-btn:hover {
+            background-color: rgba(255, 255, 255, 1) !important;
+            border-color: rgba(0, 0, 0, 0.4) !important;
+        }
         """
         
         with gr.Blocks(title="SegMed-Pro", css=custom_css) as app:
@@ -515,6 +535,26 @@ class SegMedPro:
         }
         .voice-input-row .gr-textbox {
             flex: 4 !important;
+        }
+        /* Info message components styling */
+        .info-message-container {
+            margin: 8px 0 !important;
+        }
+        .info-close-btn {
+            background-color: rgba(255, 255, 255, 0.8) !important;
+            border: 1px solid rgba(0, 0, 0, 0.2) !important;
+            border-radius: 0 6px 6px 0 !important;
+            min-width: 30px !important;
+            max-width: 30px !important;
+            height: 100% !important;
+            font-size: 16px !important;
+            font-weight: bold !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        .info-close-btn:hover {
+            background-color: rgba(255, 255, 255, 1) !important;
+            border-color: rgba(0, 0, 0, 0.4) !important;
         }
         """
         
@@ -1041,7 +1081,7 @@ class SegMedPro:
          metadata_display_dl, error_display_dl, window_level, window_width, apply_window_btn, debug_btn) = data_loading
         (error_display, metadata_display, view_selector, deidentification_checkbox, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, 
          crowdsourcing_accordion, submit_annotation_btn, assignments_remaining, next_assignment_btn, crowdsourcing_status,
-         current_labels_dataset, suggested_vlm_selector, suggest_labels_btn, suggested_labels_dataset, accept_suggestions_btn, vlm_model_selector, vlm_run_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn, voice_prompt_text, voice_audio_input, voice_analysis_row, voice_analysis_controls, voice_analysis_audio, voice_analysis_text, save_to_analysis_btn) = visualization        
+         current_labels_dataset, suggested_vlm_selector, suggest_labels_btn, suggested_labels_dataset, accept_suggestions_btn, vlm_model_selector, vlm_run_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn, voice_prompt_text, voice_audio_input, voice_analysis_row, voice_analysis_controls, voice_analysis_audio, voice_analysis_text, save_to_analysis_btn, vlm_info_accordion, vlm_tools_info_accordion, vlm_custom_prompt_info_accordion) = visualization        
         (point_prompt_checkbox, box_prompt_checkbox, coordinates_text, clear_coords_btn, ai_model_selector, 
          processing_mode, score_threshold,
          output_dir, save_visualizations, device_selector, 
@@ -1838,6 +1878,9 @@ class SegMedPro:
             inputs=[suggested_vlm_selector, image_display],
             outputs=[suggested_labels_dataset]
         )
+        
+        # VLM info components are now self-contained with JavaScript toggle functionality
+        # No backend event handlers needed - toggle is handled by onclick JavaScript
         
         # Handle label selection from datasets
         def handle_current_label_selection(evt: gr.SelectData):
