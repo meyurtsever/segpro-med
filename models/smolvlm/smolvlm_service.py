@@ -29,6 +29,7 @@ class SmolVLMService:
         self.processor = None
         self.model = None
         self.model_loaded = False
+        self.uses_device_map = False  # Track if we're using device_map
         
         logger.info(f"Initializing SmolVLM Service on device: {self.device}")
         self._load_model()
@@ -43,12 +44,21 @@ class SmolVLMService:
             self.processor = AutoProcessor.from_pretrained("HuggingFaceTB/SmolVLM-Instruct")
             
             # Load model with optimizations
-            self.model = AutoModelForVision2Seq.from_pretrained(
-                "HuggingFaceTB/SmolVLM-Instruct",
-                torch_dtype=torch.bfloat16 if self.device == "cuda" else torch.float32,
-                _attn_implementation="eager",
-                device_map="auto" if self.device == "cuda" else None,
-            ).to(self.device)
+            if self.device == "cuda":
+                self.model = AutoModelForVision2Seq.from_pretrained(
+                    "HuggingFaceTB/SmolVLM-Instruct",
+                    torch_dtype=torch.bfloat16,
+                    _attn_implementation="eager",
+                    device_map="auto",
+                )
+                self.uses_device_map = True
+            else:
+                self.model = AutoModelForVision2Seq.from_pretrained(
+                    "HuggingFaceTB/SmolVLM-Instruct",
+                    torch_dtype=torch.float32,
+                    _attn_implementation="eager",
+                ).to(self.device)
+                self.uses_device_map = False
             
             # Performance optimizations for CUDA
             if self.device == "cuda":
@@ -122,7 +132,12 @@ class SmolVLMService:
             
             prompt_text = self.processor.apply_chat_template(messages, add_generation_prompt=True)
             inputs = self.processor(text=prompt_text, images=[image], return_tensors="pt")
-            inputs = inputs.to(self.device)
+            
+            # Handle device placement based on whether we're using device_map
+            if not self.uses_device_map:
+                inputs = inputs.to(self.device)
+            # If using device_map, don't move inputs - let the model handle device placement
+            
             processing_time = time.time() - processing_start
             
             # Generate response
@@ -196,7 +211,7 @@ class SmolVLMService:
     
     def cleanup(self):
         """Clean up GPU memory"""
-        if self.device == "cuda":
+        if torch.cuda.is_available():
             torch.cuda.empty_cache()
         logger.info("SmolVLM Service cleaned up")
 

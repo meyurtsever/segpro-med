@@ -39,6 +39,7 @@ class MedGemmaService:
         self.model = None
         self.processor = None
         self.model_name = "google/medgemma-4b-it"
+        self.using_device_map = False  # Track if using device_map for multi-GPU
         self._initialize_model()
     
     def _get_device(self, device: str) -> str:
@@ -139,15 +140,21 @@ class MedGemmaService:
             )
             logger.info("Loaded MedGemma processor")
             
+            # Track whether we're using device_map for multi-GPU distribution
+            self.using_device_map = False
+            
             # Load model with error handling and fallbacks
             model_kwargs = {
                 "trust_remote_code": True,
-                "device_map": "auto" if self.device == "cuda" else None,
                 "torch_dtype": torch.bfloat16 if self.device == "cuda" else torch.float32,
             }
             
-            if quantization_config:
+            # Use device_map for multi-GPU setups only if we have quantization
+            if self.device == "cuda" and quantization_config is not None:
+                model_kwargs["device_map"] = "auto"
                 model_kwargs["quantization_config"] = quantization_config
+                self.using_device_map = True
+                logger.info("Using device_map='auto' for multi-GPU distribution")
             
             try:
                 self.model = AutoModelForImageTextToText.from_pretrained(
@@ -156,15 +163,17 @@ class MedGemmaService:
                 )
                 logger.info(f"MedGemma-4B loaded successfully on {self.device}")
                 
-                # Move to device if not using device_map
-                if self.device != "cuda" or quantization_config is None:
+                # Move to device only if not using device_map
+                if not self.using_device_map:
                     self.model = self.model.to(self.device)
+                    logger.info(f"Model moved to {self.device}")
                 
             except Exception as e:
                 logger.error(f"Failed to load MedGemma model: {e}")
                 # Fallback to CPU with minimal config
                 logger.info("Attempting fallback to CPU...")
                 self.device = "cpu"
+                self.using_device_map = False
                 model_kwargs = {
                     "trust_remote_code": True,
                     "torch_dtype": torch.float32,
@@ -269,7 +278,24 @@ class MedGemmaService:
                 text=input_text,
                 images=processed_image,
                 return_tensors="pt"
-            ).to(self.device)
+            )
+            
+            # Handle device placement based on model configuration
+            if self.using_device_map:
+                # When using device_map='auto', the model is distributed across devices
+                # We should let the model handle device placement internally
+                # Only move inputs to the first device if explicitly needed
+                try:
+                    # Try to infer the device from the model's first parameter
+                    first_device = next(self.model.parameters()).device
+                    inputs = inputs.to(first_device)
+                    logger.debug(f"Moved inputs to model's first device: {first_device}")
+                except Exception as e:
+                    logger.warning(f"Could not determine model device, keeping inputs on CPU: {e}")
+                    # Keep inputs on CPU and let the model handle device placement
+            else:
+                # For single-device setups, move inputs to the model device
+                inputs = inputs.to(self.device)
             
             # Generate response
             with torch.no_grad():

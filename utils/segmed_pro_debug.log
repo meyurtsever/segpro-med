@@ -18760,3 +18760,138 @@ ValueError: No DICOM files found in directory: /Users/enesyurtsever/Desktop/SegM
 2025-09-06 18:01:59,662 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202086094667022_MR.dcm
 2025-09-06 18:01:59,663 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.2018010709202124309767030_MR.dcm
 2025-09-06 18:01:59,664 - segmed_pro - DEBUG - Reading DICOM file: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (54)\flair\1.3.12.2.1107.5.2.18.42451.201801070920215605567027_MR.dcm
+2025-09-13 15:32:18,422 - segmed_pro - ERROR - Exception in load_data_for_annotator: No DICOM files found in directory: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (50)\flair
+2025-09-13 15:32:18,422 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "/home/enesgazi/Downloads/segpro-med/utils/debug_utils.py", line 70, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enesgazi/Downloads/segpro-med/ui/handlers.py", line 258, in load_data_for_annotator
+    self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
+                                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enesgazi/Downloads/segpro-med/utils/dicom_utils.py", line 242, in load_dicom_series
+    raise ValueError(f"No DICOM files found in directory: {directory}")
+ValueError: No DICOM files found in directory: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (50)\flair
+
+2025-09-13 15:32:20,142 - segmed_pro - ERROR - Exception in load_data_for_annotator: No DICOM files found in directory: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (50)\flair
+2025-09-13 15:32:20,143 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "/home/enesgazi/Downloads/segpro-med/utils/debug_utils.py", line 70, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enesgazi/Downloads/segpro-med/ui/handlers.py", line 258, in load_data_for_annotator
+    self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
+                                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enesgazi/Downloads/segpro-med/utils/dicom_utils.py", line 242, in load_dicom_series
+    raise ValueError(f"No DICOM files found in directory: {directory}")
+ValueError: No DICOM files found in directory: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (50)\flair
+
+2025-09-13 15:33:42,544 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-09-13 15:33:42,546 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341775486333211_MR.dcm
+2025-09-13 15:33:42,547 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-09-13 15:33:42,548 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-09-13 15:33:42,549 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-09-13 15:33:42,550 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm
+2025-09-13 15:33:42,554 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-09-13 15:33:42,555 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-09-13 15:33:42,556 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm
+2025-09-13 15:33:42,557 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-09-13 15:33:42,558 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
+2025-09-13 15:33:42,559 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-09-13 15:33:42,560 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-09-13 15:33:42,561 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-09-13 15:33:42,562 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-09-13 15:33:42,564 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-09-13 15:33:42,566 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-09-13 15:33:42,567 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-09-13 15:33:42,568 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-09-13 15:33:42,569 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-09-13 15:33:42,571 - segmed_pro - ERROR - Error processing pixel data: Unable to decompress 'JPEG Lossless, Non-Hierarchical, First-Order Prediction (Process 14 [Selection Value 1])' pixel data because all plugins are missing dependencies:
+	gdcm - requires gdcm>=3.0.10
+	pylibjpeg - requires pylibjpeg>=2.0 and pylibjpeg-libjpeg>=2.1
+2025-09-13 15:33:42,573 - segmed_pro - ERROR - Exception in load_data_for_annotator: Could not process pixel data from first slice: Unable to decompress 'JPEG Lossless, Non-Hierarchical, First-Order Prediction (Process 14 [Selection Value 1])' pixel data because all plugins are missing dependencies:
+	gdcm - requires gdcm>=3.0.10
+	pylibjpeg - requires pylibjpeg>=2.0 and pylibjpeg-libjpeg>=2.1
+2025-09-13 15:33:42,573 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "/home/enesgazi/Downloads/segpro-med/utils/dicom_utils.py", line 285, in load_dicom_series
+    pixel_array = s.pixel_array
+                  ^^^^^^^^^^^^^
+  File "/home/enesgazi/anaconda3/envs/segpromed/lib/python3.11/site-packages/pydicom/dataset.py", line 2193, in pixel_array
+    self.convert_pixel_data()
+  File "/home/enesgazi/anaconda3/envs/segpromed/lib/python3.11/site-packages/pydicom/dataset.py", line 1726, in convert_pixel_data
+    self._pixel_array = pixel_array(self, **opts)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enesgazi/anaconda3/envs/segpromed/lib/python3.11/site-packages/pydicom/pixels/utils.py", line 1430, in pixel_array
+    return decoder.as_array(
+           ^^^^^^^^^^^^^^^^^
+  File "/home/enesgazi/anaconda3/envs/segpromed/lib/python3.11/site-packages/pydicom/pixels/decoders/base.py", line 982, in as_array
+    self._validate_plugins(decoding_plugin),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enesgazi/anaconda3/envs/segpromed/lib/python3.11/site-packages/pydicom/pixels/common.py", line 257, in _validate_plugins
+    raise RuntimeError(
+RuntimeError: Unable to decompress 'JPEG Lossless, Non-Hierarchical, First-Order Prediction (Process 14 [Selection Value 1])' pixel data because all plugins are missing dependencies:
+	gdcm - requires gdcm>=3.0.10
+	pylibjpeg - requires pylibjpeg>=2.0 and pylibjpeg-libjpeg>=2.1
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/enesgazi/Downloads/segpro-med/utils/debug_utils.py", line 70, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enesgazi/Downloads/segpro-med/ui/handlers.py", line 258, in load_data_for_annotator
+    self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
+                                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enesgazi/Downloads/segpro-med/utils/dicom_utils.py", line 298, in load_dicom_series
+    raise ValueError(f"Could not process pixel data from first slice: {str(e)}")
+ValueError: Could not process pixel data from first slice: Unable to decompress 'JPEG Lossless, Non-Hierarchical, First-Order Prediction (Process 14 [Selection Value 1])' pixel data because all plugins are missing dependencies:
+	gdcm - requires gdcm>=3.0.10
+	pylibjpeg - requires pylibjpeg>=2.0 and pylibjpeg-libjpeg>=2.1
+
+2025-09-13 15:54:31,889 - segmed_pro - WARNING - Root directory does not exist: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR
+2025-09-13 15:55:39,976 - segmed_pro - ERROR - Exception in load_data_for_annotator: No DICOM files found in directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+2025-09-13 15:55:39,976 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "/home/enesgazi/Downloads/segpro-med/utils/debug_utils.py", line 70, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enesgazi/Downloads/segpro-med/ui/handlers.py", line 258, in load_data_for_annotator
+    self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
+                                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enesgazi/Downloads/segpro-med/utils/dicom_utils.py", line 242, in load_dicom_series
+    raise ValueError(f"No DICOM files found in directory: {directory}")
+ValueError: No DICOM files found in directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+
+2025-09-13 15:56:22,348 - segmed_pro - DEBUG - Reading DICOM file: /tmp/gradio/8044bfd7d334067ab48f3d24ccbfd3a452e1644f3aadcd8dbda896b050b667bf/1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-09-13 15:56:35,025 - segmed_pro - DEBUG - Reading DICOM file: /tmp/gradio/8044bfd7d334067ab48f3d24ccbfd3a452e1644f3aadcd8dbda896b050b667bf/1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-09-13 15:57:09,726 - segmed_pro - DEBUG - Reading DICOM file: /tmp/gradio/18ba23c34ce6230f878453b91f64b4de61a43e9a78b6195c9848cd66533f4667/1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-09-13 15:57:13,288 - segmed_pro - DEBUG - Reading DICOM file: /tmp/gradio/18ba23c34ce6230f878453b91f64b4de61a43e9a78b6195c9848cd66533f4667/1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-09-13 16:02:51,364 - segmed_pro - ERROR - Exception in load_data_for_annotator: No DICOM files found in directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+2025-09-13 16:02:51,365 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "/home/enesgazi/Downloads/segpro-med/utils/debug_utils.py", line 70, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enesgazi/Downloads/segpro-med/ui/handlers.py", line 258, in load_data_for_annotator
+    self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
+                                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enesgazi/Downloads/segpro-med/utils/dicom_utils.py", line 242, in load_dicom_series
+    raise ValueError(f"No DICOM files found in directory: {directory}")
+ValueError: No DICOM files found in directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+
+2025-09-13 16:02:55,748 - segmed_pro - DEBUG - Reading DICOM file: /tmp/gradio/d29dbfc16584f46f65bf3106497c3123faa798de64a9af7140d10ad5a8d66f2f/1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-09-13 16:03:06,963 - segmed_pro - DEBUG - Reading DICOM file: /tmp/gradio/d29dbfc16584f46f65bf3106497c3123faa798de64a9af7140d10ad5a8d66f2f/1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-09-13 16:06:25,066 - segmed_pro - DEBUG - Reading DICOM file: /tmp/gradio/8044bfd7d334067ab48f3d24ccbfd3a452e1644f3aadcd8dbda896b050b667bf/1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-09-13 16:06:28,568 - segmed_pro - DEBUG - Reading DICOM file: /tmp/gradio/8044bfd7d334067ab48f3d24ccbfd3a452e1644f3aadcd8dbda896b050b667bf/1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-09-13 16:13:53,213 - segmed_pro - DEBUG - Reading DICOM file: /tmp/gradio/7692f4e2eda5dd3d1c5bde58cf9a38264397bd5e67aaf38450b60bc4b4db4deb/1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-09-13 16:13:56,594 - segmed_pro - DEBUG - Reading DICOM file: /tmp/gradio/7692f4e2eda5dd3d1c5bde58cf9a38264397bd5e67aaf38450b60bc4b4db4deb/1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-09-13 16:21:35,372 - segmed_pro - DEBUG - Reading DICOM file: /tmp/gradio/dc991114a9ec33801c8c3063e2a4b2bc2602bcc5fe8ea2ea4a6b12bab2c38367/1.3.12.2.1107.5.2.36.40820.2021111512341775486333211_MR.dcm
+2025-09-13 16:21:37,670 - segmed_pro - DEBUG - Reading DICOM file: /tmp/gradio/dc991114a9ec33801c8c3063e2a4b2bc2602bcc5fe8ea2ea4a6b12bab2c38367/1.3.12.2.1107.5.2.36.40820.2021111512341775486333211_MR.dcm
+2025-09-13 16:30:08,296 - segmed_pro - DEBUG - Reading DICOM file: /tmp/gradio/18ba23c34ce6230f878453b91f64b4de61a43e9a78b6195c9848cd66533f4667/1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-09-13 16:30:11,201 - segmed_pro - DEBUG - Reading DICOM file: /tmp/gradio/18ba23c34ce6230f878453b91f64b4de61a43e9a78b6195c9848cd66533f4667/1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-09-13 16:37:10,964 - segmed_pro - DEBUG - Reading DICOM file: /tmp/gradio/7692f4e2eda5dd3d1c5bde58cf9a38264397bd5e67aaf38450b60bc4b4db4deb/1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-09-13 16:37:14,111 - segmed_pro - DEBUG - Reading DICOM file: /tmp/gradio/7692f4e2eda5dd3d1c5bde58cf9a38264397bd5e67aaf38450b60bc4b4db4deb/1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-09-13 16:37:16,293 - segmed_pro - DEBUG - Reading DICOM file: /tmp/gradio/7692f4e2eda5dd3d1c5bde58cf9a38264397bd5e67aaf38450b60bc4b4db4deb/1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-09-13 18:10:44,431 - segmed_pro - DEBUG - Reading DICOM file: /tmp/gradio/8044bfd7d334067ab48f3d24ccbfd3a452e1644f3aadcd8dbda896b050b667bf/1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-09-13 18:10:47,391 - segmed_pro - DEBUG - Reading DICOM file: /tmp/gradio/8044bfd7d334067ab48f3d24ccbfd3a452e1644f3aadcd8dbda896b050b667bf/1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
