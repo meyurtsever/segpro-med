@@ -1085,12 +1085,35 @@ class SegMedPro:
         (point_prompt_checkbox, box_prompt_checkbox, coordinates_text, clear_coords_btn, ai_model_selector, 
          processing_mode, score_threshold,
          output_dir, save_visualizations, device_selector, 
-         auto_brain_annotate_btn, annotate_btn, annotation_status) = ai_tools
+         auto_brain_annotate_btn, annotate_btn, point_info_accordion, box_info_accordion, whole_area_info_accordion) = ai_tools
         
         # Get layout functions
         layout_functions = components.get('layout_functions', {})
         toggle_layout = layout_functions.get('toggle_layout')
         reset_layout = layout_functions.get('reset_layout')
+        
+        # Point/Box Selection Info Box Handlers
+        def handle_point_prompt_change(is_checked):
+            """Show/hide point info box and coordinates text when point checkbox changes"""
+            return gr.update(visible=is_checked), gr.update(visible=is_checked)
+        
+        def handle_box_prompt_change(is_checked):
+            """Show/hide box info box when box checkbox changes"""
+            return gr.update(visible=is_checked)
+        
+        # Event handlers for dynamic info boxes
+        point_prompt_checkbox.change(
+            fn=handle_point_prompt_change,
+            inputs=[point_prompt_checkbox],
+            outputs=[point_info_accordion, coordinates_text]
+        )
+        
+        box_prompt_checkbox.change(
+            fn=handle_box_prompt_change,
+            inputs=[box_prompt_checkbox],
+            outputs=[box_info_accordion]
+        )
+        
           # Data loading handlers (updated for annotator compatibility)
         load_btn.click(
             fn=self.data_handlers.load_data_for_annotator,
@@ -1126,7 +1149,7 @@ class SegMedPro:
         label_file.change(
             fn=self.editor_segmentation_handlers.load_label_file_and_update_annotator,
             inputs=[label_file],
-            outputs=[annotation_status, image_display]
+            outputs=[error_display, image_display]
         )
         
         # Viewer handlers (using annotator-specific methods) (EDITOR-SPECIFIC)
@@ -1437,7 +1460,7 @@ class SegMedPro:
         export_3d_btn.click(
             fn=handle_export_3d_view,
             inputs=[output_dir],
-            outputs=[annotation_status]  # Show export status in annotation_status
+            outputs=[error_display]  # Show export status in error_display
         )
         
         # Connect checkbox handlers for prompt type selection
@@ -1459,12 +1482,8 @@ class SegMedPro:
                 self.editor_medsam2_handlers.disable_point_mode()
                 self.editor_medsam2_handlers.enable_box_mode()
                 self.editor_medsam2_handlers.selected_coordinates = []  # Clear coordinates from handler state
-                self.editor_medsam2_handlers.prompt_boxes = []  # Clear any existing box prompts                # Show instructions for box mode
-                return (True, False, 
-                       gr.update(visible=True, 
-                               label="Box Prompt Status", 
-                               value="📦 Box mode enabled. Ready to capture box coordinates.\n\nSteps:\n1. Use the box tool in the image editor above\n2. Draw rectangles around regions to segment\n3. Box coordinates are automatically captured\n4. Click 'Run MEDSAM2 Annotation' when ready",
-                               info="Draw boxes on the image. Coordinates are automatically captured for MEDSAM2."))
+                self.editor_medsam2_handlers.prompt_boxes = []  # Clear any existing box prompts
+                return (True, False, gr.update(visible=False))  # Hide coordinates text in box mode
             else:
                 # If box is unchecked, disable box mode and keep point state
                 self.editor_medsam2_handlers.disable_box_mode()
@@ -1477,11 +1496,7 @@ class SegMedPro:
                                    info="Click on the image to select coordinates"))
                 else:
                     self.editor_medsam2_handlers.disable_point_mode()
-                    return (False, False, 
-                           gr.update(visible=True, 
-                                   label="Mode Status", 
-                                   value="📝 Box mode disabled. Box prompts cleared. Use the clear button to remove any remaining shapes if needed.",
-                                   info="No prompt mode selected. Check Point-based or Box-based prompt to continue."))
+                    return (False, False, gr.update(visible=False))  # Hide coordinates text when no mode selected
         
         point_prompt_checkbox.change(
             fn=handle_point_prompt_change,
@@ -1600,10 +1615,10 @@ class SegMedPro:
             # Use the reset layout function
             if reset_layout:
                 layout_updates = reset_layout()                # layout_updates contains: (image_column, viewer_3d_column, image_display, viewer_3d, coordinates, processing_mode)
-                # We need: (coordinates_text, annotation_status, image_display, image_column, viewer_3d_column, viewer_3d, processing_mode)
+                # We need: (coordinates_text, error_display, image_display, image_column, viewer_3d_column, viewer_3d, processing_mode)
                 return (
                     layout_updates[4],  # coordinates ("")
-                    status,             # annotation_status
+                    status,             # error_display
                     image,              # image_display (cleared image)
                     layout_updates[0],  # image_column (scale=10)
                     layout_updates[1],  # viewer_3d_column (scale=6, visible=False)
@@ -1617,7 +1632,7 @@ class SegMedPro:
         clear_coords_btn.click(
             fn=clear_all_prompts_and_reset_layout,
             inputs=[],
-            outputs=[coordinates_text, annotation_status, image_display, image_column, viewer_3d_column, viewer_3d, processing_mode]
+            outputs=[coordinates_text, error_display, image_display, image_column, viewer_3d_column, viewer_3d, processing_mode]
         )
         
         # Custom wrapper function to handle the 3-tuple return and button visibility (EDITOR-SPECIFIC)
@@ -1648,7 +1663,7 @@ class SegMedPro:
         annotate_btn.click(
             fn=handle_annotation_workflow,
             inputs=[output_dir, save_visualizations, device_selector, processing_mode, score_threshold, image_display],
-            outputs=[annotation_status, image_display, viewer_3d]
+            outputs=[error_display, image_display, viewer_3d]
         )          # Unified VLM handler for all models (EDITOR-SPECIFIC)
         def handle_vlm_inference(vlm_model, image_display, identify_anomalies, describe_slice):
             """Handle VLM inference based on selected model"""
@@ -1947,7 +1962,7 @@ class SegMedPro:
         current_labels_dataset.select(
             fn=handle_current_label_selection,
             inputs=[],
-            outputs=[annotation_status]
+            outputs=[error_display]
         )
         
         suggested_labels_dataset.select(
@@ -2024,7 +2039,7 @@ class SegMedPro:
         accept_suggestions_btn.click(
             fn=handle_accept_suggestions,
             inputs=[],
-            outputs=[current_labels_dataset, accept_suggestions_btn, suggested_labels_dataset, annotation_status]
+            outputs=[current_labels_dataset, accept_suggestions_btn, suggested_labels_dataset, error_display]
         )
           # Auto-brain annotation handler - Updated to use SAM2 Fast Masking Pipeline (EDITOR-SPECIFIC)
         def handle_auto_brain_annotation(output_dir, save_visualizations, device_selector, processing_mode, score_threshold, dir_input_value):
@@ -2065,7 +2080,7 @@ class SegMedPro:
         auto_brain_annotate_btn.click(
             fn=handle_auto_brain_annotation,
             inputs=[output_dir, save_visualizations, device_selector, processing_mode, score_threshold, dir_input],
-            outputs=[annotation_status, image_display, viewer_3d]
+            outputs=[error_display, image_display, viewer_3d]
         )
           # Handle image removal from image_annotator (X button / clear button) (EDITOR-SPECIFIC)
     
@@ -2093,13 +2108,13 @@ class SegMedPro:
                     "3. Click 'Run MEDSAM2 Annotation (Manual Prompts)' to segment",
                     visible=True
                 )
-            else:  # SAM2 Fast Masking Mode
+            else:  # Automatic Segmentation Mode
                 return gr.update(
-                    value="🚀 **SAM2 FAST MASKING MODE**: Click 'Run SAM2 Fast Masking' for automatic brain structure segmentation",
+                    value="🚀 **AUTOMATIC SEGMENTATION MODE**: Click 'Run Automatic Segmentation' for automatic brain structure detection",
                     visible=True
                 )        # Add instruction text component
         '''instruction_text = gr.Markdown(
-            value="🚀 **SAM2 FAST MASKING MODE**: Click 'Run SAM2 Fast Masking' for automatic brain structure segmentation",
+            value="🚀 **AUTOMATIC SEGMENTATION MODE**: Click 'Run Automatic Segmentation' for automatic brain structure detection",
             visible=True        )
 '''
     

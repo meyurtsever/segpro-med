@@ -5,7 +5,7 @@ guidance and explanations throughout the application.
 """
 import gradio as gr
 
-def create_info_message(message: str, message_type: str = "info", visible: bool = True, open_state: bool = True):
+def create_info_message(message: str, message_type: str = "info", visible: bool = True, open_state: bool = False):
     """
     Create an informative message component using gr.Accordion with preserved CSS styling
     

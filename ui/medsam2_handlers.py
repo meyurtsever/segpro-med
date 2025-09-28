@@ -977,7 +977,7 @@ class MEDSAM2Handlers:
                     self.state.current_data,
                     self.state.current_slice_idx,
                     self.state.current_view,
-                    crosshair=self.state.crosshair_position
+                    crosshair=None  # No crosshair lines for annotation overlay
                 )
                 
                 # Ensure it's RGB and uint8
@@ -1623,7 +1623,7 @@ class MEDSAM2Handlers:
             height = y2 - y1
             box_descriptions.append(f"Box {i+1}: ({x1},{y1}) to ({x2},{y2}) [W:{width} H:{height}]")
         
-        return f"📦 Box prompts ready for MEDSAM2:\n" + "\n".join(box_descriptions)
+        return f"Box prompts ready for MEDSAM2:\n" + "\n".join(box_descriptions)
 
     def extract_boxes_from_image_data(self, image_display_data):
         """Extract boxes from image display data and store as prompt boxes"""

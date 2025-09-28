@@ -1527,55 +1527,17 @@ def create_editor_tab() -> dict:
             
             # Column 3: Annotate with AI Models
             with gr.Column(scale=1):
-                # Coordinate Selection for MEDSAM2
-                gr.Markdown("### Point Selection")
-                # Prompt type selection
-                with gr.Row():
-                    point_prompt_checkbox = gr.Checkbox(
-                        label="Point-based Prompt",
-                        value=False,
-                        info="Use point coordinates for segmentation"
-                    )
-                    box_prompt_checkbox = gr.Checkbox(
-                        label="Box-based Prompt", 
-                        value=False,
-                        info="Use bounding boxes for segmentation"
-                    )
-                coordinates_text = gr.Textbox(
-                    label="Selected Coordinates (x,y)",
-                    value="",
-                    interactive=False,
-                    info="Click on the image to select coordinates",
-                    visible=False  # Initially hidden until point-based is selected
-                )
-                clear_coords_btn = gr.Button("Clear Coordinates & Prompts", variant="stop",)
                 
-                gr.Markdown("## Annotate with AI Models")
+                gr.Markdown("## Segmentation Settings")
                 ai_model_selector = gr.Dropdown(
                     label="Select AI Model",
                     choices=["MEDSAM2", "UNet (dummy)", "DeepLabV3 (dummy)", "SAM (dummy)", "Other (dummy)"],
-                    value="MEDSAM2"
-                )
-                
-                # Processing Mode Selection
-                processing_mode = gr.Radio(
-                    choices=["Single Slice", "All Records"],
-                    value="Single Slice",
-                    label="Processing Mode",
-                    info="Single Slice: Process only current slice. All Records: Process entire volume with quality thresholding."
-                )
-                
-                # Score Threshold for All Records mode
-                score_threshold = gr.Slider(
-                    minimum=0.0, maximum=1.0, value=0.3, step=0.05,
-                    label="Score Threshold (All Records mode)",
-                    info="Minimum average score required to display annotations. Lower scores may indicate poor quality segmentations.",
-                    visible=False  # Initially hidden, shown when "All Records" is selected
+                    value="MEDSAM2", visible=False # Initially hidden until more models are integrated
                 )
                 
                 # MEDSAM2 specific controls
                 with gr.Group(visible=True) as medsam2_controls:
-                    with gr.Accordion("Annotation Settings", open=False):
+                    with gr.Accordion("Output & Device Settings", open=False):
                         output_dir = gr.Textbox(
                             label="Output Directory",
                             value="brain_target_results",
@@ -1589,40 +1551,108 @@ def create_editor_tab() -> dict:
                         device_selector = gr.Dropdown(
                             label="Device",
                             choices=["cpu", "cuda"],
-                            value="cpu",
+                            value="cuda",
                             info="Processing device for MEDSAM2"
-                        )                  # SAM2 Fast Masking Section
-                gr.Markdown("### SAM2 Fast Masking")
-                with gr.Row():
-                    auto_brain_annotate_btn = gr.Button(
-                        "🚀 Run SAM2 Fast Masking", 
-                        variant="primary",
-                        size="lg"
-                    )
+                        )
                 
-                with gr.Accordion("SAM2 Fast Masking Info", open=False):
-                    gr.Markdown("""
-                    **SAM2 Fast Masking Pipeline:**
-                    - Uses optimized 'fast' configuration for quick processing
-                    - Automatically segments brain structures using SAM2AutomaticMaskGenerator
-                    - Filters masks with area ≥ 500 pixels and IoU ≥ 0.8
-                    - Respects "Save Visualizations" checkbox setting
-                    - Works with both "Single Slice" and "All Records" modes
-                    - Generates JSON mask files for each processed slice
-                    - No comprehensive summary files for optimal speed
-                    """)
-                
-                annotate_btn = gr.Button("Run MEDSAM2 Annotation (Manual Prompts)")
-                annotation_status = gr.Textbox(
-                    label="Annotation Status", 
-                    interactive=False,
-                    value="Ready to annotate"
+                # Processing Mode Selection
+                processing_mode = gr.Radio(
+                    choices=["Single Slice", "All Records"],
+                    value="Single Slice",
+                    label="Processing Mode for AI Annotation",
+                    info="Single Slice: Process only current slice. All Records: Process entire volume with quality thresholding."
                 )
+                
+                # Score Threshold for All Records mode
+                score_threshold = gr.Slider(
+                    minimum=0.0, maximum=1.0, value=0.3, step=0.05,
+                    label="Score Threshold (All Records mode)",
+                    info="Minimum average score required to display annotations. Lower scores may indicate poor quality segmentations.",
+                    visible=False  # Initially hidden, shown when "All Records" is selected
+                )
+                
+                # Coordinate Selection for MEDSAM2
+                gr.Markdown("## Segmentation with AI")
+                with gr.Accordion("Guided Segmentation (Point/Box Selection)", open=False):
+                #with gr.Accordion("Annotate with AI: Point Selection", open=False):
+                    gr.Markdown("*Guide the AI with point or area selection to focus a specific area for segmenting.*")
+                    
+                    # Dynamic info boxes for point/box guidance
+                    from ui.info_components import create_info_message
+                    
+                    # Info box for point-based prompt (initially hidden)
+                    point_info_accordion = create_info_message(
+                        message="""
+                        <strong>Point-based Guidance:</strong> Click directly on the image at the location you want to segment. 
+                        <br><br>
+                        <strong>Tip:</strong> Click on the center or most representative part of the structure you want to segment for best results.
+                        """,
+                        message_type="success",
+                        visible=False,
+                        open_state=True
+                    )
+                    
+                    # Info box for box-based prompt (initially hidden)
+                    box_info_accordion = create_info_message(
+                        message="""
+                        <strong>Box-based Guidance:</strong> Draw a bounding box around the area you want to segment by clicking and dragging on the image. Use rectgangle tool from the toolbar.
+                        <br><br>
+                        <strong>Tip:</strong> Make sure the box fully contains the structure you want to segment with some margin around it.
+                        """,
+                        message_type="info", 
+                        visible=False,
+                        open_state=True
+                    )
+                    
+                    # Prompt type selection
+                    with gr.Row():
+                        point_prompt_checkbox = gr.Checkbox(
+                            label="Point-based Prompt",
+                            value=False,
+                            info="Use point coordinates for segmentation"
+                        )
+                        box_prompt_checkbox = gr.Checkbox(
+                            label="Box-based Prompt", 
+                            value=False,
+                            info="Use bounding boxes for segmentation"
+                        )
+                    coordinates_text = gr.Textbox(
+                        label="Selected Coordinates (x,y)",
+                        value="",
+                        interactive=False,
+                        info="Click on the image to select coordinates",
+                        visible=False  # Initially hidden until point-based is selected
+                    )
+                    with gr.Row():
+                        annotate_btn = gr.Button("Run Guided Annotation", variant="primary", scale=1)
+                        clear_coords_btn = gr.Button("Clear Coordinates & Prompts", variant="stop", scale=1)                              
+                
+                # Whole Area Segmentation Section
+                with gr.Accordion("Whole Area Segmentation", open=False):
+                    # Info box for whole area segmentation
+                    from ui.info_components import create_info_message
+                    whole_area_info_accordion = create_info_message(
+                        message="""
+                        <strong>Automatic Segmentation:</strong> Automatically detects and segments all major structures in the current view without manual guidance.
+                        <br><br>
+                        <strong>Tip:</strong> Works best on clear MRI images. Processing may take a few moments depending on image complexity.
+                        """,
+                        message_type="info",
+                        visible=True,
+                        open_state=False
+                    )
+                    
+                    with gr.Row():
+                        auto_brain_annotate_btn = gr.Button(
+                            "Run Automatic Segmentation", 
+                            variant="primary",
+                            size="lg"
+                        )
                 
                 col3 = (point_prompt_checkbox, box_prompt_checkbox, coordinates_text, clear_coords_btn, ai_model_selector, 
                         processing_mode, score_threshold,
                         output_dir, save_visualizations, device_selector, 
-                        auto_brain_annotate_btn, annotate_btn, annotation_status)    # Helper functions for 3D viewer interactions and layout switching
+                        auto_brain_annotate_btn, annotate_btn, point_info_accordion, box_info_accordion, whole_area_info_accordion)    # Helper functions for 3D viewer interactions and layout switching
     def toggle_layout_for_processing_mode(processing_mode):
         """Switch between full-width and split layout based on processing mode"""
         if processing_mode == "All Records":
@@ -1711,6 +1741,9 @@ def create_editor_tab() -> dict:
         'info_components': {
             'vlm_info_accordion': vlm_info_accordion,
             'vlm_tools_info_accordion': vlm_tools_info_accordion,
-            'vlm_custom_prompt_info_accordion': vlm_custom_prompt_info_accordion
+            'vlm_custom_prompt_info_accordion': vlm_custom_prompt_info_accordion,
+            'point_info_accordion': point_info_accordion,
+            'box_info_accordion': box_info_accordion,
+            'whole_area_info_accordion': whole_area_info_accordion
         }
     }
