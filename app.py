@@ -164,10 +164,10 @@ class SegMedPro:
         self.medgemma_handlers = self.editor_medgemma_handlers
         
         # Preload SmolVLM service in background for instant availability
-        self._preload_vlm_service()
+        # self._preload_vlm_service()
         
         # Skip Med-R1 preloading due to meta tensor issues - use lazy loading instead
-        self._preload_med_r1_service()
+        # self._preload_med_r1_service()
         #logger.info("📋 Med-R1 service will use lazy loading (load on first use) to avoid meta tensor issues")
         
         logger.info("🔄 Tab separation complete - Viewer and Editor tabs now use independent handlers")
@@ -1092,6 +1092,16 @@ class SegMedPro:
         toggle_layout = layout_functions.get('toggle_layout')
         reset_layout = layout_functions.get('reset_layout')
         
+        # Get segmentation modal functions
+        segmentation_modal_system = components.get('segmentation_modal', {})
+        show_segmentation_modal = segmentation_modal_system.get('show_function')
+        hide_segmentation_modal = segmentation_modal_system.get('hide_function')
+        
+        # Get modal components for outputs
+        modal_system_components = segmentation_modal_system.get('system', {})
+        modal_backdrop = modal_system_components.get('backdrop')
+        modal_container = modal_system_components.get('segmentation_modal')
+        
         # Point/Box Selection Info Box Handlers
         def handle_point_prompt_change(is_checked):
             """Show/hide point info box and coordinates text when point checkbox changes"""
@@ -1691,6 +1701,7 @@ class SegMedPro:
                 output_dir, save_visualizations, device_selector, processing_mode, score_threshold, image_display_data
             )
             logger.info(f"Annotation Status: workflow completed with success={success}")
+            
             # If processing mode is "All Records" and annotation was successful, refresh 3D viewer
             # Always return a valid Plotly figure to avoid the __module__ attribute error
             from ui.editor_tab import create_empty_3d_plot, create_3d_visualization
@@ -1707,12 +1718,30 @@ class SegMedPro:
                 logger.info(f"3D Viewer status: Not updating 3D viewer: mode={processing_mode}, success={success}")
                 viewer_3d_update = create_empty_3d_plot("3D Viewer available in 'All Records' mode")
             
-            return status, image, viewer_3d_update
+            # Show segmentation completion modal if successful and we have annotations
+            modal_backdrop_update = gr.update(visible=False)
+            modal_container_update = gr.update(visible=False)
+            
+            if success and image is not None and show_segmentation_modal:
+                # Check if the image has annotation overlays/segments
+                try:
+                    # For image_annotator format, check if there are annotations
+                    if hasattr(image, 'annotations') or (isinstance(image, dict) and 'annotations' in image):
+                        logger.info("Segmentation completed successfully - showing completion modal")
+                        modal_backdrop_update, modal_container_update = show_segmentation_modal()
+                    elif isinstance(image, dict) and 'image' in image:
+                        # Check if it's the correct annotated format
+                        logger.info("Segmentation completed successfully - showing completion modal")
+                        modal_backdrop_update, modal_container_update = show_segmentation_modal()
+                except Exception as e:
+                    logger.warning(f"Could not check annotation status for modal: {e}")
+            
+            return status, image, viewer_3d_update, modal_backdrop_update, modal_container_update
         
         annotate_btn.click(
             fn=handle_annotation_workflow,
             inputs=[output_dir, save_visualizations, device_selector, processing_mode, score_threshold, image_display],
-            outputs=[error_display, image_display, viewer_3d]
+            outputs=[error_display, image_display, viewer_3d, modal_backdrop, modal_container]
         )          # Unified VLM handler for all models (EDITOR-SPECIFIC)
         def handle_vlm_inference(vlm_model, image_display, identify_anomalies, describe_slice):
             """Handle VLM inference based on selected model"""

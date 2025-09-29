@@ -11,7 +11,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 from gradio_image_annotation import image_annotator
 from .viewer_tab import create_data_loading_section
-from .modal_components import create_editor_welcoming_modal_system
+from .modal_components import create_editor_welcoming_modal_system, create_segmentation_modal_system
 import json
 import os
 import glob
@@ -1131,6 +1131,9 @@ def create_editor_tab() -> dict:
         # Create modal system for welcome and help dialogs (auto-opening)
         modal_system = create_editor_welcoming_modal_system()
         
+        # Create segmentation completion modal system
+        segmentation_modal_system = create_segmentation_modal_system()
+        
         # Note: Modal will auto-open when tab loads - no manual trigger needed
         
         # Welcome Guide for Expert Users - Using Accordion as Modal Alternative
@@ -1198,6 +1201,13 @@ def create_editor_tab() -> dict:
         with gr.Row():
             # Column 1: All components (data loading, controls, etc.) except Metadata, Status/Errors, and Image Adjustments moved as specified
             with gr.Column(scale=1):
+                
+                # Import the new info tooltip system
+                from ui.info_tooltips import create_load_medical_data_header
+                
+                # Create enhanced header with info tooltip (single component)
+                create_load_medical_data_header()
+                
                 file_input = gr.File(
                     label="Load File (DICOM, NIFTI, MAT)",
                     file_types=[".dcm", ".nii", ".nii.gz", ".mat"]
@@ -1209,6 +1219,10 @@ def create_editor_tab() -> dict:
                 load_btn = gr.Button("Load Data")
                 reset_dir_btn = gr.Button("Reset Directory")
                 file_browser = gr.Dropdown(label="Available Files", choices=[], interactive=True)
+                
+                # Load Label File section with tooltip
+                from ui.info_tooltips import create_load_label_file_header
+                create_load_label_file_header()
                 
                 # Label File Loader
                 label_file = gr.File(
@@ -1534,7 +1548,12 @@ def create_editor_tab() -> dict:
             # Column 3: Annotate with AI Models
             with gr.Column(scale=1):
                 
-                gr.Markdown("## Segmentation Settings")
+                # Import the new info tooltip system
+                from ui.info_tooltips import create_segmentation_settings_header
+                
+                # Create enhanced header with info tooltip (single component)
+                create_segmentation_settings_header()
+                
                 ai_model_selector = gr.Dropdown(
                     label="Select AI Model",
                     choices=["MEDSAM2", "UNet (dummy)", "DeepLabV3 (dummy)", "SAM (dummy)", "Other (dummy)"],
@@ -1578,7 +1597,12 @@ def create_editor_tab() -> dict:
                 )
                 
                 # Coordinate Selection for MEDSAM2
-                gr.Markdown("## Segmentation with AI")
+                # Import the new info tooltip system
+                from ui.info_tooltips import create_segmentation_with_ai_header
+                
+                # Create enhanced header with info tooltip (single component)
+                create_segmentation_with_ai_header()
+                
                 with gr.Accordion("Guided Segmentation (Point/Box Selection)", open=False):
                 #with gr.Accordion("Annotate with AI: Point Selection", open=False):
                     gr.Markdown("*Guide the AI with point or area selection to focus a specific area for segmenting.*")
@@ -1779,5 +1803,10 @@ def create_editor_tab() -> dict:
                 'normal': modal_system['load_normal_btn'], 
                 'hgg': modal_system['load_hgg_btn']
             }
+        },
+        'segmentation_modal': {
+            'system': segmentation_modal_system,
+            'show_function': segmentation_modal_system['show_segmentation_modal'],
+            'hide_function': segmentation_modal_system['hide_segmentation_modal']
         }
     }

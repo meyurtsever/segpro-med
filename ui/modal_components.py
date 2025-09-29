@@ -9,7 +9,7 @@ This module provides modal-like fu            /* Modal container */
                 background: #27272A !important;
                 border-radius: 16px !important;
                 box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8) !important;
-                z-index: 9999 !important;
+                z-index: 1001 !important;
                 width: 800px !important;
                 max-width: 95vw !important;
                 max-height: 80vh !important;
@@ -75,7 +75,7 @@ def create_editor_welcoming_modal():
                 width: 100vw !important;
                 height: 100vh !important;
                 background: rgba(39, 39, 42, 0.3) !important;
-                z-index: 9998 !important;
+                z-index: 1000 !important;
                 backdrop-filter: blur(1px) !important;
                 -webkit-backdrop-filter: blur(1px) !important;
             }}
@@ -89,7 +89,7 @@ def create_editor_welcoming_modal():
                 background: #27272A !important;
                 border-radius: 16px !important;
                 box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8) !important;
-                z-index: 9999 !important;
+                z-index: 1001 !important;
                 width: 850px !important;
                 max-width: 90vw !important;
                 max-height: 80vh !important;
@@ -172,104 +172,61 @@ def create_editor_welcoming_modal():
                 font-weight: 600 !important;
             }}
             
-            /* Close button styling - much smaller and refined */
+            /* Close button styling - tiny and minimal */
             .modal-container .close-button {{
-                background: rgba(75, 85, 99, 0.5) !important;
-                color: #d1d5db !important;
-                border: 1px solid #6b7280 !important;
-                border-radius: 4px !important;
-                padding: 2px 6px !important;
+                background: rgba(55, 65, 81, 0.6) !important;
+                color: #9ca3af !important;
+                border: none !important;
+                border-radius: 3px !important;
+                padding: 1px 3px !important;
                 cursor: pointer !important;
-                font-size: 12px !important;
-                font-weight: 200 !important;
+                font-size: 10px !important;
+                font-weight: 300 !important;
                 transition: all 0.2s ease !important;
-                width: 6 !important;
-                height: 6 !important;
+                width: 40px !important;
+                height: 40px !important;
+                min-width: 20px !important;
+                min-height: 20px !important;
+                max-width: 20px !important;
+                max-height: 20px !important;
                 display: flex !important;
                 align-items: center !important;
                 justify-content: center !important;
                 margin-left: auto !important;
                 flex-shrink: 0 !important;
+                line-height: 1 !important;
+                box-shadow: none !important;
             }}
             
             .modal-container .close-button:hover {{
-                background: rgba(239, 68, 68, 0.8) !important;
+                background: rgba(239, 68, 68, 0.7) !important;
                 color: white !important;
-                border-color: #ef4444 !important;
-                transform: scale(1.05) !important;
+                transform: scale(1.1) !important;
             }}
             
-
+            .modal-container .close-button:active {{
+                transform: scale(0.95) !important;
+            }}
             
-
-            
-            /* Professional sample cards */
-            .sample-cards-row {{
-                gap: 16px !important;
+            /* Compact sample buttons row */
+            .compact-sample-row {{
+                gap: 12px !important;
                 margin: 16px 0 !important;
             }}
             
-            /* Sample cards styling - button-based approach */
-            .sample-cards-row {{
-                gap: 20px !important;
-                margin: 20px 0 !important;
-            }}
-            
-            .sample-card-wrapper {{
-                display: flex !important;
-                flex-direction: column !important;
-                align-items: center !important;
-                gap: 12px !important;
-                flex: 1 !important;
-            }}
-            
-            .sample-description {{
-                background: #374151 !important;
-                border-radius: 12px !important;
-                padding: 16px !important;
-                text-align: center !important;
-                border: 1px solid #4b5563 !important;
+            /* Compact sample buttons */
+            .compact-sample-btn {{
                 width: 100% !important;
-                margin-bottom: 8px !important;
-                transition: all 0.3s ease !important;
-            }}
-            
-            .sample-description:hover {{
-                background: #4b5563 !important;
-                border-color: #6b7280 !important;
-            }}
-            
-            .sample-icon {{
-                font-size: 2rem !important;
-                margin-bottom: 8px !important;
-            }}
-            
-            .sample-info strong {{
-                color: #f9fafb !important;
-                font-size: 1rem !important;
+                height: 40px !important;
                 font-weight: 600 !important;
-                display: block !important;
-                margin-bottom: 4px !important;
-            }}
-            
-            .sample-info span {{
-                color: #d1d5db !important;
-                font-size: 0.85rem !important;
-                line-height: 1.4 !important;
-            }}
-            
-            /* Professional sample buttons */
-            .professional-sample-btn {{
-                width: 100% !important;
-                height: 48px !important;
                 font-size: 0.9rem !important;
-                font-weight: 600 !important;
                 border-radius: 8px !important;
                 transition: all 0.3s ease !important;
                 box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+                padding: 8px 16px !important;
             }}
             
-            .professional-sample-btn:hover {{
+            .compact-sample-btn:hover {{
                 transform: translateY(-2px) !important;
                 box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
             }}
@@ -342,23 +299,6 @@ def create_editor_welcoming_modal():
                 border-left: 3px solid #4b5563 !important;
             }}
             
-            /* Professional load buttons */
-            .professional-load-btn {{
-                width: 100% !important;
-                height: 32px !important;
-                font-weight: 500 !important;
-                font-size: 0.75rem !important;
-                border-radius: 6px !important;
-                transition: all 0.3s ease !important;
-                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
-                padding: 4px 8px !important;
-            }}
-            
-            .professional-load-btn:hover {{
-                transform: translateY(-1px) !important;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
-            }}
-            
             .cavernoma-btn:hover {{ box-shadow: 0 8px 20px rgba(245, 158, 11, 0.4) !important; }}
             .healthy-btn:hover {{ box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4) !important; }}
             .glioma-btn:hover {{ box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4) !important; }}
@@ -383,29 +323,13 @@ def create_editor_welcoming_modal():
                     padding: 12px 16px !important;
                 }}
                 
-                .sample-cards-row {{
+                .compact-sample-row {{
                     flex-direction: column !important;
                     gap: 8px !important;
                 }}
                 
-                .sample-description {{
-                    margin-bottom: 6px !important;
-                    padding: 6px !important;
-                    min-height: 50px !important;
-                }}
-                
-                .professional-load-btn {{
-                    height: 28px !important;
-                    font-size: 0.7rem !important;
-                }}
-                
-                .sample-description strong {{
-                    font-size: 0.75rem !important;
-                }}
-                
-                .sample-description span {{
-                    font-size: 0.6rem !important;
-                }}
+                .compact-sample-btn {{
+                    height: 36px !important;
                     font-size: 0.8rem !important;
                 }}
             }}
@@ -414,9 +338,12 @@ def create_editor_welcoming_modal():
         
         # Modal header
         with gr.Row(elem_classes=["modal-header"]):
-            gr.HTML(f'<h1 class="modal-title">Welcome to KoGa Medical Image Editor</h1>')
-            close_button = gr.Button("✕", elem_classes=["close-button"], size="sm", variant="secondary")
-        
+            with gr.Column(scale=30):
+                gr.HTML(f'<h1 class="modal-title">Welcome to KoGa Medical Image Editor</h1>')
+            
+            with gr.Column(scale=1):
+                close_button = gr.Button("✕", elem_classes=["close-button"], variant="secondary")
+
         # Modal content
         with gr.Column(elem_classes=["modal-content"]):
             gr.HTML("""
@@ -429,58 +356,28 @@ def create_editor_welcoming_modal():
             <p>Click any button below to automatically load sample medical imaging data:</p>
             """)
             
-            # Professional sample data cards as buttons
-            with gr.Row(equal_height=True, elem_classes=["sample-cards-row"]):
-                with gr.Column(elem_classes=["sample-card-wrapper"]):
-                    gr.HTML("""
-                    <div class="sample-description">
-                        <div class="sample-icon">🧠</div>
-                        <div class="sample-info">
-                            <strong>Cavernoma Sample</strong><br>
-                            <span>Brain MRI with cavernous malformation</span>
-                        </div>
-                    </div>
-                    """)
-                    load_cvm_btn = gr.Button(
-                        "Load Cavernoma", 
-                        variant="primary", 
-                        size="sm",
-                        elem_classes=["professional-load-btn", "cavernoma-btn"]
-                    )
+            # Compact sample data buttons
+            with gr.Row(equal_height=True, elem_classes=["compact-sample-row"]):
+                load_cvm_btn = gr.Button(
+                    "Brain Sample - Malformation", 
+                    variant="primary", 
+                    size="sm",
+                    elem_classes=["compact-sample-btn", "cavernoma-btn"]
+                )
                 
-                with gr.Column(elem_classes=["sample-card-wrapper"]):
-                    gr.HTML("""
-                    <div class="sample-description">
-                        <div class="sample-icon">✅</div>
-                        <div class="sample-info">
-                            <strong>Healthy Sample</strong><br>
-                            <span>Normal brain MRI for comparison</span>
-                        </div>
-                    </div>
-                    """)
-                    load_normal_btn = gr.Button(
-                        "Load Healthy", 
-                        variant="secondary", 
-                        size="sm",
-                        elem_classes=["professional-load-btn", "healthy-btn"]
-                    )
+                load_normal_btn = gr.Button(
+                    "Brain Sample - Benign", 
+                    variant="secondary", 
+                    size="sm",
+                    elem_classes=["compact-sample-btn", "healthy-btn"]
+                )
                 
-                with gr.Column(elem_classes=["sample-card-wrapper"]):
-                    gr.HTML("""
-                    <div class="sample-description">
-                        <div class="sample-icon">⚠️</div>
-                        <div class="sample-info">
-                            <strong>High Grade Glioma</strong><br>
-                            <span>Brain tumor MRI for oncological analysis</span>
-                        </div>
-                    </div>
-                    """)
-                    load_hgg_btn = gr.Button(
-                        "Load Glioma", 
-                        variant="stop", 
-                        size="sm",
-                        elem_classes=["professional-load-btn", "glioma-btn"]
-                    )
+                load_hgg_btn = gr.Button(
+                    "Brain Sample - Tumor", 
+                    variant="stop", 
+                    size="sm",
+                    elem_classes=["compact-sample-btn", "glioma-btn"]
+                )
             
         gr.HTML("""   
         <div style="background: #065f46; padding: 16px; border-radius: 8px; text-align: center; margin-top: 20px;">
@@ -571,3 +468,176 @@ def create_editor_welcoming_modal_system():
 
 # Main function alias for backward compatibility
 create_auto_opening_modal_system = create_editor_welcoming_modal_system
+
+def create_segmentation_complete_modal():
+    """
+    Create a modal that appears after segmentation is completed to guide users
+    on how to edit and refine their annotations.
+    """
+    with gr.Column(
+        visible=False,  # Start hidden, will be shown after segmentation
+        elem_id="segmentation-modal-container",
+        elem_classes=["modal-container"]
+    ) as modal_container:
+        
+        # Modal styling (focused on segmentation completion)
+        gr.HTML(f"""
+        <style>
+            /* Segmentation modal specific styling */
+            #segmentation-modal-container {{
+                width: 650px !important;
+                max-width: 90vw !important;
+            }}
+            
+            .segmentation-modal-header {{
+                background: linear-gradient(135deg, #059669, #047857) !important;
+                color: white !important;
+                padding: 20px !important;
+                border-radius: 8px 8px 0 0 !important;
+                border-bottom: 1px solid #047857 !important;
+                display: flex !important;
+                justify-content: space-between !important;
+                align-items: center !important;
+            }}
+            
+            .segmentation-modal-title {{
+                font-size: 1.3rem !important;
+                font-weight: 600 !important;
+                margin: 0 !important;
+                color: white !important;
+                flex-grow: 1 !important;
+            }}
+            
+            .segmentation-modal-content {{
+                padding: 24px !important;
+                color: #e5e7eb !important;
+                line-height: 1.6 !important;
+                background: #27272A !important;
+            }}
+            
+            .segmentation-modal-content h3 {{
+                color: #10b981 !important;
+                font-size: 1.1rem !important;
+                margin-bottom: 12px !important;
+                margin-top: 16px !important;
+                font-weight: 600 !important;
+            }}
+            
+            .segmentation-modal-content p {{
+                margin-bottom: 14px !important;
+                color: #d1d5db !important;
+                font-size: 0.95rem !important;
+            }}
+            
+            .segmentation-modal-content ul {{
+                margin-bottom: 16px !important;
+                padding-left: 20px !important;
+            }}
+            
+            .segmentation-modal-content li {{
+                margin-bottom: 8px !important;
+                color: #d1d5db !important;
+                font-size: 0.9rem !important;
+            }}
+            
+            .segmentation-modal-content strong {{
+                color: #f9fafb !important;
+                font-weight: 600 !important;
+            }}
+            
+            .completion-highlight {{
+                background: rgba(16, 185, 129, 0.1) !important;
+                border: 1px solid #10b981 !important;
+                border-radius: 8px !important;
+                padding: 16px !important;
+                margin: 16px 0 !important;
+                text-align: center !important;
+            }}
+            
+            .completion-highlight h4 {{
+                color: #10b981 !important;
+                margin: 0 0 8px 0 !important;
+                font-size: 1.1rem !important;
+                font-weight: 600 !important;
+            }}
+            
+            .completion-highlight p {{
+                color: #d1fae5 !important;
+                margin: 0 !important;
+                font-size: 0.9rem !important;
+            }}
+        </style>
+        """)
+        
+        # Modal header
+        with gr.Row(elem_classes=["segmentation-modal-header"]):
+            with gr.Column(scale=30):
+                gr.HTML(f'<h1 class="segmentation-modal-title">Segmentation Complete</h1>')
+            
+            with gr.Column(scale=1):
+                close_button = gr.Button("✕", elem_classes=["close-button"], variant="secondary")
+
+        # Modal content
+        with gr.Column(elem_classes=["segmentation-modal-content"]):
+            gr.HTML("""
+            <div class="completion-highlight">
+                <h4>AI Segmentation Successfully Generated</h4>
+                <p>Your medical image has been processed and annotated</p>
+            </div>
+            
+            <p>The AI has completed the initial segmentation. You can now refine and customize the results:</p>
+            
+            <h3>Edit Annotations</h3>
+            <ul>
+                <li><strong>Double-click any annotation</strong> to edit its properties</li>
+                <li><strong>Rename labels</strong> to match your terminology</li>
+                <li><strong>Change colors</strong> for better visual distinction</li>
+                <li><strong>Drag annotations</strong> to reposition them as needed</li>
+            </ul>
+            
+            <h3>Annotation Tools</h3>
+            <ul>
+                <li><strong>Select tool</strong> - Click and drag to move annotations</li>
+                <li><strong>Rectangle tool</strong> - Draw new bounding boxes</li>
+                <li><strong>Polygon tool</strong> - Create custom shaped annotations</li>
+                <li><strong>Point tool</strong> - Add precise point markers</li>
+            </ul>
+            
+            <p>All changes are automatically saved as you work. You can continue annotating or export your results when ready.</p>
+            """)
+    
+    return modal_container, close_button
+
+def create_segmentation_modal_system():
+    """
+    Create a modal system for post-segmentation guidance.
+    """
+    # Create backdrop for segmentation modal
+    backdrop = create_modal_backdrop()
+    
+    # Create segmentation completion modal
+    segmentation_modal, segmentation_close = create_segmentation_complete_modal()
+    
+    # Set initial state to hidden
+    backdrop.visible = False
+    segmentation_modal.visible = False
+    
+    def show_segmentation_modal():
+        return gr.update(visible=True), gr.update(visible=True)
+    
+    def hide_segmentation_modal():
+        return gr.update(visible=False), gr.update(visible=False)
+    
+    # Connect close button
+    segmentation_close.click(
+        fn=hide_segmentation_modal,
+        outputs=[backdrop, segmentation_modal]
+    )
+    
+    return {
+        'backdrop': backdrop,
+        'segmentation_modal': segmentation_modal,
+        'segmentation_close': segmentation_close,
+        'show_segmentation_modal': show_segmentation_modal,
+        'hide_segmentation_modal': hide_segmentation_modal
+    }
