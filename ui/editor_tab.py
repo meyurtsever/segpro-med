@@ -11,6 +11,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 from gradio_image_annotation import image_annotator
 from .viewer_tab import create_data_loading_section
+from .modal_components import create_editor_welcoming_modal_system
 import json
 import os
 import glob
@@ -1127,6 +1128,11 @@ def create_other_vlm_label_suggestions(vlm_model, image_annotator_value, slice_i
 def create_editor_tab() -> dict:
     """Create the complete editor tab layout"""
     with gr.TabItem("Editor", id=1):
+        # Create modal system for welcome and help dialogs (auto-opening)
+        modal_system = create_editor_welcoming_modal_system()
+        
+        # Note: Modal will auto-open when tab loads - no manual trigger needed
+        
         # Welcome Guide for Expert Users - Using Accordion as Modal Alternative
         with gr.Accordion("Crowdsourcing", open=False, visible=False) as welcome_guide:
             welcome_guide_content = gr.HTML("""
@@ -1705,6 +1711,25 @@ def create_editor_tab() -> dict:
         except Exception as e:
             return f"Error exporting 3D view: {str(e)}"
     
+    # Sample data loading functionality (connected in main app)
+    def load_sample_data_and_trigger(dataset_path):
+        """Load sample dataset and update directory input"""
+        try:
+            logger.info(f"Loading sample data from: {dataset_path}")
+            # Return the directory path and close modal
+            return (
+                dataset_path,  # Update directory input
+                gr.update(visible=False),  # Hide backdrop
+                gr.update(visible=False),  # Hide modal
+            )
+        except Exception as e:
+            logger.error(f"Error loading sample data: {e}")
+            return (
+                dataset_path,  # Update directory input anyway
+                gr.update(visible=False),  # Hide backdrop
+                gr.update(visible=False),  # Hide modal
+            )
+    
     # Return all components in a structured way
     return {
         'data_loading': col1,
@@ -1722,6 +1747,7 @@ def create_editor_tab() -> dict:
             'content': welcome_guide_content,
             'close_btn': welcome_guide_close
         },
+        'modal_system': modal_system,
         'voice_analysis': {
             'row': voice_analysis_row,
             'controls': voice_analysis_controls,
@@ -1745,5 +1771,13 @@ def create_editor_tab() -> dict:
             'point_info_accordion': point_info_accordion,
             'box_info_accordion': box_info_accordion,
             'whole_area_info_accordion': whole_area_info_accordion
+        },
+        'sample_loading': {
+            'function': load_sample_data_and_trigger,
+            'buttons': {
+                'cvm': modal_system['load_cvm_btn'],
+                'normal': modal_system['load_normal_btn'], 
+                'hgg': modal_system['load_hgg_btn']
+            }
         }
     }

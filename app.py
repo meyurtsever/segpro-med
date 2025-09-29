@@ -1152,6 +1152,55 @@ class SegMedPro:
             outputs=[error_display, image_display]
         )
         
+        # Connect sample loading buttons to actual data loading functionality
+        sample_loading = components.get('sample_loading', {})
+        modal_system = components.get('modal_system', {})
+        if sample_loading and modal_system:
+            sample_buttons = sample_loading.get('buttons', {})
+            
+            # Connect each sample button to update directory, close modal, and load data
+            if 'cvm' in sample_buttons:
+                sample_buttons['cvm'].click(
+                    fn=lambda: ("/home/enes/segpro-med/cvm_48_t1", gr.update(visible=False), gr.update(visible=False)),
+                    outputs=[dir_input, modal_system['backdrop'], modal_system['welcome_modal']]
+                ).then(
+                    fn=lambda file_obj, dir_input_val: self.data_handlers.load_data_for_annotator(file_obj, dir_input_val, False),
+                    inputs=[file_input, dir_input],
+                    outputs=[
+                        image_display, file_browser, metadata_display,
+                        slice_slider, slice_text, crosshair_info, error_display,
+                        window_level, window_width
+                    ]
+                )
+            
+            if 'normal' in sample_buttons:
+                sample_buttons['normal'].click(
+                    fn=lambda: ("/home/enes/segpro-med/normal_52", gr.update(visible=False), gr.update(visible=False)),
+                    outputs=[dir_input, modal_system['backdrop'], modal_system['welcome_modal']]
+                ).then(
+                    fn=lambda file_obj, dir_input_val: self.data_handlers.load_data_for_annotator(file_obj, dir_input_val, False),
+                    inputs=[file_input, dir_input],
+                    outputs=[
+                        image_display, file_browser, metadata_display,
+                        slice_slider, slice_text, crosshair_info, error_display,
+                        window_level, window_width
+                    ]
+                )
+            
+            if 'hgg' in sample_buttons:
+                sample_buttons['hgg'].click(
+                    fn=lambda: ("/home/enes/segpro-med/hgg_17", gr.update(visible=False), gr.update(visible=False)),
+                    outputs=[dir_input, modal_system['backdrop'], modal_system['welcome_modal']]
+                ).then(
+                    fn=lambda file_obj, dir_input_val: self.data_handlers.load_data_for_annotator(file_obj, dir_input_val, False),
+                    inputs=[file_input, dir_input],
+                    outputs=[
+                        image_display, file_browser, metadata_display,
+                        slice_slider, slice_text, crosshair_info, error_display,
+                        window_level, window_width
+                    ]
+                )
+        
         # Viewer handlers (using annotator-specific methods) (EDITOR-SPECIFIC)
         def handle_slice_change_with_labels(slice_value, image_annotator_value):
             """Handle slice slider change and update current labels, suggested labels, and VLM analysis"""

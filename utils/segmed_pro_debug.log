@@ -19055,3 +19055,299 @@ ValueError: No DICOM files found in directory: C:\Users\Yurtsever\Downloads\segp
 2025-09-28 17:26:39,013 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
 2025-09-28 17:26:39,014 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm
 2025-09-28 17:26:39,015 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm
+2025-09-29 12:38:31,794 - segmed_pro - ERROR - Exception in load_data_for_annotator: No DICOM files found in directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+2025-09-29 12:38:31,795 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "/home/enes/segpro-med/utils/debug_utils.py", line 70, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enes/segpro-med/ui/handlers.py", line 258, in load_data_for_annotator
+    self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
+                                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enes/segpro-med/utils/dicom_utils.py", line 242, in load_dicom_series
+    raise ValueError(f"No DICOM files found in directory: {directory}")
+ValueError: No DICOM files found in directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+
+2025-09-29 12:38:43,145 - segmed_pro - ERROR - Exception in load_data_for_annotator: No DICOM files found in directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+2025-09-29 12:38:43,146 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "/home/enes/segpro-med/utils/debug_utils.py", line 70, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enes/segpro-med/ui/handlers.py", line 258, in load_data_for_annotator
+    self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
+                                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enes/segpro-med/utils/dicom_utils.py", line 242, in load_dicom_series
+    raise ValueError(f"No DICOM files found in directory: {directory}")
+ValueError: No DICOM files found in directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+
+2025-09-29 12:38:44,452 - segmed_pro - ERROR - Exception in load_data_for_annotator: No DICOM files found in directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+2025-09-29 12:38:44,452 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "/home/enes/segpro-med/utils/debug_utils.py", line 70, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enes/segpro-med/ui/handlers.py", line 258, in load_data_for_annotator
+    self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
+                                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enes/segpro-med/utils/dicom_utils.py", line 242, in load_dicom_series
+    raise ValueError(f"No DICOM files found in directory: {directory}")
+ValueError: No DICOM files found in directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+
+2025-09-29 12:38:59,692 - segmed_pro - ERROR - Exception in load_data_for_annotator: No DICOM files found in directory: \Ubuntu\home\enes\segpro-med
+2025-09-29 12:38:59,692 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "/home/enes/segpro-med/utils/debug_utils.py", line 70, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enes/segpro-med/ui/handlers.py", line 258, in load_data_for_annotator
+    self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
+                                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enes/segpro-med/utils/dicom_utils.py", line 242, in load_dicom_series
+    raise ValueError(f"No DICOM files found in directory: {directory}")
+ValueError: No DICOM files found in directory: \Ubuntu\home\enes\segpro-med
+
+2025-09-29 12:39:00,747 - segmed_pro - ERROR - Exception in load_data_for_annotator: No DICOM files found in directory: \Ubuntu\home\enes\segpro-med
+2025-09-29 12:39:00,748 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "/home/enes/segpro-med/utils/debug_utils.py", line 70, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enes/segpro-med/ui/handlers.py", line 258, in load_data_for_annotator
+    self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
+                                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enes/segpro-med/utils/dicom_utils.py", line 242, in load_dicom_series
+    raise ValueError(f"No DICOM files found in directory: {directory}")
+ValueError: No DICOM files found in directory: \Ubuntu\home\enes\segpro-med
+
+2025-09-29 12:39:14,969 - segmed_pro - ERROR - Exception in load_data_for_annotator: No DICOM files found in directory: "C:\Users\enes\Downloads\cvm_48_t1"
+2025-09-29 12:39:14,969 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "/home/enes/segpro-med/utils/debug_utils.py", line 70, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enes/segpro-med/ui/handlers.py", line 258, in load_data_for_annotator
+    self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
+                                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enes/segpro-med/utils/dicom_utils.py", line 242, in load_dicom_series
+    raise ValueError(f"No DICOM files found in directory: {directory}")
+ValueError: No DICOM files found in directory: "C:\Users\enes\Downloads\cvm_48_t1"
+
+2025-09-29 12:39:18,084 - segmed_pro - ERROR - Exception in load_data_for_annotator: No DICOM files found in directory: C:\Users\enes\Downloads\cvm_48_t1
+2025-09-29 12:39:18,084 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "/home/enes/segpro-med/utils/debug_utils.py", line 70, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enes/segpro-med/ui/handlers.py", line 258, in load_data_for_annotator
+    self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
+                                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enes/segpro-med/utils/dicom_utils.py", line 242, in load_dicom_series
+    raise ValueError(f"No DICOM files found in directory: {directory}")
+ValueError: No DICOM files found in directory: C:\Users\enes\Downloads\cvm_48_t1
+
+2025-09-29 12:39:38,464 - segmed_pro - ERROR - Exception in load_data_for_annotator: No DICOM files found in directory: C:/Users/enes/Downloads/cvm_48_t1
+2025-09-29 12:39:38,465 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "/home/enes/segpro-med/utils/debug_utils.py", line 70, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enes/segpro-med/ui/handlers.py", line 258, in load_data_for_annotator
+    self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
+                                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enes/segpro-med/utils/dicom_utils.py", line 242, in load_dicom_series
+    raise ValueError(f"No DICOM files found in directory: {directory}")
+ValueError: No DICOM files found in directory: C:/Users/enes/Downloads/cvm_48_t1
+
+2025-09-29 12:39:41,528 - segmed_pro - DEBUG - Reading DICOM file: cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm
+2025-09-29 12:39:41,529 - segmed_pro - DEBUG - Reading DICOM file: cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-09-29 12:39:41,529 - segmed_pro - DEBUG - Reading DICOM file: cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-09-29 12:39:41,530 - segmed_pro - DEBUG - Reading DICOM file: cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-09-29 12:39:41,530 - segmed_pro - DEBUG - Reading DICOM file: cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341775486333211_MR.dcm
+2025-09-29 12:39:41,531 - segmed_pro - DEBUG - Reading DICOM file: cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-09-29 12:39:41,531 - segmed_pro - DEBUG - Reading DICOM file: cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-09-29 12:39:41,532 - segmed_pro - DEBUG - Reading DICOM file: cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-09-29 12:39:41,534 - segmed_pro - DEBUG - Reading DICOM file: cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm
+2025-09-29 12:39:41,534 - segmed_pro - DEBUG - Reading DICOM file: cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-09-29 12:39:41,535 - segmed_pro - DEBUG - Reading DICOM file: cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-09-29 12:39:41,535 - segmed_pro - DEBUG - Reading DICOM file: cvm_48_t1/1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-09-29 12:39:41,536 - segmed_pro - DEBUG - Reading DICOM file: cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-09-29 12:39:41,536 - segmed_pro - DEBUG - Reading DICOM file: cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-09-29 12:39:41,537 - segmed_pro - DEBUG - Reading DICOM file: cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-09-29 12:39:41,537 - segmed_pro - DEBUG - Reading DICOM file: cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
+2025-09-29 12:39:41,538 - segmed_pro - DEBUG - Reading DICOM file: cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-09-29 12:39:41,539 - segmed_pro - DEBUG - Reading DICOM file: cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-09-29 12:39:41,539 - segmed_pro - DEBUG - Reading DICOM file: cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-09-29 12:39:41,540 - segmed_pro - DEBUG - Reading DICOM file: cvm_48_t1/1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-09-29 15:12:21,262 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm
+2025-09-29 15:12:21,265 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-09-29 15:12:21,266 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-09-29 15:12:21,267 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-09-29 15:12:21,268 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341775486333211_MR.dcm
+2025-09-29 15:12:21,269 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-09-29 15:12:21,270 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-09-29 15:12:21,272 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-09-29 15:12:21,274 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm
+2025-09-29 15:12:21,275 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-09-29 15:12:21,276 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-09-29 15:12:21,277 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-09-29 15:12:21,279 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-09-29 15:12:21,280 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-09-29 15:12:21,281 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-09-29 15:12:21,282 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
+2025-09-29 15:12:21,283 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-09-29 15:12:21,284 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-09-29 15:12:21,285 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-09-29 15:12:21,287 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-09-29 15:12:49,423 - segmed_pro - ERROR - Exception in load_data_for_annotator: No DICOM files found in directory: /home/enes/segpro-med/normal_52
+2025-09-29 15:12:49,423 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "/home/enes/segpro-med/utils/debug_utils.py", line 70, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enes/segpro-med/ui/handlers.py", line 258, in load_data_for_annotator
+    self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
+                                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enes/segpro-med/utils/dicom_utils.py", line 242, in load_dicom_series
+    raise ValueError(f"No DICOM files found in directory: {directory}")
+ValueError: No DICOM files found in directory: /home/enes/segpro-med/normal_52
+
+2025-09-29 15:19:43,126 - segmed_pro - ERROR - Exception in load_data_for_annotator: No DICOM files found in directory: /home/enes/segpro-med/hgg_17
+2025-09-29 15:19:43,127 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "/home/enes/segpro-med/utils/debug_utils.py", line 70, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enes/segpro-med/ui/handlers.py", line 258, in load_data_for_annotator
+    self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
+                                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enes/segpro-med/utils/dicom_utils.py", line 242, in load_dicom_series
+    raise ValueError(f"No DICOM files found in directory: {directory}")
+ValueError: No DICOM files found in directory: /home/enes/segpro-med/hgg_17
+
+2025-09-29 15:26:59,199 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm
+2025-09-29 15:26:59,201 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-09-29 15:26:59,203 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-09-29 15:26:59,204 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-09-29 15:26:59,205 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341775486333211_MR.dcm
+2025-09-29 15:26:59,206 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-09-29 15:26:59,208 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-09-29 15:26:59,209 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-09-29 15:26:59,210 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm
+2025-09-29 15:26:59,211 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-09-29 15:26:59,213 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-09-29 15:26:59,214 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-09-29 15:26:59,215 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-09-29 15:26:59,217 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-09-29 15:26:59,219 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-09-29 15:26:59,220 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
+2025-09-29 15:26:59,221 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-09-29 15:26:59,222 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-09-29 15:26:59,224 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-09-29 15:26:59,225 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-09-29 15:33:31,529 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm
+2025-09-29 15:33:31,531 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-09-29 15:33:31,532 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-09-29 15:33:31,534 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-09-29 15:33:31,535 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341775486333211_MR.dcm
+2025-09-29 15:33:31,536 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-09-29 15:33:31,537 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-09-29 15:33:31,538 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-09-29 15:33:31,539 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm
+2025-09-29 15:33:31,540 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-09-29 15:33:31,541 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-09-29 15:33:31,543 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-09-29 15:33:31,546 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-09-29 15:33:31,547 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-09-29 15:33:31,548 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-09-29 15:33:31,549 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
+2025-09-29 15:33:31,551 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-09-29 15:33:31,552 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-09-29 15:33:31,553 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-09-29 15:33:31,554 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-09-29 15:35:39,447 - segmed_pro - ERROR - Exception in load_data_for_annotator: No DICOM files found in directory: /home/enes/segpro-med/normal_52
+2025-09-29 15:35:39,447 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "/home/enes/segpro-med/utils/debug_utils.py", line 70, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enes/segpro-med/ui/handlers.py", line 258, in load_data_for_annotator
+    self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
+                                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enes/segpro-med/utils/dicom_utils.py", line 242, in load_dicom_series
+    raise ValueError(f"No DICOM files found in directory: {directory}")
+ValueError: No DICOM files found in directory: /home/enes/segpro-med/normal_52
+
+2025-09-29 15:35:41,406 - segmed_pro - ERROR - Exception in load_data_for_annotator: No DICOM files found in directory: /home/enes/segpro-med/normal_52
+2025-09-29 15:35:41,407 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "/home/enes/segpro-med/utils/debug_utils.py", line 70, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enes/segpro-med/ui/handlers.py", line 258, in load_data_for_annotator
+    self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
+                                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enes/segpro-med/utils/dicom_utils.py", line 242, in load_dicom_series
+    raise ValueError(f"No DICOM files found in directory: {directory}")
+ValueError: No DICOM files found in directory: /home/enes/segpro-med/normal_52
+
+2025-09-29 15:43:46,044 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm
+2025-09-29 15:43:46,046 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-09-29 15:43:46,047 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-09-29 15:43:46,049 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-09-29 15:43:46,050 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341775486333211_MR.dcm
+2025-09-29 15:43:46,051 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-09-29 15:43:46,053 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-09-29 15:43:46,056 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-09-29 15:43:46,058 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm
+2025-09-29 15:43:46,062 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-09-29 15:43:46,063 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-09-29 15:43:46,065 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-09-29 15:43:46,067 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-09-29 15:43:46,069 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-09-29 15:43:46,070 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-09-29 15:43:46,072 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
+2025-09-29 15:43:46,073 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-09-29 15:43:46,075 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-09-29 15:43:46,077 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-09-29 15:43:46,078 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-09-29 16:09:34,020 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm
+2025-09-29 16:09:34,022 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-09-29 16:09:34,025 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-09-29 16:09:34,026 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-09-29 16:09:34,027 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341775486333211_MR.dcm
+2025-09-29 16:09:34,029 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-09-29 16:09:34,030 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-09-29 16:09:34,031 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-09-29 16:09:34,033 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm
+2025-09-29 16:09:34,034 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-09-29 16:09:34,035 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-09-29 16:09:34,036 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-09-29 16:09:34,038 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-09-29 16:09:34,039 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-09-29 16:09:34,040 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-09-29 16:09:34,042 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
+2025-09-29 16:09:34,043 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-09-29 16:09:34,044 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-09-29 16:09:34,046 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-09-29 16:09:34,047 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-09-29 16:27:47,209 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm
+2025-09-29 16:27:47,211 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-09-29 16:27:47,213 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-09-29 16:27:47,214 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-09-29 16:27:47,215 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341775486333211_MR.dcm
+2025-09-29 16:27:47,217 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-09-29 16:27:47,219 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-09-29 16:27:47,220 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-09-29 16:27:47,221 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm
+2025-09-29 16:27:47,223 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-09-29 16:27:47,224 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-09-29 16:27:47,226 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-09-29 16:27:47,227 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-09-29 16:27:47,229 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-09-29 16:27:47,230 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-09-29 16:27:47,232 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
+2025-09-29 16:27:47,233 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-09-29 16:27:47,234 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-09-29 16:27:47,236 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-09-29 16:27:47,237 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
