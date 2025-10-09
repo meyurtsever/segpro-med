@@ -100,6 +100,13 @@ class MEDSAM2Handlers:
             # Format coordinates for display
             coords_str = "; ".join([f"({x},{y})" for x, y in self.selected_coordinates])
             
+            # Show Gradio info message for user feedback
+            total_points = len(self.selected_coordinates)
+            if total_points == 1:
+                gr.Info(f"✅ Selected coordinates ({x}, {y}) for point-based prompting")
+            else:
+                gr.Info(f"✅ Added point ({x}, {y}) - Total: {total_points} points selected for point-based prompting")
+            
             logger.info(f"Added coordinate: ({x}, {y}). Total points: {len(self.selected_coordinates)}")
             return coords_str
             
@@ -110,9 +117,17 @@ class MEDSAM2Handlers:
             return f"Error: {str(e)}"    @log_exception
     def clear_coordinates(self) -> str:
         """Clear all selected coordinates, prompt boxes, and reset annotated slice"""
+        coords_count = len(self.selected_coordinates)
         self.selected_coordinates = []
         self.prompt_boxes = []
         self.annotated_slice = None  # Reset annotated slice when clearing coordinates
+        
+        # Show info message about clearing coordinates
+        if coords_count > 0:
+            gr.Info(f"✅ Cleared {coords_count} selected coordinates and prompts")
+        else:
+            gr.Info("✅ Cleared all coordinates and prompts")
+        
         logger.info("Cleared all coordinates, prompt boxes, and reset annotated slice")
         return ""
     @log_exception

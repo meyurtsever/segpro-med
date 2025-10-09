@@ -1625,7 +1625,7 @@ def create_editor_tab() -> dict:
                     # Info box for box-based prompt (initially hidden)
                     box_info_accordion = create_info_message(
                         message="""
-                        <strong>Box-based Guidance:</strong> Draw a bounding box around the area you want to segment by clicking and dragging on the image. Use rectgangle tool from the toolbar.
+                        <strong>Box-based Guidance:</strong> Draw a bounding box around the area you want to segment by clicking and dragging on the image. <strong>Use rectangle tool from the toolbar.</strong>
                         <br><br>
                         <strong>Tip:</strong> Make sure the box fully contains the structure you want to segment with some margin around it.
                         """,

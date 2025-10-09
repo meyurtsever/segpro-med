@@ -49,6 +49,12 @@ class DebugFilter(logging.Filter):
                 "Found",  # For "Found X raw annotations to process"
                 "Final annotation collection",  # For final annotation count
                 "Submitting annotation with",  # For submission summary
+                # Deidentification debugging
+                "deidentification",  # For deidentification process messages
+                "defacing",  # For defacing operation messages
+                "pydeface",  # For pydeface library messages
+                "Deidentifying",  # For deidentification progress messages
+                "Face detection",  # For face detection messages
             ]
             message = record.getMessage()
             return any(keyword in message for keyword in allowed_keywords)
@@ -1212,10 +1218,10 @@ class SegMedPro:
                 )
         
         # Viewer handlers (using annotator-specific methods) (EDITOR-SPECIFIC)
-        def handle_slice_change_with_labels(slice_value, image_annotator_value):
+        def handle_slice_change_with_labels(slice_value, image_annotator_value, deidentify=False):
             """Handle slice slider change and update current labels, suggested labels, and VLM analysis"""
             # Get the main slider change result
-            result = self.editor_image_handlers.handle_annotator_slider_change(slice_value, image_annotator_value)
+            result = self.editor_image_handlers.handle_annotator_slider_change(slice_value, image_annotator_value, deidentify)
             # result contains: (image_display, slice_text, crosshair_info, metadata_display, window_level, window_width)
             
             # Extract current labels from the updated image and load saved labels and VLM analysis
@@ -1275,7 +1281,7 @@ class SegMedPro:
         
         slice_slider.change(
             fn=handle_slice_change_with_labels,
-            inputs=[slice_slider, image_display],
+            inputs=[slice_slider, image_display, deidentification_checkbox],
             outputs=[image_display, slice_text, crosshair_info, metadata_display, window_level, window_width, current_labels_dataset, suggested_labels_dataset, accept_suggestions_btn, vlm_caption, voice_analysis_row, voice_analysis_controls]
         )
         def handle_view_change_with_labels(view_value):
@@ -1355,10 +1361,10 @@ class SegMedPro:
             inputs=[file_browser],
             outputs=[image_display, slice_text, crosshair_info, metadata_display, slice_slider, window_level, window_width]        )
           # Navigation buttons with annotation saving
-        def handle_prev_navigation(current_slider_value, current_annotated_value):
+        def handle_prev_navigation(current_slider_value, current_annotated_value, deidentify=False):
             """Handle previous button click with annotation saving (EDITOR-SPECIFIC)"""
             result_tuple, new_slider_value = self.editor_image_handlers.handle_annotator_navigation(
-                "prev", current_slider_value, current_annotated_value
+                "prev", current_slider_value, current_annotated_value, deidentify
             )
             # result_tuple contains: (image_display, slice_text, crosshair_info, metadata, window_level, window_width)
             
@@ -1405,10 +1411,10 @@ class SegMedPro:
             
             return result_tuple + (new_slider_value, current_labels_dataset, suggested_labels_dataset, accept_btn_hidden)
         
-        def handle_next_navigation(current_slider_value, current_annotated_value):
+        def handle_next_navigation(current_slider_value, current_annotated_value, deidentify=False):
             """Handle next button click with annotation saving (EDITOR-SPECIFIC)"""  
             result_tuple, new_slider_value = self.editor_image_handlers.handle_annotator_navigation(
-                "next", current_slider_value, current_annotated_value
+                "next", current_slider_value, current_annotated_value, deidentify
             )
             # result_tuple contains: (image_display, slice_text, crosshair_info, metadata, window_level, window_width)
             
@@ -1457,11 +1463,11 @@ class SegMedPro:
         
         prev_btn.click(
             fn=handle_prev_navigation,
-            inputs=[slice_slider, image_display],
+            inputs=[slice_slider, image_display, deidentification_checkbox],
             outputs=[image_display, slice_text, crosshair_info, metadata_display, window_level, window_width, slice_slider, current_labels_dataset, suggested_labels_dataset, accept_suggestions_btn]
         )
         
-        next_btn.click(            fn=handle_next_navigation,            inputs=[slice_slider, image_display],
+        next_btn.click(            fn=handle_next_navigation,            inputs=[slice_slider, image_display, deidentification_checkbox],
             outputs=[image_display, slice_text, crosshair_info, metadata_display, window_level, window_width, slice_slider, current_labels_dataset, suggested_labels_dataset, accept_suggestions_btn]
         )
           # Connect processing mode change event with layout switching
@@ -1722,6 +1728,10 @@ class SegMedPro:
             modal_backdrop_update = gr.update(visible=False)
             modal_container_update = gr.update(visible=False)
             
+            # Deselect both checkboxes after successful annotation
+            point_checkbox_update = gr.update(value=False) if success else gr.update()
+            box_checkbox_update = gr.update(value=False) if success else gr.update()
+            
             if success and image is not None and show_segmentation_modal:
                 # Check if the image has annotation overlays/segments
                 try:
@@ -1736,12 +1746,12 @@ class SegMedPro:
                 except Exception as e:
                     logger.warning(f"Could not check annotation status for modal: {e}")
             
-            return status, image, viewer_3d_update, modal_backdrop_update, modal_container_update
+            return status, image, viewer_3d_update, modal_backdrop_update, modal_container_update, point_checkbox_update, box_checkbox_update
         
         annotate_btn.click(
             fn=handle_annotation_workflow,
             inputs=[output_dir, save_visualizations, device_selector, processing_mode, score_threshold, image_display],
-            outputs=[error_display, image_display, viewer_3d, modal_backdrop, modal_container]
+            outputs=[error_display, image_display, viewer_3d, modal_backdrop, modal_container, point_prompt_checkbox, box_prompt_checkbox]
         )          # Unified VLM handler for all models (EDITOR-SPECIFIC)
         def handle_vlm_inference(vlm_model, image_display, identify_anomalies, describe_slice):
             """Handle VLM inference based on selected model"""

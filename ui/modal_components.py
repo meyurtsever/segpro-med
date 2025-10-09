@@ -487,17 +487,24 @@ def create_segmentation_complete_modal():
             #segmentation-modal-container {{
                 width: 650px !important;
                 max-width: 90vw !important;
+                padding: 0 !important;
+                overflow-y: auto !important;
+                overflow-x: hidden !important;
+                max-height: 80vh !important;
             }}
             
             .segmentation-modal-header {{
                 background: linear-gradient(135deg, #059669, #047857) !important;
                 color: white !important;
-                padding: 20px !important;
-                border-radius: 8px 8px 0 0 !important;
+                padding: 16px 20px !important;
+                border-radius: 16px 16px 0 0 !important;
                 border-bottom: 1px solid #047857 !important;
                 display: flex !important;
-                justify-content: space-between !important;
+                justify-content: center !important;
                 align-items: center !important;
+                position: relative !important;
+                min-height: 60px !important;
+                margin: 0 !important;
             }}
             
             .segmentation-modal-title {{
@@ -505,7 +512,48 @@ def create_segmentation_complete_modal():
                 font-weight: 600 !important;
                 margin: 0 !important;
                 color: white !important;
-                flex-grow: 1 !important;
+                text-align: center !important;
+                flex: 1 !important;
+            }}
+            
+            /* Position close button absolutely to avoid affecting title centering */
+            .segmentation-modal-header .close-button {{
+                position: absolute !important;
+                right: 12px !important;
+                top: 50% !important;
+                transform: translateY(-50%) !important;
+                background: rgba(255, 255, 255, 0.2) !important;
+                color: white !important;
+                border: 1px solid rgba(255, 255, 255, 0.3) !important;
+                border-radius: 4px !important;
+                padding: 4px !important;
+                cursor: pointer !important;
+                font-size: 12px !important;
+                font-weight: 600 !important;
+                transition: all 0.2s ease !important;
+                width: 24px !important;
+                height: 24px !important;
+                min-width: 24px !important;
+                min-height: 24px !important;
+                max-width: 24px !important;
+                max-height: 24px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                line-height: 1 !important;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+                flex-shrink: 0 !important;
+            }}
+            
+            .segmentation-modal-header .close-button:hover {{
+                background: rgba(239, 68, 68, 0.8) !important;
+                color: white !important;
+                transform: translateY(-50%) scale(1.05) !important;
+                border-color: rgba(239, 68, 68, 0.8) !important;
+            }}
+            
+            .segmentation-modal-header .close-button:active {{
+                transform: translateY(-50%) scale(0.98) !important;
             }}
             
             .segmentation-modal-content {{
@@ -571,11 +619,8 @@ def create_segmentation_complete_modal():
         
         # Modal header
         with gr.Row(elem_classes=["segmentation-modal-header"]):
-            with gr.Column(scale=30):
-                gr.HTML(f'<h1 class="segmentation-modal-title">Segmentation Complete</h1>')
-            
-            with gr.Column(scale=1):
-                close_button = gr.Button("✕", elem_classes=["close-button"], variant="secondary")
+            gr.HTML(f'<h1 class="segmentation-modal-title">Segmentation Complete</h1>')
+            close_button = gr.Button("✕", elem_classes=["close-button"], variant="secondary")
 
         # Modal content
         with gr.Column(elem_classes=["segmentation-modal-content"]):
