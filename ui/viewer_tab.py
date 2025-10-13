@@ -182,6 +182,19 @@ def create_viewer_controls_section() -> tuple:
         # Viewer Controls Section
         gr.Markdown("## Viewer Controls")
         
+        # Mammography Zoom Controls (for Direct Pixel Extractor)
+        with gr.Accordion("Mammography Zoom", open=True):
+            gr.Markdown("**Lossless Zoom Controls for Mammography Images**")
+            with gr.Row():
+                zoom_in_btn = gr.Button("🔍 Zoom In", size="sm")
+                zoom_out_btn = gr.Button("🔍 Zoom Out", size="sm")
+            zoom_reset_btn = gr.Button("🏠 Reset View", variant="secondary")
+            zoom_status = gr.Textbox(
+                label="Zoom Status",
+                interactive=False,
+                value="No zoom active"
+            )
+        
         # Enhanced Export Options
         with gr.Accordion("Export Options", open=False):
             # Export format selection

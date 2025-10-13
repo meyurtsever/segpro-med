@@ -9,6 +9,7 @@ import os
 import logging
 import gradio as gr
 import numpy as np
+import cv2
 from typing import Optional, List
 import time
 
@@ -19,6 +20,35 @@ from ui.state import AppState
 from ui.export_handlers import ExportHandlers
 
 logger = logging.getLogger(__name__)
+
+
+def get_viewport_image_for_annotator(state):
+    """
+    Get the current viewport image for the image_annotator.
+    If viewport system is active, returns the viewport image.
+    Otherwise returns the original approach.
+    
+    Args:
+        state: AppState instance
+        
+    Returns:
+        np.ndarray: Image for display in image_annotator
+    """
+    try:
+        if state.use_viewport_system and state.image_viewport is not None:
+            # Use professional viewport system
+            viewport_image = state.image_viewport.get_viewport_image()
+            logger.debug(f"Retrieved viewport image: {viewport_image.shape}")
+            return viewport_image
+        else:
+            # Fallback to original image processing
+            # This is for brain MRI and other normal resolution images
+            logger.debug("Using standard image processing (no viewport)")
+            return None  # Caller should handle this case
+            
+    except Exception as e:
+        logger.error(f"Error getting viewport image: {e}")
+        return None
 
 
 class ImageViewerHandlers:
@@ -92,14 +122,59 @@ class ImageViewerHandlers:
             logger.info(f"Using WindowWidth from metadata: {window_width}")
           # Generate the slice image
         try:
-            img = display_slice(
-                self.state.current_data, 
-                self.state.current_slice_idx, 
-                self.state.current_view,
-                window_level=window_center,
-                window_width=window_width,
-                crosshair=None,
-                add_orientation_marker=False            )
+            # DETECT MAMMOGRAPHY AND ACTIVATE DIRECT PIXEL EXTRACTOR
+            # Check if this is mammography data that needs lossless quality handling
+            if (self.state.current_data is not None and 
+                not getattr(self.state, 'direct_pixel_extractor', None) and
+                self.state.current_data_type == "dicom"):
+                
+                # Get current slice to check dimensions
+                current_slice = display_slice(
+                    self.state.current_data,
+                    self.state.current_slice_idx,
+                    self.state.current_view,
+                    window_level=window_center,
+                    window_width=window_width,
+                    crosshair=None,
+                    add_orientation_marker=False
+                )
+                
+                # Check if this looks like mammography (high resolution)
+                if current_slice.shape[1] > 2000 or current_slice.shape[0] > 2000:  # Width or height > 2000
+                    logger.info(f"🏥 MAMMOGRAPHY DETECTED: {current_slice.shape} - Activating Direct Pixel Extractor")
+                    
+                    # Convert to RGB if needed
+                    if len(current_slice.shape) == 2:
+                        # Normalize and convert grayscale to RGB
+                        normalized = ((current_slice - current_slice.min()) / 
+                                    (current_slice.max() - current_slice.min()) * 255).astype(np.uint8)
+                        slice_rgb = np.stack([normalized] * 3, axis=-1)
+                    else:
+                        slice_rgb = current_slice.astype(np.uint8)
+                    
+                    # Activate Direct Pixel Extractor
+                    from utils.direct_pixel_extractor import create_lossless_mammography_extractor
+                    self.state.direct_pixel_extractor = create_lossless_mammography_extractor(slice_rgb)
+                    self.state.use_viewport_system = True
+                    
+                    logger.info(f"✅ DIRECT PIXEL EXTRACTOR ACTIVATED for {slice_rgb.shape} mammography")
+            
+            # Check if we should use the DIRECT PIXEL EXTRACTOR for lossless mammography viewing
+            if self.state.use_viewport_system and hasattr(self.state, 'direct_pixel_extractor') and self.state.direct_pixel_extractor is not None:
+                # Use DIRECT PIXEL EXTRACTION for guaranteed lossless quality
+                # This extracts exact pixels from original mammography data
+                img = self.state.direct_pixel_extractor.get_display_image()
+                logger.debug(f"Using DIRECT PIXEL EXTRACTION: got image {img.shape} (LOSSLESS)")
+            else:
+                # Standard approach for normal resolution images (brain MRI, etc.)
+                img = display_slice(
+                    self.state.current_data, 
+                    self.state.current_slice_idx, 
+                    self.state.current_view,
+                    window_level=window_center,
+                    window_width=window_width,
+                    crosshair=None,
+                    add_orientation_marker=False            )
             
             # NOTE: Segmentation overlays are now handled via image_annotator shapes instead of image overlays
             
@@ -835,7 +910,19 @@ class ImagePlotToolHandlers:
                 img_rgb = img
             
             if img_rgb.dtype != np.uint8:
-                img_rgb = (img_rgb * 255).astype(np.uint8)            # Check for annotation overlays and convert to polygon shapes
+                img_rgb = (img_rgb * 255).astype(np.uint8)
+            
+            # Use viewport system if available, otherwise use original image
+            viewport_img = get_viewport_image_for_annotator(self.state)
+            if viewport_img is not None:
+                # Professional viewport system active
+                img_rgb = viewport_img
+                logger.debug("Using professional viewport for slice update")
+            else:
+                # Standard image processing for normal resolution images
+                logger.debug("Using standard image processing for slice update")
+            
+            # Check for annotation overlays and convert to polygon shapes
             annotation_shapes = []
               # Check if user has edited annotations for this slice
             has_user_annotations = self.state.current_slice_idx in self.user_annotations
@@ -897,7 +984,7 @@ class ImagePlotToolHandlers:
             
             logger.info(f"Total annotations for slice {self.state.current_slice_idx}: {len(annotation_shapes)}")
             
-            # Create AnnotatedImageValue format - display at full size
+            # Create AnnotatedImageValue format - use viewport or original image
             annotated_value = {
                 "image": img_rgb,
                 "boxes": annotation_shapes,  # Include MEDSAM2 polygon shapes for interactive editing
@@ -1098,9 +1185,11 @@ class ImagePlotToolHandlers:
                 if isinstance(window_width, list):
                     window_width = window_width[0]
                 
-                # Update slider
+                # Update slider - fix math domain error when max_slices = 0
                 max_slices = self.state.get_max_slice_for_view(self.state.current_view)
-                new_slider = gr.Slider(minimum=0, maximum=max_slices, value=self.state.current_slice_idx)
+                # Ensure maximum is always greater than minimum to avoid math domain error
+                slider_max = max(max_slices, 1)
+                new_slider = gr.Slider(minimum=0, maximum=slider_max, value=self.state.current_slice_idx, visible=(max_slices > 0))
                 
                 return (annotated_value, 
                        f"{self.state.current_slice_idx + 1}/{max_slices + 1}", 

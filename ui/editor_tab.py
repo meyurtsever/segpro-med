@@ -1299,7 +1299,21 @@ def create_editor_tab() -> dict:
                         # 3D Viewer Controls
                         with gr.Row() as viewer_3d_controls:
                             refresh_3d_btn = gr.Button("🔄 Refresh 3D View", size="sm")
-                            export_3d_btn = gr.Button("💾 Export 3D", size="sm")# Navigation controls (middle)
+                            export_3d_btn = gr.Button("💾 Export 3D", size="sm")
+                
+                # Mammography Zoom Controls (for Direct Pixel Extractor)
+                with gr.Row() as mammography_zoom_controls:
+                    zoom_in_btn = gr.Button("🔍+ Zoom In", size="sm", variant="secondary")
+                    zoom_out_btn = gr.Button("🔍- Zoom Out", size="sm", variant="secondary") 
+                    zoom_reset_btn = gr.Button("🏠 Reset View", size="sm", variant="secondary")
+                    zoom_status = gr.Textbox(
+                        label="Zoom Status", 
+                        value="Zoom: 1.0x", 
+                        interactive=False,
+                        scale=2
+                    )
+                
+                # Navigation controls (middle)
                 with gr.Row():
                     prev_btn = gr.Button("Previous")
                     slice_slider = gr.Slider(
@@ -1541,7 +1555,9 @@ def create_editor_tab() -> dict:
                 with gr.Accordion("Metadata", open=False):
                     metadata_display = gr.JSON(label=None, visible=True)
                 
-                col2 = (error_display, metadata_display, view_selector, deidentification_checkbox, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, 
+                col2 = (error_display, metadata_display, view_selector, deidentification_checkbox, image_display, image_column, viewer_3d_column, 
+                        zoom_in_btn, zoom_out_btn, zoom_reset_btn, zoom_status,
+                        prev_btn, slice_slider, next_btn, slice_text, crosshair_info, 
                         crowdsourcing_accordion, submit_annotation_btn, assignments_remaining, next_assignment_btn, crowdsourcing_status,
                         current_labels_dataset, suggested_vlm_selector, suggest_labels_btn, suggested_labels_dataset, accept_suggestions_btn, vlm_model_selector, vlm_run_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn, voice_prompt_text, voice_audio_input, voice_analysis_row, voice_analysis_controls, voice_analysis_audio, voice_analysis_text, save_to_analysis_btn, vlm_info_accordion, vlm_tools_info_accordion, vlm_custom_prompt_info_accordion)
             

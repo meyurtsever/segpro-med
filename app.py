@@ -113,6 +113,7 @@ from ui.med_r1_handlers import MedR1Handlers
 from ui.medgemma_handlers import MedGemmaHandlers
 from ui.medgemma_handlers import MedGemmaHandlers
 from ui.patient_retrieval_handlers import PatientRetrievalHandlers
+from ui.direct_extraction_events import DirectExtractionEventHandlers
 from utils.voice_input import transcribe_voice_input
 
 # Crowdsourcing imports (only imported if authentication is enabled)
@@ -1085,7 +1086,9 @@ class SegMedPro:
         # Unpack components
         (file_input, dir_input, load_btn, reset_dir_btn, file_browser, label_file,
          metadata_display_dl, error_display_dl, window_level, window_width, apply_window_btn, debug_btn) = data_loading
-        (error_display, metadata_display, view_selector, deidentification_checkbox, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, 
+        (error_display, metadata_display, view_selector, deidentification_checkbox, image_display, image_column, viewer_3d_column, 
+         zoom_in_btn, zoom_out_btn, zoom_reset_btn, zoom_status,
+         prev_btn, slice_slider, next_btn, slice_text, crosshair_info, 
          crowdsourcing_accordion, submit_annotation_btn, assignments_remaining, next_assignment_btn, crowdsourcing_status,
          current_labels_dataset, suggested_vlm_selector, suggest_labels_btn, suggested_labels_dataset, accept_suggestions_btn, vlm_model_selector, vlm_run_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn, voice_prompt_text, voice_audio_input, voice_analysis_row, voice_analysis_controls, voice_analysis_audio, voice_analysis_text, save_to_analysis_btn, vlm_info_accordion, vlm_tools_info_accordion, vlm_custom_prompt_info_accordion) = visualization        
         (point_prompt_checkbox, box_prompt_checkbox, coordinates_text, clear_coords_btn, ai_model_selector, 
@@ -1130,14 +1133,14 @@ class SegMedPro:
             outputs=[box_info_accordion]
         )
         
-          # Data loading handlers (updated for annotator compatibility)
+          # Data loading handlers (updated for adaptive medical data loading)
         load_btn.click(
-            fn=self.data_handlers.load_data_for_annotator,
+            fn=self.data_handlers.load_medical_data_adaptive,
             inputs=[file_input, dir_input, deidentification_checkbox],
             outputs=[
                 image_display, file_browser, metadata_display,
                 slice_slider, slice_text, crosshair_info, error_display,
-                window_level, window_width
+                window_level, window_width, view_selector
             ]
         )
         reset_dir_btn.click(
@@ -1146,12 +1149,12 @@ class SegMedPro:
             outputs=[dir_input]
         )
         file_input.change(
-            fn=self.data_handlers.load_data_for_annotator,
+            fn=self.data_handlers.load_medical_data_adaptive,
             inputs=[file_input, dir_input, deidentification_checkbox],
             outputs=[
                 image_display, file_browser, metadata_display,
                 slice_slider, slice_text, crosshair_info, error_display,
-                window_level, window_width
+                window_level, window_width, view_selector
             ]
         )
         
@@ -1159,6 +1162,17 @@ class SegMedPro:
             fn=self.data_handlers.debug_selected_file,
             inputs=[file_input, dir_input],
             outputs=[error_display]
+        )
+        
+        # File input clear handler - clears display when X button is clicked
+        file_input.clear(
+            fn=self.data_handlers.clear_data_and_display,
+            inputs=[],
+            outputs=[
+                image_display, file_browser, metadata_display,
+                slice_slider, slice_text, crosshair_info, error_display,
+                window_level, window_width, view_selector
+            ]
         )
         
         # Label file handler for updating image_annotator labels (EDITOR-SPECIFIC)
@@ -1180,7 +1194,7 @@ class SegMedPro:
                     fn=lambda: ("/home/enes/segpro-med/cvm_48_t1", gr.update(visible=False), gr.update(visible=False)),
                     outputs=[dir_input, modal_system['backdrop'], modal_system['welcome_modal']]
                 ).then(
-                    fn=lambda file_obj, dir_input_val: self.data_handlers.load_data_for_annotator(file_obj, dir_input_val, False),
+                    fn=lambda file_obj, dir_input_val: self.data_handlers.load_medical_data_adaptive(file_obj, dir_input_val, False),
                     inputs=[file_input, dir_input],
                     outputs=[
                         image_display, file_browser, metadata_display,
@@ -1194,7 +1208,7 @@ class SegMedPro:
                     fn=lambda: ("/home/enes/segpro-med/normal_52", gr.update(visible=False), gr.update(visible=False)),
                     outputs=[dir_input, modal_system['backdrop'], modal_system['welcome_modal']]
                 ).then(
-                    fn=lambda file_obj, dir_input_val: self.data_handlers.load_data_for_annotator(file_obj, dir_input_val, False),
+                    fn=lambda file_obj, dir_input_val: self.data_handlers.load_medical_data_adaptive(file_obj, dir_input_val, False),
                     inputs=[file_input, dir_input],
                     outputs=[
                         image_display, file_browser, metadata_display,
@@ -1208,7 +1222,7 @@ class SegMedPro:
                     fn=lambda: ("/home/enes/segpro-med/hgg_17", gr.update(visible=False), gr.update(visible=False)),
                     outputs=[dir_input, modal_system['backdrop'], modal_system['welcome_modal']]
                 ).then(
-                    fn=lambda file_obj, dir_input_val: self.data_handlers.load_data_for_annotator(file_obj, dir_input_val, False),
+                    fn=lambda file_obj, dir_input_val: self.data_handlers.load_medical_data_adaptive(file_obj, dir_input_val, False),
                     inputs=[file_input, dir_input],
                     outputs=[
                         image_display, file_browser, metadata_display,
@@ -1346,8 +1360,41 @@ class SegMedPro:
             # Return original result plus label datasets, hidden accept button, VLM analysis, and voice components
             return result + (current_labels_dataset, suggested_labels_dataset, accept_btn_hidden, saved_vlm_analysis, voice_row_hidden, voice_controls_hidden)
         
+        # View orientation handler - adaptive for both brain MRI orientations and mammography views
+        def handle_view_orientation_adaptive(selected_orientation):
+            """Handle view orientation change for both mammography and brain MRI with warning support"""
+            result = self.data_handlers.handle_view_orientation_change(selected_orientation)
+            if result is None:
+                # Fallback to existing handler for brain MRI
+                return handle_view_change_with_labels(selected_orientation)
+            
+            annotated_value, status_text, warning = result
+            
+            if warning is not None:
+                # Return warning along with current state
+                current_result = handle_view_change_with_labels(selected_orientation)
+                return current_result  # Let existing handler manage the display
+            else:
+                # For mammography, return updated display
+                if annotated_value is not None:
+                    # Reset label datasets for new view
+                    current_labels_dataset = gr.Dataset(samples=[])
+                    suggested_labels_dataset = gr.Dataset(samples=[])
+                    accept_btn_hidden = gr.update(visible=False)
+                    saved_vlm_analysis = ""
+                    voice_row_hidden = gr.update(visible=False)
+                    voice_controls_hidden = gr.update(visible=False)
+                    
+                    # Return mammography view update
+                    return (gr.Slider(visible=False), status_text, annotated_value, 
+                           current_labels_dataset, suggested_labels_dataset, accept_btn_hidden, 
+                           saved_vlm_analysis, voice_row_hidden, voice_controls_hidden)
+                else:
+                    # Fallback to existing handler
+                    return handle_view_change_with_labels(selected_orientation)
+        
         view_selector.change(
-            fn=handle_view_change_with_labels,
+            fn=handle_view_orientation_adaptive,
             inputs=[view_selector],
             outputs=[slice_slider, slice_text, image_display, current_labels_dataset, suggested_labels_dataset, accept_suggestions_btn, vlm_caption, voice_analysis_row, voice_analysis_controls]
         )
@@ -1356,10 +1403,26 @@ class SegMedPro:
             inputs=[window_level, window_width],
             outputs=[image_display]
         )
+        # File browser change handler - adaptive for both file selection and mammography view switching
+        def handle_browser_selection_adaptive(selected_item):
+            """Handle browser selection for both brain MRI files and mammography views"""
+            if self.data_handlers.state.current_data_type == "mammography":
+                # Handle mammography view switching
+                result = self.data_handlers.switch_mammography_view(selected_item)
+                if result is None:
+                    # Return default values if switching fails
+                    return None, "View switch failed", "N/A", {}, gr.Slider(visible=False), 500, 1000
+                annotated_value, status_text, crosshair_text = result
+                return annotated_value, status_text, crosshair_text, self.data_handlers.state.current_metadata, gr.Slider(visible=False), 500, 1000
+            else:
+                # Handle traditional file browser selection for brain MRI
+                return self.editor_image_handlers.select_file_from_browser_for_annotator(selected_item)
+        
         file_browser.change(
-            fn=self.editor_image_handlers.select_file_from_browser_for_annotator,
+            fn=handle_browser_selection_adaptive,
             inputs=[file_browser],
-            outputs=[image_display, slice_text, crosshair_info, metadata_display, slice_slider, window_level, window_width]        )
+            outputs=[image_display, slice_text, crosshair_info, metadata_display, slice_slider, window_level, window_width]
+        )
           # Navigation buttons with annotation saving
         def handle_prev_navigation(current_slider_value, current_annotated_value, deidentify=False):
             """Handle previous button click with annotation saving (EDITOR-SPECIFIC)"""
@@ -1752,7 +1815,31 @@ class SegMedPro:
             fn=handle_annotation_workflow,
             inputs=[output_dir, save_visualizations, device_selector, processing_mode, score_threshold, image_display],
             outputs=[error_display, image_display, viewer_3d, modal_backdrop, modal_container, point_prompt_checkbox, box_prompt_checkbox]
-        )          # Unified VLM handler for all models (EDITOR-SPECIFIC)
+        )
+        
+        # Direct Pixel Extractor Zoom Controls (MAMMOGRAPHY-SPECIFIC)
+        # Create event handler instance
+        zoom_handlers = DirectExtractionEventHandlers(self.state)
+        
+        # Zoom In Button - zoom in at center
+        zoom_in_btn.click(
+            fn=lambda: zoom_handlers.handle_zoom_event(1.5, 600, 300),  # Zoom in 1.5x at center (1200x600 display)
+            outputs=[image_display, zoom_status]
+        )
+        
+        # Zoom Out Button - zoom out at center
+        zoom_out_btn.click(
+            fn=lambda: zoom_handlers.handle_zoom_event(0.67, 600, 300),  # Zoom out 0.67x at center
+            outputs=[image_display, zoom_status]
+        )
+        
+        # Reset Zoom Button - reset to fit view
+        zoom_reset_btn.click(
+            fn=zoom_handlers.handle_reset_view,
+            outputs=[image_display, zoom_status]
+        )
+        
+        # Unified VLM handler for all models (EDITOR-SPECIFIC)
         def handle_vlm_inference(vlm_model, image_display, identify_anomalies, describe_slice):
             """Handle VLM inference based on selected model"""
             try:
