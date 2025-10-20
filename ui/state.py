@@ -31,7 +31,7 @@ class AppState:
         
         # Core data state
         self.current_data: Optional[np.ndarray] = None
-        self.current_data_type: Optional[str] = None  # "dicom", "nifti", or "mammography"
+        self.current_data_type: Optional[str] = None  # "dicom" or "nifti"
         self.current_metadata: Optional[Dict[str, Any]] = None
         self.current_directory: Optional[str] = None
         self.file_list: List[str] = []
@@ -39,11 +39,6 @@ class AppState:
         self.current_view: str = "axial"  # axial, sagittal, coronal
         self.crosshair_position: Optional[Tuple[int, int, int]] = None
         self.current_shape: Tuple[int, int, int] = (0, 0, 0)
-        
-        # Mammography-specific state
-        self.mammography_views: Optional[Dict[str, np.ndarray]] = None  # Dict of view_name -> numpy array
-        self.mammography_view_files: Optional[Dict[str, str]] = None    # Dict of view_name -> file_path
-        self.current_mammography_view: Optional[str] = None            # Current view being displayed
         
         # Plot tool state
         self.current_plot_tool: str = "drawclosedpath"          # Segmentation state
@@ -76,15 +71,6 @@ class AppState:
         
         # Image viewer state (used by image_viewer_handlers)
         self.image_viewer_tool: str = "pan"
-        
-        # Image scaling state (for high-resolution images like mammography)
-        self.image_scale_x: float = 1.0  # Scaling factor for x-coordinate conversion
-        self.image_scale_y: float = 1.0  # Scaling factor for y-coordinate conversion
-        
-        # Professional viewport system for high-resolution images
-        self.image_viewport = None  # ImageViewport instance for mammography and other high-res images (DEPRECATED)
-        self.direct_pixel_extractor = None  # DirectPixelExtractor for LOSSLESS mammography viewing
-        self.use_viewport_system: bool = False  # Whether to use viewport/extractor for current image
         
         # Window/level settings
         self.window_level: float = 500.0
@@ -125,11 +111,6 @@ class AppState:
         self.current_slice_idx = 0
         self.crosshair_position = None
         self.current_shape = (0, 0, 0)
-        
-        # Reset mammography-specific state
-        self.mammography_views = None
-        self.mammography_view_files = None
-        self.current_mammography_view = None
     
     def reset_segmentation(self) -> None:
         """Reset segmentation-related state"""
