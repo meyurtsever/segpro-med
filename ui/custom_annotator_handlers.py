@@ -498,7 +498,7 @@ class CustomAnnotatorHandlers:
                     slider_max = 0
                 slice_slider_update = gr.Slider(minimum=0, maximum=slider_max, value=slice_idx, step=1)
             else:
-                slice_slider_update = gr.Slider(minimum=0, maximum=0, value=0, step=1)
+                slice_slider_update = gr.Slider(minimum=0, maximum=1, value=0, step=1, visible=False)
             
             logger.info(f"Loaded data for annotator with slice: {slice_idx}, files: {len(file_list)}, slider_max: {slider_max}")
             return annotation_value, error, metadata, window_level, window_width, slice_slider_update, slice_text, dropdown_update
@@ -507,7 +507,7 @@ class CustomAnnotatorHandlers:
             # Create a placeholder image to prevent JSON decoding errors
             image = np.zeros((100, 100, 3), dtype=np.uint8)
             placeholder = {"image": image, "boxes": []}
-            return placeholder, f"Error: {str(e)}", {}, 500, 1000, gr.Slider(minimum=0, maximum=0, value=0, step=1), "0/0", gr.Dropdown(choices=[], value=None)
+            return placeholder, f"Error: {str(e)}", {}, 500, 1000, gr.Slider(minimum=0, maximum=1, value=0, step=1, visible=False), "0/0", gr.Dropdown(choices=[], value=None)
 
     def reset_directory(self):
         """Reset the directory input field"""
@@ -523,7 +523,7 @@ class CustomAnnotatorHandlers:
                 # No file selected or no directory loaded
                 image = np.zeros((100, 100, 3), dtype=np.uint8)
                 annotation_value = {"image": image, "boxes": []}
-                return annotation_value, "No file selected or directory not loaded", {}, 500, 1000, gr.Slider(minimum=0, maximum=0, value=0, step=1), "0/0"
+                return annotation_value, "No file selected or directory not loaded", {}, 500, 1000, gr.Slider(minimum=0, maximum=1, value=0, step=1, visible=False), "0/0"
             
             # Construct full path
             selected_path = os.path.join(self.state.current_directory, selected_file)
@@ -532,7 +532,7 @@ class CustomAnnotatorHandlers:
             if not os.path.exists(selected_path):
                 image = np.zeros((100, 100, 3), dtype=np.uint8)
                 annotation_value = {"image": image, "boxes": []}
-                return annotation_value, f"File not found: {selected_path}", {}, 500, 1000, gr.Slider(minimum=0, maximum=0, value=0, step=1), "0/0"
+                return annotation_value, f"File not found: {selected_path}", {}, 500, 1000, gr.Slider(minimum=0, maximum=1, value=0, step=1, visible=False), "0/0"
             
             # Find index of selected file in file list
             if hasattr(self.state, 'current_file_list') and self.state.current_file_list:
@@ -589,7 +589,7 @@ class CustomAnnotatorHandlers:
             # Return default values with error message
             image = np.zeros((100, 100, 3), dtype=np.uint8)
             placeholder = {"image": image, "boxes": []}
-            return placeholder, f"Error: {str(e)}", {}, 500, 1000, gr.Slider(minimum=0, maximum=0, value=0, step=1), "0/0"
+            return placeholder, f"Error: {str(e)}", {}, 500, 1000, gr.Slider(minimum=0, maximum=1, value=0, step=1, visible=False), "0/0"
 
     def prev_slice(self, slider_value):
         """Navigate to previous slice"""
@@ -715,7 +715,7 @@ class CustomAnnotatorHandlers:
             # Create a placeholder value to prevent JSON decoding errors
             image = np.zeros((100, 100, 3), dtype=np.uint8)
             placeholder = {"image": image, "boxes": []}
-            return gr.Slider(minimum=0, maximum=0, value=0, step=1), "0/0", placeholder
+            return gr.Slider(minimum=0, maximum=1, value=0, step=1, visible=False), "0/0", placeholder
 
     def update_window_level(self, level, width):
         """Update window level/width for image display"""

@@ -101,8 +101,8 @@ def create_custom_annotator_tab():
                 with gr.Row():
                     prev_btn = gr.Button("Previous")
                     slice_slider = gr.Slider(
-                        minimum=0, maximum=0, value=0, step=1,
-                        label="Slice Navigation", visible=True
+                        minimum=0, maximum=1, value=0, step=1,
+                        label="Slice Navigation", visible=False
                     )
                     next_btn = gr.Button("Next")
                 

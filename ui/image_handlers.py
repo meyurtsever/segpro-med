@@ -169,6 +169,8 @@ class ImageViewerHandlers:
         # Determine slice count and range based on view
         slider_min = 0
         slider_max = self.state.get_max_slice_for_view(self.state.current_view)
+        # Ensure maximum > minimum to avoid log10(0) error
+        slider_max = max(slider_max, 1)
         
         if self.state.current_view == "axial":
             self.state.current_slice_idx = self.state.crosshair_position[2]
@@ -940,6 +942,8 @@ class ImagePlotToolHandlers:
         # Determine slice count and range based on view
         slider_min = 0
         slider_max = self.state.get_max_slice_for_view(self.state.current_view)
+        # Ensure maximum > minimum to avoid log10(0) error
+        slider_max = max(slider_max, 1)
         
         if self.state.current_view == "axial":
             self.state.current_slice_idx = self.state.crosshair_position[2]
@@ -1098,9 +1102,10 @@ class ImagePlotToolHandlers:
                 if isinstance(window_width, list):
                     window_width = window_width[0]
                 
-                # Update slider
+                # Update slider - ensure maximum > minimum to avoid log10(0) error
                 max_slices = self.state.get_max_slice_for_view(self.state.current_view)
-                new_slider = gr.Slider(minimum=0, maximum=max_slices, value=self.state.current_slice_idx)
+                slider_max = max(max_slices, 1)  # Ensure maximum is at least 1
+                new_slider = gr.Slider(minimum=0, maximum=slider_max, value=self.state.current_slice_idx, visible=(max_slices > 0))
                 
                 return (annotated_value, 
                        f"{self.state.current_slice_idx + 1}/{max_slices + 1}", 

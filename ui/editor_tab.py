@@ -1284,6 +1284,9 @@ def create_editor_tab() -> dict:
                             single_box=False,  # Allow multiple boxes
                             disable_edit_boxes=False,  # Allow editing boxes
                             shape_creation_mode="drag",
+                            auto_scroll=True,
+                            scroll_threshold=1.0,  # Enable scrolling when image exceeds container
+                            preserve_resolution=True,  # Maintain original image quality
                         )
                     
                     # 3D Viewer column - initially hidden
@@ -1303,8 +1306,8 @@ def create_editor_tab() -> dict:
                 with gr.Row():
                     prev_btn = gr.Button("Previous")
                     slice_slider = gr.Slider(
-                        minimum=0, maximum=0, value=0, step=1,
-                        label="Slice Navigation", visible=True
+                        minimum=0, maximum=1, value=0, step=1,
+                        label="Slice Navigation", visible=False
                     )
                     next_btn = gr.Button("Next")
                 with gr.Row():
