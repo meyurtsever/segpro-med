@@ -1,4 +1,7 @@
 {
+  "identify_anomalies": "As a medical AI assistant, carefully analyze this brain MRI slice. Identify any abnormal findings, anomalies, or pathological regions. Describe the location, characteristics, and potential clinical significance of any abnormalities you observe. If no clear abnormalities are visible, state that the slice appears normal.",
+  "describe_slice": "As a medical AI assistant, provide a detailed description of this brain MRI slice. Identify the anatomical structures visible, the imaging plane (axial, sagittal, or coronal), and describe the overall tissue contrast and image quality. Mention any notable anatomical landmarks or structures that are clearly visible.",
+  "suggest_labels": "This is a brain MRI slice. Please list the anatomical or pathological structures that are visible. Return a comma-separated list of possible labels (e.g., eye, lvent, tvent, tumor, lesion, etc.).",
   "mri_label_suggestions": {
     "title": "MRI Label Suggestion Prompt",
     "description": "Specialized prompt for generating anatomical structure labels in MRI scans",

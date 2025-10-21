@@ -90,6 +90,12 @@ class ImageViewerHandlers:
             if isinstance(window_width, list):
                 window_width = window_width[0]
             logger.info(f"Using WindowWidth from metadata: {window_width}")
+        
+        # Set default values if not found in metadata
+        if window_center is None:
+            window_center = 500
+        if window_width is None:
+            window_width = 1000
           # Generate the slice image
         try:
             img = display_slice(
@@ -148,11 +154,6 @@ class ImageViewerHandlers:
             x, y, z = self.state.crosshair_position
             crosshair_text = f"x: {x}, y: {y}, z: {z}"
             
-            # Default values for window center and width if not found
-            if window_center is None:
-                window_center = 500
-            if window_width is None:
-                window_width = 1000            
             return annotated_value, f"{self.state.current_slice_idx + 1}/{total_slices}", crosshair_text, metadata, window_center, window_width
         except Exception as e:
             logger.error(f"Error generating slice image: {str(e)}")
@@ -298,7 +299,15 @@ class ImageViewerHandlers:
             if metadata and 'WindowWidth' in metadata:
                 window_width = metadata['WindowWidth']
                 if isinstance(window_width, list):
-                    window_width = window_width[0]            # Generate image at the new index
+                    window_width = window_width[0]
+            
+            # Set default values if not found in metadata
+            if window_center is None:
+                window_center = 500
+            if window_width is None:
+                window_width = 1000
+            
+            # Generate image at the new index
             img = display_slice(
                 self.state.current_data, 
                 slice_idx, 
@@ -785,19 +794,25 @@ class ImagePlotToolHandlers:
                     metadata.update(per_slice_metadata)
                     
                     # Get windowing information from per-slice metadata
-                    if "window_center" in per_slice_metadata:
-                        window_center = per_slice_metadata["window_center"]
+                    if "WindowCenter" in per_slice_metadata:
+                        window_center = per_slice_metadata["WindowCenter"]
                         if isinstance(window_center, list):
                             window_center = window_center[0]
                         logger.info(f"Using WindowCenter from per-slice metadata: {window_center}")
                     
-                    if "window_width" in per_slice_metadata:
-                        window_width = per_slice_metadata["window_width"]
+                    if "WindowWidth" in per_slice_metadata:
+                        window_width = per_slice_metadata["WindowWidth"]
                         if isinstance(window_width, list):
                             window_width = window_width[0]
                         logger.info(f"Using WindowWidth from per-slice metadata: {window_width}")
             except Exception as e:
                 logger.error(f"Error getting per-slice metadata: {str(e)}")
+        
+        # Set default values if not found in metadata
+        if window_center is None:
+            window_center = 500
+        if window_width is None:
+            window_width = 1000
           # Generate the slice image as numpy array
         try:
             img = display_slice(
@@ -916,11 +931,6 @@ class ImagePlotToolHandlers:
             # Update crosshair info
             x, y, z = self.state.crosshair_position
             crosshair_text = f"x: {x}, y: {y}, z: {z}"
-              # Default values for window center and width if not found
-            if window_center is None:
-                window_center = 500
-            if window_width is None:
-                window_width = 1000
             
             # Clear loading flag before returning
             self._loading_slice = False
@@ -1065,11 +1075,27 @@ class ImagePlotToolHandlers:
                 metadata = get_dicom_metadata(selected_file_path)
                 if not metadata:
                     metadata = self.state.current_metadata
+                
+                # Extract window values
+                window_center = metadata.get("WindowCenter", None)
+                window_width = metadata.get("WindowWidth", None)
+                if isinstance(window_center, list):
+                    window_center = window_center[0]
+                if isinstance(window_width, list):
+                    window_width = window_width[0]
+                
+                # Set default values if not found in metadata
+                if window_center is None:
+                    window_center = 500
+                if window_width is None:
+                    window_width = 1000
                   # Generate the slice image
                 img = display_slice(
                     self.state.current_data, 
                     self.state.current_slice_idx, 
                     self.state.current_view,
+                    window_level=window_center,
+                    window_width=window_width,
                     crosshair=None,
                     add_orientation_marker=False
                 )
@@ -1093,14 +1119,6 @@ class ImagePlotToolHandlers:
                 # Update crosshair info
                 x, y, z = self.state.crosshair_position
                 crosshair_text = f"x: {x}, y: {y}, z: {z}"
-                
-                # Get windowing information
-                window_center = metadata.get("window_center", 500)
-                window_width = metadata.get("window_width", 1000)
-                if isinstance(window_center, list):
-                    window_center = window_center[0]
-                if isinstance(window_width, list):
-                    window_width = window_width[0]
                 
                 # Update slider - ensure maximum > minimum to avoid log10(0) error
                 max_slices = self.state.get_max_slice_for_view(self.state.current_view)

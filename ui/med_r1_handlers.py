@@ -73,7 +73,7 @@ class MedR1Handlers:
                     self._service = None
         return self._service
         
-    def run_med_r1_inference(self, image_annotator_value: Optional[dict], identify_anomalies: bool = True, describe_slice: bool = False) -> str:
+    def run_med_r1_inference(self, image_annotator_value: Optional[dict], identify_anomalies: bool = True, describe_slice: bool = False, modality: str = "MRI") -> str:
         """
         Run Med-R1 VLM inference on the current image from image_annotator using persistent service
         
@@ -81,6 +81,7 @@ class MedR1Handlers:
             image_annotator_value: Current value from the image_annotator component
             identify_anomalies: Whether to use anomaly identification prompt
             describe_slice: Whether to use general description prompt
+            modality: Imaging modality (MRI, MG for mammography, CT, etc.)
             
         Returns:
             str: Med-R1 generated caption or error message
@@ -97,25 +98,43 @@ class MedR1Handlers:
             if image_array is None:
                 return "Error: Image data is None"
             
-            # Create Med-R1 compatible prompts (following official script format)
+            # Create Med-R1 compatible prompts based on modality (following official script format)
             # Official script uses: "First output the thinking process in <think> </think> and final choice"
-            if identify_anomalies:
-                base_prompt = ("Analyze this brain MRI scan for any abnormal findings. "
-                              "Identify any lesions, masses, hemorrhages, infarcts, or other pathological changes. "
-                              "Describe the location, size, and characteristics of any abnormalities found. "
-                              "If no abnormalities are detected, state that the scan appears normal.")
-                prompt = f"{base_prompt} First output your thinking process in <think> </think> tags and then provide your final analysis."
-            elif describe_slice:
-                base_prompt = ("Provide a detailed medical analysis of this brain MRI slice. "
-                              "Describe the anatomical structures visible, imaging quality, "
-                              "slice level, and any notable features or findings. "
-                              "Include information about brain symmetry, ventricles, and tissue contrast.")
-                prompt = f"{base_prompt} First output your thinking process in <think> </think> tags and then provide your final analysis."
-            else:
-                # Fallback prompt if neither is selected
-                base_prompt = ("Analyze this medical brain MRI image. "
-                              "Describe the visible anatomical structures and any notable findings.")
-                prompt = f"{base_prompt} First output your thinking process in <think> </think> tags and then provide your final analysis."
+            if modality == "MG":
+                if identify_anomalies:
+                    base_prompt = ("Analyze this mammogram for any abnormal findings. "
+                                  "Identify any masses, microcalcifications, architectural distortions, or asymmetries. "
+                                  "Describe the location, characteristics (shape, margins, density), and BI-RADS category if applicable. "
+                                  "If no abnormalities are detected, state that the mammogram appears normal.")
+                    prompt = f"{base_prompt} First output your thinking process in <think> </think> tags and then provide your final analysis."
+                elif describe_slice:
+                    base_prompt = ("Provide a detailed analysis of this mammogram. "
+                                  "Describe the breast tissue composition (density category), anatomical structures visible, "
+                                  "imaging quality, positioning adequacy, and any notable features. "
+                                  "Include information about tissue distribution and any visible anatomical landmarks.")
+                    prompt = f"{base_prompt} First output your thinking process in <think> </think> tags and then provide your final analysis."
+                else:
+                    base_prompt = ("Analyze this mammogram image. "
+                                  "Describe the breast tissue composition and any notable findings.")
+                    prompt = f"{base_prompt} First output your thinking process in <think> </think> tags and then provide your final analysis."
+            else:  # MRI or other
+                if identify_anomalies:
+                    base_prompt = ("Analyze this brain MRI scan for any abnormal findings. "
+                                  "Identify any lesions, masses, hemorrhages, infarcts, or other pathological changes. "
+                                  "Describe the location, size, and characteristics of any abnormalities found. "
+                                  "If no abnormalities are detected, state that the scan appears normal.")
+                    prompt = f"{base_prompt} First output your thinking process in <think> </think> tags and then provide your final analysis."
+                elif describe_slice:
+                    base_prompt = ("Provide a detailed medical analysis of this brain MRI slice. "
+                                  "Describe the anatomical structures visible, imaging quality, "
+                                  "slice level, and any notable features or findings. "
+                                  "Include information about brain symmetry, ventricles, and tissue contrast.")
+                    prompt = f"{base_prompt} First output your thinking process in <think> </think> tags and then provide your final analysis."
+                else:
+                    # Fallback prompt if neither is selected
+                    base_prompt = ("Analyze this medical brain MRI image. "
+                                  "Describe the visible anatomical structures and any notable findings.")
+                    prompt = f"{base_prompt} First output your thinking process in <think> </think> tags and then provide your final analysis."
             
             logger.info(f"Running Med-R1 inference with prompt: {prompt[:50]}...")
             logger.info(f"Image shape: {image_array.shape}")

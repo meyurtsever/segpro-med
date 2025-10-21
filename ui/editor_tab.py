@@ -1391,6 +1391,19 @@ def create_editor_tab() -> dict:
                     # Suggested Labels Section
                     gr.Markdown("**Suggested Labels**")
                     
+                    # Info message for label suggestion usage (initially hidden)
+                    with gr.Row(elem_classes="label-suggestion-info-row", visible=False) as label_suggestion_info_row:
+                        gr.HTML("""
+                        <div style='padding: 8px; background: linear-gradient(135deg, #065f46 0%, #047857 100%); border-radius: 6px; margin-bottom: 8px; border-left: 3px solid #10b981;'>
+                            <div style='color: #d1fae5; font-size: 13px; font-weight: 600; margin-bottom: 2px;'>
+                                🏷️ Label Suggestions Ready
+                            </div>
+                            <div style='color: #a7f3d0; font-size: 11px; line-height: 1.3;'>
+                                Click on the suggested labels below to select them, then click "Accept Selected Suggestions" to add them to your current labels
+                            </div>
+                        </div>
+                        """)
+                    
                     with gr.Row():
                         suggested_labels_dataset = gr.Dataset(
                             label="Suggested Labels",
@@ -1469,7 +1482,7 @@ def create_editor_tab() -> dict:
                                 scale=2
                             )
                             vlm_prompt_describe = gr.Checkbox(
-                                label="Describe MRI Slice", 
+                                label="Describe the Image", 
                                 value=False,
                                 info="General description of anatomical structures",
                                 scale=2
@@ -1546,7 +1559,7 @@ def create_editor_tab() -> dict:
                 
                 col2 = (error_display, metadata_display, view_selector, deidentification_checkbox, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, 
                         crowdsourcing_accordion, submit_annotation_btn, assignments_remaining, next_assignment_btn, crowdsourcing_status,
-                        current_labels_dataset, suggested_vlm_selector, suggest_labels_btn, suggested_labels_dataset, accept_suggestions_btn, vlm_model_selector, vlm_run_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn, voice_prompt_text, voice_audio_input, voice_analysis_row, voice_analysis_controls, voice_analysis_audio, voice_analysis_text, save_to_analysis_btn, vlm_info_accordion, vlm_tools_info_accordion, vlm_custom_prompt_info_accordion)
+                        current_labels_dataset, suggested_vlm_selector, suggest_labels_btn, suggested_labels_dataset, accept_suggestions_btn, label_suggestion_info_row, vlm_model_selector, vlm_run_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn, voice_prompt_text, voice_audio_input, voice_analysis_row, voice_analysis_controls, voice_analysis_audio, voice_analysis_text, save_to_analysis_btn, vlm_info_accordion, vlm_tools_info_accordion, vlm_custom_prompt_info_accordion)
             
             # Column 3: Annotate with AI Models
             with gr.Column(scale=1):

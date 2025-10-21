@@ -43,7 +43,7 @@ class SmolVLMHandlers:
                 self._service = None
         return self._service
         
-    def run_vlm_inference(self, image_annotator_value: Optional[dict], identify_anomalies: bool = True, describe_slice: bool = False) -> str:
+    def run_vlm_inference(self, image_annotator_value: Optional[dict], identify_anomalies: bool = True, describe_slice: bool = False, modality: str = "MRI") -> str:
         """
         Run VLM inference on the current image from image_annotator using persistent service
         
@@ -51,6 +51,7 @@ class SmolVLMHandlers:
             image_annotator_value: Current value from the image_annotator component
             identify_anomalies: Whether to use anomaly identification prompt
             describe_slice: Whether to use general description prompt
+            modality: Imaging modality (MRI, MG for mammography, CT, etc.)
             
         Returns:
             str: VLM generated caption or error message
@@ -64,16 +65,23 @@ class SmolVLMHandlers:
             if image_array is None:
                 return "Error: Image data is None"
             
-            # Determine the prompt based on checkbox selection
-            if identify_anomalies:
-                prompt = "Identify and label abnormal regions in this brain MRI. Highlight any suspicious areas and suggest their likely pathology."
-            elif describe_slice:
-                prompt = "Describe this medical image slice in detail, focusing on visible anatomical structures and any notable features."
-            else:
-                # Fallback prompt if neither is selected
-                prompt = "Describe this medical image slice in detail, focusing on visible anatomical structures and any notable features."
+            # Determine the prompt based on checkbox selection and modality
+            if modality == "MG":
+                if identify_anomalies:
+                    prompt = "Identify and describe any abnormal findings in this mammogram. Look for masses, calcifications, architectural distortions, or asymmetries. Use BI-RADS terminology."
+                elif describe_slice:
+                    prompt = "Describe this mammogram in detail, focusing on breast tissue composition, anatomical structures, and any notable features."
+                else:
+                    prompt = "Describe this mammogram in detail, focusing on breast tissue composition, anatomical structures, and any notable features."
+            else:  # MRI or other
+                if identify_anomalies:
+                    prompt = "Identify and label abnormal regions in this brain MRI. Highlight any suspicious areas and suggest their likely pathology."
+                elif describe_slice:
+                    prompt = "Describe this medical image slice in detail, focusing on visible anatomical structures and any notable features."
+                else:
+                    prompt = "Describe this medical image slice in detail, focusing on visible anatomical structures and any notable features."
             
-            logger.info(f"Running VLM inference with prompt: {prompt[:50]}...")
+            logger.info(f"Running VLM inference with prompt for {modality}: {prompt[:50]}...")
             logger.info(f"Image shape: {image_array.shape}")
             
             # Convert numpy array to PIL Image

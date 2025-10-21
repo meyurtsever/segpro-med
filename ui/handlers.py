@@ -251,16 +251,10 @@ class DataLoadingHandlers:
         # Reset current data
         self.state.reset_data()
         
-        # Determine input source
-        if directory:
-            path = directory
-            self.state.current_directory = directory  # Store the directory path
-            self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
-        else:
+        # Determine input source - FILE TAKES PRIORITY OVER DIRECTORY
+        if file_obj and hasattr(file_obj, 'name') and file_obj.name and os.path.exists(file_obj.name):
             # Load single file by extension
-            path = file_obj.name if file_obj else None
-            if not path or not os.path.exists(path):
-                return None, gr.Dropdown(choices=[]), {}, gr.Slider(visible=False), "0/0", "x: 0, y: 0, z: 0", "No data loaded", 500, 1000
+            path = file_obj.name
             
             # Store the directory of the single file
             self.state.current_directory = os.path.dirname(path)
@@ -280,6 +274,14 @@ class DataLoadingHandlers:
                 self.state.file_list = [path]
             else:
                 return None, gr.Dropdown(choices=[]), {}, gr.Slider(visible=False), "0/0", "x: 0, y: 0, z: 0", f"Unsupported file type: {ext}", 500, 1000
+        elif directory:
+            # Load from directory only if no file was provided
+            path = directory
+            self.state.current_directory = directory  # Store the directory path
+            self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
+        else:
+            # No file or directory provided
+            return None, gr.Dropdown(choices=[]), {}, gr.Slider(visible=False), "0/0", "x: 0, y: 0, z: 0", "No data loaded", 500, 1000
 
         self.state.current_data_type = "dicom"
         shape = self.state.current_data.shape

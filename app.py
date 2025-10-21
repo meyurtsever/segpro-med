@@ -1087,7 +1087,7 @@ class SegMedPro:
          metadata_display_dl, error_display_dl, window_level, window_width, apply_window_btn, debug_btn) = data_loading
         (error_display, metadata_display, view_selector, deidentification_checkbox, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, 
          crowdsourcing_accordion, submit_annotation_btn, assignments_remaining, next_assignment_btn, crowdsourcing_status,
-         current_labels_dataset, suggested_vlm_selector, suggest_labels_btn, suggested_labels_dataset, accept_suggestions_btn, vlm_model_selector, vlm_run_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn, voice_prompt_text, voice_audio_input, voice_analysis_row, voice_analysis_controls, voice_analysis_audio, voice_analysis_text, save_to_analysis_btn, vlm_info_accordion, vlm_tools_info_accordion, vlm_custom_prompt_info_accordion) = visualization        
+         current_labels_dataset, suggested_vlm_selector, suggest_labels_btn, suggested_labels_dataset, accept_suggestions_btn, label_suggestion_info_row, vlm_model_selector, vlm_run_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn, voice_prompt_text, voice_audio_input, voice_analysis_row, voice_analysis_controls, voice_analysis_audio, voice_analysis_text, save_to_analysis_btn, vlm_info_accordion, vlm_tools_info_accordion, vlm_custom_prompt_info_accordion) = visualization        
         (point_prompt_checkbox, box_prompt_checkbox, coordinates_text, clear_coords_btn, ai_model_selector, 
          processing_mode, score_threshold,
          output_dir, save_visualizations, device_selector, 
@@ -1221,7 +1221,7 @@ class SegMedPro:
         def handle_slice_change_with_labels(slice_value, image_annotator_value, deidentify=False):
             """Handle slice slider change and update current labels, suggested labels, and VLM analysis"""
             # Get the main slider change result
-            result = self.editor_image_handlers.handle_annotator_slider_change(slice_value, image_annotator_value, deidentify)
+            result = self.editor_image_handlers.handle_annotator_slider_change(slice_value, image_annotator_value)
             # result contains: (image_display, slice_text, crosshair_info, metadata_display, window_level, window_width)
             
             # Extract current labels from the updated image and load saved labels and VLM analysis
@@ -1364,7 +1364,7 @@ class SegMedPro:
         def handle_prev_navigation(current_slider_value, current_annotated_value, deidentify=False):
             """Handle previous button click with annotation saving (EDITOR-SPECIFIC)"""
             result_tuple, new_slider_value = self.editor_image_handlers.handle_annotator_navigation(
-                "prev", current_slider_value, current_annotated_value, deidentify
+                "prev", current_slider_value, current_annotated_value
             )
             # result_tuple contains: (image_display, slice_text, crosshair_info, metadata, window_level, window_width)
             
@@ -1414,7 +1414,7 @@ class SegMedPro:
         def handle_next_navigation(current_slider_value, current_annotated_value, deidentify=False):
             """Handle next button click with annotation saving (EDITOR-SPECIFIC)"""  
             result_tuple, new_slider_value = self.editor_image_handlers.handle_annotator_navigation(
-                "next", current_slider_value, current_annotated_value, deidentify
+                "next", current_slider_value, current_annotated_value
             )
             # result_tuple contains: (image_display, slice_text, crosshair_info, metadata, window_level, window_width)
             
@@ -1756,17 +1756,23 @@ class SegMedPro:
         def handle_vlm_inference(vlm_model, image_display, identify_anomalies, describe_slice):
             """Handle VLM inference based on selected model"""
             try:
+                # Get modality from current metadata
+                modality = "MRI"  # Default
+                if hasattr(self.state, 'current_metadata') and self.state.current_metadata:
+                    modality = self.state.current_metadata.get('Modality', 'MRI')
+                    logger.info(f"Using modality from metadata: {modality}")
+                
                 if vlm_model == "SmolVLM":
                     return self.editor_smolvlm_handlers.run_vlm_inference(
-                        image_display, identify_anomalies, describe_slice
+                        image_display, identify_anomalies, describe_slice, modality
                     )
                 elif vlm_model == "Med-R1":
                     return self.editor_med_r1_handlers.run_med_r1_inference(
-                        image_display, identify_anomalies, describe_slice
+                        image_display, identify_anomalies, describe_slice, modality
                     )
                 elif vlm_model == "MedGemma-4B":
                     return self.editor_medgemma_handlers.run_vlm_inference(
-                        image_display, identify_anomalies, describe_slice
+                        image_display, identify_anomalies, describe_slice, modality
                     )
                 else:
                     return f"Unknown VLM model: {vlm_model}"
@@ -1960,11 +1966,14 @@ class SegMedPro:
                     result_samples = create_other_vlm_label_suggestions(vlm_model, image_annotator_value, current_slice_idx, current_labels)
                 
                 logger.info(f"VLM suggestions result: {len(result_samples)} samples for slice {current_slice_idx}")
-                return gr.Dataset(samples=result_samples)
+                
+                # Show info row if we have suggestions, hide if empty
+                info_row_visible = len(result_samples) > 0
+                return gr.Dataset(samples=result_samples), gr.update(visible=info_row_visible)
                     
             except Exception as e:
                 logger.error(f"Error generating VLM label suggestions: {e}")
-                return gr.Dataset(samples=[])
+                return gr.Dataset(samples=[]), gr.update(visible=False)
         
         # Show loading state during VLM processing
         def show_loading_state():
@@ -1979,7 +1988,7 @@ class SegMedPro:
         ).then(
             fn=handle_vlm_label_suggestions,
             inputs=[suggested_vlm_selector, image_display],
-            outputs=[suggested_labels_dataset]
+            outputs=[suggested_labels_dataset, label_suggestion_info_row]
         )
         
         # VLM info components are now self-contained with JavaScript toggle functionality
@@ -2118,16 +2127,19 @@ class SegMedPro:
                 logger.info(f"Total labels for slice {current_slice_idx}: {len(all_labels)} - {all_labels}")
                 logger.info(f"Remaining suggestions for slice {current_slice_idx}: {len(remaining_suggestions)} - {remaining_suggestions}")
                 
-                return updated_current_labels, gr.update(visible=False), updated_suggested_labels, save_result
+                # Hide info row if no remaining suggestions
+                info_row_visible = len(remaining_suggestions) > 0
+                
+                return updated_current_labels, gr.update(visible=False), updated_suggested_labels, gr.update(visible=info_row_visible), save_result
                 
             except Exception as e:
                 logger.error(f"Error accepting suggestions: {e}")
-                return gr.update(), gr.update(visible=False), gr.update(), f"Error: {str(e)}"
+                return gr.update(), gr.update(visible=False), gr.update(), gr.update(visible=False), f"Error: {str(e)}"
         
         accept_suggestions_btn.click(
             fn=handle_accept_suggestions,
             inputs=[],
-            outputs=[current_labels_dataset, accept_suggestions_btn, suggested_labels_dataset, error_display]
+            outputs=[current_labels_dataset, accept_suggestions_btn, suggested_labels_dataset, label_suggestion_info_row, error_display]
         )
           # Auto-brain annotation handler - Updated to use SAM2 Fast Masking Pipeline (EDITOR-SPECIFIC)
         def handle_auto_brain_annotation(output_dir, save_visualizations, device_selector, processing_mode, score_threshold, dir_input_value):

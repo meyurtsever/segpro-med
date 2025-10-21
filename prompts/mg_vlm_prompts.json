@@ -1,0 +1,82 @@
+{
+  "identify_anomalies": "As a breast imaging specialist, carefully analyze this mammogram. Identify any abnormal findings, masses, calcifications, architectural distortions, or other suspicious features. Describe the location, characteristics, margins, and density using BI-RADS terminology. Assess the clinical significance of any abnormalities you observe. If no clear abnormalities are visible, state that the mammogram appears normal.",
+  "describe_slice": "As a breast imaging specialist, provide a detailed description of this mammogram. Identify the breast composition (ACR density category), visible anatomical structures (pectoral muscle, nipple, subcutaneous tissue), and describe the overall tissue distribution and image quality. Mention any notable anatomical landmarks or tissue patterns that are clearly visible.",
+  "suggest_labels": "This is a mammogram image. Please list the anatomical structures and any pathological findings that are visible. Return a comma-separated list of possible labels using BI-RADS terminology (e.g., dense tissue, mass, calcifications, nipple, pectoral muscle, fatty tissue, etc.).",
+  "mg_label_suggestions": {
+    "title": "Mammography Label Suggestion Prompt",
+    "description": "Specialized prompt for generating anatomical and pathological labels in mammography images",
+    "prompt": "You are an expert breast radiologist examining a mammography image. Please analyze this mammogram and suggest appropriate labels for the visible structures and findings. For each structure or finding you identify, provide:\n\n1. Structure/Finding name (e.g., 'Dense Tissue', 'Fatty Tissue', 'Mass', 'Calcifications', 'Nipple', 'Pectoral Muscle')\n2. Location (e.g., 'Upper Outer Quadrant', 'Central', 'Subareolar')\n3. Characteristics (e.g., 'Round', 'Irregular', 'Spiculated', 'Clustered')\n4. Clinical significance if relevant\n\nFocus on clearly visible anatomical structures and any abnormal findings. Use BI-RADS terminology where appropriate.\n\nFormat your response as a structured list with clear labels and descriptions.",
+    "use_cases": [
+      "Breast tissue identification",
+      "Mass detection and characterization",
+      "Calcification identification",
+      "Educational labeling",
+      "Clinical documentation support"
+    ],
+    "parameters": {
+      "max_tokens": 512,
+      "temperature": 0.3,
+      "focus": "breast_structures"
+    }
+  },
+  "breast_region_analysis": {
+    "title": "Breast Region Analysis",
+    "description": "Detailed analysis of breast tissue and structures in mammography",
+    "prompt": "As a breast imaging specialist, examine this mammogram and provide a detailed analysis. Include:\n\n- Breast tissue composition (fatty, scattered fibroglandular, heterogeneously dense, extremely dense)\n- Anatomical structures visible (pectoral muscle, nipple, skin line)\n- Tissue distribution patterns\n- Symmetry assessment (if comparing with other views)\n- Any notable features or variants\n\nProvide precise breast imaging terminology and clinical context where appropriate.",
+    "use_cases": [
+      "Breast density assessment",
+      "Clinical evaluation",
+      "Research documentation"
+    ],
+    "parameters": {
+      "max_tokens": 400,
+      "temperature": 0.2,
+      "focus": "breast_anatomy"
+    }
+  },
+  "pathology_detection": {
+    "title": "Mammography Pathology Detection",
+    "description": "Identify and describe potential pathological findings in mammography",
+    "prompt": "Examine this mammogram as an experienced breast radiologist looking for pathological findings. Report:\n\n1. Normal breast tissue patterns present\n2. Any masses (describe shape, margins, density)\n3. Calcifications (describe morphology and distribution)\n4. Architectural distortions\n5. Asymmetries\n6. Skin or nipple changes\n7. Overall BI-RADS assessment if appropriate\n\nUse appropriate BI-RADS terminology and indicate confidence levels for any findings. If no pathology is evident, state this clearly.",
+    "use_cases": [
+      "Clinical diagnosis support",
+      "Screening interpretation",
+      "Educational case review"
+    ],
+    "parameters": {
+      "max_tokens": 600,
+      "temperature": 0.1,
+      "focus": "pathology_assessment"
+    }
+  },
+  "educational_description": {
+    "title": "Educational Mammography Description",
+    "description": "Comprehensive educational description suitable for medical students and residents",
+    "prompt": "Describe this mammogram in detail for medical education purposes. Include:\n\n**Imaging Parameters:**\n- View type (CC, MLO, lateral, etc.)\n- Image quality assessment\n- Breast positioning quality\n\n**Breast Composition:**\n- Tissue density (BI-RADS categories)\n- Glandular tissue distribution\n- Fatty tissue patterns\n\n**Anatomical Landmarks:**\n- Pectoral muscle (if visible)\n- Nipple location\n- Inframammary fold\n\n**Educational Points:**\n- Key learning objectives\n- Important anatomical relationships\n- Clinical correlations\n- BI-RADS terminology\n\nMake this accessible to learners while maintaining accuracy.",
+    "use_cases": [
+      "Medical education",
+      "Radiology resident training",
+      "Teaching case preparation"
+    ],
+    "parameters": {
+      "max_tokens": 500,
+      "temperature": 0.4,
+      "focus": "educational_content"
+    }
+  },
+  "technical_analysis": {
+    "title": "Technical Mammography Quality Analysis",
+    "description": "Technical assessment of mammography image quality",
+    "prompt": "Provide a technical quality analysis of this mammogram focusing on:\n\n**Image Quality:**\n- Positioning adequacy\n- Compression adequacy\n- Exposure parameters appropriateness\n- Artifacts present (if any)\n- Contrast and sharpness\n\n**Technical Assessment:**\n- Inclusion of all breast tissue\n- Pectoral muscle visualization (for MLO views)\n- Skin line visibility\n- Image labeling correctness\n\n**Recommendations:**\n- Suitability for diagnostic interpretation\n- Need for additional views\n- Technical improvements needed (if any)\n\nFocus on technical imaging aspects rather than clinical findings.",
+    "use_cases": [
+      "Image quality control",
+      "Technical validation",
+      "Technologist training"
+    ],
+    "parameters": {
+      "max_tokens": 350,
+      "temperature": 0.2,
+      "focus": "technical_assessment"
+    }
+  }
+}

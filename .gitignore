@@ -3,6 +3,11 @@ models/medsam2/checkpoints/*.pt
 models/medsam2/checkpoints/*.pth
 models/medsam2/checkpoints/*.ckpt
 models/med-r1/checkpoints/*
+models/medgemma/*.safetensors
+models/medgemma/*.pt
+models/medgemma/model.safetensors.index.json
+
+# Keep Python code but ignore large model files
 
 # Other potential large model files
 *.pt

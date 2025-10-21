@@ -10,8 +10,9 @@ import logging
 import os
 import tempfile
 import sys
+import json
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Dict
 import numpy as np
 from PIL import Image
 
@@ -37,6 +38,31 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+# Load modality-specific prompts
+def load_vlm_prompts(modality: str = "MRI") -> Dict:
+    """Load VLM prompts based on modality"""
+    try:
+        # Get base directory
+        base_dir = os.path.dirname(os.path.dirname(__file__))
+        
+        # Determine which prompt file to use
+        if modality == "MG":
+            prompt_file = "mg_vlm_prompts.json"
+        else:
+            prompt_file = "mri_vlm_prompts.json"
+        
+        prompt_path = os.path.join(base_dir, "prompts", prompt_file)
+        
+        if os.path.exists(prompt_path):
+            with open(prompt_path, 'r') as f:
+                return json.load(f)
+        else:
+            logger.warning(f"Prompt file not found: {prompt_path}, using defaults")
+            return {}
+    except Exception as e:
+        logger.error(f"Error loading prompts: {e}")
+        return {}
+
 
 class MedGemmaHandlers:
     """Handlers for MedGemma-4B visual language model operations"""
@@ -57,7 +83,7 @@ class MedGemmaHandlers:
                 self._service = None
         return self._service
         
-    def run_vlm_inference(self, image_annotator_value: Optional[dict], identify_anomalies: bool = True, describe_slice: bool = False) -> str:
+    def run_vlm_inference(self, image_annotator_value: Optional[dict], identify_anomalies: bool = True, describe_slice: bool = False, modality: str = "MRI") -> str:
         """
         Run MedGemma VLM inference on the current image from image_annotator
         
@@ -65,6 +91,7 @@ class MedGemmaHandlers:
             image_annotator_value: Value from the image_annotator component containing image data
             identify_anomalies: Whether to focus on identifying anomalies
             describe_slice: Whether to provide general description
+            modality: Imaging modality (MRI, MG for mammography, CT, etc.)
             
         Returns:
             VLM analysis result as string
@@ -84,9 +111,9 @@ class MedGemmaHandlers:
             if image_data is None:
                 return "Could not extract image data from the annotator. Please ensure an image is loaded."
             
-            # Build prompt based on user selections
-            prompt = self._build_prompt(identify_anomalies, describe_slice)
-            logger.info(f"Running MedGemma inference with prompt type: {self._get_prompt_type(identify_anomalies, describe_slice)}")
+            # Build prompt based on user selections and modality
+            prompt = self._build_prompt(identify_anomalies, describe_slice, modality)
+            logger.info(f"Running MedGemma inference with prompt type: {self._get_prompt_type(identify_anomalies, describe_slice)} for modality: {modality}")
             
             # Run inference
             try:
@@ -220,18 +247,36 @@ class MedGemmaHandlers:
             logger.error(f"Error extracting image from annotator: {e}")
             return None
     
-    def _build_prompt(self, identify_anomalies: bool, describe_slice: bool) -> str:
+    def _build_prompt(self, identify_anomalies: bool, describe_slice: bool, modality: str = "MRI") -> str:
         """
-        Build the appropriate prompt based on user selections
+        Build the appropriate prompt based on user selections and modality
         
         Args:
             identify_anomalies: Whether to focus on anomaly detection
             describe_slice: Whether to provide general description
+            modality: Imaging modality (MRI, MG, CT, etc.)
             
         Returns:
             Formatted prompt string
         """
-        if get_medical_prompt:
+        # Load modality-specific prompts from JSON files
+        prompts = load_vlm_prompts(modality)
+        
+        # If prompts are loaded from JSON, use them
+        if prompts:
+            if identify_anomalies and describe_slice:
+                # Combined prompt
+                anomaly_prompt = prompts.get("identify_anomalies", "")
+                describe_prompt = prompts.get("describe_slice", "")
+                if anomaly_prompt and describe_prompt:
+                    return f"{anomaly_prompt} Additionally, {describe_prompt.lower()}"
+            elif identify_anomalies:
+                return prompts.get("identify_anomalies", "")
+            elif describe_slice:
+                return prompts.get("describe_slice", "")
+        
+        # Fallback to get_medical_prompt for MRI (original behavior)
+        if get_medical_prompt and modality != "MG":
             if identify_anomalies and describe_slice:
                 # Combined prompt
                 return (get_medical_prompt("identify_anomalies") + " " +
@@ -245,17 +290,30 @@ class MedGemmaHandlers:
                 return get_medical_prompt("describe_slice")
         else:
             # Fallback prompts if service not available
-            if identify_anomalies and describe_slice:
-                return ("Analyze this brain MRI slice for any abnormalities or anomalies, "
-                       "and also provide a general description of the anatomical structures visible.")
-            elif identify_anomalies:
-                return ("Analyze this brain MRI slice and identify any abnormalities, anomalies, "
-                       "or pathological regions that may be present.")
-            elif describe_slice:
-                return ("Describe this brain MRI slice, identifying the anatomical structures "
-                       "and overall characteristics visible in the image.")
-            else:
-                return "Analyze and describe this brain MRI slice."
+            if modality == "MG":
+                if identify_anomalies and describe_slice:
+                    return ("Analyze this mammogram for any abnormalities or suspicious findings, "
+                           "and also provide a general description of the breast tissue and structures visible.")
+                elif identify_anomalies:
+                    return ("Analyze this mammogram and identify any masses, calcifications, architectural distortions, "
+                           "or other abnormalities that may be present. Use BI-RADS terminology.")
+                elif describe_slice:
+                    return ("Describe this mammogram, identifying the breast composition, anatomical structures "
+                           "and overall characteristics visible in the image.")
+                else:
+                    return "Analyze and describe this mammogram."
+            else:  # MRI or other
+                if identify_anomalies and describe_slice:
+                    return ("Analyze this brain MRI slice for any abnormalities or anomalies, "
+                           "and also provide a general description of the anatomical structures visible.")
+                elif identify_anomalies:
+                    return ("Analyze this brain MRI slice and identify any abnormalities, anomalies, "
+                           "or pathological regions that may be present.")
+                elif describe_slice:
+                    return ("Describe this brain MRI slice, identifying the anatomical structures "
+                           "and overall characteristics visible in the image.")
+                else:
+                    return "Analyze and describe this brain MRI slice."
     
     def _get_prompt_type(self, identify_anomalies: bool, describe_slice: bool) -> str:
         """Get a readable description of the prompt type"""
