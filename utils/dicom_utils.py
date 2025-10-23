@@ -68,6 +68,23 @@ def get_dicom_metadata(dicom_path):
         if hasattr(ds, 'ImagePositionPatient'):
             metadata['ImagePositionPatient'] = [float(val) for val in ds.ImagePositionPatient]
         
+        # Mammography-specific metadata
+        if hasattr(ds, 'ViewPosition'):
+            metadata['ViewPosition'] = ds.ViewPosition
+        if hasattr(ds, 'ImageLaterality'):
+            metadata['ImageLaterality'] = ds.ImageLaterality
+        if hasattr(ds, 'ViewCodeSequence'):
+            try:
+                # ViewCodeSequence is a sequence, extract relevant info
+                view_code = ds.ViewCodeSequence[0] if ds.ViewCodeSequence else None
+                if view_code:
+                    metadata['ViewCodeSequence'] = {
+                        'CodeValue': getattr(view_code, 'CodeValue', ''),
+                        'CodeMeaning': getattr(view_code, 'CodeMeaning', '')
+                    }
+            except:
+                pass
+        
         # Check if compressed
         is_compressed = False
         compression_type = "None"

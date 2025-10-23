@@ -21279,3 +21279,132 @@ ValueError: Invalid view: rmlo.dcm
 2025-10-21 23:48:06,248 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm
 2025-10-21 23:48:06,250 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm
 2025-10-21 23:48:13,791 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\AppData\Local\Temp\gradio\e51015f3bc541b38adbf1b2651f29e52ddf115e26f0a274403283e1d02ad1ae8\RCC.dcm
+2025-10-23 14:45:51,511 - segmed_pro - DEBUG - Reading DICOM file: /tmp/gradio/96e3094bf3c08955114db0aed6fd4e7cad38d87015b652f46648a8bb7114e9ad/RCC.dcm
+2025-10-23 15:01:15,957 - segmed_pro - DEBUG - Reading DICOM file: /tmp/gradio/96e3094bf3c08955114db0aed6fd4e7cad38d87015b652f46648a8bb7114e9ad/RCC.dcm
+2025-10-23 15:02:04,215 - segmed_pro - DEBUG - Reading DICOM file: /tmp/gradio/96e3094bf3c08955114db0aed6fd4e7cad38d87015b652f46648a8bb7114e9ad/RCC.dcm
+2025-10-23 15:02:20,282 - segmed_pro - ERROR - Exception in load_data_for_annotator: No DICOM files found in directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+2025-10-23 15:02:20,282 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "/home/enes/segpro-med/utils/debug_utils.py", line 70, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enes/segpro-med/ui/handlers.py", line 281, in load_data_for_annotator
+    self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
+                                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enes/segpro-med/utils/dicom_utils.py", line 242, in load_dicom_series
+    raise ValueError(f"No DICOM files found in directory: {directory}")
+ValueError: No DICOM files found in directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+
+2025-10-23 15:02:22,648 - segmed_pro - DEBUG - Reading DICOM file: /tmp/gradio/b52afa79624fc638789e5b4c57f3c39b5efcc10c6f59075db0567c7dcd693c4b/RMLO.dcm
+2025-10-23 15:02:39,773 - segmed_pro - ERROR - Exception in load_data_for_annotator: No DICOM files found in directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+2025-10-23 15:02:39,774 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "/home/enes/segpro-med/utils/debug_utils.py", line 70, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enes/segpro-med/ui/handlers.py", line 281, in load_data_for_annotator
+    self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
+                                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enes/segpro-med/utils/dicom_utils.py", line 242, in load_dicom_series
+    raise ValueError(f"No DICOM files found in directory: {directory}")
+ValueError: No DICOM files found in directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+
+2025-10-23 15:02:44,209 - segmed_pro - DEBUG - Reading DICOM file: /tmp/gradio/ed29d6a9c84d916f4adeb5f26d04af1511acac33bee5d7458ebf22abdade353e/LCC.dcm
+2025-10-23 15:02:58,755 - segmed_pro - ERROR - Exception in load_data_for_annotator: No DICOM files found in directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+2025-10-23 15:02:58,755 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "/home/enes/segpro-med/utils/debug_utils.py", line 70, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enes/segpro-med/ui/handlers.py", line 281, in load_data_for_annotator
+    self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
+                                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enes/segpro-med/utils/dicom_utils.py", line 242, in load_dicom_series
+    raise ValueError(f"No DICOM files found in directory: {directory}")
+ValueError: No DICOM files found in directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+
+2025-10-23 15:03:00,965 - segmed_pro - DEBUG - Reading DICOM file: /tmp/gradio/0c02f3cc9b4365e9467353e0eef7276b11a6bb844e383da81e93510c4089351d/RMLO.dcm
+2025-10-23 15:12:30,354 - segmed_pro - DEBUG - Reading DICOM file: /tmp/gradio/4cc5ccbfc21f0c6c85e3e548a8f64d37991f4eb258039c940710a4947bd87aca/RCC.dcm
+2025-10-23 15:18:13,529 - segmed_pro - DEBUG - Reading DICOM file: /tmp/gradio/0c02f3cc9b4365e9467353e0eef7276b11a6bb844e383da81e93510c4089351d/RMLO.dcm
+2025-10-23 15:18:32,700 - segmed_pro - DEBUG - Reading DICOM file: /tmp/gradio/0c02f3cc9b4365e9467353e0eef7276b11a6bb844e383da81e93510c4089351d/RMLO.dcm
+2025-10-23 15:18:32,757 - segmed_pro - ERROR - Exception in load_data_for_annotator: Invalid view: rmlo
+2025-10-23 15:18:32,758 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "/home/enes/segpro-med/utils/debug_utils.py", line 70, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enes/segpro-med/ui/handlers.py", line 324, in load_data_for_annotator
+    img = display_slice(
+          ^^^^^^^^^^^^^^
+  File "/home/enes/segpro-med/utils/visualization.py", line 132, in display_slice
+    raise ValueError(f"Invalid view: {view}")
+ValueError: Invalid view: rmlo
+
+2025-10-23 15:22:19,929 - segmed_pro - DEBUG - Reading DICOM file: /tmp/gradio/0c02f3cc9b4365e9467353e0eef7276b11a6bb844e383da81e93510c4089351d/RMLO.dcm
+2025-10-23 15:22:34,649 - segmed_pro - ERROR - Exception in load_data_for_annotator: No DICOM files found in directory: home/enes/segpro-med/836163430
+2025-10-23 15:22:34,650 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "/home/enes/segpro-med/utils/debug_utils.py", line 70, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enes/segpro-med/ui/handlers.py", line 281, in load_data_for_annotator
+    self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
+                                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enes/segpro-med/utils/dicom_utils.py", line 259, in load_dicom_series
+    raise ValueError(f"No DICOM files found in directory: {directory}")
+ValueError: No DICOM files found in directory: home/enes/segpro-med/836163430
+
+2025-10-23 15:22:44,635 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/836163430/RMLO.dcm
+2025-10-23 15:22:44,648 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/836163430/LMLO.dcm
+2025-10-23 15:22:44,672 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/836163430/LCC.dcm
+2025-10-23 15:22:44,685 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/836163430/RCC.dcm
+2025-10-23 15:23:39,888 - segmed_pro - DEBUG - Reading DICOM file: /tmp/gradio/0c02f3cc9b4365e9467353e0eef7276b11a6bb844e383da81e93510c4089351d/RMLO.dcm
+2025-10-23 15:23:46,385 - segmed_pro - ERROR - Exception in load_data_for_annotator: No DICOM files found in directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+2025-10-23 15:23:46,385 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "/home/enes/segpro-med/utils/debug_utils.py", line 70, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enes/segpro-med/ui/handlers.py", line 281, in load_data_for_annotator
+    self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
+                                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enes/segpro-med/utils/dicom_utils.py", line 259, in load_dicom_series
+    raise ValueError(f"No DICOM files found in directory: {directory}")
+ValueError: No DICOM files found in directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+
+2025-10-23 15:24:41,842 - segmed_pro - DEBUG - Reading DICOM file: /tmp/gradio/4cc5ccbfc21f0c6c85e3e548a8f64d37991f4eb258039c940710a4947bd87aca/RCC.dcm
+2025-10-23 15:24:54,249 - segmed_pro - DEBUG - Reading DICOM file: /tmp/gradio/9c13dee2e09225673c8727963aa3d37bdb54e5acee6c733b75ce9775ec35dfd5/LMLO.dcm
+2025-10-23 15:26:02,057 - segmed_pro - ERROR - Exception in load_data_for_annotator: No DICOM files found in directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+2025-10-23 15:26:02,057 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "/home/enes/segpro-med/utils/debug_utils.py", line 70, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enes/segpro-med/ui/handlers.py", line 281, in load_data_for_annotator
+    self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
+                                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enes/segpro-med/utils/dicom_utils.py", line 259, in load_dicom_series
+    raise ValueError(f"No DICOM files found in directory: {directory}")
+ValueError: No DICOM files found in directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+
+2025-10-23 15:26:03,920 - segmed_pro - DEBUG - Reading DICOM file: /tmp/gradio/ed29d6a9c84d916f4adeb5f26d04af1511acac33bee5d7458ebf22abdade353e/LCC.dcm
+2025-10-23 15:29:44,311 - segmed_pro - DEBUG - Reading DICOM file: /tmp/gradio/9c13dee2e09225673c8727963aa3d37bdb54e5acee6c733b75ce9775ec35dfd5/LMLO.dcm
+2025-10-23 15:30:01,604 - segmed_pro - ERROR - Exception in load_data_for_annotator: No DICOM files found in directory: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (50)\flair
+2025-10-23 15:30:01,605 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "/home/enes/segpro-med/utils/debug_utils.py", line 70, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enes/segpro-med/ui/handlers.py", line 281, in load_data_for_annotator
+    self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
+                                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enes/segpro-med/utils/dicom_utils.py", line 259, in load_dicom_series
+    raise ValueError(f"No DICOM files found in directory: {directory}")
+ValueError: No DICOM files found in directory: E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (50)\flair
+
+2025-10-23 15:30:03,417 - segmed_pro - DEBUG - Reading DICOM file: /tmp/gradio/0c02f3cc9b4365e9467353e0eef7276b11a6bb844e383da81e93510c4089351d/RMLO.dcm
+2025-10-23 15:31:21,535 - segmed_pro - DEBUG - Reading DICOM file: /tmp/gradio/9c13dee2e09225673c8727963aa3d37bdb54e5acee6c733b75ce9775ec35dfd5/LMLO.dcm
+2025-10-23 15:31:48,919 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/836163430/RMLO.dcm
+2025-10-23 15:31:48,933 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/836163430/LMLO.dcm
+2025-10-23 15:31:48,946 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/836163430/LCC.dcm
+2025-10-23 15:31:48,959 - segmed_pro - DEBUG - Reading DICOM file: /home/enes/segpro-med/836163430/RCC.dcm

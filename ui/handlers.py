@@ -273,15 +273,40 @@ class DataLoadingHandlers:
                 self.state.current_metadata = {}
                 self.state.file_list = [path]
             else:
-                return None, gr.Dropdown(choices=[]), {}, gr.Slider(visible=False), "0/0", "x: 0, y: 0, z: 0", f"Unsupported file type: {ext}", 500, 1000
+                return None, gr.Dropdown(choices=[]), {}, gr.Slider(visible=False), "0/0", "x: 0, y: 0, z: 0", f"Unsupported file type: {ext}", 500, 1000, gr.Radio()
         elif directory:
             # Load from directory only if no file was provided
             path = directory
             self.state.current_directory = directory  # Store the directory path
             self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
+            
+            # Check if this is MG data - if so, load only the first file initially
+            if self.state.current_metadata and self.state.current_metadata.get('Modality') == 'MG':
+                logger.info("MG modality detected in directory - loading first orientation file")
+                # For MG, we'll load each file individually when orientation is selected
+                # For now, load the first file as the initial view
+                from ui.editor_tab import get_mg_orientations_from_directory
+                orientation_map = get_mg_orientations_from_directory(self.state.file_list)
+                
+                if orientation_map:
+                    # Load the first available orientation
+                    first_orientation = list(orientation_map.keys())[0]
+                    first_file = orientation_map[first_orientation]
+                    logger.info(f"Loading first MG orientation: {first_orientation} from {first_file}")
+                    
+                    from utils.dicom_utils import load_single_dicom
+                    pixel_array, metadata = load_single_dicom(first_file, apply_deidentification=apply_deidentification)
+                    
+                    if pixel_array is not None:
+                        # Update state with single file
+                        if len(pixel_array.shape) == 2:
+                            self.state.current_data = pixel_array[np.newaxis, :, :]  # Add slice dimension
+                        else:
+                            self.state.current_data = pixel_array
+                        self.state.current_metadata = metadata
         else:
             # No file or directory provided
-            return None, gr.Dropdown(choices=[]), {}, gr.Slider(visible=False), "0/0", "x: 0, y: 0, z: 0", "No data loaded", 500, 1000
+            return None, gr.Dropdown(choices=[]), {}, gr.Slider(visible=False), "0/0", "x: 0, y: 0, z: 0", "No data loaded", 500, 1000, gr.Radio()
 
         self.state.current_data_type = "dicom"
         shape = self.state.current_data.shape
@@ -313,11 +338,27 @@ class DataLoadingHandlers:
                 window_width = window_width[0]
             logger.info(f"Using WindowWidth from metadata: {window_width}")
         
+        # Check modality and update view selector accordingly
+        from ui.editor_tab import update_view_selector_for_modality
+        view_choices, view_value, view_visible = update_view_selector_for_modality(
+            self.state.current_metadata, 
+            self.state.file_list
+        )
+        
+        # Determine the view to use for display_slice
+        # For MG modality, always use 'axial' since they are 2D images
+        modality = self.state.current_metadata.get('Modality', '') if self.state.current_metadata else ''
+        if modality == 'MG':
+            display_view = 'axial'
+            logger.info(f"MG modality detected - using 'axial' view for display (orientation: {view_value})")
+        else:
+            display_view = self.state.current_view.lower()
+        
         # Initial image
         img = display_slice(
             self.state.current_data, 
             0, 
-            self.state.current_view.lower(), 
+            display_view, 
             window_level=window_center, 
             window_width=window_width,
             crosshair=self.state.crosshair_position
@@ -354,7 +395,8 @@ class DataLoadingHandlers:
             crosshair_text,
             f"DICOM data loaded: {len(self.state.file_list)} slice(s)",
             window_level_value,
-            window_width_value
+            window_width_value,
+            gr.Radio(choices=view_choices, value=view_value, visible=view_visible)
         )
 
 

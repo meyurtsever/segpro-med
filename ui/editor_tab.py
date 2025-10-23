@@ -33,6 +33,147 @@ SLICE_SUGGESTED_LABELS = {}
 # Global dictionary to track selected suggested labels (slice_index -> list of selected labels)
 SELECTED_SUGGESTED_LABELS = {}
 
+def detect_mg_orientation_from_metadata(metadata):
+    """
+    Detect mammography orientation from DICOM metadata
+    Returns one of: 'LCC', 'LMLO', 'RCC', 'RMLO', or None
+    """
+    if not metadata:
+        return None
+    
+    # Check if modality is MG (Mammography)
+    modality = metadata.get('Modality', '')
+    if modality != 'MG':
+        return None
+    
+    # Try ViewPosition tag (0018,5101) - most direct way
+    if 'ViewPosition' in metadata:
+        view_position = str(metadata['ViewPosition']).upper()
+        # ViewPosition can be: CC (Cranio-Caudal), MLO (Medio-Lateral Oblique)
+        # Combined with ImageLaterality
+        laterality = metadata.get('ImageLaterality', '').upper()
+        if laterality in ['L', 'R'] and view_position in ['CC', 'MLO']:
+            return f"{laterality}{view_position}"
+    
+    # Try ImageLaterality (0020,0062) + ViewCodeSequence
+    laterality = metadata.get('ImageLaterality', '').upper()
+    if 'ViewCodeSequence' in metadata:
+        try:
+            view_code = metadata['ViewCodeSequence']
+            # This is more complex, might need specific code values
+            if hasattr(view_code, 'CodeMeaning'):
+                view_meaning = str(view_code.CodeMeaning).upper()
+                if 'CC' in view_meaning and laterality:
+                    return f"{laterality}CC"
+                elif 'MLO' in view_meaning and laterality:
+                    return f"{laterality}MLO"
+        except:
+            pass
+    
+    # Try SeriesDescription or StudyDescription as fallback
+    for desc_field in ['SeriesDescription', 'StudyDescription']:
+        if desc_field in metadata:
+            desc = str(metadata[desc_field]).upper()
+            # Look for patterns like "L CC", "R MLO", "LCC", "RMLO", etc.
+            for orientation in ['LCC', 'LMLO', 'RCC', 'RMLO']:
+                if orientation in desc.replace(' ', ''):
+                    return orientation
+    
+    return None
+
+def detect_mg_orientation_from_filename(filename):
+    """
+    Detect mammography orientation from filename
+    Returns one of: 'LCC', 'LMLO', 'RCC', 'RMLO', or None
+    """
+    if not filename:
+        return None
+    
+    # Convert to uppercase and remove extension
+    name = os.path.splitext(os.path.basename(filename))[0].upper()
+    
+    # Check for exact matches or patterns
+    for orientation in ['LCC', 'LMLO', 'RCC', 'RMLO']:
+        if orientation in name:
+            return orientation
+    
+    return None
+
+def get_mg_orientations_from_directory(file_list):
+    """
+    Get available mammography orientations from a list of files
+    Returns dict mapping orientation -> file_path
+    """
+    orientation_map = {}
+    
+    if not file_list:
+        return orientation_map
+    
+    for file_path in file_list:
+        # Try filename first (faster)
+        orientation = detect_mg_orientation_from_filename(file_path)
+        
+        if orientation:
+            orientation_map[orientation] = file_path
+            logger.info(f"Detected {orientation} from filename: {os.path.basename(file_path)}")
+    
+    return orientation_map
+
+def update_view_selector_for_modality(metadata, file_list=None):
+    """
+    Update view selector choices based on modality
+    Returns: (choices, value, visible) for gr.Radio update
+    """
+    if not metadata:
+        return ["Axial", "Sagittal", "Coronal"], "Axial", True
+    
+    modality = metadata.get('Modality', '')
+    
+    # Mammography (MG) - use specific orientations
+    if modality == 'MG':
+        # Check if we have files to detect orientations from
+        if file_list:
+            orientation_map = get_mg_orientations_from_directory(file_list)
+            available_orientations = list(orientation_map.keys())
+            
+            if available_orientations:
+                # Sort in standard order: LCC, LMLO, RCC, RMLO
+                standard_order = ['LCC', 'LMLO', 'RCC', 'RMLO']
+                sorted_orientations = [o for o in standard_order if o in available_orientations]
+                
+                logger.info(f"Mammography detected with orientations: {sorted_orientations}")
+                return sorted_orientations, sorted_orientations[0], True
+        
+        # Fallback: provide all MG orientations even if not detected
+        logger.info("Mammography detected - using default MG orientations")
+        return ['LCC', 'LMLO', 'RCC', 'RMLO'], 'LCC', True
+    
+    # For other modalities (CT, MR, etc.) - use standard anatomical views
+    else:
+        return ["Axial", "Sagittal", "Coronal"], "Axial", True
+
+def get_file_for_mg_orientation(orientation, file_list, current_data_directory=None):
+    """
+    Get the file path for a specific MG orientation
+    Returns: file_path or None
+    """
+    if not file_list:
+        return None
+    
+    # Build orientation map from file list
+    orientation_map = get_mg_orientations_from_directory(file_list)
+    
+    # Return the file for the requested orientation
+    file_path = orientation_map.get(orientation)
+    
+    if file_path:
+        logger.info(f"Selected file for {orientation}: {os.path.basename(file_path)}")
+    else:
+        logger.warning(f"No file found for orientation: {orientation}")
+    
+    return file_path
+
+
 def load_annotation_data(output_dir="brain_target_results"):
     """Load annotation data from the results directory"""
     try:
@@ -1251,11 +1392,12 @@ def create_editor_tab() -> dict:
                     view_selector = gr.Radio(
                         choices=["Axial", "Sagittal", "Coronal"],
                         value="Axial",
-                        label="View Orientation"
+                        label="View Orientation",
+                        info="Orientation changes based on modality (MG: LCC, LMLO, RCC, RMLO)"
                     )
                     deidentification_checkbox = gr.Checkbox(
                         label="De Identification",
-                        value=True,
+                        value=False,
                         info="Remove faces from DICOM images using pydeface"
                     )                # Image and 3D Viewer - dynamic layout based on processing mode
                 with gr.Row(equal_height=True) as main_viewer_row:
@@ -1824,5 +1966,12 @@ def create_editor_tab() -> dict:
             'system': segmentation_modal_system,
             'show_function': segmentation_modal_system['show_segmentation_modal'],
             'hide_function': segmentation_modal_system['hide_segmentation_modal']
+        },
+        'mg_orientation_functions': {
+            'detect_from_metadata': detect_mg_orientation_from_metadata,
+            'detect_from_filename': detect_mg_orientation_from_filename,
+            'get_orientations_from_directory': get_mg_orientations_from_directory,
+            'update_view_selector': update_view_selector_for_modality,
+            'get_file_for_orientation': get_file_for_mg_orientation
         }
     }

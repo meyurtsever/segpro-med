@@ -1137,7 +1137,7 @@ class SegMedPro:
             outputs=[
                 image_display, file_browser, metadata_display,
                 slice_slider, slice_text, crosshair_info, error_display,
-                window_level, window_width
+                window_level, window_width, view_selector
             ]
         )
         reset_dir_btn.click(
@@ -1151,7 +1151,7 @@ class SegMedPro:
             outputs=[
                 image_display, file_browser, metadata_display,
                 slice_slider, slice_text, crosshair_info, error_display,
-                window_level, window_width
+                window_level, window_width, view_selector
             ]
         )
         
@@ -1185,7 +1185,7 @@ class SegMedPro:
                     outputs=[
                         image_display, file_browser, metadata_display,
                         slice_slider, slice_text, crosshair_info, error_display,
-                        window_level, window_width
+                        window_level, window_width, view_selector
                     ]
                 )
             
@@ -1199,7 +1199,7 @@ class SegMedPro:
                     outputs=[
                         image_display, file_browser, metadata_display,
                         slice_slider, slice_text, crosshair_info, error_display,
-                        window_level, window_width
+                        window_level, window_width, view_selector
                     ]
                 )
             
@@ -1213,7 +1213,7 @@ class SegMedPro:
                     outputs=[
                         image_display, file_browser, metadata_display,
                         slice_slider, slice_text, crosshair_info, error_display,
-                        window_level, window_width
+                        window_level, window_width, view_selector
                     ]
                 )
         
@@ -1286,8 +1286,84 @@ class SegMedPro:
         )
         def handle_view_change_with_labels(view_value):
             """Handle view selector change and update current labels, suggested labels, and VLM analysis"""
-            # Get the main view change result
-            result = self.editor_image_handlers.change_view_for_annotator(view_value)
+            # Check if we're dealing with MG orientation change
+            modality = self.state.current_metadata.get('Modality', '') if self.state.current_metadata else ''
+            
+            if modality == 'MG' and view_value in ['LCC', 'LMLO', 'RCC', 'RMLO']:
+                # Handle MG orientation change - load the specific file
+                logger.info(f"MG orientation change detected: {view_value}")
+                from ui.editor_tab import get_file_for_mg_orientation
+                
+                # Get the file for this orientation
+                file_path = get_file_for_mg_orientation(view_value, self.state.file_list, self.state.current_directory)
+                
+                if file_path:
+                    # Load the specific MG file
+                    from utils.dicom_utils import load_single_dicom
+                    pixel_array, metadata = load_single_dicom(file_path, apply_deidentification=False)
+                    
+                    if pixel_array is not None:
+                        # Update state with the new file
+                        # For MG, treat each orientation as a single "slice"
+                        if len(pixel_array.shape) == 2:
+                            # Single 2D image
+                            self.state.current_data = pixel_array[np.newaxis, :, :]  # Add slice dimension
+                        else:
+                            self.state.current_data = pixel_array
+                        
+                        self.state.current_metadata = metadata
+                        self.state.current_slice_idx = 0
+                        self.state.current_view = view_value  # Store MG orientation as view
+                        
+                        # Generate the image for display
+                        from utils.visualization import display_slice
+                        window_center = metadata.get('WindowCenter', 500)
+                        window_width = metadata.get('WindowWidth', 1000)
+                        
+                        if isinstance(window_center, list):
+                            window_center = window_center[0]
+                        if isinstance(window_width, list):
+                            window_width = window_width[0]
+                        
+                        img = display_slice(
+                            self.state.current_data,
+                            0,
+                            'axial',  # Use axial for 2D MG images
+                            window_level=window_center,
+                            window_width=window_width
+                        )
+                        
+                        # Convert to format expected by image_annotator
+                        if len(img.shape) == 2:
+                            img_rgb = np.stack([img] * 3, axis=-1)
+                        else:
+                            img_rgb = img
+                        
+                        if img_rgb.dtype != np.uint8:
+                            img_rgb = (img_rgb * 255).astype(np.uint8)
+                        
+                        annotated_value = {
+                            "image": img_rgb,
+                            "boxes": [],
+                            "orientation": 0
+                        }
+                        
+                        # Update slider and slice text for MG (single image)
+                        result = (
+                            gr.update(minimum=0, maximum=0, value=0, visible=False),  # Hide slider for MG
+                            f"0/0 ({view_value})",  # Show orientation in slice text
+                            annotated_value
+                        )
+                    else:
+                        logger.error(f"Failed to load MG file: {file_path}")
+                        result = self.editor_image_handlers.change_view_for_annotator(view_value)
+                else:
+                    logger.warning(f"No file found for MG orientation: {view_value}")
+                    result = self.editor_image_handlers.change_view_for_annotator(view_value)
+            else:
+                # Regular view change (CT, MR, etc.)
+                result = self.editor_image_handlers.change_view_for_annotator(view_value)
+            
             # result contains: (slice_slider, slice_text, image_display)
             
             # Extract current labels from the updated image and load saved labels and VLM analysis
