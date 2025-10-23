@@ -324,6 +324,19 @@ class CustomAnnotatorHandlers:
             # Initialize file_list to ensure it's always defined
             file_list = []
             
+            # Check if file was explicitly cleared (file_obj is None but we had data before)
+            # In this case, clear everything even if dir_path has a value
+            if file_obj is None and hasattr(self.state, 'current_data') and self.state.current_data is not None:
+                # Clear the state
+                self.state.current_data = None
+                self.state.current_metadata = {}
+                self.state.current_directory = None
+                self.state.file_list = []
+                # Create a placeholder image
+                image = np.zeros((100, 100, 3), dtype=np.uint8)
+                placeholder = {"image": image, "boxes": []}
+                return placeholder, "File cleared", {}, gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), "0/0", gr.Dropdown(choices=[], value=None)
+            
             # Check if we have a file object or directory path
             if not file_obj and not dir_path:
                 # Create a placeholder image to prevent JSON decoding errors

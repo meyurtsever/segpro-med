@@ -102,7 +102,7 @@ def display_slice(volume, slice_idx=None, view='axial', window_level=None, windo
     Args:
         volume (numpy.ndarray): 3D volume
         slice_idx (int, optional): Slice index
-        view (str, optional): View orientation ('axial', 'sagittal', 'coronal')
+        view (str, optional): View orientation ('axial', 'sagittal', 'coronal', or MG orientations: 'LCC', 'RCC', 'LMLO', 'RMLO')
         window_level (float, optional): Window level (center)
         window_width (float, optional): Window width
         crosshair (tuple, optional): Crosshair position (x, y, z)
@@ -112,18 +112,26 @@ def display_slice(volume, slice_idx=None, view='axial', window_level=None, windo
     Returns:
         numpy.ndarray: Slice image as uint8 RGB array
     """
+    # Handle MG orientations (LCC, RCC, LMLO, RMLO) - treat them as axial views
+    mg_orientations = ['lcc', 'rcc', 'lmlo', 'rmlo']
+    view_lower = view.lower()
+    
+    if view_lower in mg_orientations:
+        # MG images are 2D, treat as axial view
+        view_lower = 'axial'
+    
     # Select slice based on view
-    if view.lower() == 'axial':
+    if view_lower == 'axial':
         if slice_idx is None or slice_idx >= volume.shape[0]:
             slice_idx = volume.shape[0] // 2
         slice_data = volume[slice_idx, :, :]
         orientation = 'ALPR'  # Anterior-Left-Posterior-Right
-    elif view.lower() == 'sagittal':
+    elif view_lower == 'sagittal':
         if slice_idx is None or slice_idx >= volume.shape[2]:
             slice_idx = volume.shape[2] // 2
         slice_data = volume[:, :, slice_idx]
         orientation = 'SAHF'  # Superior-Anterior-Inferior-Posterior
-    elif view.lower() == 'coronal':
+    elif view_lower == 'coronal':
         if slice_idx is None or slice_idx >= volume.shape[1]:
             slice_idx = volume.shape[1] // 2
         slice_data = volume[:, slice_idx, :]
@@ -142,52 +150,52 @@ def display_slice(volume, slice_idx=None, view='axial', window_level=None, windo
     draw = ImageDraw.Draw(pil_img)
     
     # Add crosshair if provided
-    if crosshair is not None:
-        x, y, z = crosshair
-        
-        if view.lower() == 'axial':
-            # Draw horizontal and vertical lines through (x, y)
-            draw.line((0, y, pil_img.width, y), fill=(255, 0, 0), width=1)
-            draw.line((x, 0, x, pil_img.height), fill=(255, 0, 0), width=1)
-        elif view.lower() == 'sagittal':
-            # Draw lines through (y, z)
-            draw.line((0, z, pil_img.width, z), fill=(255, 0, 0), width=1)
-            draw.line((y, 0, y, pil_img.height), fill=(255, 0, 0), width=1)
-        elif view.lower() == 'coronal':
-            # Draw lines through (x, z)
-            draw.line((0, z, pil_img.width, z), fill=(255, 0, 0), width=1)
-            draw.line((x, 0, x, pil_img.height), fill=(255, 0, 0), width=1)
+    # if crosshair is not None:
+    #     x, y, z = crosshair
+    #     
+    #     if view.lower() == 'axial':
+    #         # Draw horizontal and vertical lines through (x, y)
+    #         draw.line((0, y, pil_img.width, y), fill=(255, 0, 0), width=1)
+    #         draw.line((x, 0, x, pil_img.height), fill=(255, 0, 0), width=1)
+    #     elif view.lower() == 'sagittal':
+    #         # Draw lines through (y, z)
+    #         draw.line((0, z, pil_img.width, z), fill=(255, 0, 0), width=1)
+    #         draw.line((y, 0, y, pil_img.height), fill=(255, 0, 0), width=1)
+    #     elif view.lower() == 'coronal':
+    #         # Draw lines through (x, z)
+    #         draw.line((0, z, pil_img.width, z), fill=(255, 0, 0), width=1)
+    #         draw.line((x, 0, x, pil_img.height), fill=(255, 0, 0), width=1)
     
     # Add orientation markers
-    if add_orientation_marker:
-        font_size = 20
-        try:
-            font = ImageFont.truetype("arial.ttf", font_size)
-        except IOError:
-            # Use default font if arial is not available
-            font = ImageFont.load_default()
-        
-        margin = 10
-        
-        # Draw orientation labels based on view
-        if view.lower() == 'axial':
-            # A at top, P at bottom, L at right, R at left
-            draw.text((pil_img.width // 2, margin), "A", fill=(0, 255, 0), font=font)
-            draw.text((pil_img.width // 2, pil_img.height - margin - font_size), "P", fill=(0, 255, 0), font=font)
-            draw.text((margin, pil_img.height // 2), "L", fill=(0, 255, 0), font=font)
-            draw.text((pil_img.width - margin - font_size, pil_img.height // 2), "R", fill=(0, 255, 0), font=font)
-        elif view.lower() == 'sagittal':
-            # S at top, I at bottom, A at right, P at left
-            draw.text((pil_img.width // 2, margin), "S", fill=(0, 255, 0), font=font)
-            draw.text((pil_img.width // 2, pil_img.height - margin - font_size), "I", fill=(0, 255, 0), font=font)
-            draw.text((margin, pil_img.height // 2), "A", fill=(0, 255, 0), font=font)
-            draw.text((pil_img.width - margin - font_size, pil_img.height // 2), "P", fill=(0, 255, 0), font=font)
-        elif view.lower() == 'coronal':
-            # S at top, I at bottom, L at right, R at left
-            draw.text((pil_img.width // 2, margin), "S", fill=(0, 255, 0), font=font)
-            draw.text((pil_img.width // 2, pil_img.height - margin - font_size), "I", fill=(0, 255, 0), font=font)
-            draw.text((margin, pil_img.height // 2), "L", fill=(0, 255, 0), font=font)
-            draw.text((pil_img.width - margin - font_size, pil_img.height // 2), "R", fill=(0, 255, 0), font=font)
+    # if add_orientation_marker:
+    #     font_size = 20
+    #     try:
+    #         font = ImageFont.truetype("arial.ttf", font_size)
+    #     except IOError:
+    #         # Use default font if arial is not available
+    #         font = ImageFont.load_default()
+    #     
+    #     margin = 10
+    #     
+    #     # Draw orientation labels based on view
+    #     if view.lower() == 'axial':
+    #         # A at top, P at bottom, L at right, R at left
+    #         draw.text((pil_img.width // 2, margin), "A", fill=(0, 255, 0), font=font)
+    #         draw.text((pil_img.width // 2, pil_img.height - margin - font_size), "P", fill=(0, 255, 0), font=font)
+    #         draw.text((margin, pil_img.height // 2), "L", fill=(0, 255, 0), font=font)
+    #         draw.text((pil_img.width - margin - font_size, pil_img.height // 2), "R", fill=(0, 255, 0), font=font)
+    #     elif view.lower() == 'sagittal':
+    #         # S at top, I at bottom, A at right, P at left
+    #         draw.text((pil_img.width // 2, margin), "S", fill=(0, 255, 0), font=font)
+    #         draw.text((pil_img.width // 2, pil_img.height - margin - font_size), "I", fill=(0, 255, 0), font=font)
+    #         draw.text((margin, pil_img.height // 2), "A", fill=(0, 255, 0), font=font)
+    #         draw.text((pil_img.width - margin - font_size, pil_img.height // 2), "P", fill=(0, 255, 0), font=font)
+    #     elif view.lower() == 'coronal':
+    #         # S at top, I at bottom, L at right, R at left
+    #         draw.text((pil_img.width // 2, margin), "S", fill=(0, 255, 0), font=font)
+    #         draw.text((pil_img.width // 2, pil_img.height - margin - font_size), "I", fill=(0, 255, 0), font=font)
+    #         draw.text((margin, pil_img.height // 2), "L", fill=(0, 255, 0), font=font)
+    #         draw.text((pil_img.width - margin - font_size, pil_img.height // 2), "R", fill=(0, 255, 0), font=font)
     
     # Add scale bar (10% of width)
     if add_scale:

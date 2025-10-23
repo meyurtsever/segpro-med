@@ -246,9 +246,15 @@ class DataLoadingHandlers:
     @log_exception
     def load_data_for_annotator(self, file_obj, directory, apply_deidentification=False):
         """Load DICOM data from file or directory and return AnnotatedImageValue format for image_annotator"""
-        logger.info(f"Loading data for annotator: file={file_obj}, directory={directory}, deidentification={apply_deidentification}")
         
-        # Reset current data
+        # Check if we have any valid input
+        if not file_obj and not directory:
+            # No input - return empty state without resetting
+            image = np.zeros((100, 100, 3), dtype=np.uint8)
+            placeholder = {"image": image, "boxes": []}
+            return placeholder, gr.Dropdown(choices=[], value=None), {}, gr.Slider(visible=False, minimum=0, maximum=1, value=0), "0/0", "x: 0, y: 0, z: 0", "Please select a file or enter a directory path", gr.update(visible=False), gr.update(visible=False), gr.Dropdown(choices=[], value=None), gr.update(visible=False), gr.update(visible=False)
+        
+        # Reset current data only when we have valid input
         self.state.reset_data()
         
         # Determine input source - FILE TAKES PRIORITY OVER DIRECTORY
@@ -306,8 +312,14 @@ class DataLoadingHandlers:
                         self.state.current_metadata = metadata
         else:
             # No file or directory provided
-            return None, gr.Dropdown(choices=[]), {}, gr.Slider(visible=False), "0/0", "x: 0, y: 0, z: 0", "No data loaded", 500, 1000, gr.Radio()
+            return None, gr.Dropdown(choices=[]), {}, gr.Slider(visible=False), "0/0", "x: 0, y: 0, z: 0", "No data loaded", 500, 1000, gr.Radio(), gr.update(visible=False), gr.update(visible=False)
 
+        # Validate that data was actually loaded
+        if self.state.current_data is None:
+            image = np.zeros((100, 100, 3), dtype=np.uint8)
+            placeholder = {"image": image, "boxes": []}
+            return placeholder, gr.Dropdown(choices=[], value=None), {}, gr.Slider(visible=False, minimum=0, maximum=1, value=0), "0/0", "x: 0, y: 0, z: 0", "Failed to load data", gr.update(visible=False), gr.update(visible=False), gr.Dropdown(choices=[], value=None), gr.update(visible=False), gr.update(visible=False)
+        
         self.state.current_data_type = "dicom"
         shape = self.state.current_data.shape
         self.state.current_shape = shape
@@ -386,6 +398,9 @@ class DataLoadingHandlers:
         window_level_value = window_center if window_center is not None else 500
         window_width_value = window_width if window_width is not None else 1000
         
+        # Determine if prev/next buttons should be visible (only for multiple slices)
+        has_multiple_slices = slider_max > 0
+        
         return (
             annotated_value,
             gr.Dropdown(choices=file_names, value=file_names[0] if file_names else None),
@@ -396,7 +411,9 @@ class DataLoadingHandlers:
             f"DICOM data loaded: {len(self.state.file_list)} slice(s)",
             window_level_value,
             window_width_value,
-            gr.Radio(choices=view_choices, value=view_value, visible=view_visible)
+            gr.Radio(choices=view_choices, value=view_value, visible=view_visible),
+            gr.update(visible=has_multiple_slices),  # prev_btn visibility
+            gr.update(visible=has_multiple_slices)   # next_btn visibility
         )
 
 

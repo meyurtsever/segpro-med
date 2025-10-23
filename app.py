@@ -1137,7 +1137,8 @@ class SegMedPro:
             outputs=[
                 image_display, file_browser, metadata_display,
                 slice_slider, slice_text, crosshair_info, error_display,
-                window_level, window_width, view_selector
+                window_level, window_width, view_selector,
+                prev_btn, next_btn
             ]
         )
         reset_dir_btn.click(
@@ -1151,7 +1152,8 @@ class SegMedPro:
             outputs=[
                 image_display, file_browser, metadata_display,
                 slice_slider, slice_text, crosshair_info, error_display,
-                window_level, window_width, view_selector
+                window_level, window_width, view_selector,
+                prev_btn, next_btn
             ]
         )
         
@@ -1286,6 +1288,7 @@ class SegMedPro:
         )
         def handle_view_change_with_labels(view_value):
             """Handle view selector change and update current labels, suggested labels, and VLM analysis"""
+            
             # Check if we're dealing with MG orientation change
             modality = self.state.current_metadata.get('Modality', '') if self.state.current_metadata else ''
             
