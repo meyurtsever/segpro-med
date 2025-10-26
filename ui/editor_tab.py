@@ -1266,14 +1266,27 @@ def create_other_vlm_label_suggestions(vlm_model, image_annotator_value, slice_i
         logger.error(f"Error generating {vlm_model} label suggestions: {e}")
         return []
 
-def create_editor_tab() -> dict:
-    """Create the complete editor tab layout"""
+def create_editor_tab(current_user=None) -> dict:
+    """
+    Create the complete editor tab layout
+    
+    Args:
+        current_user: Dictionary containing user info (with 'user_id' key), or None for guest
+    """
+    # Extract user_id from current_user, default to "guest"
+    user_id = current_user.get('user_id', 'guest') if current_user else 'guest'
+    
     with gr.TabItem("Editor", id=1):
         # Create modal system for welcome and help dialogs (auto-opening)
-        modal_system = create_editor_welcoming_modal_system()
+        modal_system = create_editor_welcoming_modal_system(user_id=user_id)
         
         # Create segmentation completion modal system
-        segmentation_modal_system = create_segmentation_modal_system()
+        segmentation_modal_system = create_segmentation_modal_system(user_id=user_id)
+        
+        # Create prompt tip modal systems
+        from ui.modal_components import create_prompt_tip_modal_system
+        point_tip_modal_system = create_prompt_tip_modal_system(user_id=user_id, modal_type="point")
+        box_tip_modal_system = create_prompt_tip_modal_system(user_id=user_id, modal_type="box")
         
         # Note: Modal will auto-open when tab loads - no manual trigger needed
         
@@ -1455,6 +1468,88 @@ def create_editor_tab() -> dict:
                 with gr.Row():
                     slice_text = gr.Textbox(label="Slice", interactive=False, visible=False)
                     crosshair_info = gr.Textbox(label="Crosshair", interactive=True, visible=False)
+                
+                # AI Guided Annotation Accordion (initially hidden, shown with green highlight when activated)
+                with gr.Accordion("🤖 AI-Guided Annotation", open=True, visible=False, elem_id="ai-tools-accordion") as ai_tools_accordion:
+                    gr.HTML("""
+                    <style>
+                        #ai-tools-accordion {
+                            background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(5, 150, 105, 0.08) 100%) !important;
+                            border: 1px solid rgba(16, 185, 129, 0.3) !important;
+                            border-radius: 8px !important;
+                            padding: 8px !important;
+                            margin: 8px 0 !important;
+                            animation: highlightPulse 2s ease-in-out !important;
+                        }
+                        
+                        @keyframes highlightPulse {
+                            0%, 100% { 
+                                background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(5, 150, 105, 0.08) 100%);
+                            }
+                            50% { 
+                                background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.15) 100%);
+                            }
+                        }
+                        
+                        #ai-tools-accordion .label-wrap {
+                            color: #10b981 !important;
+                            font-weight: 600 !important;
+                        }
+                    </style>
+                    """)
+                    
+                    # AI Tools content (Point/Box prompts and annotation button)
+                    gr.Markdown("*Guide the AI with point or area selection to focus a specific area for segmenting.*")
+                    
+                    # Dynamic info boxes for point/box guidance
+                    from ui.info_components import create_info_message
+                    
+                    # Info box for point-based prompt (initially hidden)
+                    point_info_accordion = create_info_message(
+                        message="""
+                        <strong>Point-based Guidance:</strong> Click directly on the image at the location you want to segment. 
+                        <br><br>
+                        <strong>Tip:</strong> Click on the center or most representative part of the structure you want to segment for best results.
+                        """,
+                        message_type="success",
+                        visible=False,
+                        open_state=True
+                    )
+                    
+                    # Info box for box-based prompt (initially hidden)
+                    box_info_accordion = create_info_message(
+                        message="""
+                        <strong>Box-based Guidance:</strong> Draw a bounding box around the area you want to segment by clicking and dragging on the image. <strong>Use rectangle tool from the toolbar.</strong>
+                        <br><br>
+                        <strong>Tip:</strong> Make sure the box fully contains the structure you want to segment with some margin around it.
+                        """,
+                        message_type="info", 
+                        visible=False,
+                        open_state=True
+                    )
+                    
+                    # Prompt type selection
+                    with gr.Row():
+                        point_prompt_checkbox = gr.Checkbox(
+                            label="Point-based Prompt",
+                            value=False,
+                            info="Use point coordinates for segmentation"
+                        )
+                        box_prompt_checkbox = gr.Checkbox(
+                            label="Box-based Prompt", 
+                            value=False,
+                            info="Use bounding boxes for segmentation"
+                        )
+                    coordinates_text = gr.Textbox(
+                        label="Selected Coordinates (x,y)",
+                        value="",
+                        interactive=False,
+                        info="Click on the image to select coordinates",
+                        visible=False  # Initially hidden until point-based is selected
+                    )
+                    with gr.Row():
+                        annotate_btn = gr.Button("Run Guided Annotation", variant="primary", scale=1)
+                        clear_coords_btn = gr.Button("Clear Coordinates & Prompts", variant="stop", scale=1)
                 
                 # Crowdsourcing Controls (moved up and enhanced)
                 with gr.Accordion("Crowdsourcing Controls", open=True, visible=False) as crowdsourcing_accordion:
@@ -1761,8 +1856,8 @@ def create_editor_tab() -> dict:
                 # Create enhanced header with info tooltip (single component)
                 create_segmentation_with_ai_header()
                 
+                # Guided Segmentation (Point/Box Selection) - Checkboxes to trigger modals and accordion
                 with gr.Accordion("Guided Segmentation (Point/Box Selection)", open=False):
-                #with gr.Accordion("Annotate with AI: Point Selection", open=False):
                     gr.Markdown("*Guide the AI with point or area selection to focus a specific area for segmenting.*")
                     
                     # Dynamic info boxes for point/box guidance
@@ -1792,7 +1887,7 @@ def create_editor_tab() -> dict:
                         open_state=True
                     )
                     
-                    # Prompt type selection
+                    # Prompt type selection checkboxes (triggers modal and moves content to accordion above)
                     with gr.Row():
                         point_prompt_checkbox = gr.Checkbox(
                             label="Point-based Prompt",
@@ -1813,7 +1908,7 @@ def create_editor_tab() -> dict:
                     )
                     with gr.Row():
                         annotate_btn = gr.Button("Run Guided Annotation", variant="primary", scale=1)
-                        clear_coords_btn = gr.Button("Clear Coordinates & Prompts", variant="stop", scale=1)                              
+                        clear_coords_btn = gr.Button("Clear Coordinates & Prompts", variant="stop", scale=1)
                 
                 # Whole Area Segmentation Section
                 with gr.Accordion("Whole Area Segmentation", open=False):
@@ -1840,7 +1935,7 @@ def create_editor_tab() -> dict:
                 col3 = (point_prompt_checkbox, box_prompt_checkbox, coordinates_text, clear_coords_btn, ai_model_selector, 
                         processing_mode, score_threshold,
                         output_dir, save_visualizations, device_selector, 
-                        auto_brain_annotate_btn, annotate_btn, point_info_accordion, box_info_accordion, whole_area_info_accordion)    # Helper functions for 3D viewer interactions and layout switching
+                        auto_brain_annotate_btn, annotate_btn, point_info_accordion, box_info_accordion, whole_area_info_accordion, ai_tools_accordion)    # Helper functions for 3D viewer interactions and layout switching
     def toggle_layout_for_processing_mode(processing_mode):
         """Switch between full-width and split layout based on processing mode"""
         if processing_mode == "All Records":
@@ -1966,6 +2061,16 @@ def create_editor_tab() -> dict:
             'system': segmentation_modal_system,
             'show_function': segmentation_modal_system['show_segmentation_modal'],
             'hide_function': segmentation_modal_system['hide_segmentation_modal']
+        },
+        'point_tip_modal': {
+            'system': point_tip_modal_system,
+            'show_function': point_tip_modal_system['show_modal'],
+            'hide_function': point_tip_modal_system['hide_modal']
+        },
+        'box_tip_modal': {
+            'system': box_tip_modal_system,
+            'show_function': box_tip_modal_system['show_modal'],
+            'hide_function': box_tip_modal_system['hide_modal']
         },
         'mg_orientation_functions': {
             'detect_from_metadata': detect_mg_orientation_from_metadata,

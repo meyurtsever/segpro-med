@@ -346,7 +346,7 @@ class SegMedPro:
                 with gr.Tabs() as tabs:
                     # Standard tabs - revert back to normal tab creation functions
                     viewer_components = create_viewer_tab()
-                    editor_components = create_editor_tab()
+                    editor_components = create_editor_tab(current_user=self.current_user)
                     conversion_components = create_conversion_tab()
                     label_manager_components = create_label_manager_tab()
                     
@@ -392,6 +392,10 @@ class SegMedPro:
                         gr.update(visible=management_visible),  # Management tab
                         gr.update(visible=contribute_visible),  # Contribute tab
                         user_data['user_id'],  # Update contribute tab user state
+                        user_data['user_id'],  # Update editor modal user_id_state
+                        user_data['user_id'],  # Update segmentation modal user_id_state
+                        user_data['user_id'],  # Update point tip modal user_id_state
+                        user_data['user_id'],  # Update box tip modal user_id_state
                         "Login successful!"  # Login status message
                     )
                 else:
@@ -404,6 +408,10 @@ class SegMedPro:
                         gr.update(visible=False),  # Management tab
                         gr.update(visible=False),  # Contribute tab
                         "",     # contribute user state
+                        "guest",  # Keep editor modal at guest
+                        "guest",  # Keep segmentation modal at guest
+                        "guest",  # Keep point tip modal at guest
+                        "guest",  # Keep box tip modal at guest
                         "❌ Invalid username or password"  # Login status message
                     )
             
@@ -420,6 +428,10 @@ class SegMedPro:
                     gr.update(visible=False),  # Hide management tab
                     gr.update(visible=False),  # Hide contribute tab
                     "",     # Clear contribute user state
+                    "guest",  # Reset editor modal to guest
+                    "guest",  # Reset segmentation modal to guest
+                    "guest",  # Reset point tip modal to guest
+                    "guest",  # Reset box tip modal to guest
                     "",     # Clear username
                     "",     # Clear password
                     ""      # Clear login status
@@ -438,12 +450,24 @@ class SegMedPro:
                     management_tab,
                     contribute_tab,
                     contribute_components['current_user_state'],
+                    editor_components['modal_system']['user_id_state'],
+                    editor_components['segmentation_modal']['system']['user_id_state'],
+                    editor_components['point_tip_modal']['system']['user_id_state'],
+                    editor_components['box_tip_modal']['system']['user_id_state'],
                     login_status
                 ]
             ).then(
                 fn=lambda msg: gr.update(value=msg, visible=True),
                 inputs=[login_status],
                 outputs=[login_status]
+            ).then(
+                # After login, update modal visibility based on user preferences
+                fn=editor_components['modal_system']['update_for_user'],
+                inputs=[editor_components['modal_system']['user_id_state']],
+                outputs=[
+                    editor_components['modal_system']['backdrop'],
+                    editor_components['modal_system']['welcome_modal']
+                ]
             )
             
             # Allow Enter key to trigger login
@@ -459,12 +483,24 @@ class SegMedPro:
                     management_tab,
                     contribute_tab,
                     contribute_components['current_user_state'],
+                    editor_components['modal_system']['user_id_state'],
+                    editor_components['segmentation_modal']['system']['user_id_state'],
+                    editor_components['point_tip_modal']['system']['user_id_state'],
+                    editor_components['box_tip_modal']['system']['user_id_state'],
                     login_status
                 ]
             ).then(
                 fn=lambda msg: gr.update(value=msg, visible=True),
                 inputs=[login_status],
                 outputs=[login_status]
+            ).then(
+                # After login, update modal visibility based on user preferences
+                fn=editor_components['modal_system']['update_for_user'],
+                inputs=[editor_components['modal_system']['user_id_state']],
+                outputs=[
+                    editor_components['modal_system']['backdrop'],
+                    editor_components['modal_system']['welcome_modal']
+                ]
             )
             
             # Connect logout
@@ -479,6 +515,10 @@ class SegMedPro:
                     management_tab,
                     contribute_tab,
                     contribute_components['current_user_state'],
+                    editor_components['modal_system']['user_id_state'],
+                    editor_components['segmentation_modal']['system']['user_id_state'],
+                    editor_components['point_tip_modal']['system']['user_id_state'],
+                    editor_components['box_tip_modal']['system']['user_id_state'],
                     username_input,
                     password_input,
                     login_status
@@ -569,8 +609,8 @@ class SegMedPro:
             with gr.Tabs() as tabs:
                 # Create viewer tab
                 viewer_components = create_viewer_tab()
-                # Create editor tab
-                editor_components = create_editor_tab()
+                # Create editor tab (pass None for guest user)
+                editor_components = create_editor_tab(current_user=None)
                 # Create conversion tab
                 conversion_components = create_conversion_tab()
                 # Create label manager tab
@@ -1091,7 +1131,7 @@ class SegMedPro:
         (point_prompt_checkbox, box_prompt_checkbox, coordinates_text, clear_coords_btn, ai_model_selector, 
          processing_mode, score_threshold,
          output_dir, save_visualizations, device_selector, 
-         auto_brain_annotate_btn, annotate_btn, point_info_accordion, box_info_accordion, whole_area_info_accordion) = ai_tools
+         auto_brain_annotate_btn, annotate_btn, point_info_accordion, box_info_accordion, whole_area_info_accordion, ai_tools_accordion) = ai_tools
         
         # Get layout functions
         layout_functions = components.get('layout_functions', {})
@@ -1102,6 +1142,21 @@ class SegMedPro:
         segmentation_modal_system = components.get('segmentation_modal', {})
         show_segmentation_modal = segmentation_modal_system.get('show_function')
         hide_segmentation_modal = segmentation_modal_system.get('hide_function')
+        
+        # Get prompt tip modal functions
+        point_tip_modal_system = components.get('point_tip_modal', {})
+        show_point_tip_modal = point_tip_modal_system.get('show_function')
+        point_tip_modal_components = point_tip_modal_system.get('system', {})
+        point_tip_backdrop = point_tip_modal_components.get('backdrop')
+        point_tip_modal = point_tip_modal_components.get('modal')
+        point_tip_user_id_state = point_tip_modal_components.get('user_id_state')
+        
+        box_tip_modal_system = components.get('box_tip_modal', {})
+        show_box_tip_modal = box_tip_modal_system.get('show_function')
+        box_tip_modal_components = box_tip_modal_system.get('system', {})
+        box_tip_backdrop = box_tip_modal_components.get('backdrop')
+        box_tip_modal = box_tip_modal_components.get('modal')
+        box_tip_user_id_state = box_tip_modal_components.get('user_id_state')
         
         # Get modal components for outputs
         modal_system_components = segmentation_modal_system.get('system', {})
@@ -1608,49 +1663,70 @@ class SegMedPro:
         )
         
         # Connect checkbox handlers for prompt type selection
-        def handle_point_prompt_change(point_checked, box_checked):
-            """Handle point prompt checkbox change - ensure mutual exclusivity and clear coords (EDITOR-SPECIFIC)"""
+        def handle_point_prompt_change(point_checked, box_checked, current_user_id):
+            """Handle point prompt checkbox change - ensure mutual exclusivity, clear coords, show modal and accordion (EDITOR-SPECIFIC)"""
             if point_checked:
-                # If point is checked, uncheck box and show coordinates
+                # If point is checked, uncheck box, show coordinates, show modal, and show accordion
                 self.editor_medsam2_handlers.enable_point_mode()
-                return True, False, gr.update(visible=True)
-            else:                # If point is unchecked, hide coordinates and clear them
+                
+                # Show tip modal and accordion
+                modal_backdrop_update, modal_update = show_point_tip_modal(current_user_id)
+                
+                return (True, False, gr.update(visible=True), 
+                        modal_backdrop_update, modal_update, gr.update(visible=True, open=True))
+            else:
+                # If point is unchecked, hide coordinates and clear them, keep accordion visible if box is checked
                 self.editor_medsam2_handlers.disable_point_mode()
                 self.editor_medsam2_handlers.selected_coordinates = []  # Clear coordinates from handler state
-                return False, box_checked, gr.update(visible=False)
+                
+                # Keep accordion visible if box is checked
+                accordion_visible = box_checked
+                return (False, box_checked, gr.update(visible=False),
+                        gr.update(), gr.update(), gr.update(visible=accordion_visible))
         
-        def handle_box_prompt_change(box_checked, point_checked):
-            """Handle box prompt checkbox change - ensure mutual exclusivity and enable box mode (EDITOR-SPECIFIC)"""
+        def handle_box_prompt_change(box_checked, point_checked, current_user_id):
+            """Handle box prompt checkbox change - ensure mutual exclusivity, enable box mode, show modal and accordion (EDITOR-SPECIFIC)"""
             if box_checked:
-                # If box is checked, uncheck point, hide coordinates, and enable box mode
+                # If box is checked, uncheck point, hide coordinates, enable box mode, show modal, and show accordion
                 self.editor_medsam2_handlers.disable_point_mode()
                 self.editor_medsam2_handlers.enable_box_mode()
                 self.editor_medsam2_handlers.selected_coordinates = []  # Clear coordinates from handler state
                 self.editor_medsam2_handlers.prompt_boxes = []  # Clear any existing box prompts
-                return (True, False, gr.update(visible=False))  # Hide coordinates text in box mode
+                
+                # Show tip modal and accordion
+                modal_backdrop_update, modal_update = show_box_tip_modal(current_user_id)
+                
+                return (True, False, gr.update(visible=False),
+                        modal_backdrop_update, modal_update, gr.update(visible=True, open=True))
             else:
                 # If box is unchecked, disable box mode and keep point state
                 self.editor_medsam2_handlers.disable_box_mode()
                 if point_checked:
                     self.editor_medsam2_handlers.enable_point_mode()
+                    # Keep accordion visible if point is checked
                     return (False, True, 
                            gr.update(visible=True, 
                                    label="Selected Coordinates (x,y)", 
                                    value="",
-                                   info="Click on the image to select coordinates"))
+                                   info="Click on the image to select coordinates"),
+                           gr.update(), gr.update(), gr.update(visible=True))
                 else:
                     self.editor_medsam2_handlers.disable_point_mode()
-                    return (False, False, gr.update(visible=False))  # Hide coordinates text when no mode selected
+                    return (False, False, gr.update(visible=False),
+                           gr.update(), gr.update(), gr.update(visible=False))  # Hide accordion when both unchecked
         
         point_prompt_checkbox.change(
             fn=handle_point_prompt_change,
-            inputs=[point_prompt_checkbox, box_prompt_checkbox],
-            outputs=[point_prompt_checkbox, box_prompt_checkbox, coordinates_text]        )
+            inputs=[point_prompt_checkbox, box_prompt_checkbox, point_tip_user_id_state],
+            outputs=[point_prompt_checkbox, box_prompt_checkbox, coordinates_text, 
+                    point_tip_backdrop, point_tip_modal, ai_tools_accordion]
+        )
         
         box_prompt_checkbox.change(
             fn=handle_box_prompt_change,
-            inputs=[box_prompt_checkbox, point_prompt_checkbox],
-            outputs=[box_prompt_checkbox, point_prompt_checkbox, coordinates_text]
+            inputs=[box_prompt_checkbox, point_prompt_checkbox, box_tip_user_id_state],
+            outputs=[box_prompt_checkbox, point_prompt_checkbox, coordinates_text,
+                    box_tip_backdrop, box_tip_modal, ai_tools_accordion]
         )        # VLM checkbox mutual exclusivity handlers
         def handle_anomalies_checkbox_change(anomalies_checked, describe_checked):
             """Handle anomalies checkbox change - ensure mutual exclusivity"""
@@ -1780,7 +1856,7 @@ class SegMedPro:
         )
         
         # Custom wrapper function to handle the 3-tuple return and button visibility (EDITOR-SPECIFIC)
-        def handle_annotation_workflow(output_dir, save_visualizations, device_selector, processing_mode, score_threshold, image_display_data):
+        def handle_annotation_workflow(output_dir, save_visualizations, device_selector, processing_mode, score_threshold, image_display_data, current_user_id):
             logger.info(f"Annotation Status: workflow started with processing_mode={processing_mode}")
             status, image, success = self.editor_medsam2_handlers.run_full_annotation_workflow(
                 output_dir, save_visualizations, device_selector, processing_mode, score_threshold, image_display_data
@@ -1817,11 +1893,11 @@ class SegMedPro:
                     # For image_annotator format, check if there are annotations
                     if hasattr(image, 'annotations') or (isinstance(image, dict) and 'annotations' in image):
                         logger.info("Segmentation completed successfully - showing completion modal")
-                        modal_backdrop_update, modal_container_update = show_segmentation_modal()
+                        modal_backdrop_update, modal_container_update = show_segmentation_modal(current_user_id)
                     elif isinstance(image, dict) and 'image' in image:
                         # Check if it's the correct annotated format
                         logger.info("Segmentation completed successfully - showing completion modal")
-                        modal_backdrop_update, modal_container_update = show_segmentation_modal()
+                        modal_backdrop_update, modal_container_update = show_segmentation_modal(current_user_id)
                 except Exception as e:
                     logger.warning(f"Could not check annotation status for modal: {e}")
             
@@ -1829,7 +1905,7 @@ class SegMedPro:
         
         annotate_btn.click(
             fn=handle_annotation_workflow,
-            inputs=[output_dir, save_visualizations, device_selector, processing_mode, score_threshold, image_display],
+            inputs=[output_dir, save_visualizations, device_selector, processing_mode, score_threshold, image_display, modal_system_components.get('user_id_state')],
             outputs=[error_display, image_display, viewer_3d, modal_backdrop, modal_container, point_prompt_checkbox, box_prompt_checkbox]
         )          # Unified VLM handler for all models (EDITOR-SPECIFIC)
         def handle_vlm_inference(vlm_model, image_display, identify_anomalies, describe_slice):

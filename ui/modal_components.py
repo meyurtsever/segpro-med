@@ -1,45 +1,10 @@
 """
 SegMed-Pro Modal Components
-This module provides modal-like fu            /* Modal container */
-            .modal-container {
-                position: fixed !important;
-                top: 50% !important;
-                left: 50% !important;
-                transform: translate(-50%, -50%) !important;
-                background: #27272A !important;
-                border-radius: 16px !important;
-                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8) !important;
-                z-index: 1001 !important;
-                width: 800px !important;
-                max-width: 95vw !important;
-                max-height: 80vh !important;
-                overflow-y: auto !important;
-                border: 1px solid #4b5563 !important;
-                animation: modalSlideIn 0.3s ease-out !important;
-            }    /* Modal header */
-            .modal-header {{
-                background: linear-gradient(135deg, #374151, #4b5563) !important;
-                color: white !important;
-                padding: 16px 20px !important;
-                border-radius: 16px 16px 0 0 !important;
-                border-bottom: 1px solid #4b5563 !important;
-                display: flex !important;
-                justify-content: space-between !important;
-                align-items: center !important;
-                position: relative !important;
-                gap: 16px !important;
-            }}
-            
-            .modal-title {{
-                font-size: 1.4rem !important;
-                font-weight: 600 !important;
-                margin: 0 !important;
-                color: white !important;
-                flex: 1 !important;
-            }}ations by simulating
-modal behavior with backdrop blur and layered components.
+This module provides modal-like behavior with backdrop blur and layered components.
 """
+
 import gradio as gr
+from auth.user_preferences import get_preferences_manager
 
 def create_modal_backdrop():
     """
@@ -386,8 +351,36 @@ def create_editor_welcoming_modal():
             </p>
         </div>
         """)
+        
+        # Add "Do not show again" checkbox
+        with gr.Row(elem_classes=["modal-footer"], elem_id="modal-footer-row"):
+            dont_show_again_checkbox = gr.Checkbox(
+                label="Do not show this message again",
+                value=False,
+                elem_classes=["dont-show-checkbox"]
+            )
+        
+        # Add styling for the checkbox
+        gr.HTML("""
+        <style>
+            .modal-footer {
+                margin-top: 20px !important;
+                padding-top: 16px !important;
+                border-top: 1px solid #4b5563 !important;
+            }
+            
+            .dont-show-checkbox label {
+                color: #9ca3af !important;
+                font-size: 0.9rem !important;
+            }
+            
+            .dont-show-checkbox input[type="checkbox"] {
+                cursor: pointer !important;
+            }
+        </style>
+        """)
     
-    return modal_container, close_button, load_cvm_btn, load_normal_btn, load_hgg_btn
+    return modal_container, close_button, load_cvm_btn, load_normal_btn, load_hgg_btn, dont_show_again_checkbox
 
 def show_modal(modal_container, backdrop):
     """
@@ -424,33 +417,61 @@ def hide_modal(modal_container, backdrop):
 # Backward compatibility aliases
 create_welcome_modal = create_editor_welcoming_modal
 
-def create_editor_welcoming_modal_system():
+def create_editor_welcoming_modal_system(user_id="guest"):
     """
     Create a modal system that automatically opens when the page loads.
     Uses Gradio's component lifecycle to trigger the modal.
+    Respects user preferences for modal display.
+    
+    Args:
+        user_id: The current user's ID (default: "guest")
     """
+    # Get preferences manager
+    prefs_manager = get_preferences_manager()
+    
     # Create backdrop
     backdrop = create_modal_backdrop()
     
     # Create welcome modal - start as visible for auto-open
-    welcome_modal, welcome_close, load_cvm_btn, load_normal_btn, load_hgg_btn = create_editor_welcoming_modal()
+    welcome_modal, welcome_close, load_cvm_btn, load_normal_btn, load_hgg_btn, dont_show_checkbox = create_editor_welcoming_modal()
     
-    # Set initial state to show modal automatically
-    backdrop.visible = True
-    welcome_modal.visible = True
+    # Check user preferences
+    should_show = prefs_manager.should_show_editor_welcome(user_id)
+    
+    # Set initial state based on user preferences
+    backdrop.visible = should_show
+    welcome_modal.visible = should_show
     
     # Create a state component to track if modal has been shown
     modal_shown_state = gr.State(value=False)
     
+    # Create a state component to store the current user_id
+    user_id_state = gr.State(value=user_id)
+    
     def show_welcome_modal():
         return gr.update(visible=True), gr.update(visible=True), True
     
-    def hide_welcome_modal():
+    def hide_welcome_modal(dont_show_again, current_user_id):
+        """Hide the modal and optionally save user preference"""
+        # If user checked "don't show again", save preference
+        if dont_show_again:
+            prefs_manager.hide_editor_welcome(current_user_id)
+        
         return gr.update(visible=False), gr.update(visible=False), True
     
-    # Connect close button
+    def update_modal_for_user(new_user_id):
+        """Check preferences and update modal visibility when user changes"""
+        should_show = prefs_manager.should_show_editor_welcome(new_user_id)
+        
+        if should_show:
+            return gr.update(visible=True), gr.update(visible=True)
+        else:
+            return gr.update(visible=False), gr.update(visible=False)
+    
+    # Connect close button with preference saving - pass user_id_state as input
     welcome_close.click(
         fn=hide_welcome_modal,
+        inputs=[dont_show_checkbox, user_id_state],
         outputs=[backdrop, welcome_modal, modal_shown_state]
     )
     
@@ -461,9 +482,12 @@ def create_editor_welcoming_modal_system():
         'load_cvm_btn': load_cvm_btn,
         'load_normal_btn': load_normal_btn,
         'load_hgg_btn': load_hgg_btn,
+        'dont_show_checkbox': dont_show_checkbox,
         'modal_shown_state': modal_shown_state,
+        'user_id_state': user_id_state,
         'show_welcome': show_welcome_modal,
-        'hide_welcome': hide_welcome_modal
+        'hide_welcome': hide_welcome_modal,
+        'update_for_user': update_modal_for_user
     }
 
 # Main function alias for backward compatibility
@@ -650,32 +674,82 @@ def create_segmentation_complete_modal():
             
             <p>All changes are automatically saved as you work. You can continue annotating or export your results when ready.</p>
             """)
+            
+            # Add "Do not show again" checkbox
+            with gr.Row(elem_classes=["modal-footer"], elem_id="segmentation-modal-footer-row"):
+                dont_show_segmentation_checkbox = gr.Checkbox(
+                    label="Do not show this message again",
+                    value=False,
+                    elem_classes=["dont-show-checkbox"]
+                )
+            
+            # Add styling for the checkbox
+            gr.HTML("""
+            <style>
+                #segmentation-modal-footer-row {
+                    margin-top: 20px !important;
+                    padding-top: 16px !important;
+                    border-top: 1px solid #4b5563 !important;
+                }
+            </style>
+            """)
     
-    return modal_container, close_button
+    return modal_container, close_button, dont_show_segmentation_checkbox
 
-def create_segmentation_modal_system():
+def create_segmentation_modal_system(user_id="guest"):
     """
     Create a modal system for post-segmentation guidance.
+    Respects user preferences for modal display.
+    
+    Args:
+        user_id: The current user's ID (default: "guest")
     """
+    # Get preferences manager
+    prefs_manager = get_preferences_manager()
+    
     # Create backdrop for segmentation modal
     backdrop = create_modal_backdrop()
     
     # Create segmentation completion modal
-    segmentation_modal, segmentation_close = create_segmentation_complete_modal()
+    segmentation_modal, segmentation_close, dont_show_segmentation_checkbox = create_segmentation_complete_modal()
     
-    # Set initial state to hidden
+    # Set initial state to hidden (will be shown after segmentation)
     backdrop.visible = False
     segmentation_modal.visible = False
     
-    def show_segmentation_modal():
-        return gr.update(visible=True), gr.update(visible=True)
+    # Create a state component to store the current user_id
+    user_id_state = gr.State(value=user_id)
     
-    def hide_segmentation_modal():
+    def show_segmentation_modal(current_user_id):
+        """Show segmentation modal only if user preferences allow"""
+        should_show = prefs_manager.should_show_segmentation_complete(current_user_id)
+        
+        if should_show:
+            return gr.update(visible=True), gr.update(visible=True)
+        else:
+            return gr.update(visible=False), gr.update(visible=False)
+    
+    def hide_segmentation_modal(dont_show_again, current_user_id):
+        """Hide the modal and optionally save user preference"""
+        # If user checked "don't show again", save preference
+        if dont_show_again:
+            prefs_manager.hide_segmentation_complete(current_user_id)
+        
         return gr.update(visible=False), gr.update(visible=False)
     
-    # Connect close button
+    def update_segmentation_modal_for_user(new_user_id):
+        """Check preferences and update modal visibility when user changes"""
+        should_show = prefs_manager.should_show_segmentation_complete(new_user_id)
+        
+        if should_show:
+            return gr.update(visible=True), gr.update(visible=True)
+        else:
+            return gr.update(visible=False), gr.update(visible=False)
+    
+    # Connect close button with preference saving - pass user_id_state as input
     segmentation_close.click(
         fn=hide_segmentation_modal,
+        inputs=[dont_show_segmentation_checkbox, user_id_state],
         outputs=[backdrop, segmentation_modal]
     )
     
@@ -683,6 +757,205 @@ def create_segmentation_modal_system():
         'backdrop': backdrop,
         'segmentation_modal': segmentation_modal,
         'segmentation_close': segmentation_close,
+        'dont_show_segmentation_checkbox': dont_show_segmentation_checkbox,
+        'user_id_state': user_id_state,
         'show_segmentation_modal': show_segmentation_modal,
-        'hide_segmentation_modal': hide_segmentation_modal
+        'hide_segmentation_modal': hide_segmentation_modal,
+        'update_for_user': update_segmentation_modal_for_user
+    }
+
+def create_point_prompt_tip_modal():
+    """
+    Create a modal with quick tips for point-based prompt.
+    """
+    with gr.Column(
+        visible=False,
+        elem_id="point-tip-modal-container",
+        elem_classes=["modal-container", "tip-modal"]
+    ) as modal_container:
+        
+        # Modal styling
+        gr.HTML("""
+        <style>
+            #point-tip-modal-container {
+                width: 550px !important;
+                max-width: 90vw !important;
+            }
+            
+            .tip-modal-header {
+                background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+                color: white !important;
+                padding: 16px 20px !important;
+                border-radius: 16px 16px 0 0 !important;
+                display: flex !important;
+                justify-content: space-between !important;
+                align-items: center !important;
+            }
+            
+            .tip-modal-title {
+                font-size: 1.2rem !important;
+                font-weight: 600 !important;
+                color: white !important;
+            }
+            
+            .tip-modal-content {
+                padding: 20px !important;
+                color: #e5e7eb !important;
+                line-height: 1.6 !important;
+            }
+            
+            .tip-highlight {
+                background: rgba(59, 130, 246, 0.1) !important;
+                border-left: 3px solid #3b82f6 !important;
+                padding: 12px !important;
+                margin: 12px 0 !important;
+                border-radius: 4px !important;
+            }
+        </style>
+        """)
+        
+        # Modal header
+        with gr.Row(elem_classes=["tip-modal-header"]):
+            gr.HTML('<h1 class="tip-modal-title">💡 Point-based Prompt - Quick Tip</h1>')
+            close_button = gr.Button("✕", elem_classes=["close-button"], variant="secondary")
+        
+        # Modal content
+        with gr.Column(elem_classes=["tip-modal-content"]):
+            gr.HTML("""
+            <div class="tip-highlight">
+                <strong>📍 How to use Point-based Prompt:</strong>
+                <ul style="margin: 8px 0; padding-left: 20px;">
+                    <li>Click directly on the image at the location you want to segment</li>
+                    <li>Click on the <strong>center</strong> or most representative part of the structure</li>
+                    <li>You can select multiple points for complex structures</li>
+                </ul>
+            </div>
+            
+            <p style="color: #d1d5db; font-size: 0.95rem; margin-top: 12px;">
+                <strong>💡 Pro Tip:</strong> For best results, click on areas with high contrast or distinctive features of the anatomical structure you want to segment.
+            </p>
+            """)
+            
+            # "Don't show again" checkbox
+            with gr.Row(elem_classes=["modal-footer"]):
+                dont_show_checkbox = gr.Checkbox(
+                    label="Do not show this message again",
+                    value=False,
+                    elem_classes=["dont-show-checkbox"]
+                )
+    
+    return modal_container, close_button, dont_show_checkbox
+
+def create_box_prompt_tip_modal():
+    """
+    Create a modal with quick tips for box-based prompt.
+    """
+    with gr.Column(
+        visible=False,
+        elem_id="box-tip-modal-container",
+        elem_classes=["modal-container", "tip-modal"]
+    ) as modal_container:
+        
+        # Modal styling
+        gr.HTML("""
+        <style>
+            #box-tip-modal-container {
+                width: 550px !important;
+                max-width: 90vw !important;
+            }
+        </style>
+        """)
+        
+        # Modal header
+        with gr.Row(elem_classes=["tip-modal-header"]):
+            gr.HTML('<h1 class="tip-modal-title">💡 Box-based Prompt - Quick Tip</h1>')
+            close_button = gr.Button("✕", elem_classes=["close-button"], variant="secondary")
+        
+        # Modal content
+        with gr.Column(elem_classes=["tip-modal-content"]):
+            gr.HTML("""
+            <div class="tip-highlight">
+                <strong>📦 How to use Box-based Prompt:</strong>
+                <ul style="margin: 8px 0; padding-left: 20px;">
+                    <li>Use the <strong>rectangle tool</strong> from the toolbar above the image</li>
+                    <li>Draw a bounding box around the area you want to segment</li>
+                    <li>Click and drag to create the box</li>
+                    <li>Make sure the box fully contains the structure with some margin</li>
+                </ul>
+            </div>
+            
+            <p style="color: #d1d5db; font-size: 0.95rem; margin-top: 12px;">
+                <strong>💡 Pro Tip:</strong> Leave a small margin around the structure for better segmentation accuracy. The AI will focus on the dominant structure within the box.
+            </p>
+            """)
+            
+            # "Don't show again" checkbox
+            with gr.Row(elem_classes=["modal-footer"]):
+                dont_show_checkbox = gr.Checkbox(
+                    label="Do not show this message again",
+                    value=False,
+                    elem_classes=["dont-show-checkbox"]
+                )
+    
+    return modal_container, close_button, dont_show_checkbox
+
+def create_prompt_tip_modal_system(user_id="guest", modal_type="point"):
+    """
+    Create modal system for prompt tips (point or box).
+    
+    Args:
+        user_id: The current user's ID
+        modal_type: Either "point" or "box"
+    """
+    prefs_manager = get_preferences_manager()
+    backdrop = create_modal_backdrop()
+    
+    # Create appropriate modal based on type
+    if modal_type == "point":
+        modal, close_btn, dont_show_checkbox = create_point_prompt_tip_modal()
+        check_function = prefs_manager.should_show_point_prompt_tip
+        hide_function = prefs_manager.hide_point_prompt_tip
+    else:  # box
+        modal, close_btn, dont_show_checkbox = create_box_prompt_tip_modal()
+        check_function = prefs_manager.should_show_box_prompt_tip
+        hide_function = prefs_manager.hide_box_prompt_tip
+    
+    # Set initial state to hidden
+    backdrop.visible = False
+    modal.visible = False
+    
+    # Create user_id state
+    user_id_state = gr.State(value=user_id)
+    
+    def show_tip_modal(current_user_id):
+        """Show modal only if user preferences allow"""
+        should_show = check_function(current_user_id)
+        
+        if should_show:
+            return gr.update(visible=True), gr.update(visible=True)
+        else:
+            return gr.update(visible=False), gr.update(visible=False)
+    
+    def hide_tip_modal(dont_show_again, current_user_id):
+        """Hide modal and optionally save preference"""
+        if dont_show_again:
+            hide_function(current_user_id)
+        
+        return gr.update(visible=False), gr.update(visible=False)
+    
+    # Connect close button
+    close_btn.click(
+        fn=hide_tip_modal,
+        inputs=[dont_show_checkbox, user_id_state],
+        outputs=[backdrop, modal]
+    )
+    
+    return {
+        'backdrop': backdrop,
+        'modal': modal,
+        'close_btn': close_btn,
+        'dont_show_checkbox': dont_show_checkbox,
+        'user_id_state': user_id_state,
+        'show_modal': show_tip_modal,
+        'hide_modal': hide_tip_modal
     }
