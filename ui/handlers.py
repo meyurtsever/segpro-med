@@ -257,6 +257,9 @@ class DataLoadingHandlers:
         # Reset current data only when we have valid input
         self.state.reset_data()
         
+        # Track if we're using lazy loading
+        is_lazy = False
+        
         # Determine input source - FILE TAKES PRIORITY OVER DIRECTORY
         if file_obj and hasattr(file_obj, 'name') and file_obj.name and os.path.exists(file_obj.name):
             # Load single file by extension
@@ -285,6 +288,14 @@ class DataLoadingHandlers:
             path = directory
             self.state.current_directory = directory  # Store the directory path
             self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
+            
+            # Check if data is lazy-loaded
+            from utils.lazy_dicom_loader import LazyVolumeWrapper
+            if isinstance(self.state.current_data, LazyVolumeWrapper):
+                is_lazy = True
+                self.state.is_lazy_loaded = True
+                self.state.lazy_loader = self.state.current_data.loader
+                logger.info(f"Lazy loading enabled for {len(self.state.file_list)} files")
             
             # Check if this is MG data - if so, load only the first file initially
             if self.state.current_metadata and self.state.current_metadata.get('Modality') == 'MG':
@@ -398,8 +409,18 @@ class DataLoadingHandlers:
         window_level_value = window_center if window_center is not None else 500
         window_width_value = window_width if window_width is not None else 1000
         
+        # **FIX: Update state with the actual window values from metadata**
+        self.state.window_level = window_level_value
+        self.state.window_width = window_width_value
+        logger.info(f"Updated state window values: Level={window_level_value}, Width={window_width_value}")
+        
         # Determine if prev/next buttons should be visible (only for multiple slices)
         has_multiple_slices = slider_max > 0
+        
+        # Create status message with lazy loading indicator
+        status_message = f"DICOM data loaded: {len(self.state.file_list)} slice(s)"
+        if is_lazy:
+            status_message += " [Lazy Loading: Active - Files loaded on-demand for better performance]"
         
         return (
             annotated_value,
@@ -408,7 +429,7 @@ class DataLoadingHandlers:
             gr.Slider(minimum=slider_min, maximum=slider_max, value=0, step=1, label="Slice Navigation", visible=visible_flag),
             f"0/{slider_max}",
             crosshair_text,
-            f"DICOM data loaded: {len(self.state.file_list)} slice(s)",
+            status_message,
             window_level_value,
             window_width_value,
             gr.Radio(choices=view_choices, value=view_value, visible=view_visible),

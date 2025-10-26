@@ -239,16 +239,17 @@ def load_single_dicom(file_path, apply_deidentification=False):
         logger.error(f"Error loading DICOM file: {str(e)}")
         return None, {"error": str(e)}
 
-def load_dicom_series(directory, apply_deidentification=False):
+def load_dicom_series(directory, apply_deidentification=False, lazy_load_threshold=100):
     """
     Load a series of DICOM files from a directory
     
     Args:
         directory (str): Path to directory containing DICOM files
         apply_deidentification: Whether to apply face removal using pydeface
+        lazy_load_threshold: If number of files > threshold, use lazy loading (default: 100)
         
     Returns:
-        tuple: (3D volume as numpy array, metadata dict, list of file paths)
+        tuple: (3D volume as numpy array or LazyVolumeWrapper, metadata dict, list of file paths)
     """
     logger.info(f"Loading DICOM series from directory: {directory}")
     
@@ -259,6 +260,105 @@ def load_dicom_series(directory, apply_deidentification=False):
         raise ValueError(f"No DICOM files found in directory: {directory}")
     
     logger.info(f"Found {len(dicom_files)} DICOM files")
+    
+    # Check if we should use lazy loading
+    use_lazy_loading = len(dicom_files) > lazy_load_threshold
+    
+    if use_lazy_loading:
+        logger.info(f"Using lazy loading for {len(dicom_files)} files (threshold: {lazy_load_threshold})")
+        return _load_dicom_series_lazy(dicom_files, apply_deidentification)
+    else:
+        logger.info(f"Using standard loading for {len(dicom_files)} files")
+        return _load_dicom_series_standard(dicom_files, apply_deidentification)
+
+
+def _load_dicom_series_lazy(dicom_files, apply_deidentification=False):
+    """
+    Load DICOM series using lazy loading
+    
+    Args:
+        dicom_files: List of DICOM file paths
+        apply_deidentification: Whether to apply face removal
+        
+    Returns:
+        tuple: (LazyVolumeWrapper, metadata dict, list of sorted file paths)
+    """
+    from utils.lazy_dicom_loader import LazyDICOMLoader, LazyVolumeWrapper
+    
+    # Sort files first (by reading minimal metadata)
+    sorted_files = _sort_dicom_files(dicom_files)
+    
+    # Create lazy loader
+    loader = LazyDICOMLoader(
+        sorted_files, 
+        apply_deidentification=apply_deidentification,
+        cache_size=100,
+        preload_window=20
+    )
+    
+    # Wrap in numpy-like interface
+    volume_wrapper = LazyVolumeWrapper(loader)
+    
+    # Get metadata
+    metadata = loader.get_metadata()
+    
+    logger.info(f"Lazy loader initialized: shape={volume_wrapper.shape}")
+    
+    return volume_wrapper, metadata, sorted_files
+
+
+def _sort_dicom_files(dicom_files):
+    """
+    Sort DICOM files by reading only metadata (no pixel data)
+    
+    Args:
+        dicom_files: List of DICOM file paths
+        
+    Returns:
+        List of sorted file paths
+    """
+    logger.info(f"Sorting {len(dicom_files)} DICOM files by metadata...")
+    
+    # Read minimal metadata from each file
+    file_info = []
+    for file_path in dicom_files:
+        try:
+            ds = pydicom.dcmread(file_path, stop_before_pixels=True)
+            
+            # Extract sorting key
+            if hasattr(ds, 'InstanceNumber'):
+                sort_key = (0, int(ds.InstanceNumber))  # Priority 0: InstanceNumber
+            elif hasattr(ds, 'ImagePositionPatient'):
+                sort_key = (1, float(ds.ImagePositionPatient[2]))  # Priority 1: Z position
+            else:
+                sort_key = (2, file_path)  # Priority 2: filename
+            
+            file_info.append((sort_key, file_path))
+            
+        except Exception as e:
+            logger.warning(f"Error reading metadata from {file_path}: {e}")
+            # Add to end with lowest priority
+            file_info.append(((3, file_path), file_path))
+    
+    # Sort by key
+    file_info.sort(key=lambda x: x[0])
+    sorted_files = [fp for _, fp in file_info]
+    
+    logger.info(f"Files sorted successfully")
+    return sorted_files
+
+def _load_dicom_series_standard(dicom_files, apply_deidentification=False):
+    """
+    Load DICOM series using standard (non-lazy) loading
+    This is the original implementation for smaller datasets
+    
+    Args:
+        dicom_files: List of DICOM file paths
+        apply_deidentification: Whether to apply face removal
+        
+    Returns:
+        tuple: (3D numpy array, metadata dict, list of sorted file paths)
+    """
     
     # Read all DICOM files
     slices = []

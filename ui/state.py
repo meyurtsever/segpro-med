@@ -40,6 +40,10 @@ class AppState:
         self.crosshair_position: Optional[Tuple[int, int, int]] = None
         self.current_shape: Tuple[int, int, int] = (0, 0, 0)
         
+        # Lazy loading state
+        self.is_lazy_loaded: bool = False
+        self.lazy_loader = None
+        
         # Plot tool state
         self.current_plot_tool: str = "drawclosedpath"          # Segmentation state
         self.segmentation_data: Optional[np.ndarray] = None
@@ -103,6 +107,14 @@ class AppState:
     
     def reset_data(self) -> None:
         """Reset all data-related state"""
+        # Shutdown lazy loader if active
+        if self.is_lazy_loaded and self.lazy_loader is not None:
+            try:
+                self.lazy_loader.shutdown()
+                logger.info("Lazy loader shutdown complete")
+            except Exception as e:
+                logger.error(f"Error shutting down lazy loader: {e}")
+        
         self.current_data = None
         self.current_data_type = None
         self.current_metadata = None
@@ -111,6 +123,8 @@ class AppState:
         self.current_slice_idx = 0
         self.crosshair_position = None
         self.current_shape = (0, 0, 0)
+        self.is_lazy_loaded = False
+        self.lazy_loader = None
     
     def reset_segmentation(self) -> None:
         """Reset segmentation-related state"""

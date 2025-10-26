@@ -7,6 +7,8 @@ models/medgemma/*.safetensors
 models/medgemma/*.pt
 models/medgemma/model.safetensors.index.json
 
+*.md
+
 # Keep Python code but ignore large model files
 
 # Other potential large model files

@@ -142,6 +142,8 @@ class MEDSAM2Handlers:
                 self.state.current_data,
                 current_slice,
                 self.state.current_view,
+                window_level=self.state.window_level,
+                window_width=self.state.window_width,
                 crosshair=None,
                 add_orientation_marker=False
             )
@@ -349,6 +351,8 @@ class MEDSAM2Handlers:
                     self.state.current_data,
                     current_slice,
                     self.state.current_view,
+                    window_level=self.state.window_level,
+                    window_width=self.state.window_width,
                     crosshair=None,  # Don't include crosshair in analysis
                     add_orientation_marker=False
                 )
@@ -382,6 +386,8 @@ class MEDSAM2Handlers:
                             self.state.current_data,
                             ui_slice,
                             self.state.current_view,
+                            window_level=self.state.window_level,
+                            window_width=self.state.window_width,
                             crosshair=None,
                             add_orientation_marker=False
                         )
@@ -538,6 +544,8 @@ class MEDSAM2Handlers:
                             self.state.current_data,
                             self.state.current_slice_idx,
                             self.state.current_view,
+                            window_level=self.state.window_level,
+                            window_width=self.state.window_width,
                             crosshair=None,
                             add_orientation_marker=False
                         )
@@ -798,6 +806,8 @@ class MEDSAM2Handlers:
                 self.state.current_data,
                 dicom_slice_idx,
                 self.state.current_view,
+                window_level=self.state.window_level,
+                window_width=self.state.window_width,
                 crosshair=self.state.crosshair_position
             )
             overlayed_img = overlay_segmentation(
@@ -892,6 +902,8 @@ class MEDSAM2Handlers:
                 self.state.current_data,
                 current_slice,
                 self.state.current_view,
+                window_level=self.state.window_level,
+                window_width=self.state.window_width,
                 crosshair=self.state.crosshair_position
             )
             
@@ -917,6 +929,8 @@ class MEDSAM2Handlers:
                 self.state.current_data,
                 current_slice,
                 self.state.current_view,
+                window_level=self.state.window_level,
+                window_width=self.state.window_width,
                 crosshair=self.state.crosshair_position
             )
             
@@ -992,6 +1006,8 @@ class MEDSAM2Handlers:
                     self.state.current_data,
                     self.state.current_slice_idx,
                     self.state.current_view,
+                    window_level=self.state.window_level,
+                    window_width=self.state.window_width,
                     crosshair=None  # No crosshair lines for annotation overlay
                 )
                 
@@ -2066,6 +2082,8 @@ class MEDSAM2Handlers:
                         self.state.current_data,
                         ui_slice_idx,
                         self.state.current_view,
+                        window_level=self.state.window_level,
+                        window_width=self.state.window_width,
                         crosshair=None,
                         add_orientation_marker=False
                     )
@@ -2516,6 +2534,8 @@ class MEDSAM2Handlers:
                         self.state.current_data,
                         slice_idx,
                         self.state.current_view,
+                        window_level=self.state.window_level,
+                        window_width=self.state.window_width,
                         crosshair=None,
                         add_orientation_marker=False
                     )
@@ -2587,6 +2607,8 @@ class MEDSAM2Handlers:
                 self.state.current_data,
                 self.state.current_slice_idx,
                 self.state.current_view,
+                window_level=self.state.window_level,
+                window_width=self.state.window_width,
                 crosshair=None,
                 add_orientation_marker=False            )
             
