@@ -15,6 +15,7 @@ import time
 from utils.dicom_utils import get_dicom_metadata
 from utils.visualization import (display_slice, overlay_segmentation, make_image_for_gradio)
 from utils.debug_utils import log_exception
+from utils.metadata_sanitizer import sanitize_metadata_for_display
 from ui.state import AppState
 from ui.export_handlers import ExportHandlers
 
@@ -154,7 +155,10 @@ class ImageViewerHandlers:
             x, y, z = self.state.crosshair_position
             crosshair_text = f"x: {x}, y: {y}, z: {z}"
             
-            return annotated_value, f"{self.state.current_slice_idx + 1}/{total_slices}", crosshair_text, metadata, window_center, window_width
+            # Sanitize metadata for display (removes PHI while keeping clinical data)
+            display_metadata = sanitize_metadata_for_display(metadata)
+            
+            return annotated_value, f"{self.state.current_slice_idx + 1}/{total_slices}", crosshair_text, display_metadata, window_center, window_width
         except Exception as e:
             logger.error(f"Error generating slice image: {str(e)}")
             return None, f"Error: {str(e)}", "x: 0, y: 0, z: 0", {}, None, None
@@ -351,8 +355,11 @@ class ImageViewerHandlers:
             x, y, z = self.state.crosshair_position
             crosshair_text = f"x: {x}, y: {y}, z: {z}"
             
+            # Sanitize metadata for display (removes PHI while keeping clinical data)
+            display_metadata = sanitize_metadata_for_display(metadata)
+            
             return (annotated_value, f"{slice_idx}/{len(self.state.file_list)-1}", crosshair_text, 
-                   metadata, slice_idx, window_center, window_width)
+                   display_metadata, slice_idx, window_center, window_width)
                    
         except Exception as e:
             return None, "0/0", "x: 0, y: 0, z: 0", {"error": str(e)}, 0, None, None
@@ -932,9 +939,12 @@ class ImagePlotToolHandlers:
             x, y, z = self.state.crosshair_position
             crosshair_text = f"x: {x}, y: {y}, z: {z}"
             
+            # Sanitize metadata for display (removes PHI while keeping clinical data)
+            display_metadata = sanitize_metadata_for_display(metadata)
+            
             # Clear loading flag before returning
             self._loading_slice = False
-            return annotated_value, f"{self.state.current_slice_idx + 1}/{total_slices}", crosshair_text, metadata, window_center, window_width
+            return annotated_value, f"{self.state.current_slice_idx + 1}/{total_slices}", crosshair_text, display_metadata, window_center, window_width
         except Exception as e:
             logger.error(f"Error generating annotated slice image: {str(e)}")
             # Clear loading flag before returning

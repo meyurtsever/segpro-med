@@ -20,6 +20,7 @@ import base64
 
 # Import DICOM utilities for proper data loading
 from utils.dicom_utils import load_dicom_series, load_single_dicom, list_dicoms_in_directory
+from utils.metadata_sanitizer import sanitize_metadata_for_display
 
 logger = logging.getLogger(__name__)
 
@@ -463,8 +464,9 @@ class CustomAnnotatorHandlers:
             else:
                 error = f"Successfully loaded {len(file_list)} file(s)"
                 
-            # 3. Metadata dict
-            metadata = getattr(self.state, 'current_metadata', {})
+            # 3. Metadata dict - sanitize for display
+            raw_metadata = getattr(self.state, 'current_metadata', {})
+            metadata = sanitize_metadata_for_display(raw_metadata)
             
             # 4. Window level/width
             window_level = getattr(self.state, 'window_level', 500)
@@ -569,8 +571,9 @@ class CustomAnnotatorHandlers:
             else:
                 error = f"Loaded file: {selected_file}"
                 
-            # Get metadata and window settings
-            metadata = getattr(self.state, 'current_metadata', {})
+            # Get metadata and window settings - sanitize metadata for display
+            raw_metadata = getattr(self.state, 'current_metadata', {})
+            metadata = sanitize_metadata_for_display(raw_metadata)
             window_level = getattr(self.state, 'window_level', 500)
             window_width = getattr(self.state, 'window_width', 1000)
             

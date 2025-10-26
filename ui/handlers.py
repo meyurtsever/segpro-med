@@ -24,6 +24,7 @@ from utils.visualization import (display_slice, make_slice_figure, overlay_segme
                                       make_image_for_gradio, segmentation_to_shapes)
 from utils.conversion import dicom_to_nifti, nifti_to_mat, dicom_to_mat, nifti_to_png
 from utils.debug_utils import log_exception
+from utils.metadata_sanitizer import sanitize_metadata_for_display
 from ui.state import AppState
 
 logger = logging.getLogger(__name__)
@@ -115,10 +116,13 @@ class DataLoadingHandlers:
         window_level_value = window_center if window_center is not None else 500
         window_width_value = window_width if window_width is not None else 1000
         
+        # Sanitize metadata for display (removes PHI while keeping clinical data)
+        display_metadata = sanitize_metadata_for_display(self.state.current_metadata)
+        
         return (
             pil_image,
             gr.Dropdown(choices=file_names, value=file_names[0] if file_names else None),
-            self.state.current_metadata,
+            display_metadata,  # Return sanitized metadata instead of original
             gr.Slider(minimum=slider_min, maximum=slider_max, value=0, step=1, label="Slice Navigation", visible=visible_flag),
             f"0/{slider_max}",
             crosshair_text,
@@ -231,10 +235,13 @@ class DataLoadingHandlers:
         window_level_value = window_center if window_center is not None else 500
         window_width_value = window_width if window_width is not None else 1000
         
+        # Sanitize metadata for display (removes PHI while keeping clinical data)
+        display_metadata = sanitize_metadata_for_display(self.state.current_metadata)
+        
         return (
             plotly_fig,
             gr.Dropdown(choices=file_names, value=file_names[0] if file_names else None),
-            self.state.current_metadata,
+            display_metadata,  # Return sanitized metadata instead of original
             gr.Slider(minimum=slider_min, maximum=slider_max, value=0, step=1, label="Slice Navigation", visible=visible_flag),
             f"0/{slider_max}",
             crosshair_text,
@@ -422,10 +429,13 @@ class DataLoadingHandlers:
         if is_lazy:
             status_message += " [Lazy Loading: Active - Files loaded on-demand for better performance]"
         
+        # Sanitize metadata for display (removes PHI while keeping clinical data)
+        display_metadata = sanitize_metadata_for_display(self.state.current_metadata)
+        
         return (
             annotated_value,
             gr.Dropdown(choices=file_names, value=file_names[0] if file_names else None),
-            self.state.current_metadata,
+            display_metadata,  # Return sanitized metadata instead of original
             gr.Slider(minimum=slider_min, maximum=slider_max, value=0, step=1, label="Slice Navigation", visible=visible_flag),
             f"0/{slider_max}",
             crosshair_text,
@@ -543,7 +553,10 @@ class ViewerHandlers:
             if window_width is None:
                 window_width = 1000
             
-            return pil_image, f"{self.state.current_slice_idx + 1}/{total_slices}", crosshair_text, metadata, window_center, window_width
+            # Sanitize metadata for display (removes PHI while keeping clinical data)
+            display_metadata = sanitize_metadata_for_display(metadata)
+            
+            return pil_image, f"{self.state.current_slice_idx + 1}/{total_slices}", crosshair_text, display_metadata, window_center, window_width
         except Exception as e:
             logger.error(f"Error generating slice image: {str(e)}")
             return None, f"Error: {str(e)}", "x: 0, y: 0, z: 0", {}, None, None
@@ -1443,10 +1456,13 @@ class ConversionHandlers:
         window_level_value = window_center if window_center is not None else 500
         window_width_value = window_width if window_width is not None else 1000
         
+        # Sanitize metadata for display (removes PHI while keeping clinical data)
+        display_metadata = sanitize_metadata_for_display(self.state.current_metadata)
+        
         return (
             plotly_fig,
             gr.Dropdown(choices=file_names, value=file_names[0] if file_names else None),
-            self.state.current_metadata,
+            display_metadata,  # Return sanitized metadata instead of original
             gr.Slider(minimum=slider_min, maximum=slider_max, value=0, step=1, label="Slice Navigation", visible=visible_flag),
             f"0/{slider_max}",
             crosshair_text,
