@@ -1457,7 +1457,78 @@ def create_editor_tab(current_user=None) -> dict:
                         # 3D Viewer Controls
                         with gr.Row() as viewer_3d_controls:
                             refresh_3d_btn = gr.Button("🔄 Refresh 3D View", size="sm")
-                            export_3d_btn = gr.Button("💾 Export 3D", size="sm")# Navigation controls (middle)
+                            export_3d_btn = gr.Button("💾 Export 3D", size="sm")
+                
+                # AI Guided Annotation Accordion (initially hidden, shown with yellow highlight when activated)
+                with gr.Accordion("AI-Guided Annotation", open=True, visible=False, elem_id="ai-tools-accordion") as ai_tools_accordion:
+                    gr.HTML("""
+                    <style>
+                        #ai-tools-accordion {
+                            background: linear-gradient(135deg, rgba(254, 240, 138, 0.15) 0%, rgba(253, 224, 71, 0.15) 100%) !important;
+                            border: 1px solid rgba(234, 179, 8, 0.4) !important;
+                            border-radius: 8px !important;
+                            padding: 8px !important;
+                            margin: 8px 0 !important;
+                            animation: highlightPulse 2s ease-in-out !important;
+                        }
+                        
+                        @keyframes highlightPulse {
+                            0%, 100% { 
+                                background: linear-gradient(135deg, rgba(254, 240, 138, 0.15) 0%, rgba(253, 224, 71, 0.15) 100%);
+                            }
+                            50% { 
+                                background: linear-gradient(135deg, rgba(254, 240, 138, 0.25) 0%, rgba(253, 224, 71, 0.25) 100%);
+                            }
+                        }
+                        
+                        #ai-tools-accordion .label-wrap {
+                            color: #ca8a04 !important;
+                            font-weight: 600 !important;
+                        }
+                        
+                        .compact-tip {
+                            font-style: italic !important;
+                            color: #9ca3af !important;
+                            font-size: 0.9rem !important;
+                            padding: 6px 0 !important;
+                            margin: 4px 0 !important;
+                        }
+                    </style>
+                    """)
+                    
+                    # Everything in a single compact row with columns
+                    with gr.Row():
+                        # Column 1: Quick Tips (italic text-only, initially hidden)
+                        with gr.Column(scale=5):
+                            point_info_accordion = gr.Markdown(
+                                "*💡 Point-based: Click directly on the image at the location you want to segment. Best results when clicking the center of the structure.*",
+                                visible=False,
+                                elem_classes=["compact-tip"]
+                            )
+                            
+                            box_info_accordion = gr.Markdown(
+                                "*📦 Box-based: Draw a bounding box around the area using the rectangle tool from the toolbar. Make sure the box fully contains the structure with some margin.*",
+                                visible=False,
+                                elem_classes=["compact-tip"]
+                            )
+                        
+                        # Column 2: Run Button
+                        with gr.Column(scale=2):
+                            annotate_btn = gr.Button("Run Guided Annotation", variant="primary")
+                        
+                        # Column 3: Clear Button
+                        with gr.Column(scale=2):
+                            clear_coords_btn = gr.Button("Clear Coordinates & Prompts", variant="stop")
+                    
+                    # Hidden coordinates textbox (kept for functionality but not displayed)
+                    with gr.Row(visible=False):
+                        coordinates_text = gr.Textbox(
+                            label="Selected Coordinates (x,y)",
+                            value="",
+                            interactive=False
+                        )
+                
+                # Navigation controls (middle)
                 with gr.Row():
                     prev_btn = gr.Button("Previous")
                     slice_slider = gr.Slider(
@@ -1468,88 +1539,6 @@ def create_editor_tab(current_user=None) -> dict:
                 with gr.Row():
                     slice_text = gr.Textbox(label="Slice", interactive=False, visible=False)
                     crosshair_info = gr.Textbox(label="Crosshair", interactive=True, visible=False)
-                
-                # AI Guided Annotation Accordion (initially hidden, shown with green highlight when activated)
-                with gr.Accordion("🤖 AI-Guided Annotation", open=True, visible=False, elem_id="ai-tools-accordion") as ai_tools_accordion:
-                    gr.HTML("""
-                    <style>
-                        #ai-tools-accordion {
-                            background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(5, 150, 105, 0.08) 100%) !important;
-                            border: 1px solid rgba(16, 185, 129, 0.3) !important;
-                            border-radius: 8px !important;
-                            padding: 8px !important;
-                            margin: 8px 0 !important;
-                            animation: highlightPulse 2s ease-in-out !important;
-                        }
-                        
-                        @keyframes highlightPulse {
-                            0%, 100% { 
-                                background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(5, 150, 105, 0.08) 100%);
-                            }
-                            50% { 
-                                background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.15) 100%);
-                            }
-                        }
-                        
-                        #ai-tools-accordion .label-wrap {
-                            color: #10b981 !important;
-                            font-weight: 600 !important;
-                        }
-                    </style>
-                    """)
-                    
-                    # AI Tools content (Point/Box prompts and annotation button)
-                    gr.Markdown("*Guide the AI with point or area selection to focus a specific area for segmenting.*")
-                    
-                    # Dynamic info boxes for point/box guidance
-                    from ui.info_components import create_info_message
-                    
-                    # Info box for point-based prompt (initially hidden)
-                    point_info_accordion = create_info_message(
-                        message="""
-                        <strong>Point-based Guidance:</strong> Click directly on the image at the location you want to segment. 
-                        <br><br>
-                        <strong>Tip:</strong> Click on the center or most representative part of the structure you want to segment for best results.
-                        """,
-                        message_type="success",
-                        visible=False,
-                        open_state=True
-                    )
-                    
-                    # Info box for box-based prompt (initially hidden)
-                    box_info_accordion = create_info_message(
-                        message="""
-                        <strong>Box-based Guidance:</strong> Draw a bounding box around the area you want to segment by clicking and dragging on the image. <strong>Use rectangle tool from the toolbar.</strong>
-                        <br><br>
-                        <strong>Tip:</strong> Make sure the box fully contains the structure you want to segment with some margin around it.
-                        """,
-                        message_type="info", 
-                        visible=False,
-                        open_state=True
-                    )
-                    
-                    # Prompt type selection
-                    with gr.Row():
-                        point_prompt_checkbox = gr.Checkbox(
-                            label="Point-based Prompt",
-                            value=False,
-                            info="Use point coordinates for segmentation"
-                        )
-                        box_prompt_checkbox = gr.Checkbox(
-                            label="Box-based Prompt", 
-                            value=False,
-                            info="Use bounding boxes for segmentation"
-                        )
-                    coordinates_text = gr.Textbox(
-                        label="Selected Coordinates (x,y)",
-                        value="",
-                        interactive=False,
-                        info="Click on the image to select coordinates",
-                        visible=False  # Initially hidden until point-based is selected
-                    )
-                    with gr.Row():
-                        annotate_btn = gr.Button("Run Guided Annotation", variant="primary", scale=1)
-                        clear_coords_btn = gr.Button("Clear Coordinates & Prompts", variant="stop", scale=1)
                 
                 # Crowdsourcing Controls (moved up and enhanced)
                 with gr.Accordion("Crowdsourcing Controls", open=True, visible=False) as crowdsourcing_accordion:
@@ -1617,16 +1606,32 @@ def create_editor_tab(current_user=None) -> dict:
                     # Current Labels Section
                     # gr.Markdown("**Current Labels**")
                     with gr.Row():
+                        current_labels_placeholder = gr.HTML("""
+                        <div id="current-labels-placeholder" style='padding: 6px; background: rgba(71, 85, 105, 0.2); border-radius: 6px; border: 1px dashed rgba(148, 163, 184, 0.3); text-align: left;'>
+                            <p style='margin: 0; color: #94a3b8; font-size: 13px; font-style: italic;'>
+                                Manual and AI-suggested labels will appear here
+                            </p>
+                        </div>
+                        """, visible=True, elem_id="current-labels-placeholder-html")
+                    with gr.Row():
                         current_labels_dataset = gr.Dataset(
                             label="Current Labels",
                             components=[gr.Text(visible=False)],  # Simple text component for displaying labels
                             samples=[],
                             type="index",
-                            samples_per_page=10
+                            samples_per_page=10,
+                            visible=False  # Initially hidden until labels are loaded
                         )
                     
-                    # Suggested Labels Section
-                    gr.Markdown("**Suggested Labels**")
+                    # Suggested Labels Section - with placeholder
+                    with gr.Row():
+                        suggested_labels_placeholder = gr.HTML("""
+                        <div id="suggested-labels-placeholder" style='padding: 6px; background: rgba(71, 85, 105, 0.2); border-radius: 6px; border: 1px dashed rgba(148, 163, 184, 0.3); text-align: left;'>
+                            <p style='margin: 0; color: #94a3b8; font-size: 13px; font-style: italic;'>
+                                AI-generated labels will be shown here
+                            </p>
+                        </div>
+                        """, visible=True, elem_id="suggested-labels-placeholder-html")
                     
                     # Info message for label suggestion usage (initially hidden)
                     with gr.Row(elem_classes="label-suggestion-info-row", visible=False) as label_suggestion_info_row:
@@ -1647,7 +1652,8 @@ def create_editor_tab(current_user=None) -> dict:
                             components=[gr.Text(visible=False)],  # Simple text component for displaying labels
                             samples=[],
                             type="index",
-                            samples_per_page=10
+                            samples_per_page=10,
+                            visible=False  # Initially hidden until suggestions are loaded
                         )  
                     
                     # Accept suggestions button - initially hidden
@@ -1689,6 +1695,10 @@ def create_editor_tab(current_user=None) -> dict:
                             label="Select VLM Model",
                             scale=1
                         )
+
+                    # Info message for Custom Prompts
+                    from ui.info_components import create_vlm_custom_prompt_info
+                    vlm_custom_prompt_info_accordion = create_vlm_custom_prompt_info()
                     
                     # Voice Input Section
                     with gr.Row(elem_classes="voice-input-row"):
@@ -1706,11 +1716,7 @@ def create_editor_tab(current_user=None) -> dict:
                             lines=1,
                             interactive=True
                         )
-                        
-                     # Info message for Custom Prompts
-                    from ui.info_components import create_vlm_custom_prompt_info
-                    vlm_custom_prompt_info_accordion = create_vlm_custom_prompt_info()
-                    
+                                    
                     with gr.Row(elem_classes="vlm-options-row"):
                             vlm_prompt_anomalies = gr.Checkbox(
                                 label="Identify Anomalies",
@@ -1796,7 +1802,7 @@ def create_editor_tab(current_user=None) -> dict:
                 
                 col2 = (error_display, metadata_display, view_selector, deidentification_checkbox, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, 
                         crowdsourcing_accordion, submit_annotation_btn, assignments_remaining, next_assignment_btn, crowdsourcing_status,
-                        current_labels_dataset, suggested_vlm_selector, suggest_labels_btn, suggested_labels_dataset, accept_suggestions_btn, label_suggestion_info_row, vlm_model_selector, vlm_run_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn, voice_prompt_text, voice_audio_input, voice_analysis_row, voice_analysis_controls, voice_analysis_audio, voice_analysis_text, save_to_analysis_btn, vlm_info_accordion, vlm_tools_info_accordion, vlm_custom_prompt_info_accordion)
+                        current_labels_dataset, current_labels_placeholder, suggested_vlm_selector, suggest_labels_btn, suggested_labels_dataset, suggested_labels_placeholder, accept_suggestions_btn, label_suggestion_info_row, vlm_model_selector, vlm_run_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn, voice_prompt_text, voice_audio_input, voice_analysis_row, voice_analysis_controls, voice_analysis_audio, voice_analysis_text, save_to_analysis_btn, vlm_info_accordion, vlm_tools_info_accordion, vlm_custom_prompt_info_accordion)
             
             # Column 3: Annotate with AI Models
             with gr.Column(scale=1):
@@ -1858,57 +1864,30 @@ def create_editor_tab(current_user=None) -> dict:
                 
                 # Guided Segmentation (Point/Box Selection) - Checkboxes to trigger modals and accordion
                 with gr.Accordion("Guided Segmentation (Point/Box Selection)", open=False):
-                    gr.Markdown("*Guide the AI with point or area selection to focus a specific area for segmenting.*")
+                    gr.Markdown("*Select a prompt type to activate AI-guided annotation in the highlighted section above.*")
                     
-                    # Dynamic info boxes for point/box guidance
-                    from ui.info_components import create_info_message
+                    gr.HTML("""
+                    <div style='padding: 12px; background: rgba(59, 130, 246, 0.1); border-radius: 8px; border-left: 3px solid #3b82f6; margin-bottom: 12px;'>
+                        <p style='margin: 0; color: #93c5fd; font-size: 14px;'>
+                            ℹ️ <strong>How to use:</strong> Check one of the options below. The <strong>AI-Guided Annotation</strong> 
+                            section will appear above with all controls.
+                        </p>
+                    </div>
+                    """)
                     
-                    # Info box for point-based prompt (initially hidden)
-                    point_info_accordion = create_info_message(
-                        message="""
-                        <strong>Point-based Guidance:</strong> Click directly on the image at the location you want to segment. 
-                        <br><br>
-                        <strong>Tip:</strong> Click on the center or most representative part of the structure you want to segment for best results.
-                        """,
-                        message_type="success",
-                        visible=False,
-                        open_state=True
-                    )
-                    
-                    # Info box for box-based prompt (initially hidden)
-                    box_info_accordion = create_info_message(
-                        message="""
-                        <strong>Box-based Guidance:</strong> Draw a bounding box around the area you want to segment by clicking and dragging on the image. <strong>Use rectangle tool from the toolbar.</strong>
-                        <br><br>
-                        <strong>Tip:</strong> Make sure the box fully contains the structure you want to segment with some margin around it.
-                        """,
-                        message_type="info", 
-                        visible=False,
-                        open_state=True
-                    )
-                    
-                    # Prompt type selection checkboxes (triggers modal and moves content to accordion above)
+                    # These checkboxes are NOT duplicates - they are the ONLY checkboxes that trigger everything
+                    # The ones in the AI-Guided Annotation accordion need to be removed
                     with gr.Row():
                         point_prompt_checkbox = gr.Checkbox(
                             label="Point-based Prompt",
                             value=False,
-                            info="Use point coordinates for segmentation"
+                            info="Click on image to select points"
                         )
                         box_prompt_checkbox = gr.Checkbox(
                             label="Box-based Prompt", 
                             value=False,
-                            info="Use bounding boxes for segmentation"
+                            info="Draw bounding boxes"
                         )
-                    coordinates_text = gr.Textbox(
-                        label="Selected Coordinates (x,y)",
-                        value="",
-                        interactive=False,
-                        info="Click on the image to select coordinates",
-                        visible=False  # Initially hidden until point-based is selected
-                    )
-                    with gr.Row():
-                        annotate_btn = gr.Button("Run Guided Annotation", variant="primary", scale=1)
-                        clear_coords_btn = gr.Button("Clear Coordinates & Prompts", variant="stop", scale=1)
                 
                 # Whole Area Segmentation Section
                 with gr.Accordion("Whole Area Segmentation", open=False):

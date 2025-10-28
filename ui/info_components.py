@@ -135,7 +135,7 @@ def create_vlm_label_management_info():
     <strong>🎯 Recommendation:</strong> For best medical imaging results, use <strong>MedGemma-4B</strong> which is specifically trained on medical data.
     """
     
-    return create_info_message(message, "info", visible=True)
+    return create_info_message(message, "info", visible=True, open_state=False)
 
 
 def create_vlm_tools_info():
@@ -150,7 +150,7 @@ def create_vlm_tools_info():
     <strong>🎯 Recommendation:</strong> Use <strong>MedGemma-4B</strong> with <strong>"Identify Anomalies"</strong> enabled for the most accurate medical image analysis.
     """
     
-    return create_info_message(message, "info", visible=True)
+    return create_info_message(message, "info", visible=True, open_state=False)
 
 
 def create_custom_prompts_info():
@@ -180,7 +180,7 @@ def create_vlm_custom_prompt_info():
     <strong>💡 Tip:</strong> Custom prompts allow you to ask specific questions about the medical image or request particular types of analysis.
     """
     
-    return create_info_message(message, "success", visible=True)
+    return create_info_message(message, "success", visible=True, open_state=False)
 
 
 def create_custom_info_message(title: str, description: str, recommendation: str = "", message_type: str = "info"):

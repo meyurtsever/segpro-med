@@ -1127,7 +1127,7 @@ class SegMedPro:
          metadata_display_dl, error_display_dl, window_level, window_width, apply_window_btn, debug_btn) = data_loading
         (error_display, metadata_display, view_selector, deidentification_checkbox, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, 
          crowdsourcing_accordion, submit_annotation_btn, assignments_remaining, next_assignment_btn, crowdsourcing_status,
-         current_labels_dataset, suggested_vlm_selector, suggest_labels_btn, suggested_labels_dataset, accept_suggestions_btn, label_suggestion_info_row, vlm_model_selector, vlm_run_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn, voice_prompt_text, voice_audio_input, voice_analysis_row, voice_analysis_controls, voice_analysis_audio, voice_analysis_text, save_to_analysis_btn, vlm_info_accordion, vlm_tools_info_accordion, vlm_custom_prompt_info_accordion) = visualization        
+         current_labels_dataset, current_labels_placeholder, suggested_vlm_selector, suggest_labels_btn, suggested_labels_dataset, suggested_labels_placeholder, accept_suggestions_btn, label_suggestion_info_row, vlm_model_selector, vlm_run_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn, voice_prompt_text, voice_audio_input, voice_analysis_row, voice_analysis_controls, voice_analysis_audio, voice_analysis_text, save_to_analysis_btn, vlm_info_accordion, vlm_tools_info_accordion, vlm_custom_prompt_info_accordion) = visualization        
         (point_prompt_checkbox, box_prompt_checkbox, coordinates_text, clear_coords_btn, ai_model_selector, 
          processing_mode, score_threshold,
          output_dir, save_visualizations, device_selector, 
@@ -1307,15 +1307,20 @@ class SegMedPro:
                         all_labels.append(label)
                 
                 labels_samples = create_labels_dataset_samples(all_labels)
-                current_labels_dataset = gr.Dataset(samples=labels_samples)
+                has_current_labels = len(all_labels) > 0
+                current_labels_dataset = gr.Dataset(samples=labels_samples, visible=has_current_labels)
+                current_labels_placeholder = gr.update(visible=not has_current_labels)
                 
                 # Get suggested labels for this slice (without selection indicators)
                 suggested_samples = get_suggested_labels_for_slice(slice_value)
-                suggested_labels_dataset = gr.Dataset(samples=suggested_samples)
+                has_suggested_labels = len(suggested_samples) > 0
+                suggested_labels_dataset = gr.Dataset(samples=suggested_samples, visible=has_suggested_labels)
+                suggested_labels_placeholder = gr.update(visible=not has_suggested_labels)
                 
                 # Clear any previous selections when changing slices
                 clear_selected_suggested_labels_for_slice(slice_value)
                 accept_btn_hidden = gr.update(visible=False)
+                info_row_hidden = gr.update(visible=False)  # Hide info row when changing slices
                 
                 # Hide voice analysis components when changing slices (will show after new VLM analysis)
                 voice_row_hidden = gr.update(visible=False)
@@ -1326,20 +1331,23 @@ class SegMedPro:
                 
             except Exception as e:
                 logger.error(f"Error updating labels/analysis on slice change: {e}")
-                current_labels_dataset = gr.Dataset(samples=[])
-                suggested_labels_dataset = gr.Dataset(samples=[])
+                current_labels_dataset = gr.Dataset(samples=[], visible=False)
+                current_labels_placeholder = gr.update(visible=True)
+                suggested_labels_dataset = gr.Dataset(samples=[], visible=False)
+                suggested_labels_placeholder = gr.update(visible=True)
                 accept_btn_hidden = gr.update(visible=False)
+                info_row_hidden = gr.update(visible=False)
                 saved_vlm_analysis = ""
                 voice_row_hidden = gr.update(visible=False)
                 voice_controls_hidden = gr.update(visible=False)
             
-            # Return original result plus label datasets, hidden accept button, VLM analysis, and voice components
-            return result + (current_labels_dataset, suggested_labels_dataset, accept_btn_hidden, saved_vlm_analysis, voice_row_hidden, voice_controls_hidden)
+            # Return original result plus label datasets, placeholders, hidden accept button, info row, VLM analysis, and voice components
+            return result + (current_labels_dataset, current_labels_placeholder, suggested_labels_dataset, suggested_labels_placeholder, accept_btn_hidden, info_row_hidden, saved_vlm_analysis, voice_row_hidden, voice_controls_hidden)
         
         slice_slider.change(
             fn=handle_slice_change_with_labels,
             inputs=[slice_slider, image_display, deidentification_checkbox],
-            outputs=[image_display, slice_text, crosshair_info, metadata_display, window_level, window_width, current_labels_dataset, suggested_labels_dataset, accept_suggestions_btn, vlm_caption, voice_analysis_row, voice_analysis_controls]
+            outputs=[image_display, slice_text, crosshair_info, metadata_display, window_level, window_width, current_labels_dataset, current_labels_placeholder, suggested_labels_dataset, suggested_labels_placeholder, accept_suggestions_btn, label_suggestion_info_row, vlm_caption, voice_analysis_row, voice_analysis_controls]
         )
         def handle_view_change_with_labels(view_value):
             """Handle view selector change and update current labels, suggested labels, and VLM analysis"""
@@ -1812,18 +1820,19 @@ class SegMedPro:
                 
                 logger.info(f"Annotation change - Slice {current_slice_idx} labels: {len(annotator_labels)} from annotator + {len(saved_labels)} saved = {len(all_labels)} total")
                 
-                # Return gr.Dataset update with combined labels
-                return gr.Dataset(samples=samples)
+                # Return gr.Dataset update with combined labels and placeholder visibility
+                has_labels = len(all_labels) > 0
+                return gr.Dataset(samples=samples, visible=has_labels), gr.update(visible=not has_labels)
             except Exception as e:
                 logger.error(f"Error handling image annotation change: {str(e)}")
                 import traceback
                 logger.error(f"Traceback: {traceback.format_exc()}")
-                return []
+                return gr.update(), gr.update()
           # Save annotations immediately when they change (edits, deletions, additions) AND update current labels
         image_display.change(
             fn=handle_image_annotation_change,
             inputs=[image_display],
-            outputs=[current_labels_dataset]
+            outputs=[current_labels_dataset, current_labels_placeholder]
         )
         
         def clear_all_prompts_and_reset_layout():
@@ -2122,28 +2131,32 @@ class SegMedPro:
                 
                 logger.info(f"VLM suggestions result: {len(result_samples)} samples for slice {current_slice_idx}")
                 
-                # Show info row if we have suggestions, hide if empty
-                info_row_visible = len(result_samples) > 0
-                return gr.Dataset(samples=result_samples), gr.update(visible=info_row_visible)
+                # Show dataset and info row if we have suggestions, show placeholder if empty
+                has_suggestions = len(result_samples) > 0
+                return (
+                    gr.Dataset(samples=result_samples, visible=has_suggestions),  # Show dataset if we have suggestions
+                    gr.update(visible=not has_suggestions),  # Show placeholder if no suggestions
+                    gr.update(visible=has_suggestions)  # Show info row if we have suggestions
+                )
                     
             except Exception as e:
                 logger.error(f"Error generating VLM label suggestions: {e}")
-                return gr.Dataset(samples=[]), gr.update(visible=False)
+                return gr.Dataset(samples=[], visible=False), gr.update(visible=True), gr.update(visible=False)
         
         # Show loading state during VLM processing
         def show_loading_state():
             """Show loading state for suggested labels"""
             loading_samples = [["⏳ Generating suggestions..."]]
-            return gr.Dataset(samples=loading_samples)
+            return gr.Dataset(samples=loading_samples, visible=True), gr.update(visible=False)
         
         suggest_labels_btn.click(
             fn=show_loading_state,
             inputs=[],
-            outputs=[suggested_labels_dataset]
+            outputs=[suggested_labels_dataset, suggested_labels_placeholder]
         ).then(
             fn=handle_vlm_label_suggestions,
             inputs=[suggested_vlm_selector, image_display],
-            outputs=[suggested_labels_dataset, label_suggestion_info_row]
+            outputs=[suggested_labels_dataset, suggested_labels_placeholder, label_suggestion_info_row]
         )
         
         # VLM info components are now self-contained with JavaScript toggle functionality
@@ -2269,11 +2282,11 @@ class SegMedPro:
                 
                 # Create updated current labels dataset
                 current_labels_samples = create_labels_dataset_samples(all_labels)
-                updated_current_labels = gr.Dataset(samples=current_labels_samples)
+                updated_current_labels = gr.Dataset(samples=current_labels_samples, visible=len(all_labels) > 0)
                 
                 # Remove accepted labels from suggested labels list (so they don't appear again)
                 remaining_suggestions = remove_labels_from_suggested_for_slice(current_slice_idx, clean_labels)
-                updated_suggested_labels = gr.Dataset(samples=create_labels_dataset_samples(remaining_suggestions))
+                updated_suggested_labels = gr.Dataset(samples=create_labels_dataset_samples(remaining_suggestions), visible=len(remaining_suggestions) > 0)
                 
                 # Clear selected suggestions and hide accept button
                 clear_selected_suggested_labels_for_slice(current_slice_idx)
@@ -2282,19 +2295,29 @@ class SegMedPro:
                 logger.info(f"Total labels for slice {current_slice_idx}: {len(all_labels)} - {all_labels}")
                 logger.info(f"Remaining suggestions for slice {current_slice_idx}: {len(remaining_suggestions)} - {remaining_suggestions}")
                 
-                # Hide info row if no remaining suggestions
-                info_row_visible = len(remaining_suggestions) > 0
+                # Show/hide placeholders and info row
+                current_placeholder_visible = len(all_labels) == 0
+                suggested_placeholder_visible = len(remaining_suggestions) == 0
+                info_row_visible = False  # Always hide info row after accepting suggestions
                 
-                return updated_current_labels, gr.update(visible=False), updated_suggested_labels, gr.update(visible=info_row_visible), save_result
+                return (
+                    updated_current_labels,  # current_labels_dataset
+                    gr.update(visible=current_placeholder_visible),  # current_labels_placeholder
+                    gr.update(visible=False),  # accept_suggestions_btn - always hide
+                    updated_suggested_labels,  # suggested_labels_dataset
+                    gr.update(visible=suggested_placeholder_visible),  # suggested_labels_placeholder
+                    gr.update(visible=info_row_visible),  # label_suggestion_info_row - always hide after accept
+                    save_result  # error_display
+                )
                 
             except Exception as e:
                 logger.error(f"Error accepting suggestions: {e}")
-                return gr.update(), gr.update(visible=False), gr.update(), gr.update(visible=False), f"Error: {str(e)}"
+                return gr.update(), gr.update(), gr.update(visible=False), gr.update(), gr.update(), gr.update(visible=False), f"Error: {str(e)}"
         
         accept_suggestions_btn.click(
             fn=handle_accept_suggestions,
             inputs=[],
-            outputs=[current_labels_dataset, accept_suggestions_btn, suggested_labels_dataset, label_suggestion_info_row, error_display]
+            outputs=[current_labels_dataset, current_labels_placeholder, accept_suggestions_btn, suggested_labels_dataset, suggested_labels_placeholder, label_suggestion_info_row, error_display]
         )
           # Auto-brain annotation handler - Updated to use SAM2 Fast Masking Pipeline (EDITOR-SPECIFIC)
         def handle_auto_brain_annotation(output_dir, save_visualizations, device_selector, processing_mode, score_threshold, dir_input_value):
