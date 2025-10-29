@@ -89,7 +89,7 @@ def create_data_loading_section() -> tuple:
             file_types=[".dcm", ".nii", ".nii.gz", ".mat"]
         )
         dir_input = gr.Textbox(label="Enter directory path containing DICOM files",
-                               value=r"E:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (50)\flair")
+                               value=r"/home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair")
         load_btn = gr.Button("Load Data")
         reset_dir_btn = gr.Button("Reset Directory")
         

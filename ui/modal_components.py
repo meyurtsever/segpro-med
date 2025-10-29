@@ -312,7 +312,6 @@ def create_editor_welcoming_modal():
         # Modal content
         with gr.Column(elem_classes=["modal-content"]):
             gr.HTML("""
-            <h2>🎉 Welcome to SegMed-Pro Editor!</h2>
             
             <p>Your comprehensive platform for <strong>AI-powered medical image segmentation</strong> and analysis.</p>
             
@@ -324,21 +323,21 @@ def create_editor_welcoming_modal():
             # Compact sample data buttons
             with gr.Row(equal_height=True, elem_classes=["compact-sample-row"]):
                 load_cvm_btn = gr.Button(
-                    "Brain Sample - Malformation", 
+                    "Brain MRI Sample", 
                     variant="primary", 
                     size="sm",
                     elem_classes=["compact-sample-btn", "cavernoma-btn"]
                 )
                 
                 load_normal_btn = gr.Button(
-                    "Brain Sample - Benign", 
+                    "Mammography Sample", 
                     variant="secondary", 
                     size="sm",
                     elem_classes=["compact-sample-btn", "healthy-btn"]
                 )
                 
                 load_hgg_btn = gr.Button(
-                    "Brain Sample - Tumor", 
+                    "Abdomen Sample", 
                     variant="stop", 
                     size="sm",
                     elem_classes=["compact-sample-btn", "glioma-btn"]

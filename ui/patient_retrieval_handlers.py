@@ -102,9 +102,10 @@ class PatientRetrievalHandlers:
             
             result = data_handler.load_data_for_annotator(dummy_file, dir_input)
             
-            # Unpack the result from data loading
+            # Unpack the result from data loading (12 values returned)
             (image_display, file_browser, metadata_display, slice_slider, 
-             slice_text, crosshair_info, error_display, window_level, window_width) = result
+             slice_text, crosshair_info, error_display, window_level, window_width,
+             view_selector, prev_btn_visible, next_btn_visible) = result
             
             # Clear any existing annotations from image_annotator before loading segmentation
             if image_display is not None and hasattr(image_display, 'value'):
@@ -165,21 +166,31 @@ class PatientRetrievalHandlers:
             selected_patient: Selected patient display name
             
         Returns:
-            Tuple of (status_message, updated_image_display)
+            Tuple of (updated_image_display, status_message)
         """
+        # Helper function to create empty annotated image structure
+        def create_empty_annotated_image():
+            import numpy as np
+            blank_image = np.zeros((100, 100, 3), dtype=np.uint8)
+            return {
+                "image": blank_image,
+                "boxes": [],
+                "orientation": 0
+            }
+        
         try:
             if not selected_patient:
-                return "No patient selected", None
+                return create_empty_annotated_image(), "No patient selected"
                 
             # Get patient information
             patient_info = patient_retrieval.get_patient_info(selected_patient)
             if not patient_info:
-                return f"Patient information not found for: {selected_patient}", None
+                return create_empty_annotated_image(), f"Patient information not found for: {selected_patient}"
             
             segmentation_path = patient_info['segmentation_path']
             
             if not segmentation_path or not os.path.exists(segmentation_path):
-                return f"No segmentation file found for patient: {selected_patient}", None
+                return create_empty_annotated_image(), f"No segmentation file found for patient: {selected_patient}"
             
             # Import segmentation handlers
             from ui.segmentation_handlers import SegmentationHandlers
@@ -206,15 +217,25 @@ class PatientRetrievalHandlers:
         except Exception as e:
             error_msg = f"Failed to load segmentation for {selected_patient}: {str(e)}"
             logger.error(error_msg)
-            return None, error_msg
+            return create_empty_annotated_image(), error_msg
     
     def clear_manual_segmentation(self) -> Tuple[str, Optional[dict]]:
         """
         Clear the currently loaded segmentation overlay
         
         Returns:
-            Tuple of (status_message, updated_image_display)
+            Tuple of (updated_image_display, status_message)
         """
+        # Helper function to create empty annotated image structure
+        def create_empty_annotated_image():
+            import numpy as np
+            blank_image = np.zeros((100, 100, 3), dtype=np.uint8)
+            return {
+                "image": blank_image,
+                "boxes": [],
+                "orientation": 0
+            }
+        
         try:
             # Import segmentation handlers
             from ui.segmentation_handlers import SegmentationHandlers
@@ -233,4 +254,4 @@ class PatientRetrievalHandlers:
         except Exception as e:
             error_msg = f"Failed to clear segmentation: {str(e)}"
             logger.error(error_msg)
-            return None, error_msg
+            return create_empty_annotated_image(), error_msg

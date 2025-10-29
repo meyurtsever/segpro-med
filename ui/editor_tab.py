@@ -1368,7 +1368,7 @@ def create_editor_tab(current_user=None) -> dict:
                 )
                 dir_input = gr.Textbox(
                     label="Enter directory path containing DICOM files",
-                    value=r"C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1"
+                    value=r"/home/enesgazi/Downloads/segpro-med/cvm_48_t1"
                 )
                 load_btn = gr.Button("Load Data")
                 reset_dir_btn = gr.Button("Reset Directory")
@@ -1406,12 +1406,12 @@ def create_editor_tab(current_user=None) -> dict:
                         choices=["Axial", "Sagittal", "Coronal"],
                         value="Axial",
                         label="View Orientation",
-                        info="Orientation changes based on modality (MG: LCC, LMLO, RCC, RMLO)"
+                        info="Orientation changes based on modality"
                     )
                     deidentification_checkbox = gr.Checkbox(
                         label="De Identification",
                         value=False,
-                        info="Remove faces from DICOM images using pydeface"
+                        info="Remove faces from DICOM images using pydeface", visible=False
                     )                # Image and 3D Viewer - dynamic layout based on processing mode
                 with gr.Row(equal_height=True) as main_viewer_row:
                     # Image annotator column - dynamic scaling

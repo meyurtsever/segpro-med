@@ -130,11 +130,20 @@ class SegmentationHandlers:
     @log_exception
     def direct_load_segmentation(self, seg_file, label_file=None):
         """Direct method to load segmentation file with axis swapping for dimension mismatches"""
+        # Helper function to create empty annotated image structure
+        def create_empty_annotated_image():
+            blank_image = np.zeros((100, 100, 3), dtype=np.uint8)
+            return {
+                "image": blank_image,
+                "boxes": [],
+                "orientation": 0
+            }
+        
         if self.state.current_data is None:
-            return "Please load a DICOM dataset first", None
+            return "Please load a DICOM dataset first", create_empty_annotated_image()
         
         if seg_file is None:
-            return "No segmentation file provided", None
+            return "No segmentation file provided", create_empty_annotated_image()
         
         try:
             # Get file path from the uploaded file object
@@ -256,7 +265,7 @@ class SegmentationHandlers:
                 
                 return status_msg, annotated_image
             else:
-                return "Error: Could not extract segmentation slice", None
+                return "Error: Could not extract segmentation slice", create_empty_annotated_image()
         
         except Exception as e:
             logger.error(f"Error in direct segmentation loading: {str(e)}")
@@ -264,13 +273,22 @@ class SegmentationHandlers:
             logger.error(traceback.format_exc())
             self.state.segmentation_loaded = False
             self.state.segmentation_data = None
-            return f"Error loading segmentation: {str(e)}", None
+            return f"Error loading segmentation: {str(e)}", create_empty_annotated_image()
     
     @log_exception
     def update_segmentation_opacity(self, opacity):
         """Update the opacity/transparency of the segmentation shapes"""
+        # Helper function to create empty annotated image structure
+        def create_empty_annotated_image():
+            blank_image = np.zeros((100, 100, 3), dtype=np.uint8)
+            return {
+                "image": blank_image,
+                "boxes": [],
+                "orientation": 0
+            }
+        
         if not self.state.segmentation_loaded or self.state.segmentation_data is None:
-            return "No segmentation loaded", None
+            return "No segmentation loaded", create_empty_annotated_image()
         
         self.state.segmentation_alpha = opacity
         
@@ -300,6 +318,15 @@ class SegmentationHandlers:
     @log_exception
     def clear_segmentation(self):
         """Clear the current segmentation shapes"""
+        # Helper function to create empty annotated image structure
+        def create_empty_annotated_image():
+            blank_image = np.zeros((100, 100, 3), dtype=np.uint8)
+            return {
+                "image": blank_image,
+                "boxes": [],
+                "orientation": 0
+            }
+        
         self.state.reset_segmentation()
         
         # Clear all stored segmentation shapes
@@ -307,7 +334,7 @@ class SegmentationHandlers:
         self.user_modified_shapes = {}
         
         if self.state.current_data is None:
-            return "No data loaded", None
+            return "No data loaded", create_empty_annotated_image()
         
         # Re-display image without segmentation
         img = display_slice(

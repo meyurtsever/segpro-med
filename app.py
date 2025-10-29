@@ -419,6 +419,11 @@ class SegMedPro:
             def handle_logout():
                 """Handle logout and return to login screen"""
                 self.current_user = None
+                
+                # Clear images from both viewer and editor tabs by calling their X handlers
+                viewer_cleared_image = self.viewer_image_handlers.handle_image_remove_viewer()
+                editor_cleared_image = self.editor_image_handlers.handle_image_remove()
+                
                 return (
                     False,  # is_logged_in
                     None,   # current_user_state
@@ -434,7 +439,9 @@ class SegMedPro:
                     "guest",  # Reset box tip modal to guest
                     "",     # Clear username
                     "",     # Clear password
-                    ""      # Clear login status
+                    "",     # Clear login status
+                    viewer_cleared_image,  # Clear viewer image_annotator
+                    editor_cleared_image   # Clear editor image_annotator
                 )
             
             # Connect login
@@ -521,7 +528,9 @@ class SegMedPro:
                     editor_components['box_tip_modal']['system']['user_id_state'],
                     username_input,
                     password_input,
-                    login_status
+                    login_status,
+                    viewer_components['visualization'][1],  # viewer image_display
+                    editor_components['visualization'][4]   # editor image_display
                 ]
             )
             
@@ -698,7 +707,8 @@ class SegMedPro:
             outputs=[
                 image_display, file_browser, metadata_display,
                 slice_slider, slice_text, crosshair_info, error_display,
-                window_level, window_width
+                window_level, window_width, view_selector, 
+                prev_btn, next_btn
             ]
         )
         
@@ -749,7 +759,8 @@ class SegMedPro:
             outputs=[
                 image_display, file_browser, metadata_display,
                 slice_slider, slice_text, crosshair_info, error_display,
-                window_level, window_width
+                window_level, window_width, view_selector,
+                prev_btn, next_btn
             ]
         )
         debug_btn.click(
@@ -1234,7 +1245,7 @@ class SegMedPro:
             # Connect each sample button to update directory, close modal, and load data
             if 'cvm' in sample_buttons:
                 sample_buttons['cvm'].click(
-                    fn=lambda: ("/home/enes/segpro-med/cvm_48_t1", gr.update(visible=False), gr.update(visible=False)),
+                    fn=lambda: ("/home/enesgazi/Downloads/segpro-med/cvm_48_t1", gr.update(visible=False), gr.update(visible=False)),
                     outputs=[dir_input, modal_system['backdrop'], modal_system['welcome_modal']]
                 ).then(
                     fn=lambda file_obj, dir_input_val: self.data_handlers.load_data_for_annotator(file_obj, dir_input_val, False),
@@ -1248,7 +1259,7 @@ class SegMedPro:
             
             if 'normal' in sample_buttons:
                 sample_buttons['normal'].click(
-                    fn=lambda: ("/home/enes/segpro-med/normal_52", gr.update(visible=False), gr.update(visible=False)),
+                    fn=lambda: ("/home/enesgazi/Downloads/segpro-med/MG/836163459", gr.update(visible=False), gr.update(visible=False)),
                     outputs=[dir_input, modal_system['backdrop'], modal_system['welcome_modal']]
                 ).then(
                     fn=lambda file_obj, dir_input_val: self.data_handlers.load_data_for_annotator(file_obj, dir_input_val, False),
@@ -1262,7 +1273,7 @@ class SegMedPro:
             
             if 'hgg' in sample_buttons:
                 sample_buttons['hgg'].click(
-                    fn=lambda: ("/home/enes/segpro-med/hgg_17", gr.update(visible=False), gr.update(visible=False)),
+                    fn=lambda: ("/home/enesgazi/Downloads/segpro-med/abdomen/20020", gr.update(visible=False), gr.update(visible=False)),
                     outputs=[dir_input, modal_system['backdrop'], modal_system['welcome_modal']]
                 ).then(
                     fn=lambda file_obj, dir_input_val: self.data_handlers.load_data_for_annotator(file_obj, dir_input_val, False),
@@ -2423,9 +2434,9 @@ class SegMedPro:
                 result = self.data_handlers.load_data_for_annotator(None, dataset_path, False)
                 logger.info(f"DEBUG: load_data_for_annotator returned type: {type(result)}, length: {len(result) if result else 'None'}")
                 
-                # result is a tuple: (annotated_value, dropdown, metadata, slider, slice_info, crosshair_text, status_message, window_level, window_width)
-                if result and len(result) >= 9:
-                    annotated_value, dropdown, metadata, slider, slice_info, crosshair_text, status_message, window_level, window_width = result
+                # result is a tuple with 12 values: (annotated_value, dropdown, metadata, slider, slice_info, crosshair_text, status_message, window_level, window_width, view_selector, prev_btn, next_btn)
+                if result and len(result) >= 12:
+                    annotated_value, dropdown, metadata, slider, slice_info, crosshair_text, status_message, window_level, window_width, view_selector, prev_btn, next_btn = result
                     logger.info(f"DEBUG: Extracted annotated_value type: {type(annotated_value)}")
                     if isinstance(annotated_value, dict):
                         logger.info(f"DEBUG: annotated_value keys: {list(annotated_value.keys())}")
@@ -2439,13 +2450,20 @@ class SegMedPro:
                         # It's a dict with {"image": img_rgb, "boxes": [], "orientation": 0}
                         logger.info(f"DEBUG: load_dataset_from_contribute returning success with annotated_value type: {type(annotated_value)}")
                         
+                        # Extract values from component objects to create proper updates
+                        # The slider object contains the configuration, extract it for gr.update
+                        if hasattr(slider, 'minimum') and hasattr(slider, 'maximum') and hasattr(slider, 'value'):
+                            slider_update = gr.update(minimum=slider.minimum, maximum=slider.maximum, value=slider.value, visible=slider.visible)
+                        else:
+                            slider_update = slider
+                        
                         # Return complete initialization data for editor tab
                         return (
                             "Dataset loaded successfully!",  # Simple success message for contribute tab
                             gr.update(visible=True),          # Show crowdsourcing controls
                             annotated_value,                   # Initialize image display (already properly formatted)
                             metadata,                          # Initialize metadata
-                            slider,                            # Initialize slider
+                            slider_update,                     # Initialize slider with proper update
                             slice_info,                        # Initialize slice info
                             crosshair_text,                    # Initialize crosshair text
                             window_level,                      # Initialize window level
@@ -3022,7 +3040,7 @@ class SegMedPro:
                     # Call load_data_for_annotator directly and get the properly formatted result
                     result = self.data_handlers.load_data_for_annotator(None, modality_path, False)
                     
-                    if not result or len(result) < 9:
+                    if not result or len(result) < 12:
                         logger.error(f"Failed to load assignment: Invalid result")
                         return [
                             gr.update(),  # tabs (no change)
@@ -3041,8 +3059,8 @@ class SegMedPro:
                             gr.update(),  # selected_task_info
                         ]
                     
-                    # Extract the data (annotated_value is already in correct format)
-                    annotated_value, dropdown, metadata, slider, slice_info, crosshair_text, status_message, window_level, window_width = result
+                    # Extract the data (annotated_value is already in correct format) - handle all 12 return values
+                    annotated_value, dropdown, metadata, slider, slice_info, crosshair_text, status_message, window_level, window_width, view_selector, prev_btn, next_btn = result
                     
                     logger.info(f"DEBUG: Loaded annotated_value type: {type(annotated_value)}")
                     if isinstance(annotated_value, dict):
@@ -3163,11 +3181,11 @@ class SegMedPro:
                 outputs=[
                     contribute_components['load_status'],           # Status message
                     editor_components['crowdsourcing']['accordion'], # Show crowdsourcing controls
-                    editor_components['visualization'][3],          # image_display
-                    editor_components['visualization'][1],          # metadata_display  
-                    editor_components['visualization'][7],          # slice_slider
-                    editor_components['visualization'][9],          # slice_text
-                    editor_components['visualization'][10],         # crosshair_info
+                    editor_components['visualization'][4],          # image_display (index 4)
+                    editor_components['visualization'][1],          # metadata_display (index 1)
+                    editor_components['visualization'][8],          # slice_slider (index 8)
+                    editor_components['visualization'][10],         # slice_text (index 10)
+                    editor_components['visualization'][11],         # crosshair_info (index 11)
                     # Window level and width are in data_loading section
                     editor_components['data_loading'][8],           # window_level
                     editor_components['data_loading'][9]            # window_width
@@ -3222,8 +3240,8 @@ class SegMedPro:
                     # Load the dataset into editor
                     try:
                         result = self.data_handlers.load_data_for_annotator(None, dataset_path, False)
-                        if result and len(result) >= 9:
-                            annotated_value, dropdown, metadata, slider, slice_info, crosshair_text, status_message, window_level, window_width = result
+                        if result and len(result) >= 12:
+                            annotated_value, dropdown, metadata, slider, slice_info, crosshair_text, status_message, window_level, window_width, view_selector, prev_btn, next_btn = result
                             
                             # Update contribute tab dataset to show current status
                             contribute_dataset, contribute_status = contribute_components['get_assigned_tasks_dataset'](user_id)

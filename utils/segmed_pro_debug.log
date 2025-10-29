@@ -25414,3 +25414,478 @@ ValueError: No DICOM files found in directory: /home/enes/segpro-med/cvm_48_t1
 2025-10-28 19:51:34,963 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
 2025-10-28 19:51:34,973 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm
 2025-10-28 19:51:34,981 - segmed_pro - DEBUG - Reading DICOM file: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1\1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm
+2025-10-29 14:52:32,591 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (54)/flair/1.3.12.2.1107.5.2.18.42451.2018010709202049079867012_MR.dcm
+2025-10-29 14:52:32,595 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (54)/flair/1.3.12.2.1107.5.2.18.42451.2018010709190016320866959_MR.dcm
+2025-10-29 14:52:32,596 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (54)/flair/1.3.12.2.1107.5.2.18.42451.2018010709190018883466973_MR.dcm
+2025-10-29 14:52:32,597 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (54)/flair/1.3.12.2.1107.5.2.18.42451.2018010709202067522867017_MR.dcm
+2025-10-29 14:52:32,598 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (54)/flair/1.3.12.2.1107.5.2.18.42451.2018010709202086094667022_MR.dcm
+2025-10-29 14:52:32,599 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (54)/flair/1.3.12.2.1107.5.2.18.42451.2018010709190016583066964_MR.dcm
+2025-10-29 14:52:32,599 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (54)/flair/1.3.12.2.1107.5.2.18.42451.2018010709201976549166992_MR.dcm
+2025-10-29 14:52:32,600 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (54)/flair/1.3.12.2.1107.5.2.18.42451.2018010709190016387966961_MR.dcm
+2025-10-29 14:52:32,601 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (54)/flair/1.3.12.2.1107.5.2.18.42451.2018010709202124309767030_MR.dcm
+2025-10-29 14:52:32,602 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (54)/flair/1.3.12.2.1107.5.2.18.42451.2018010709190043763066980_MR.dcm
+2025-10-29 14:52:32,602 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (54)/flair/1.3.12.2.1107.5.2.18.42451.2018010709190016602166965_MR.dcm
+2025-10-29 14:52:32,603 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (54)/flair/1.3.12.2.1107.5.2.18.42451.2018010709202034081667007_MR.dcm
+2025-10-29 14:52:32,604 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (54)/flair/1.3.12.2.1107.5.2.18.42451.2018010709190018110066972_MR.dcm
+2025-10-29 14:52:32,604 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (54)/flair/1.3.12.2.1107.5.2.18.42451.2018010709190016723766966_MR.dcm
+2025-10-29 14:52:32,605 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (54)/flair/1.3.12.2.1107.5.2.18.42451.2018010709190025402566977_MR.dcm
+2025-10-29 14:52:32,606 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (54)/flair/1.3.12.2.1107.5.2.18.42451.2018010709190017602566969_MR.dcm
+2025-10-29 14:52:32,607 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (54)/flair/1.3.12.2.1107.5.2.18.42451.2018010709190016356166960_MR.dcm
+2025-10-29 14:52:32,608 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (54)/flair/1.3.12.2.1107.5.2.18.42451.2018010709201994843466997_MR.dcm
+2025-10-29 14:52:32,609 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (54)/flair/1.3.12.2.1107.5.2.18.42451.2018010709202013579667002_MR.dcm
+2025-10-29 14:52:32,609 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (54)/flair/1.3.12.2.1107.5.2.18.42451.2018010709201958356966987_MR.dcm
+2025-10-29 14:52:32,610 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (54)/flair/1.3.12.2.1107.5.2.18.42451.201801070920215605567027_MR.dcm
+2025-10-29 14:52:47,070 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (55)/flair/1.3.12.2.1107.5.2.18.42451.2018112602210125632099458_MR.dcm
+2025-10-29 14:52:47,076 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (55)/flair/1.3.12.2.1107.5.2.18.42451.2018112602200449275799390_MR.dcm
+2025-10-29 14:52:47,078 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (55)/flair/1.3.12.2.1107.5.2.18.42451.2018112602200499927399400_MR.dcm
+2025-10-29 14:52:47,078 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (55)/flair/1.3.12.2.1107.5.2.18.42451.2018112602200432796599371_MR.dcm
+2025-10-29 14:52:47,079 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (55)/flair/1.3.12.2.1107.5.2.18.42451.2018112602210099858099455_MR.dcm
+2025-10-29 14:52:47,080 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (55)/flair/1.3.12.2.1107.5.2.18.42451.2018112602210048547899445_MR.dcm
+2025-10-29 14:52:47,081 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (55)/flair/1.3.12.2.1107.5.2.18.42451.2018112602200435721799385_MR.dcm
+2025-10-29 14:52:47,082 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (55)/flair/1.3.12.2.1107.5.2.18.42451.2018112602205917664599420_MR.dcm
+2025-10-29 14:52:47,082 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (55)/flair/1.3.12.2.1107.5.2.18.42451.2018112602205994721299435_MR.dcm
+2025-10-29 14:52:47,083 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (55)/flair/1.3.12.2.1107.5.2.18.42451.2018112602205945202999425_MR.dcm
+2025-10-29 14:52:47,084 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (55)/flair/1.3.12.2.1107.5.2.18.42451.2018112602200432752399370_MR.dcm
+2025-10-29 14:52:47,085 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (55)/flair/1.3.12.2.1107.5.2.18.42451.2018112602210075769399450_MR.dcm
+2025-10-29 14:52:47,086 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (55)/flair/1.3.12.2.1107.5.2.18.42451.2018112602205969447299430_MR.dcm
+2025-10-29 14:52:47,086 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (55)/flair/1.3.12.2.1107.5.2.18.42451.2018112602200434225099378_MR.dcm
+2025-10-29 14:52:47,087 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (55)/flair/1.3.12.2.1107.5.2.18.42451.2018112602200473494599395_MR.dcm
+2025-10-29 14:52:47,088 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (55)/flair/1.3.12.2.1107.5.2.18.42451.2018112602200433955999377_MR.dcm
+2025-10-29 14:52:47,089 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (55)/flair/1.3.12.2.1107.5.2.18.42451.2018112602205894206199415_MR.dcm
+2025-10-29 14:52:47,089 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (55)/flair/1.3.12.2.1107.5.2.18.42451.2018112602200526558999403_MR.dcm
+2025-10-29 14:52:47,090 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (55)/flair/1.3.12.2.1107.5.2.18.42451.2018112602200433686999376_MR.dcm
+2025-10-29 14:52:47,091 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (55)/flair/1.3.12.2.1107.5.2.18.42451.2018112602210021596499440_MR.dcm
+2025-10-29 14:52:47,092 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (55)/flair/1.3.12.2.1107.5.2.18.42451.2018112602205870865299410_MR.dcm
+2025-10-29 14:52:47,093 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (55)/flair/1.3.12.2.1107.5.2.18.42451.2018112602200436654999386_MR.dcm
+2025-10-29 14:52:54,752 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (12)/flair/1.3.12.2.1107.5.2.18.42451.2019030510241912939882294_MR.dcm
+2025-10-29 14:52:54,755 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (12)/flair/1.3.12.2.1107.5.2.18.42451.2019030510241985086382314_MR.dcm
+2025-10-29 14:52:54,757 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (12)/flair/1.3.12.2.1107.5.2.18.42451.2019030510241895439082289_MR.dcm
+2025-10-29 14:52:54,758 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (12)/flair/1.3.12.2.1107.5.2.18.42451.2019030510242021686982320_MR.dcm
+2025-10-29 14:52:54,759 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (12)/flair/1.3.12.2.1107.5.2.18.42451.2019030510241934338182299_MR.dcm
+2025-10-29 14:52:54,760 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (12)/flair/1.3.12.2.1107.5.2.18.42451.2019030510241858116882279_MR.dcm
+2025-10-29 14:52:54,761 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (12)/flair/1.3.12.2.1107.5.2.18.42451.2019030510225943826182262_MR.dcm
+2025-10-29 14:52:54,762 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (12)/flair/1.3.12.2.1107.5.2.18.42451.2019030510225940999782250_MR.dcm
+2025-10-29 14:52:54,763 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (12)/flair/1.3.12.2.1107.5.2.18.42451.2019030510225953088582267_MR.dcm
+2025-10-29 14:52:54,764 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (12)/flair/1.3.12.2.1107.5.2.18.42451.201903051024203598382317_MR.dcm
+2025-10-29 14:52:54,765 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (12)/flair/1.3.12.2.1107.5.2.18.42451.2019030510225941887382255_MR.dcm
+2025-10-29 14:52:54,766 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (12)/flair/1.3.12.2.1107.5.2.18.42451.2019030510241949154382304_MR.dcm
+2025-10-29 14:52:54,767 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (12)/flair/1.3.12.2.1107.5.2.18.42451.2019030510225941533482254_MR.dcm
+2025-10-29 14:52:54,768 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (12)/flair/1.3.12.2.1107.5.2.18.42451.2019030510225941380782253_MR.dcm
+2025-10-29 14:52:54,769 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (12)/flair/1.3.12.2.1107.5.2.18.42451.2019030510241967064782309_MR.dcm
+2025-10-29 14:52:54,770 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (12)/flair/1.3.12.2.1107.5.2.18.42451.2019030510225942637982257_MR.dcm
+2025-10-29 14:52:54,771 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (12)/flair/1.3.12.2.1107.5.2.18.42451.2019030510241879795182284_MR.dcm
+2025-10-29 14:52:54,772 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (12)/flair/1.3.12.2.1107.5.2.18.42451.2019030510225944164582263_MR.dcm
+2025-10-29 14:52:54,773 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (12)/flair/1.3.12.2.1107.5.2.18.42451.2019030510225954594682270_MR.dcm
+2025-10-29 14:52:54,774 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (12)/flair/1.3.12.2.1107.5.2.18.42451.2019030510225941935882256_MR.dcm
+2025-10-29 14:53:33,459 - segmed_pro - ERROR - Exception in load_data_for_annotator: No DICOM files found in directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+2025-10-29 14:53:33,460 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "/home/enesgazi/Downloads/segpro-med/utils/debug_utils.py", line 70, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enesgazi/Downloads/segpro-med/ui/handlers.py", line 297, in load_data_for_annotator
+    self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
+                                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enesgazi/Downloads/segpro-med/utils/dicom_utils.py", line 260, in load_dicom_series
+    raise ValueError(f"No DICOM files found in directory: {directory}")
+ValueError: No DICOM files found in directory: C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1
+
+2025-10-29 14:53:52,825 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574155357140860_MR.dcm
+2025-10-29 14:53:52,827 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819563041576240835_MR.dcm
+2025-10-29 14:53:52,830 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574098185540840_MR.dcm
+2025-10-29 14:53:52,831 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819562984848140815_MR.dcm
+2025-10-29 14:53:52,833 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574212898340880_MR.dcm
+2025-10-29 14:53:52,835 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819563013901940825_MR.dcm
+2025-10-29 14:53:52,836 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574227651940885_MR.dcm
+2025-10-29 14:53:52,837 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819562899161340784_MR.dcm
+2025-10-29 14:53:52,838 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574127013240850_MR.dcm
+2025-10-29 14:53:52,839 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819562956420940805_MR.dcm
+2025-10-29 14:53:52,839 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819562941182240800_MR.dcm
+2025-10-29 14:53:52,840 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819562970785940810_MR.dcm
+2025-10-29 14:53:52,841 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819563027979740830_MR.dcm
+2025-10-29 14:53:52,842 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819562927545240795_MR.dcm
+2025-10-29 14:53:52,843 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819562913056140789_MR.dcm
+2025-10-29 14:53:52,843 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574184035340870_MR.dcm
+2025-10-29 14:53:52,844 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574112643940845_MR.dcm
+2025-10-29 14:53:52,845 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574241639140890_MR.dcm
+2025-10-29 14:53:52,846 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574198965540875_MR.dcm
+2025-10-29 14:53:52,846 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574141486040855_MR.dcm
+2025-10-29 14:53:52,847 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574170141540865_MR.dcm
+2025-10-29 14:53:52,848 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819562998977640820_MR.dcm
+2025-10-29 14:54:37,161 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574155357140860_MR.dcm
+2025-10-29 14:54:37,164 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819563041576240835_MR.dcm
+2025-10-29 14:54:37,165 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574098185540840_MR.dcm
+2025-10-29 14:54:37,167 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819562984848140815_MR.dcm
+2025-10-29 14:54:37,168 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574212898340880_MR.dcm
+2025-10-29 14:54:37,169 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819563013901940825_MR.dcm
+2025-10-29 14:54:37,170 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574227651940885_MR.dcm
+2025-10-29 14:54:37,171 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819562899161340784_MR.dcm
+2025-10-29 14:54:37,172 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574127013240850_MR.dcm
+2025-10-29 14:54:37,173 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819562956420940805_MR.dcm
+2025-10-29 14:54:37,175 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819562941182240800_MR.dcm
+2025-10-29 14:54:37,176 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819562970785940810_MR.dcm
+2025-10-29 14:54:37,177 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819563027979740830_MR.dcm
+2025-10-29 14:54:37,178 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819562927545240795_MR.dcm
+2025-10-29 14:54:37,179 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819562913056140789_MR.dcm
+2025-10-29 14:54:37,181 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574184035340870_MR.dcm
+2025-10-29 14:54:37,181 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574112643940845_MR.dcm
+2025-10-29 14:54:37,182 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574241639140890_MR.dcm
+2025-10-29 14:54:37,183 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574198965540875_MR.dcm
+2025-10-29 14:54:37,183 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574141486040855_MR.dcm
+2025-10-29 14:54:37,184 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574170141540865_MR.dcm
+2025-10-29 14:54:37,185 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819562998977640820_MR.dcm
+2025-10-29 14:55:12,855 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815344235355462057_MR.dcm
+2025-10-29 14:55:12,857 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815344198564962047_MR.dcm
+2025-10-29 14:55:12,858 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815332197230462015_MR.dcm
+2025-10-29 14:55:12,859 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815344254238162062_MR.dcm
+2025-10-29 14:55:12,860 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815344271220762067_MR.dcm
+2025-10-29 14:55:12,861 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.201910181534437600862077_MR.dcm
+2025-10-29 14:55:12,862 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815344289849162072_MR.dcm
+2025-10-29 14:55:12,863 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815344215910962052_MR.dcm
+2025-10-29 14:55:12,864 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815344326965762080_MR.dcm
+2025-10-29 14:55:12,865 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815332196415062010_MR.dcm
+2025-10-29 14:55:12,865 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815332247506962030_MR.dcm
+2025-10-29 14:55:12,866 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815332196492562011_MR.dcm
+2025-10-29 14:55:12,867 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815332196678362012_MR.dcm
+2025-10-29 14:55:12,868 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815332197191362014_MR.dcm
+2025-10-29 14:55:12,869 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815344181524762042_MR.dcm
+2025-10-29 14:55:12,870 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815332197001062013_MR.dcm
+2025-10-29 14:55:12,870 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815332229332062027_MR.dcm
+2025-10-29 14:55:12,871 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815344161451162037_MR.dcm
+2025-10-29 14:55:12,872 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815332196377762009_MR.dcm
+2025-10-29 14:55:12,875 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.201910181533229785762022_MR.dcm
+2025-10-29 14:55:12,878 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815332198997762018_MR.dcm
+2025-10-29 15:02:27,199 - segmed_pro - ERROR - Exception in load_data_for_annotator: No DICOM files found in directory: /home/enes/segpro-med/cvm_48_t1
+2025-10-29 15:02:27,200 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "/home/enesgazi/Downloads/segpro-med/utils/debug_utils.py", line 70, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enesgazi/Downloads/segpro-med/ui/handlers.py", line 297, in load_data_for_annotator
+    self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
+                                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enesgazi/Downloads/segpro-med/utils/dicom_utils.py", line 260, in load_dicom_series
+    raise ValueError(f"No DICOM files found in directory: {directory}")
+ValueError: No DICOM files found in directory: /home/enes/segpro-med/cvm_48_t1
+
+2025-10-29 15:02:31,387 - segmed_pro - DEBUG - Reading DICOM file: /tmp/gradio/dc991114a9ec33801c8c3063e2a4b2bc2602bcc5fe8ea2ea4a6b12bab2c38367/1.3.12.2.1107.5.2.36.40820.2021111512341775486333211_MR.dcm
+2025-10-29 15:03:00,226 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574155357140860_MR.dcm
+2025-10-29 15:03:00,228 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819563041576240835_MR.dcm
+2025-10-29 15:03:00,231 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574098185540840_MR.dcm
+2025-10-29 15:03:00,233 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819562984848140815_MR.dcm
+2025-10-29 15:03:00,236 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574212898340880_MR.dcm
+2025-10-29 15:03:00,238 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819563013901940825_MR.dcm
+2025-10-29 15:03:00,240 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574227651940885_MR.dcm
+2025-10-29 15:03:00,241 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819562899161340784_MR.dcm
+2025-10-29 15:03:00,242 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574127013240850_MR.dcm
+2025-10-29 15:03:00,242 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819562956420940805_MR.dcm
+2025-10-29 15:03:00,243 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819562941182240800_MR.dcm
+2025-10-29 15:03:00,244 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819562970785940810_MR.dcm
+2025-10-29 15:03:00,245 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819563027979740830_MR.dcm
+2025-10-29 15:03:00,245 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819562927545240795_MR.dcm
+2025-10-29 15:03:00,246 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819562913056140789_MR.dcm
+2025-10-29 15:03:00,250 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574184035340870_MR.dcm
+2025-10-29 15:03:00,251 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574112643940845_MR.dcm
+2025-10-29 15:03:00,252 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574241639140890_MR.dcm
+2025-10-29 15:03:00,253 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574198965540875_MR.dcm
+2025-10-29 15:03:00,254 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574141486040855_MR.dcm
+2025-10-29 15:03:00,254 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574170141540865_MR.dcm
+2025-10-29 15:03:00,255 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819562998977640820_MR.dcm
+2025-10-29 15:24:14,781 - segmed_pro - ERROR - Exception in load_data_for_annotator: No DICOM files found in directory: /home/enes/gazi/Downloads/500 MR/NORMAL/normal (50)/flair
+2025-10-29 15:24:14,782 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "/home/enesgazi/Downloads/segpro-med/utils/debug_utils.py", line 70, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enesgazi/Downloads/segpro-med/ui/handlers.py", line 297, in load_data_for_annotator
+    self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
+                                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enesgazi/Downloads/segpro-med/utils/dicom_utils.py", line 260, in load_dicom_series
+    raise ValueError(f"No DICOM files found in directory: {directory}")
+ValueError: No DICOM files found in directory: /home/enes/gazi/Downloads/500 MR/NORMAL/normal (50)/flair
+
+2025-10-29 15:25:58,060 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574155357140860_MR.dcm
+2025-10-29 15:25:58,065 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819563041576240835_MR.dcm
+2025-10-29 15:25:58,066 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574098185540840_MR.dcm
+2025-10-29 15:25:58,067 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819562984848140815_MR.dcm
+2025-10-29 15:25:58,068 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574212898340880_MR.dcm
+2025-10-29 15:25:58,068 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819563013901940825_MR.dcm
+2025-10-29 15:25:58,069 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574227651940885_MR.dcm
+2025-10-29 15:25:58,070 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819562899161340784_MR.dcm
+2025-10-29 15:25:58,071 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574127013240850_MR.dcm
+2025-10-29 15:25:58,072 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819562956420940805_MR.dcm
+2025-10-29 15:25:58,073 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819562941182240800_MR.dcm
+2025-10-29 15:25:58,073 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819562970785940810_MR.dcm
+2025-10-29 15:25:58,074 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819563027979740830_MR.dcm
+2025-10-29 15:25:58,075 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819562927545240795_MR.dcm
+2025-10-29 15:25:58,076 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819562913056140789_MR.dcm
+2025-10-29 15:25:58,076 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574184035340870_MR.dcm
+2025-10-29 15:25:58,077 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574112643940845_MR.dcm
+2025-10-29 15:25:58,078 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574241639140890_MR.dcm
+2025-10-29 15:25:58,079 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574198965540875_MR.dcm
+2025-10-29 15:25:58,080 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574141486040855_MR.dcm
+2025-10-29 15:25:58,080 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574170141540865_MR.dcm
+2025-10-29 15:25:58,081 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819562998977640820_MR.dcm
+2025-10-29 15:26:55,321 - segmed_pro - ERROR - Exception in load_data_for_annotator: No DICOM files found in directory: /home/enes/segpro-med/MG/836163430
+2025-10-29 15:26:55,322 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "/home/enesgazi/Downloads/segpro-med/utils/debug_utils.py", line 70, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enesgazi/Downloads/segpro-med/ui/handlers.py", line 297, in load_data_for_annotator
+    self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
+                                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enesgazi/Downloads/segpro-med/utils/dicom_utils.py", line 260, in load_dicom_series
+    raise ValueError(f"No DICOM files found in directory: {directory}")
+ValueError: No DICOM files found in directory: /home/enes/segpro-med/MG/836163430
+
+2025-10-29 15:28:48,857 - segmed_pro - ERROR - Exception in load_data_for_annotator: No DICOM files found in directory: /home/enes/Downloads/segpro-med/MG/836163430
+2025-10-29 15:28:48,858 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "/home/enesgazi/Downloads/segpro-med/utils/debug_utils.py", line 70, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enesgazi/Downloads/segpro-med/ui/handlers.py", line 297, in load_data_for_annotator
+    self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
+                                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enesgazi/Downloads/segpro-med/utils/dicom_utils.py", line 260, in load_dicom_series
+    raise ValueError(f"No DICOM files found in directory: {directory}")
+ValueError: No DICOM files found in directory: /home/enes/Downloads/segpro-med/MG/836163430
+
+2025-10-29 15:29:26,919 - segmed_pro - ERROR - Exception in load_data_for_annotator: No DICOM files found in directory: /home/enes/Downloads/segpro-med/abdomen/20020
+2025-10-29 15:29:26,919 - segmed_pro - DEBUG - Traceback:
+Traceback (most recent call last):
+  File "/home/enesgazi/Downloads/segpro-med/utils/debug_utils.py", line 70, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enesgazi/Downloads/segpro-med/ui/handlers.py", line 297, in load_data_for_annotator
+    self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
+                                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/enesgazi/Downloads/segpro-med/utils/dicom_utils.py", line 260, in load_dicom_series
+    raise ValueError(f"No DICOM files found in directory: {directory}")
+ValueError: No DICOM files found in directory: /home/enes/Downloads/segpro-med/abdomen/20020
+
+2025-10-29 15:30:38,341 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/MG/836163430/LCC.dcm
+2025-10-29 15:30:38,360 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/MG/836163430/RCC.dcm
+2025-10-29 15:30:38,373 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/MG/836163430/RMLO.dcm
+2025-10-29 15:30:38,386 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/MG/836163430/LMLO.dcm
+2025-10-29 15:33:00,875 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574155357140860_MR.dcm
+2025-10-29 15:33:00,878 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819563041576240835_MR.dcm
+2025-10-29 15:33:00,879 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574098185540840_MR.dcm
+2025-10-29 15:33:00,881 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819562984848140815_MR.dcm
+2025-10-29 15:33:00,883 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574212898340880_MR.dcm
+2025-10-29 15:33:00,884 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819563013901940825_MR.dcm
+2025-10-29 15:33:00,885 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574227651940885_MR.dcm
+2025-10-29 15:33:00,886 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819562899161340784_MR.dcm
+2025-10-29 15:33:00,886 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574127013240850_MR.dcm
+2025-10-29 15:33:00,887 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819562956420940805_MR.dcm
+2025-10-29 15:33:00,888 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819562941182240800_MR.dcm
+2025-10-29 15:33:00,889 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819562970785940810_MR.dcm
+2025-10-29 15:33:00,890 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819563027979740830_MR.dcm
+2025-10-29 15:33:00,890 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819562927545240795_MR.dcm
+2025-10-29 15:33:00,891 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819562913056140789_MR.dcm
+2025-10-29 15:33:00,892 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574184035340870_MR.dcm
+2025-10-29 15:33:00,893 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574112643940845_MR.dcm
+2025-10-29 15:33:00,893 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574241639140890_MR.dcm
+2025-10-29 15:33:00,894 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574198965540875_MR.dcm
+2025-10-29 15:33:00,895 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574141486040855_MR.dcm
+2025-10-29 15:33:00,896 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819574170141540865_MR.dcm
+2025-10-29 15:33:00,897 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/NORMAL/normal (50)/flair/1.3.12.2.1107.5.2.36.40496.2019082819562998977640820_MR.dcm
+2025-10-29 15:40:08,357 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (21)/flair/1.3.12.2.1107.5.2.18.42451.2021112913465542808770625_MR.dcm
+2025-10-29 15:40:08,365 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (21)/flair/1.3.12.2.1107.5.2.18.42451.2021112913481662142570691_MR.dcm
+2025-10-29 15:40:08,367 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (21)/flair/1.3.12.2.1107.5.2.18.42451.2021112913481622734970683_MR.dcm
+2025-10-29 15:40:08,367 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (21)/flair/1.3.12.2.1107.5.2.18.42451.2021112913481571724770668_MR.dcm
+2025-10-29 15:40:08,368 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (21)/flair/1.3.12.2.1107.5.2.18.42451.2021112913465543533370628_MR.dcm
+2025-10-29 15:40:08,369 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (21)/flair/1.3.12.2.1107.5.2.18.42451.2021112913465542499470622_MR.dcm
+2025-10-29 15:40:08,370 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (21)/flair/1.3.12.2.1107.5.2.18.42451.2021112913465543285170627_MR.dcm
+2025-10-29 15:40:08,371 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (21)/flair/1.3.12.2.1107.5.2.18.42451.2021112913465542616970623_MR.dcm
+2025-10-29 15:40:08,372 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (21)/flair/1.3.12.2.1107.5.2.18.42451.202111291348166171870678_MR.dcm
+2025-10-29 15:40:08,373 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (21)/flair/1.3.12.2.1107.5.2.18.42451.2021112913481512512770653_MR.dcm
+2025-10-29 15:40:08,374 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (21)/flair/1.3.12.2.1107.5.2.18.42451.2021112913481641261770688_MR.dcm
+2025-10-29 15:40:08,375 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (21)/flair/1.3.12.2.1107.5.2.18.42451.2021112913465542977670626_MR.dcm
+2025-10-29 15:40:08,376 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (21)/flair/1.3.12.2.1107.5.2.18.42451.2021112913465544996370632_MR.dcm
+2025-10-29 15:40:08,377 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (21)/flair/1.3.12.2.1107.5.2.18.42451.2021112913481549895770663_MR.dcm
+2025-10-29 15:40:08,378 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (21)/flair/1.3.12.2.1107.5.2.18.42451.2021112913481530619970658_MR.dcm
+2025-10-29 15:40:08,379 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (21)/flair/1.3.12.2.1107.5.2.18.42451.2021112913481498123270648_MR.dcm
+2025-10-29 15:40:08,380 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (21)/flair/1.3.12.2.1107.5.2.18.42451.2021112913465580298970641_MR.dcm
+2025-10-29 15:40:08,380 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (21)/flair/1.3.12.2.1107.5.2.18.42451.2021112913465561461170638_MR.dcm
+2025-10-29 15:40:08,381 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (21)/flair/1.3.12.2.1107.5.2.18.42451.2021112913465543890670631_MR.dcm
+2025-10-29 15:40:08,382 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (21)/flair/1.3.12.2.1107.5.2.18.42451.2021112913481588917270673_MR.dcm
+2025-10-29 15:40:08,383 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (21)/flair/1.3.12.2.1107.5.2.18.42451.2021112913465542636470624_MR.dcm
+2025-10-29 15:40:08,473 - segmed_pro - ERROR - Failed to load patient CAVERNOMA/cvm (21): too many values to unpack (expected 9)
+2025-10-29 15:43:46,912 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (23)/flair/1.3.12.2.1107.5.2.18.42451.2021111312424589583427207_MR.dcm
+2025-10-29 15:43:46,915 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (23)/flair/1.3.12.2.1107.5.2.18.42451.2021111312412579699827172_MR.dcm
+2025-10-29 15:43:46,916 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (23)/flair/1.3.12.2.1107.5.2.18.42451.2021111312412579650427171_MR.dcm
+2025-10-29 15:43:46,917 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (23)/flair/1.3.12.2.1107.5.2.18.42451.2021111312412578175227156_MR.dcm
+2025-10-29 15:43:46,918 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (23)/flair/1.3.12.2.1107.5.2.18.42451.2021111312412578878927166_MR.dcm
+2025-10-29 15:43:46,919 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (23)/flair/1.3.12.2.1107.5.2.18.42451.2021111312424699052827235_MR.dcm
+2025-10-29 15:43:46,920 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (23)/flair/1.3.12.2.1107.5.2.18.42451.2021111312412578632627165_MR.dcm
+2025-10-29 15:43:46,921 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (23)/flair/1.3.12.2.1107.5.2.18.42451.2021111312412579153527167_MR.dcm
+2025-10-29 15:43:46,922 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (23)/flair/1.3.12.2.1107.5.2.18.42451.2021111312412579542227168_MR.dcm
+2025-10-29 15:43:46,922 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (23)/flair/1.3.12.2.1107.5.2.18.42451.2021111312412581220427176_MR.dcm
+2025-10-29 15:43:46,923 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (23)/flair/1.3.12.2.1107.5.2.18.42451.2021111312412580646927175_MR.dcm
+2025-10-29 15:43:46,924 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (23)/flair/1.3.12.2.1107.5.2.18.42451.2021111312424568891627202_MR.dcm
+2025-10-29 15:43:46,925 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (23)/flair/1.3.12.2.1107.5.2.18.42451.202111131242467412127212_MR.dcm
+2025-10-29 15:43:46,926 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (23)/flair/1.3.12.2.1107.5.2.18.42451.2021111312412620465027183_MR.dcm
+2025-10-29 15:43:46,927 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (23)/flair/1.3.12.2.1107.5.2.18.42451.2021111312412599782027180_MR.dcm
+2025-10-29 15:43:46,927 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (23)/flair/1.3.12.2.1107.5.2.18.42451.2021111312424717508227238_MR.dcm
+2025-10-29 15:43:46,928 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (23)/flair/1.3.12.2.1107.5.2.18.42451.2021111312424681694327232_MR.dcm
+2025-10-29 15:43:46,929 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (23)/flair/1.3.12.2.1107.5.2.18.42451.2021111312424642882027222_MR.dcm
+2025-10-29 15:43:46,930 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (23)/flair/1.3.12.2.1107.5.2.18.42451.2021111312424549719027197_MR.dcm
+2025-10-29 15:43:46,931 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (23)/flair/1.3.12.2.1107.5.2.18.42451.2021111312424624637627217_MR.dcm
+2025-10-29 15:43:46,931 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (23)/flair/1.3.12.2.1107.5.2.18.42451.2021111312424536608127192_MR.dcm
+2025-10-29 15:43:46,932 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/CAVERNOMA/cvm (23)/flair/1.3.12.2.1107.5.2.18.42451.2021111312424660266727227_MR.dcm
+2025-10-29 15:43:59,651 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/MG/836163459/LCC.dcm
+2025-10-29 15:43:59,670 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/MG/836163459/RCC.dcm
+2025-10-29 15:43:59,685 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/MG/836163459/RMLO.dcm
+2025-10-29 15:43:59,700 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/MG/836163459/LMLO.dcm
+2025-10-29 15:46:11,597 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-10-29 15:46:11,604 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341775486333211_MR.dcm
+2025-10-29 15:46:11,605 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-10-29 15:46:11,606 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-10-29 15:46:11,607 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-10-29 15:46:11,608 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm
+2025-10-29 15:46:11,609 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-10-29 15:46:11,610 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-10-29 15:46:11,611 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm
+2025-10-29 15:46:11,612 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-10-29 15:46:11,613 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
+2025-10-29 15:46:11,614 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-10-29 15:46:11,614 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-10-29 15:46:11,615 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-10-29 15:46:11,617 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-10-29 15:46:11,617 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-10-29 15:46:11,618 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-10-29 15:46:11,619 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-10-29 15:46:11,620 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-10-29 15:46:11,621 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-10-29 15:46:48,460 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-10-29 15:46:48,463 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341775486333211_MR.dcm
+2025-10-29 15:46:48,465 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-10-29 15:46:48,466 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-10-29 15:46:48,467 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-10-29 15:46:48,468 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm
+2025-10-29 15:46:48,468 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-10-29 15:46:48,469 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-10-29 15:46:48,470 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm
+2025-10-29 15:46:48,471 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-10-29 15:46:48,472 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
+2025-10-29 15:46:48,474 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-10-29 15:46:48,475 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-10-29 15:46:48,476 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-10-29 15:46:48,477 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-10-29 15:46:48,478 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-10-29 15:46:48,479 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-10-29 15:46:48,480 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-10-29 15:46:48,481 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-10-29 15:46:48,482 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
+2025-10-29 15:46:56,607 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815344235355462057_MR.dcm
+2025-10-29 15:46:56,609 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815344198564962047_MR.dcm
+2025-10-29 15:46:56,611 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815332197230462015_MR.dcm
+2025-10-29 15:46:56,613 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815344254238162062_MR.dcm
+2025-10-29 15:46:56,616 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815344271220762067_MR.dcm
+2025-10-29 15:46:56,617 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.201910181534437600862077_MR.dcm
+2025-10-29 15:46:56,618 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815344289849162072_MR.dcm
+2025-10-29 15:46:56,619 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815344215910962052_MR.dcm
+2025-10-29 15:46:56,619 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815344326965762080_MR.dcm
+2025-10-29 15:46:56,620 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815332196415062010_MR.dcm
+2025-10-29 15:46:56,621 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815332247506962030_MR.dcm
+2025-10-29 15:46:56,622 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815332196492562011_MR.dcm
+2025-10-29 15:46:56,623 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815332196678362012_MR.dcm
+2025-10-29 15:46:56,623 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815332197191362014_MR.dcm
+2025-10-29 15:46:56,624 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815344181524762042_MR.dcm
+2025-10-29 15:46:56,625 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815332197001062013_MR.dcm
+2025-10-29 15:46:56,626 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815332229332062027_MR.dcm
+2025-10-29 15:46:56,627 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815344161451162037_MR.dcm
+2025-10-29 15:46:56,628 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815332196377762009_MR.dcm
+2025-10-29 15:46:56,628 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.201910181533229785762022_MR.dcm
+2025-10-29 15:46:56,630 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815332198997762018_MR.dcm
+2025-10-29 15:47:07,368 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00020.dcm
+2025-10-29 15:47:07,373 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00007.dcm
+2025-10-29 15:47:07,375 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00004.dcm
+2025-10-29 15:47:07,376 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00006.dcm
+2025-10-29 15:47:07,377 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00024.dcm
+2025-10-29 15:47:07,379 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00021.dcm
+2025-10-29 15:47:07,381 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00014.dcm
+2025-10-29 15:47:07,382 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00010.dcm
+2025-10-29 15:47:07,383 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00013.dcm
+2025-10-29 15:47:07,384 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00008.dcm
+2025-10-29 15:47:07,385 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00009.dcm
+2025-10-29 15:47:07,386 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00002.dcm
+2025-10-29 15:47:07,387 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00022.dcm
+2025-10-29 15:47:07,388 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00019.dcm
+2025-10-29 15:47:07,390 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00017.dcm
+2025-10-29 15:47:07,391 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00016.dcm
+2025-10-29 15:47:07,392 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00023.dcm
+2025-10-29 15:47:07,393 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00012.dcm
+2025-10-29 15:47:07,394 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00011.dcm
+2025-10-29 15:47:07,395 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00015.dcm
+2025-10-29 15:47:07,396 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00003.dcm
+2025-10-29 15:47:07,397 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00001.dcm
+2025-10-29 15:47:07,398 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00005.dcm
+2025-10-29 15:47:07,399 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00018.dcm
+2025-10-29 15:52:04,626 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815344235355462057_MR.dcm
+2025-10-29 15:52:04,630 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815344198564962047_MR.dcm
+2025-10-29 15:52:04,633 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815332197230462015_MR.dcm
+2025-10-29 15:52:04,637 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815344254238162062_MR.dcm
+2025-10-29 15:52:04,638 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815344271220762067_MR.dcm
+2025-10-29 15:52:04,639 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.201910181534437600862077_MR.dcm
+2025-10-29 15:52:04,640 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815344289849162072_MR.dcm
+2025-10-29 15:52:04,641 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815344215910962052_MR.dcm
+2025-10-29 15:52:04,642 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815344326965762080_MR.dcm
+2025-10-29 15:52:04,642 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815332196415062010_MR.dcm
+2025-10-29 15:52:04,643 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815332247506962030_MR.dcm
+2025-10-29 15:52:04,644 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815332196492562011_MR.dcm
+2025-10-29 15:52:04,645 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815332196678362012_MR.dcm
+2025-10-29 15:52:04,646 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815332197191362014_MR.dcm
+2025-10-29 15:52:04,646 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815344181524762042_MR.dcm
+2025-10-29 15:52:04,647 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815332197001062013_MR.dcm
+2025-10-29 15:52:04,648 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815332229332062027_MR.dcm
+2025-10-29 15:52:04,649 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815344161451162037_MR.dcm
+2025-10-29 15:52:04,650 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815332196377762009_MR.dcm
+2025-10-29 15:52:04,651 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.201910181533229785762022_MR.dcm
+2025-10-29 15:52:04,651 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (27)/flair/1.3.12.2.1107.5.2.18.42451.2019101815332198997762018_MR.dcm
+2025-10-29 15:56:12,781 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00020.dcm
+2025-10-29 15:56:12,787 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00007.dcm
+2025-10-29 15:56:12,790 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00004.dcm
+2025-10-29 15:56:12,791 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00006.dcm
+2025-10-29 15:56:12,792 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00024.dcm
+2025-10-29 15:56:12,793 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00021.dcm
+2025-10-29 15:56:12,794 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00014.dcm
+2025-10-29 15:56:12,796 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00010.dcm
+2025-10-29 15:56:12,797 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00013.dcm
+2025-10-29 15:56:12,798 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00008.dcm
+2025-10-29 15:56:12,799 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00009.dcm
+2025-10-29 15:56:12,800 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00002.dcm
+2025-10-29 15:56:12,801 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00022.dcm
+2025-10-29 15:56:12,802 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00019.dcm
+2025-10-29 15:56:12,803 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00017.dcm
+2025-10-29 15:56:12,804 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00016.dcm
+2025-10-29 15:56:12,805 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00023.dcm
+2025-10-29 15:56:12,806 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00012.dcm
+2025-10-29 15:56:12,807 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00011.dcm
+2025-10-29 15:56:12,808 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00015.dcm
+2025-10-29 15:56:12,809 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00003.dcm
+2025-10-29 15:56:12,810 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00001.dcm
+2025-10-29 15:56:12,811 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00005.dcm
+2025-10-29 15:56:12,812 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/500 MR/HGG/hgg (24)/flair/IMG-0006-00018.dcm
+2025-10-29 15:56:29,535 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341710546233196_MR.dcm
+2025-10-29 15:56:29,539 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341775486333211_MR.dcm
+2025-10-29 15:56:29,541 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352866931233236_MR.dcm
+2025-10-29 15:56:29,543 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341666461533186_MR.dcm
+2025-10-29 15:56:29,544 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341644779633181_MR.dcm
+2025-10-29 15:56:29,546 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352976441533261_MR.dcm
+2025-10-29 15:56:29,547 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341688430633191_MR.dcm
+2025-10-29 15:56:29,548 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341753545933206_MR.dcm
+2025-10-29 15:56:29,549 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352954399933256_MR.dcm
+2025-10-29 15:56:29,550 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.202111151235281237733221_MR.dcm
+2025-10-29 15:56:29,551 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352932328233251_MR.dcm
+2025-10-29 15:56:29,552 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341733208833201_MR.dcm
+2025-10-29 15:56:29,553 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352822922433226_MR.dcm
+2025-10-29 15:56:29,554 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352888819833241_MR.dcm
+2025-10-29 15:56:29,555 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.202111151234161027033171_MR.dcm
+2025-10-29 15:56:29,556 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341579279633165_MR.dcm
+2025-10-29 15:56:29,557 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352845071133231_MR.dcm
+2025-10-29 15:56:29,557 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512341623308733176_MR.dcm
+2025-10-29 15:56:29,558 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352779416033216_MR.dcm
+2025-10-29 15:56:29,559 - segmed_pro - DEBUG - Reading DICOM file: /home/enesgazi/Downloads/segpro-med/cvm_48_t1/1.3.12.2.1107.5.2.36.40820.2021111512352911077633246_MR.dcm
