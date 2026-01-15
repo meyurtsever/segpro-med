@@ -16,6 +16,10 @@ import threading
 ENABLE_AUTH = True  # Set to False to disable authentication and crowdsourcing features
 # =======================================
 
+# ===== BEHAVIORAL ANALYTICS CONFIGURATION =====
+ENABLE_BEHAVIORAL_TRACKING = True  # Set to False to disable behavioral analytics tracking
+# ==============================================
+
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -55,6 +59,33 @@ class DebugFilter(logging.Filter):
                 "pydeface",  # For pydeface library messages
                 "Deidentifying",  # For deidentification progress messages
                 "Face detection",  # For face detection messages
+                # Persistent annotation storage debugging
+                "Preserved",  # For "Preserved X annotations from other slices/views"
+                "Total annotations to save",  # For annotation save summary
+                "Successfully saved",  # For successful save confirmation
+                "annotations from persistent storage",  # For annotation loading
+                "Saving current annotations before loading",  # For auto-save before study switch
+                "Loaded existing data",  # For existing annotation file loading
+                "No existing annotation data",  # For when no file exists
+                "Current slice indices",  # For slice tracking
+                "[ImagePlotToolHandlers]",  # For ImagePlotToolHandlers messages
+                "[ImageViewerHandlers]",  # For ImageViewerHandlers messages
+                "Processing",  # For "Processing X slices from user_annotations"
+                "  Slice",  # For slice annotation details
+                "Tool selected",  # For tool selection tracking
+                "Annotation duration",  # For annotation duration tracking
+                "args:",
+                "kwargs:",
+                "Received image_data type:",
+                "image_data:",
+                "Found tool_selected",
+                "Tool selected",
+                "Annotation tool interaction",
+                " Started drawing",
+                "Tool usage data",
+                "Saved behavioral ",
+                "Detected AI",
+                "Tool selection",
             ]
             message = record.getMessage()
             return any(keyword in message for keyword in allowed_keywords)
@@ -115,12 +146,24 @@ from ui.medgemma_handlers import MedGemmaHandlers
 from ui.patient_retrieval_handlers import PatientRetrievalHandlers
 from utils.voice_input import transcribe_voice_input
 
+# Behavioral analytics tracking
+from analytics.tracking_integration import (
+    init_tracking, end_tracking, configure_tracking
+)
+
+# Configure behavioral tracking based on settings
+configure_tracking(enabled=ENABLE_BEHAVIORAL_TRACKING)
+
 # Crowdsourcing imports (only imported if authentication is enabled)
 if ENABLE_AUTH:
     from ui.login_tab import create_login_interface
     from ui.management_tab import create_management_tab
     from ui.contribute_tab import create_contribute_tab
+    from ui.experts_tab import create_experts_tab
 
+
+# Global app instance for cross-module access (used by behavioral tracking)
+app_instance = None
 
 class SegMedPro:
     """Main application class for SegMed-Pro"""
@@ -129,6 +172,13 @@ class SegMedPro:
         """Initialize the application"""
         # Initialize application state
         self.state = AppState()
+        
+        # Track last annotation creation time to filter automatic tool switches
+        self.state.last_annotation_timestamp = 0
+        
+        # Set global app instance for cross-module access
+        global app_instance
+        app_instance = self
         
         # Crowdsourcing state
         self.current_user = None
@@ -357,6 +407,10 @@ class SegMedPro:
                     # Expert-only Contribute tab
                     with gr.Tab("Contribute", visible=False, id=5) as contribute_tab:
                         contribute_components = create_contribute_tab()
+                    
+                    # Admin-only Expert Profiles tab (for viewing behavioral analytics)
+                    experts_components = create_experts_tab()
+                    experts_tab = experts_components['tab']
                 
                 # Hidden state variable to track active tab (for programmatic tab switching)
                 active_tab_state = gr.State(value=0)  # Default to Viewer tab (id=0)
@@ -376,12 +430,27 @@ class SegMedPro:
                 if user_data:
                     self.current_user = user_data
                     
+                    # Set current user for annotation managers (persistent storage)
+                    logger.info(f"Setting current user '{username}' for annotation managers")
+                    self.editor_image_handlers.set_current_user(username)
+                    self.viewer_image_handlers.set_current_user(username)
+                    
+                    # Initialize behavioral analytics tracking for this user session
+                    try:
+                        init_tracking(user_id=username)
+                        logger.info(f"Behavioral tracking session started for user '{username}'")
+                    except Exception as e:
+                        logger.debug(f"Behavioral tracking not started: {e}")
+                    
                     # Show appropriate tabs based on role
                     management_visible = user_data['role'] == 'admin'
                     contribute_visible = user_data['role'] == 'expert'
                     
                     # Create styled user display HTML
                     user_display = f"<div style='text-align: right; padding: 8px 0;'><span style='color: orange; font-weight: bold; font-size: 14px;'>Logged in as: {username} ({user_data['role']})</span></div>"
+                    
+                    # Experts tab is also admin-only
+                    experts_visible = user_data['role'] == 'admin'
                     
                     return (
                         True,  # is_logged_in
@@ -391,6 +460,7 @@ class SegMedPro:
                         user_display,  # Update user info
                         gr.update(visible=management_visible),  # Management tab
                         gr.update(visible=contribute_visible),  # Contribute tab
+                        gr.update(visible=experts_visible),  # Experts tab (admin only)
                         user_data['user_id'],  # Update contribute tab user state
                         user_data['user_id'],  # Update editor modal user_id_state
                         user_data['user_id'],  # Update segmentation modal user_id_state
@@ -407,6 +477,7 @@ class SegMedPro:
                         "",     # user_info
                         gr.update(visible=False),  # Management tab
                         gr.update(visible=False),  # Contribute tab
+                        gr.update(visible=False),  # Experts tab
                         "",     # contribute user state
                         "guest",  # Keep editor modal at guest
                         "guest",  # Keep segmentation modal at guest
@@ -418,6 +489,14 @@ class SegMedPro:
             # Logout handler
             def handle_logout():
                 """Handle logout and return to login screen"""
+                # End behavioral analytics tracking session
+                try:
+                    profile = end_tracking()
+                    if profile:
+                        logger.info(f"Behavioral tracking session ended. Profile: {profile.get('ai_dependency_level', 'unknown')}")
+                except Exception as e:
+                    logger.debug(f"Behavioral tracking not ended: {e}")
+                
                 self.current_user = None
                 return (
                     False,  # is_logged_in
@@ -427,6 +506,7 @@ class SegMedPro:
                     "",     # Clear user info
                     gr.update(visible=False),  # Hide management tab
                     gr.update(visible=False),  # Hide contribute tab
+                    gr.update(visible=False),  # Hide experts tab
                     "",     # Clear contribute user state
                     "guest",  # Reset editor modal to guest
                     "guest",  # Reset segmentation modal to guest
@@ -449,6 +529,7 @@ class SegMedPro:
                     user_info,
                     management_tab,
                     contribute_tab,
+                    experts_tab,
                     contribute_components['current_user_state'],
                     editor_components['modal_system']['user_id_state'],
                     editor_components['segmentation_modal']['system']['user_id_state'],
@@ -482,6 +563,7 @@ class SegMedPro:
                     user_info,
                     management_tab,
                     contribute_tab,
+                    experts_tab,
                     contribute_components['current_user_state'],
                     editor_components['modal_system']['user_id_state'],
                     editor_components['segmentation_modal']['system']['user_id_state'],
@@ -514,6 +596,7 @@ class SegMedPro:
                     user_info,
                     management_tab,
                     contribute_tab,
+                    experts_tab,
                     contribute_components['current_user_state'],
                     editor_components['modal_system']['user_id_state'],
                     editor_components['segmentation_modal']['system']['user_id_state'],
@@ -700,6 +783,11 @@ class SegMedPro:
                 slice_slider, slice_text, crosshair_info, error_display,
                 window_level, window_width
             ]
+        ).then(
+            # After data loads successfully, load persistent annotations
+            fn=lambda: self.editor_image_handlers.load_persistent_annotations() if self.editor_image_handlers.current_user_id else None,
+            inputs=[],
+            outputs=[]
         )
         
         reset_dir_btn.click(
@@ -751,6 +839,11 @@ class SegMedPro:
                 slice_slider, slice_text, crosshair_info, error_display,
                 window_level, window_width
             ]
+        ).then(
+            # After data loads successfully, load persistent annotations
+            fn=lambda: self.editor_image_handlers.load_persistent_annotations() if self.editor_image_handlers.current_user_id else None,
+            inputs=[],
+            outputs=[]
         )
         debug_btn.click(
             fn=self.data_handlers.debug_selected_file,
@@ -851,6 +944,41 @@ class SegMedPro:
             fn=self.viewer_image_handlers.on_annotation_change_viewer,
             inputs=[image_display],
             outputs=[]  # No outputs to avoid circular dependency
+        )
+        
+        # Handle tool selection for annotation duration tracking (VIEWER-SPECIFIC)
+        def handle_viewer_tool_selected(evt: gr.EventData):
+            """Track when user selects annotation tools in viewer tab"""
+            import datetime
+            # Extract tool name and timestamp from event data
+            tool = evt._data.get('tool', 'Unknown')
+            timestamp = evt._data.get('timestamp', 0)
+            
+            # Store in state
+            self.state.last_tool_timestamp = timestamp
+            self.state.last_tool_selected = tool
+            
+            # Format timestamp for logging
+            time_str = datetime.datetime.fromtimestamp(timestamp / 1000).strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+            logger.info(f"🖊️ Tool selected (viewer): {tool} at {time_str}")
+            
+            # Track tool selection for analytics (but skip automatic tool switches after annotation)
+            # If tool selection happens within 500ms of annotation creation, it's likely automatic
+            time_since_annotation = timestamp - self.state.last_annotation_timestamp
+            is_auto_switch = time_since_annotation < 500  # 500ms threshold
+            
+            if tool and tool not in ["pan", "eraser", "Unknown"] and not is_auto_switch:
+                try:
+                    from analytics.tracking_integration import track_tool_usage
+                    track_tool_usage(tool_type=tool)
+                    logger.info(f"✅ Tracked tool usage: {tool}")
+                except Exception as e:
+                    logger.debug(f"Tool usage tracking skipped: {e}")
+            elif is_auto_switch:
+                logger.debug(f"⏭️ Skipped tracking {tool} - automatic tool switch after annotation (within {time_since_annotation}ms)")
+        
+        image_display.tool_selected(
+            fn=handle_viewer_tool_selected
         )
         
         # Handle image removal (X button) - Clear image_annotator on viewer tab (VIEWER-SPECIFIC)
@@ -1234,7 +1362,7 @@ class SegMedPro:
             # Connect each sample button to update directory, close modal, and load data
             if 'cvm' in sample_buttons:
                 sample_buttons['cvm'].click(
-                    fn=lambda: ("/home/enes/segpro-med/cvm_48_t1", gr.update(visible=False), gr.update(visible=False)),
+                    fn=lambda: (r"C:\Users\Yurtsever\Downloads\segpro-med\cvm_48_t1", gr.update(visible=False), gr.update(visible=False)),
                     outputs=[dir_input, modal_system['backdrop'], modal_system['welcome_modal']]
                 ).then(
                     fn=lambda file_obj, dir_input_val: self.data_handlers.load_data_for_annotator(file_obj, dir_input_val, False),
@@ -1248,7 +1376,7 @@ class SegMedPro:
             
             if 'normal' in sample_buttons:
                 sample_buttons['normal'].click(
-                    fn=lambda: ("/home/enes/segpro-med/normal_52", gr.update(visible=False), gr.update(visible=False)),
+                    fn=lambda: (r"C:\Users\Yurtsever\Downloads\segpro-med\MG\836163459", gr.update(visible=False), gr.update(visible=False)),
                     outputs=[dir_input, modal_system['backdrop'], modal_system['welcome_modal']]
                 ).then(
                     fn=lambda file_obj, dir_input_val: self.data_handlers.load_data_for_annotator(file_obj, dir_input_val, False),
@@ -1262,7 +1390,7 @@ class SegMedPro:
             
             if 'hgg' in sample_buttons:
                 sample_buttons['hgg'].click(
-                    fn=lambda: ("/home/enes/segpro-med/hgg_17", gr.update(visible=False), gr.update(visible=False)),
+                    fn=lambda: (r"C:\Users\Yurtsever\Downloads\segpro-med\abdomen\20020", gr.update(visible=False), gr.update(visible=False)),
                     outputs=[dir_input, modal_system['backdrop'], modal_system['welcome_modal']]
                 ).then(
                     fn=lambda file_obj, dir_input_val: self.data_handlers.load_data_for_annotator(file_obj, dir_input_val, False),
@@ -1835,6 +1963,26 @@ class SegMedPro:
             outputs=[current_labels_dataset, current_labels_placeholder]
         )
         
+        # Handle tool selection for annotation duration tracking (EDITOR-SPECIFIC)
+        def handle_editor_tool_selected(evt: gr.EventData):
+            """Set timestamp when user clicks any drawing tool and extract tool name"""
+            import datetime
+            # Extract tool name and timestamp from event data
+            tool = evt._data.get('tool', 'Unknown')
+            timestamp = evt._data.get('timestamp', 0)
+            
+            # Store in state
+            self.state.last_tool_timestamp = timestamp
+            self.state.last_tool_selected = tool
+            
+            # Format timestamp for logging
+            time_str = datetime.datetime.fromtimestamp(timestamp / 1000).strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+            logger.info(f"🖊️ Tool selected: {tool} at {time_str}")
+        
+        image_display.tool_selected(
+            fn=handle_editor_tool_selected
+        )
+        
         def clear_all_prompts_and_reset_layout():
             """Clear all prompts, coordinates, annotation overlays, and reset layout (EDITOR-SPECIFIC)"""
             self.editor_medsam2_handlers.clear_coordinates()
@@ -2079,6 +2227,17 @@ class SegMedPro:
                     from ui.editor_tab import save_vlm_analysis_to_file
                     save_result = save_vlm_analysis_to_file(data_directory, current_slice_idx, updated_analysis)
                     logger.info(f"VLM analysis saved to file: {save_result}")
+                    
+                    # Track voice input for behavioral analytics
+                    if ENABLE_BEHAVIORAL_TRACKING:
+                        try:
+                            from analytics import track_voice_input
+                            track_voice_input(
+                                prompt_text=clean_voice_text,
+                                slice_idx=current_slice_idx
+                            )
+                        except Exception as track_e:
+                            logger.debug(f"Behavioral tracking skipped: {track_e}")
                 
                 logger.info(f"Voice analysis appended to VLM analysis. Length: {len(clean_voice_text)} chars")
                 return updated_analysis
@@ -2264,6 +2423,19 @@ class SegMedPro:
                     if clean_label:
                         clean_labels.append(clean_label)
                 
+                # Track label acceptance for behavioral analytics
+                if ENABLE_BEHAVIORAL_TRACKING:
+                    try:
+                        from analytics import track_label_accepted
+                        for label in clean_labels:
+                            track_label_accepted(
+                                label=label,
+                                source="vlm",
+                                slice_idx=current_slice_idx
+                            )
+                    except Exception as track_e:
+                        logger.debug(f"Behavioral tracking skipped: {track_e}")
+                
                 # APPEND to labels.txt file (new save function handles appending)
                 save_result = save_labels_to_file(data_directory, current_slice_idx, clean_labels)
                 
@@ -2408,24 +2580,37 @@ class SegMedPro:
             return ""
         
         # Connect dataset loading from contribute tab to editor tab
-        def load_dataset_from_contribute(dataset_path, crowdsourcing_mode):
+        def load_dataset_from_contribute(dataset_path, crowdsourcing_mode, task_info):
             """Load dataset from contribute tab into editor tab"""
-            logger.info(f"DEBUG: load_dataset_from_contribute called with dataset_path: {dataset_path}, crowdsourcing_mode: {crowdsourcing_mode}")
+            logger.info(f"DEBUG: load_dataset_from_contribute called with dataset_path: {dataset_path}, crowdsourcing_mode: {crowdsourcing_mode}, task_info: {task_info}")
             
             if not dataset_path or not crowdsourcing_mode:
                 logger.info(f"DEBUG: load_dataset_from_contribute early return - no dataset selected")
                 return "No dataset selected", gr.update(), None, None, None, None, None, None, None
             
             try:
+                # Track assignment loaded for behavioral analytics
+                if task_info:
+                    try:
+                        task_parts = task_info.split('|')
+                        if len(task_parts) >= 2:
+                            campaign_id = task_parts[0].strip()
+                            patient_id = task_parts[1].strip()
+                            from analytics.tracking_integration import track_crowdsourcing_load
+                            track_crowdsourcing_load(campaign_id=campaign_id, patient_id=patient_id)
+                            logger.info(f"Tracked assignment loaded from table: campaign={campaign_id}, patient={patient_id}")
+                    except Exception as e:
+                        logger.debug(f"Assignment tracking skipped: {e}")
+                
                 # Use the existing data loading handler that returns annotated format
                 # Use load_data_for_annotator instead of load_data to get the proper format for image_annotator
                 logger.info(f"DEBUG: Calling self.data_handlers.load_data_for_annotator with dataset_path: {dataset_path}")
                 result = self.data_handlers.load_data_for_annotator(None, dataset_path, False)
                 logger.info(f"DEBUG: load_data_for_annotator returned type: {type(result)}, length: {len(result) if result else 'None'}")
                 
-                # result is a tuple: (annotated_value, dropdown, metadata, slider, slice_info, crosshair_text, status_message, window_level, window_width)
-                if result and len(result) >= 9:
-                    annotated_value, dropdown, metadata, slider, slice_info, crosshair_text, status_message, window_level, window_width = result
+                # result is a tuple: (annotated_value, dropdown, metadata, slider, slice_info, crosshair_text, status_message, window_level, window_width, view_selector, prev_btn, next_btn)
+                if result and len(result) >= 12:
+                    annotated_value, dropdown, metadata, slider, slice_info, crosshair_text, status_message, window_level, window_width, view_selector, prev_btn, next_btn = result
                     logger.info(f"DEBUG: Extracted annotated_value type: {type(annotated_value)}")
                     if isinstance(annotated_value, dict):
                         logger.info(f"DEBUG: annotated_value keys: {list(annotated_value.keys())}")
@@ -2456,14 +2641,14 @@ class SegMedPro:
                         return (
                             status_message if isinstance(status_message, str) else "Failed to load dataset",
                             gr.update(visible=False),
-                            None, None, None, None, None, None, None
+                            gr.update(), gr.update(), gr.update(), gr.update(), gr.update(), gr.update(), gr.update()
                         )
                 else:
                     logger.info(f"DEBUG: load_dataset_from_contribute invalid result length or None")
                     return (
                         "Failed to load dataset",
                         gr.update(visible=False),
-                        None, None, None, None, None, None, None
+                        gr.update(), gr.update(), gr.update(), gr.update(), gr.update(), gr.update(), gr.update()
                     )
                     
             except Exception as e:
@@ -2471,7 +2656,7 @@ class SegMedPro:
                 return (
                     f"Error loading dataset: {str(e)}",
                     gr.update(visible=False),
-                    None, None, None, None, None, None, None
+                    gr.update(), gr.update(), gr.update(), gr.update(), gr.update(), gr.update(), gr.update()
                 )
         
         # Wrapper function to handle submission and clearing overlays
@@ -2540,25 +2725,125 @@ class SegMedPro:
                         annotations = []
                         labels = []
                         
-                        logger.info(f"Processing image_annotator_data type: {type(image_annotator_data)}")
-                        
                         # Get current slice information from the state first
                         current_slice = 0  # Default slice
                         if hasattr(self.state, 'current_slice_idx'):
                             current_slice = self.state.current_slice_idx
                         
-                        # First, ensure current slice annotations are saved before processing
+                        # First, ensure current slice annotations are saved to persistent storage
                         if hasattr(self, 'editor_image_handlers') and image_annotator_data:
-                            logger.info(f"Saving current slice annotations before submission for slice {current_slice}")
                             self.editor_image_handlers.save_user_annotations(image_annotator_data, current_slice)
                         
                         # Collect annotations from all slices, not just current
                         all_slice_annotations = []
                         all_slice_labels = []
                         
-                        # Check if we have saved annotations for multiple slices
-                        # Look in the image handlers' user_annotations storage where slice navigation saves them
-                        if hasattr(self, 'editor_image_handlers') and hasattr(self.editor_image_handlers, 'user_annotations') and self.editor_image_handlers.user_annotations:
+                        # LOAD ANNOTATIONS FROM PERSISTENT STORAGE (db/annotation_records)
+                        # This is where annotations are actually saved when using AnnotationManager
+                        if hasattr(self, 'editor_image_handlers') and self.state.current_directory:
+                            from utils.annotation_manager import AnnotationManager
+                            annotation_manager = AnnotationManager()
+                            
+                            # Load persistent annotations for current user and study
+                            persistent_data = annotation_manager.load_annotations(
+                                user_id=user_id,
+                                study_path=self.state.current_directory
+                            )
+                            
+                            if persistent_data and 'slice_annotations' in persistent_data:
+                                logger.info(f"Loaded {len(persistent_data['slice_annotations'])} annotations from persistent storage")
+                                
+                                # Process persistent annotations
+                                for ann in persistent_data['slice_annotations']:
+                                    slice_idx = ann.get('slice_idx', 0)
+                                    view_type = ann.get('view_type', 'axial')
+                                    ann_data = ann.get('original_data', ann.get('data', {}))
+                                    
+                                    # Create annotation info
+                                    ann_info = {
+                                        'annotation_id': ann.get('annotation_id', f"slice_{slice_idx}_ann_{len(all_slice_annotations)}"),
+                                        'slice_index': slice_idx,
+                                        'view_type': view_type,
+                                        'type': ann_data.get('type', 'box'),
+                                        'label': ann_data.get('label', ''),
+                                        'coordinates': [],
+                                        'bbox': [],
+                                        'area': 0,
+                                        'points': [],
+                                        'color': ann_data.get('color', None)
+                                    }
+                                    
+                                    # Extract coordinates based on shape type
+                                    shape_type = ann_info['type']
+                                    if shape_type == 'polygon' and 'points' in ann_data:
+                                        points = ann_data['points']
+                                        if isinstance(points, list):
+                                            coordinates = []
+                                            for point in points:
+                                                if isinstance(point, dict) and 'x' in point and 'y' in point:
+                                                    coordinates.append([point['x'], point['y']])
+                                            ann_info['coordinates'] = coordinates
+                                            ann_info['points'] = coordinates
+                                            
+                                            if coordinates:
+                                                x_coords = [p[0] for p in coordinates]
+                                                y_coords = [p[1] for p in coordinates]
+                                                ann_info['bbox'] = [min(x_coords), min(y_coords), max(x_coords), max(y_coords)]
+                                                
+                                                # Calculate area using shoelace formula
+                                                area = 0
+                                                n = len(coordinates)
+                                                for j in range(n):
+                                                    k = (j + 1) % n
+                                                    area += coordinates[j][0] * coordinates[k][1]
+                                                    area -= coordinates[k][0] * coordinates[j][1]
+                                                ann_info['area'] = abs(area) / 2
+                                    
+                                    elif shape_type == 'freehand' and 'points' in ann_data:
+                                        points = ann_data['points']
+                                        if isinstance(points, list):
+                                            coordinates = []
+                                            for point in points:
+                                                if isinstance(point, dict) and 'x' in point and 'y' in point:
+                                                    coordinates.append([point['x'], point['y']])
+                                            ann_info['coordinates'] = coordinates
+                                            ann_info['points'] = coordinates
+                                            
+                                            if coordinates:
+                                                x_coords = [p[0] for p in coordinates]
+                                                y_coords = [p[1] for p in coordinates]
+                                                ann_info['bbox'] = [min(x_coords), min(y_coords), max(x_coords), max(y_coords)]
+                                                ann_info['area'] = len(coordinates)
+                                    
+                                    elif 'xmin' in ann_data and 'ymin' in ann_data and 'xmax' in ann_data and 'ymax' in ann_data:
+                                        xmin, ymin, xmax, ymax = ann_data['xmin'], ann_data['ymin'], ann_data['xmax'], ann_data['ymax']
+                                        ann_info['bbox'] = [xmin, ymin, xmax, ymax]
+                                        ann_info['coordinates'] = [[xmin, ymin], [xmax, ymin], [xmax, ymax], [xmin, ymax]]
+                                        ann_info['area'] = (xmax - xmin) * (ymax - ymin)
+                                    
+                                    elif 'x' in ann_data and 'y' in ann_data and 'width' in ann_data and 'height' in ann_data:
+                                        x, y, width, height = ann_data['x'], ann_data['y'], ann_data['width'], ann_data['height']
+                                        ann_info['bbox'] = [x, y, x + width, y + height]
+                                        ann_info['coordinates'] = [[x, y], [x + width, y], [x + width, y + height], [x, y + height]]
+                                        ann_info['area'] = width * height
+                                    
+                                    all_slice_annotations.append(ann_info)
+                                    
+                                    # Collect labels
+                                    if ann_info['label']:
+                                        label_with_slice = {
+                                            'label': ann_info['label'],
+                                            'slice_index': slice_idx,
+                                            'view_type': view_type,
+                                            'color': ann_info.get('color', None)
+                                        }
+                                        if label_with_slice not in all_slice_labels:
+                                            all_slice_labels.append(label_with_slice)
+                            else:
+                                logger.info("No annotations found in persistent storage")
+                        
+                        # Fallback: Check in-memory storage if persistent storage is empty
+                        if not all_slice_annotations and hasattr(self, 'editor_image_handlers') and hasattr(self.editor_image_handlers, 'user_annotations') and self.editor_image_handlers.user_annotations:
                             logger.info(f"Found user_annotations storage with {len(self.editor_image_handlers.user_annotations)} slices")
                             logger.info(f"Available slice annotations: {list(self.editor_image_handlers.user_annotations.keys())}")
                             # Process all slices with user annotations
@@ -2796,8 +3081,6 @@ class SegMedPro:
                             'submission_time': None  # Will be set by campaign manager
                         }
                         
-                        logger.info(f"Submitting annotation with {len(annotations)} annotations across multiple slices and {len(labels)} unique labels")
-                        
                     except Exception as e:
                         logger.warning(f"Error processing annotation data: {e}")
                         annotation_data = {
@@ -2812,6 +3095,15 @@ class SegMedPro:
                 
                 if success:
                     annotation_count = len(annotation_data.get('annotations', [])) if annotation_data else 0
+                    
+                    # Track assignment submission and completion for behavioral analytics
+                    try:
+                        from analytics.tracking_integration import track_crowdsourcing_submit, track_crowdsourcing_complete
+                        track_crowdsourcing_submit(campaign_id=campaign_id, patient_id=patient_id, annotation_count=annotation_count)
+                        track_crowdsourcing_complete(campaign_id=campaign_id, patient_id=patient_id)
+                        logger.info(f"Tracked assignment submission and completion: campaign={campaign_id}, patient={patient_id}, annotations={annotation_count}")
+                    except Exception as e:
+                        logger.debug(f"Assignment tracking skipped: {e}")
                     
                     # Get remaining assignments for this user
                     remaining_tasks = crowdsourcing_manager.get_remaining_assignments_for_user(user_id)
@@ -3011,6 +3303,14 @@ class SegMedPro:
                 # Update current directory in state
                 self.state.current_directory = modality_path
                 
+                # Track assignment loaded for behavioral analytics
+                try:
+                    from analytics.tracking_integration import track_crowdsourcing_load
+                    track_crowdsourcing_load(campaign_id=campaign_id, patient_id=patient_id)
+                    logger.info(f"Tracked assignment loaded: campaign={campaign_id}, patient={patient_id}")
+                except Exception as e:
+                    logger.debug(f"Assignment tracking skipped: {e}")
+                
                 # Create task_selection for the welcome guide - ensure format matches dropdown choices
                 # The dropdown choices use the exact format from the database, so we need to match that
                 task_selection = f"{campaign_id}|{patient_id}|{dataset_path}"
@@ -3022,7 +3322,7 @@ class SegMedPro:
                     # Call load_data_for_annotator directly and get the properly formatted result
                     result = self.data_handlers.load_data_for_annotator(None, modality_path, False)
                     
-                    if not result or len(result) < 9:
+                    if not result or len(result) < 12:
                         logger.error(f"Failed to load assignment: Invalid result")
                         return [
                             gr.update(),  # tabs (no change)
@@ -3042,7 +3342,8 @@ class SegMedPro:
                         ]
                     
                     # Extract the data (annotated_value is already in correct format)
-                    annotated_value, dropdown, metadata, slider, slice_info, crosshair_text, status_message, window_level, window_width = result
+                    # result is a tuple: (annotated_value, dropdown, metadata, slider, slice_info, crosshair_text, status_message, window_level, window_width, view_selector, prev_btn, next_btn)
+                    annotated_value, dropdown, metadata, slider, slice_info, crosshair_text, status_message, window_level, window_width, view_selector, prev_btn, next_btn = result
                     
                     logger.info(f"DEBUG: Loaded annotated_value type: {type(annotated_value)}")
                     if isinstance(annotated_value, dict):
@@ -3102,8 +3403,8 @@ class SegMedPro:
                         gr.update(visible=False),  # hide dicom_viewer 
                         annotated_value,  # image_annotator - direct value, no gr.update()
                         slider,  # slice_slider - use loaded slider
-                        gr.update(visible=True),  # prev_slice_btn
-                        gr.update(visible=True),  # next_slice_btn
+                        prev_btn,  # prev_slice_btn - use loaded button visibility
+                        next_btn,  # next_slice_btn - use loaded button visibility
                         metadata,  # metadata_display - use loaded metadata
                         gr.update(visible=True),  # submit_btn
                         gr.update(value=ready_status_html, visible=True),  # submission_status - SHOW with ready message
@@ -3159,15 +3460,15 @@ class SegMedPro:
             
             contribute_components['selected_dataset_path'].change(
                 fn=load_dataset_from_contribute,
-                inputs=[contribute_components['selected_dataset_path'], contribute_components['crowdsourcing_mode']],
+                inputs=[contribute_components['selected_dataset_path'], contribute_components['crowdsourcing_mode'], contribute_components['selected_task_info']],
                 outputs=[
                     contribute_components['load_status'],           # Status message
                     editor_components['crowdsourcing']['accordion'], # Show crowdsourcing controls
-                    editor_components['visualization'][3],          # image_display
+                    editor_components['visualization'][4],          # image_display
                     editor_components['visualization'][1],          # metadata_display  
-                    editor_components['visualization'][7],          # slice_slider
-                    editor_components['visualization'][9],          # slice_text
-                    editor_components['visualization'][10],         # crosshair_info
+                    editor_components['visualization'][8],          # slice_slider
+                    editor_components['visualization'][10],         # slice_text
+                    editor_components['visualization'][11],         # crosshair_info
                     # Window level and width are in data_loading section
                     editor_components['data_loading'][8],           # window_level
                     editor_components['data_loading'][9]            # window_width
@@ -3190,8 +3491,8 @@ class SegMedPro:
             # Connect crowdsourcing controls in editor tab
             editor_components['crowdsourcing']['submit_btn'].click(
                 fn=handle_submit_and_clear,
-                inputs=[contribute_components['selected_task_info'], contribute_components['current_user_state'], editor_components['visualization'][3]],  # image_display is at index 3 in visualization
-                outputs=[editor_components['crowdsourcing']['status'], editor_components['visualization'][3]]  # Also update image_annotator to clear overlays
+                inputs=[contribute_components['selected_task_info'], contribute_components['current_user_state'], editor_components['visualization'][4]],  # image_display is at index 4 in visualization
+                outputs=[editor_components['crowdsourcing']['status'], editor_components['visualization'][4]]  # Also update image_annotator to clear overlays
             ).then(
                 # Update assignment progress after submission and control button visibility - hide submit button
                 fn=lambda user_id: get_remaining_assignments_info(user_id, hide_submit_btn=True),
@@ -3222,8 +3523,8 @@ class SegMedPro:
                     # Load the dataset into editor
                     try:
                         result = self.data_handlers.load_data_for_annotator(None, dataset_path, False)
-                        if result and len(result) >= 9:
-                            annotated_value, dropdown, metadata, slider, slice_info, crosshair_text, status_message, window_level, window_width = result
+                        if result and len(result) >= 12:
+                            annotated_value, dropdown, metadata, slider, slice_info, crosshair_text, status_message, window_level, window_width, view_selector, prev_btn, next_btn = result
                             
                             # Update contribute tab dataset to show current status
                             contribute_dataset, contribute_status = contribute_components['get_assigned_tasks_dataset'](user_id)
@@ -3254,7 +3555,7 @@ class SegMedPro:
                             
                             return [
                                 gr.update(selected=1),  # Switch to Editor tab
-                                gr.update(),  # dicom_viewer
+                                "",  # error_display (clear any errors)
                                 annotated_value,  # image_display
                                 slider,  # slice_slider  
                                 gr.update(visible=True),  # prev_slice_btn
@@ -3276,7 +3577,7 @@ class SegMedPro:
                 # Failed to load - return error states
                 return [
                     gr.update(),  # tabs (no change)
-                    gr.update(),  # dicom_viewer
+                    "",  # error_display (clear)
                     gr.update(),  # image_display
                     gr.update(),  # slice_slider
                     gr.update(),  # prev_slice_btn
@@ -3298,11 +3599,11 @@ class SegMedPro:
                 inputs=[contribute_components['current_user_state']],
                 outputs=[
                     tabs,  # tabs
-                    editor_components['visualization'][0],                       # dicom_viewer
-                    editor_components['visualization'][3],                       # image_display (this is the image_annotator)
-                    editor_components['visualization'][7],                       # slice_slider
-                    editor_components['visualization'][6],                       # prev_slice_btn
-                    editor_components['visualization'][8],                       # next_slice_btn
+                    editor_components['visualization'][0],                       # error_display (status/errors)
+                    editor_components['visualization'][4],                       # image_display
+                    editor_components['visualization'][8],                       # slice_slider
+                    editor_components['visualization'][7],                       # prev_slice_btn
+                    editor_components['visualization'][9],                       # next_slice_btn
                     editor_components['visualization'][1],                       # metadata_display
                     editor_components['crowdsourcing']['submit_btn'],            # submit_btn
                     editor_components['crowdsourcing']['status'],                # submission_status
@@ -3320,6 +3621,43 @@ class SegMedPro:
             editor_components['welcome_modal']['close_btn'].click(
                 fn=lambda: gr.update(visible=False, open=False),
                 outputs=[editor_components['welcome_modal']['guide']]
+            )
+            
+            # Handle tool selection for tracking primary annotation tool (EDITOR-SPECIFIC)
+            def handle_editor_tool_selected(evt: gr.EventData):
+                """Track which annotation tools users select for primary tool analytics"""
+                import datetime
+                # Extract tool name and timestamp from event data
+                tool = evt._data.get('tool', 'Unknown')
+                timestamp = evt._data.get('timestamp', 0)
+                
+                # Store in state
+                self.state.last_tool_timestamp = timestamp
+                self.state.last_tool_selected = tool
+                
+                # Format timestamp for logging
+                time_str = datetime.datetime.fromtimestamp(timestamp / 1000).strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+                logger.info(f"🖊️ Tool selected (editor): {tool} at {time_str}")
+                
+                # Track tool selection for analytics (but skip automatic tool switches after annotation)
+                # If tool selection happens within 500ms of annotation creation, it's likely automatic
+                time_since_annotation = timestamp - self.state.last_annotation_timestamp
+                is_auto_switch = time_since_annotation < 500  # 500ms threshold
+                
+                if tool and tool not in ["pan", "eraser", "Unknown"] and not is_auto_switch:
+                    try:
+                        from analytics.tracking_integration import track_tool_usage
+                        track_tool_usage(tool_type=tool)
+                        logger.info(f"✅ Tracked tool usage: {tool}")
+                    except Exception as e:
+                        logger.debug(f"Tool usage tracking skipped: {e}")
+                elif is_auto_switch:
+                    logger.debug(f"⏭️ Skipped tracking {tool} - automatic tool switch after annotation (within {time_since_annotation}ms)")
+            
+            editor_components['visualization'][4].tool_selected(
+                fn=handle_editor_tool_selected,
+                inputs=[],  # Tool data comes from event
+                outputs=[]
             )
         
         # Auto-refresh contribute tab when tab becomes visible

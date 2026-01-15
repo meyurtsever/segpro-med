@@ -331,14 +331,14 @@ def create_editor_welcoming_modal():
                 )
                 
                 load_normal_btn = gr.Button(
-                    "Brain Sample - Benign", 
+                    "Mammography Sample", 
                     variant="secondary", 
                     size="sm",
                     elem_classes=["compact-sample-btn", "healthy-btn"]
                 )
                 
                 load_hgg_btn = gr.Button(
-                    "Brain Sample - Tumor", 
+                    "Abodomen Sample", 
                     variant="stop", 
                     size="sm",
                     elem_classes=["compact-sample-btn", "glioma-btn"]
@@ -828,6 +828,7 @@ def create_point_prompt_tip_modal():
                     <li>Click directly on the image at the location you want to segment</li>
                     <li>Click on the <strong>center</strong> or most representative part of the structure</li>
                     <li>You can select multiple points for complex structures</li>
+                    <li>Click <strong>Run Guided Annotation</strong> button to run the segmentation</li>
                 </ul>
             </div>
             
@@ -881,6 +882,7 @@ def create_box_prompt_tip_modal():
                     <li>Draw a bounding box around the area you want to segment</li>
                     <li>Click and drag to create the box</li>
                     <li>Make sure the box fully contains the structure with some margin</li>
+                    <li>Click <strong>Run Guided Annotation</strong> button to run the segmentation</li>
                 </ul>
             </div>
             

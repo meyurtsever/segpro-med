@@ -1,0 +1,246 @@
+[
+  {
+    "session_id": "sess_20251110_smith_001",
+    "user_id": "expert_dr_smith",
+    "session_start": "2025-11-10T09:00:15.234Z",
+    "session_end": "2025-11-10T09:12:45.890Z",
+    "duration_minutes": 12.5,
+    "tab": "editor",
+    "workflow_stages": [
+      {
+        "stage": "data_loading",
+        "start_time": "2025-11-10T09:00:15.234Z",
+        "end_time": "2025-11-10T09:00:45.567Z",
+        "duration_seconds": 30.3,
+        "actions_count": 2,
+        "dataset": "brain",
+        "patient_id": "20005",
+        "modality": "flair"
+      },
+      {
+        "stage": "exploration",
+        "start_time": "2025-11-10T09:00:45.567Z",
+        "end_time": "2025-11-10T09:01:25.123Z",
+        "duration_seconds": 39.6,
+        "slices_viewed": 3,
+        "view_changes": 0,
+        "window_adjustments": 1,
+        "navigation_pattern": "slider"
+      },
+      {
+        "stage": "manual_annotation",
+        "start_time": "2025-11-10T09:01:25.123Z",
+        "end_time": "2025-11-10T09:03:02.345Z",
+        "duration_seconds": 97.2,
+        "annotations_created": 2,
+        "annotations_edited": 0,
+        "annotations_deleted": 0,
+        "tool_used": "drawrect",
+        "labels_used": ["Tumor"],
+        "avg_annotation_time_seconds": 16.8
+      },
+      {
+        "stage": "ai_annotation",
+        "start_time": "2025-11-10T09:03:02.345Z",
+        "end_time": "2025-11-10T09:03:35.901Z",
+        "duration_seconds": 33.6,
+        "ai_model": "MedSAM2",
+        "ai_invocations": 1,
+        "ai_suggestions_received": 3,
+        "ai_suggestions_accepted": 2,
+        "ai_suggestions_rejected": 1,
+        "ai_acceptance_rate": 0.667,
+        "labels_used": ["Tumor", "Edema"]
+      },
+      {
+        "stage": "review_and_refinement",
+        "start_time": "2025-11-10T09:03:35.901Z",
+        "end_time": "2025-11-10T09:12:45.890Z",
+        "duration_seconds": 550.0,
+        "view_changes": 2,
+        "cross_view_references": 1,
+        "quality_checks": 3,
+        "annotations_reviewed": 47
+      }
+    ],
+    "performance_metrics": {
+      "total_annotations": 47,
+      "unique_labels": 3,
+      "slices_annotated": 15,
+      "efficiency_score": 0.89,
+      "consistency_score": 0.92,
+      "ai_dependency_rate": 0.26,
+      "avg_time_per_annotation_seconds": 15.9,
+      "view_switching_rate": 0.13,
+      "window_adjustment_rate": 0.07
+    },
+    "behavioral_indicators": {
+      "primary_tool": "drawrect",
+      "tool_diversity": 2,
+      "navigation_style": "sequential",
+      "ai_usage": "selective",
+      "review_behavior": "thorough",
+      "expertise_level": "expert"
+    }
+  },
+  {
+    "session_id": "sess_20251110_johnson_001",
+    "user_id": "expert_dr_johnson",
+    "session_start": "2025-11-10T14:00:30.123Z",
+    "session_end": "2025-11-10T14:15:12.567Z",
+    "duration_minutes": 14.7,
+    "tab": "editor",
+    "workflow_stages": [
+      {
+        "stage": "data_loading",
+        "start_time": "2025-11-10T14:00:30.123Z",
+        "end_time": "2025-11-10T14:01:15.456Z",
+        "duration_seconds": 45.3,
+        "actions_count": 1,
+        "dataset": "MG",
+        "patient_id": "836163459",
+        "modality": "MG"
+      },
+      {
+        "stage": "exploration",
+        "start_time": "2025-11-10T14:01:15.456Z",
+        "end_time": "2025-11-10T14:01:45.789Z",
+        "duration_seconds": 30.3,
+        "slices_viewed": 1,
+        "view_changes": 0,
+        "window_adjustments": 1,
+        "navigation_pattern": "stationary"
+      },
+      {
+        "stage": "manual_annotation",
+        "start_time": "2025-11-10T14:01:45.789Z",
+        "end_time": "2025-11-10T14:15:12.567Z",
+        "duration_seconds": 806.8,
+        "annotations_created": 8,
+        "annotations_edited": 3,
+        "annotations_deleted": 0,
+        "tool_used": "drawclosedpath",
+        "labels_used": ["Mass", "Calcification", "Architectural Distortion"],
+        "avg_annotation_time_seconds": 90.1
+      }
+    ],
+    "performance_metrics": {
+      "total_annotations": 8,
+      "unique_labels": 3,
+      "views_annotated": 4,
+      "efficiency_score": 0.72,
+      "consistency_score": 0.88,
+      "ai_dependency_rate": 0.0,
+      "avg_time_per_annotation_seconds": 100.9,
+      "view_switching_rate": 0.33,
+      "window_adjustment_rate": 0.125,
+      "edit_rate": 0.375
+    },
+    "behavioral_indicators": {
+      "primary_tool": "drawclosedpath",
+      "tool_diversity": 1,
+      "navigation_style": "view_focused",
+      "ai_usage": "none",
+      "review_behavior": "meticulous",
+      "expertise_level": "expert"
+    }
+  },
+  {
+    "session_id": "sess_20251110_lee_001",
+    "user_id": "expert_dr_lee",
+    "session_start": "2025-11-10T10:30:00.000Z",
+    "session_end": "2025-11-10T11:45:30.000Z",
+    "duration_minutes": 75.5,
+    "tab": "editor",
+    "workflow_stages": [
+      {
+        "stage": "data_loading",
+        "start_time": "2025-11-10T10:30:00.000Z",
+        "end_time": "2025-11-10T10:30:50.000Z",
+        "duration_seconds": 50,
+        "actions_count": 3,
+        "dataset": "abdomen",
+        "patient_id": "20008",
+        "modality": "CT"
+      },
+      {
+        "stage": "exploration",
+        "start_time": "2025-11-10T10:30:50.000Z",
+        "end_time": "2025-11-10T10:35:20.000Z",
+        "duration_seconds": 270,
+        "slices_viewed": 45,
+        "view_changes": 12,
+        "window_adjustments": 8,
+        "navigation_pattern": "jump_scanner"
+      },
+      {
+        "stage": "manual_annotation",
+        "start_time": "2025-11-10T10:35:20.000Z",
+        "end_time": "2025-11-10T10:52:40.000Z",
+        "duration_seconds": 1040,
+        "annotations_created": 18,
+        "annotations_edited": 5,
+        "annotations_deleted": 2,
+        "tool_used": "drawrect",
+        "labels_used": ["Liver", "Kidney", "Spleen", "Lesion"],
+        "avg_annotation_time_seconds": 57.8
+      },
+      {
+        "stage": "ai_annotation",
+        "start_time": "2025-11-10T10:52:40.000Z",
+        "end_time": "2025-11-10T11:12:15.000Z",
+        "duration_seconds": 1175,
+        "ai_model": "MedSAM2",
+        "ai_invocations": 8,
+        "ai_suggestions_received": 24,
+        "ai_suggestions_accepted": 20,
+        "ai_suggestions_rejected": 4,
+        "ai_acceptance_rate": 0.833,
+        "labels_used": ["Liver", "Kidney", "Spleen", "Lesion", "Tumor"]
+      },
+      {
+        "stage": "vlm_analysis",
+        "start_time": "2025-11-10T11:12:15.000Z",
+        "end_time": "2025-11-10T11:18:45.000Z",
+        "duration_seconds": 390,
+        "vlm_model": "MedGemma",
+        "prompts_submitted": 3,
+        "voice_input_used": true,
+        "label_suggestions_received": 12,
+        "label_suggestions_accepted": 8
+      },
+      {
+        "stage": "review_and_refinement",
+        "start_time": "2025-11-10T11:18:45.000Z",
+        "end_time": "2025-11-10T11:45:30.000Z",
+        "duration_seconds": 1605,
+        "view_changes": 8,
+        "cross_view_references": 5,
+        "quality_checks": 10,
+        "annotations_reviewed": 62
+      }
+    ],
+    "performance_metrics": {
+      "total_annotations": 62,
+      "unique_labels": 5,
+      "slices_annotated": 28,
+      "efficiency_score": 0.81,
+      "consistency_score": 0.85,
+      "ai_dependency_rate": 0.645,
+      "avg_time_per_annotation_seconds": 72.9,
+      "view_switching_rate": 0.27,
+      "window_adjustment_rate": 0.13,
+      "edit_rate": 0.114,
+      "deletion_rate": 0.032
+    },
+    "behavioral_indicators": {
+      "primary_tool": "drawrect",
+      "tool_diversity": 3,
+      "navigation_style": "jump_scanner",
+      "ai_usage": "heavy",
+      "vlm_usage": "active",
+      "review_behavior": "thorough",
+      "expertise_level": "intermediate"
+    }
+  }
+]

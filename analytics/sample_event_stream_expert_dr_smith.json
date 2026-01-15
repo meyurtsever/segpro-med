@@ -1,0 +1,273 @@
+[
+  {
+    "event_id": "evt_20251110_090015_001",
+    "timestamp": "2025-11-10T09:00:15.234Z",
+    "user_id": "expert_dr_smith",
+    "session_id": "sess_20251110_smith_001",
+    "tab": "editor",
+    "event_type": "data_load",
+    "component": "load_btn",
+    "action": "click",
+    "metadata": {
+      "dataset": "brain",
+      "patient_id": "20005",
+      "modality": "flair",
+      "total_slices": 155,
+      "view_orientation": "axial",
+      "window_level": 500,
+      "window_width": 1000
+    },
+    "sequence_number": 1,
+    "prev_event": null
+  },
+  {
+    "event_id": "evt_20251110_090045_002",
+    "timestamp": "2025-11-10T09:00:45.567Z",
+    "user_id": "expert_dr_smith",
+    "session_id": "sess_20251110_smith_001",
+    "tab": "editor",
+    "event_type": "slice_navigation",
+    "component": "slice_slider",
+    "action": "change",
+    "metadata": {
+      "slice_index": 45,
+      "view_orientation": "axial",
+      "navigation_type": "slider",
+      "from_slice": 0,
+      "to_slice": 45
+    },
+    "sequence_number": 2,
+    "prev_event": "data_load"
+  },
+  {
+    "event_id": "evt_20251110_090102_003",
+    "timestamp": "2025-11-10T09:01:02.891Z",
+    "user_id": "expert_dr_smith",
+    "session_id": "sess_20251110_smith_001",
+    "tab": "editor",
+    "event_type": "window_adjustment",
+    "component": "window_level_slider",
+    "action": "change",
+    "metadata": {
+      "slice_index": 45,
+      "window_level": 600,
+      "window_width": 1200,
+      "adjustment_type": "manual"
+    },
+    "sequence_number": 3,
+    "prev_event": "slice_navigation"
+  },
+  {
+    "event_id": "evt_20251110_090125_004",
+    "timestamp": "2025-11-10T09:01:25.123Z",
+    "user_id": "expert_dr_smith",
+    "session_id": "sess_20251110_smith_001",
+    "tab": "editor",
+    "event_type": "tool_selection",
+    "component": "tool_button",
+    "action": "click",
+    "metadata": {
+      "tool_selected": "drawrect",
+      "previous_tool": "pan",
+      "slice_index": 45,
+      "view_orientation": "axial"
+    },
+    "sequence_number": 4,
+    "prev_event": "window_adjustment"
+  },
+  {
+    "event_id": "evt_20251110_090142_005",
+    "timestamp": "2025-11-10T09:01:42.456Z",
+    "user_id": "expert_dr_smith",
+    "session_id": "sess_20251110_smith_001",
+    "tab": "editor",
+    "event_type": "annotation_created",
+    "component": "image_annotator",
+    "action": "box_drawn",
+    "metadata": {
+      "slice_index": 45,
+      "view_orientation": "axial",
+      "annotation_type": "rectangle",
+      "annotation_label": "Tumor",
+      "bbox": {"xmin": 187, "ymin": 203, "xmax": 298, "ymax": 314},
+      "annotation_area": 12321,
+      "window_level": 600,
+      "window_width": 1200,
+      "ai_assistance": false,
+      "tool_active": "drawrect",
+      "creation_time_ms": 17333
+    },
+    "sequence_number": 5,
+    "prev_event": "tool_selection"
+  },
+  {
+    "event_id": "evt_20251110_090158_006",
+    "timestamp": "2025-11-10T09:01:58.789Z",
+    "user_id": "expert_dr_smith",
+    "session_id": "sess_20251110_smith_001",
+    "tab": "editor",
+    "event_type": "slice_navigation",
+    "component": "next_btn",
+    "action": "click",
+    "metadata": {
+      "slice_index": 46,
+      "view_orientation": "axial",
+      "navigation_type": "button",
+      "from_slice": 45,
+      "to_slice": 46
+    },
+    "sequence_number": 6,
+    "prev_event": "annotation_created"
+  },
+  {
+    "event_id": "evt_20251110_090215_007",
+    "timestamp": "2025-11-10T09:02:15.012Z",
+    "user_id": "expert_dr_smith",
+    "session_id": "sess_20251110_smith_001",
+    "tab": "editor",
+    "event_type": "annotation_created",
+    "component": "image_annotator",
+    "action": "box_drawn",
+    "metadata": {
+      "slice_index": 46,
+      "view_orientation": "axial",
+      "annotation_type": "rectangle",
+      "annotation_label": "Tumor",
+      "bbox": {"xmin": 185, "ymin": 201, "xmax": 302, "ymax": 318},
+      "annotation_area": 13689,
+      "window_level": 600,
+      "window_width": 1200,
+      "ai_assistance": false,
+      "tool_active": "drawrect",
+      "creation_time_ms": 16223
+    },
+    "sequence_number": 7,
+    "prev_event": "slice_navigation"
+  },
+  {
+    "event_id": "evt_20251110_090302_008",
+    "timestamp": "2025-11-10T09:03:02.345Z",
+    "user_id": "expert_dr_smith",
+    "session_id": "sess_20251110_smith_001",
+    "tab": "editor",
+    "event_type": "ai_model_invoked",
+    "component": "medsam2_btn",
+    "action": "click",
+    "metadata": {
+      "slice_index": 47,
+      "view_orientation": "axial",
+      "model": "MedSAM2",
+      "prompt_type": "automatic",
+      "ai_model_params": {
+        "use_brain_roi": true,
+        "score_threshold": 0.88
+      }
+    },
+    "sequence_number": 8,
+    "prev_event": "annotation_created"
+  },
+  {
+    "event_id": "evt_20251110_090318_009",
+    "timestamp": "2025-11-10T09:03:18.678Z",
+    "user_id": "expert_dr_smith",
+    "session_id": "sess_20251110_smith_001",
+    "tab": "editor",
+    "event_type": "ai_result_received",
+    "component": "image_annotator",
+    "action": "ai_suggestion_displayed",
+    "metadata": {
+      "slice_index": 47,
+      "view_orientation": "axial",
+      "model": "MedSAM2",
+      "inference_time_ms": 16333,
+      "suggestions_count": 3,
+      "suggestion_scores": [0.92, 0.89, 0.88],
+      "suggestion_labels": ["Tumor", "Edema", "Tumor"]
+    },
+    "sequence_number": 9,
+    "prev_event": "ai_model_invoked"
+  },
+  {
+    "event_id": "evt_20251110_090335_010",
+    "timestamp": "2025-11-10T09:03:35.901Z",
+    "user_id": "expert_dr_smith",
+    "session_id": "sess_20251110_smith_001",
+    "tab": "editor",
+    "event_type": "ai_suggestion_accepted",
+    "component": "accept_btn",
+    "action": "click",
+    "metadata": {
+      "slice_index": 47,
+      "view_orientation": "axial",
+      "model": "MedSAM2",
+      "accepted_count": 2,
+      "rejected_count": 1,
+      "accepted_labels": ["Tumor", "Edema"],
+      "rejected_labels": ["Tumor"],
+      "review_time_ms": 17223
+    },
+    "sequence_number": 10,
+    "prev_event": "ai_result_received"
+  },
+  {
+    "event_id": "evt_20251110_090512_011",
+    "timestamp": "2025-11-10T09:05:12.234Z",
+    "user_id": "expert_dr_smith",
+    "session_id": "sess_20251110_smith_001",
+    "tab": "editor",
+    "event_type": "view_changed",
+    "component": "view_selector",
+    "action": "select",
+    "metadata": {
+      "slice_index": 47,
+      "from_view": "axial",
+      "to_view": "coronal",
+      "view_change_reason": "cross_reference"
+    },
+    "sequence_number": 11,
+    "prev_event": "ai_suggestion_accepted"
+  },
+  {
+    "event_id": "evt_20251110_090545_012",
+    "timestamp": "2025-11-10T09:05:45.567Z",
+    "user_id": "expert_dr_smith",
+    "session_id": "sess_20251110_smith_001",
+    "tab": "editor",
+    "event_type": "view_changed",
+    "component": "view_selector",
+    "action": "select",
+    "metadata": {
+      "slice_index": 203,
+      "from_view": "coronal",
+      "to_view": "axial",
+      "view_change_reason": "return_to_primary"
+    },
+    "sequence_number": 12,
+    "prev_event": "view_changed"
+  },
+  {
+    "event_id": "evt_20251110_091245_013",
+    "timestamp": "2025-11-10T09:12:45.890Z",
+    "user_id": "expert_dr_smith",
+    "session_id": "sess_20251110_smith_001",
+    "tab": "editor",
+    "event_type": "annotation_submission",
+    "component": "submit_btn",
+    "action": "click",
+    "metadata": {
+      "dataset": "brain",
+      "patient_id": "20005",
+      "modality": "flair",
+      "total_annotations": 47,
+      "unique_labels": ["Tumor", "Edema", "Necrosis"],
+      "slices_annotated": 15,
+      "session_duration_minutes": 12.5,
+      "ai_assistance_used": true,
+      "ai_suggestions_total": 15,
+      "ai_accepted": 12,
+      "ai_rejected": 3
+    },
+    "sequence_number": 13,
+    "prev_event": "view_changed"
+  }
+]

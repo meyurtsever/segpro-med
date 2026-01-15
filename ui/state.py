@@ -83,6 +83,14 @@ class AppState:
         # Track which annotations are saved for which slice/view combinations
         self.slice_annotations: Dict[str, Any] = {}  # Key: "{view}_{slice_idx}", Value: annotation_data
         
+        # Tool selection tracking for annotation duration calculation
+        self.last_tool_selected: Optional[str] = None
+        self.last_tool_timestamp: Optional[int] = None
+        
+        # Track pending annotations waiting for modal confirmation (label assignment)
+        # Key: slice_idx, Value: {'count': int, 'unlabeled_fingerprint': str, 'annotation_index': int}
+        self.pending_modal_confirmations: Dict[int, Dict] = {}
+        
         # Tab-specific segmentation display flags (default false for editor tab)
         self.show_segmentation_in_viewer: bool = True   # Default true for viewer tab
         self.show_segmentation_in_editor: bool = False  # Default false for editor tab as requested

@@ -27,6 +27,12 @@ from utils.debug_utils import log_exception
 from utils.metadata_sanitizer import sanitize_metadata_for_display
 from ui.state import AppState
 
+# Behavioral analytics tracking
+from analytics.tracking_integration import (
+    track_data_load, track_slice_change, track_annotation,
+    track_annotation_edit, track_annotation_delete, track_window_adjustment
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -431,6 +437,25 @@ class DataLoadingHandlers:
         
         # Sanitize metadata for display (removes PHI while keeping clinical data)
         display_metadata = sanitize_metadata_for_display(self.state.current_metadata)
+        
+        # Load persistent annotations if user is logged in
+        # Note: This requires the image handlers to have current_user_id set via set_current_user()
+        # The app.py login handler should have already called set_current_user() for both handlers
+        # Annotations will be loaded automatically when handlers detect new data
+        if self.state.current_directory:
+            logger.info(f"Data loaded successfully from: {self.state.current_directory}")
+            logger.info("Persistent annotations will be loaded automatically by image handlers if user is logged in")
+        
+        # Track data loading for behavioral analytics
+        try:
+            track_data_load(
+                dataset="dicom",
+                modality=modality if modality else "unknown",
+                total_slices=len(self.state.file_list),
+                directory=self.state.current_directory
+            )
+        except Exception as e:
+            logger.debug(f"Behavioral tracking skipped: {e}")
         
         return (
             annotated_value,

@@ -1,0 +1,190 @@
+[
+  {
+    "event_id": "evt_20251110_140030_101",
+    "timestamp": "2025-11-10T14:00:30.123Z",
+    "user_id": "expert_dr_johnson",
+    "session_id": "sess_20251110_johnson_001",
+    "tab": "editor",
+    "event_type": "data_load",
+    "component": "load_btn",
+    "action": "click",
+    "metadata": {
+      "dataset": "MG",
+      "patient_id": "836163459",
+      "modality": "MG",
+      "total_slices": 4,
+      "view_orientation": "LCC",
+      "window_level": 500,
+      "window_width": 1000
+    },
+    "sequence_number": 1,
+    "prev_event": null
+  },
+  {
+    "event_id": "evt_20251110_140115_102",
+    "timestamp": "2025-11-10T14:01:15.456Z",
+    "user_id": "expert_dr_johnson",
+    "session_id": "sess_20251110_johnson_001",
+    "tab": "editor",
+    "event_type": "window_adjustment",
+    "component": "window_level_slider",
+    "action": "change",
+    "metadata": {
+      "slice_index": 0,
+      "window_level": 650,
+      "window_width": 1100,
+      "adjustment_type": "manual"
+    },
+    "sequence_number": 2,
+    "prev_event": "data_load"
+  },
+  {
+    "event_id": "evt_20251110_140145_103",
+    "timestamp": "2025-11-10T14:01:45.789Z",
+    "user_id": "expert_dr_johnson",
+    "session_id": "sess_20251110_johnson_001",
+    "tab": "editor",
+    "event_type": "tool_selection",
+    "component": "tool_button",
+    "action": "click",
+    "metadata": {
+      "tool_selected": "drawclosedpath",
+      "previous_tool": "pan",
+      "slice_index": 0,
+      "view_orientation": "LCC"
+    },
+    "sequence_number": 3,
+    "prev_event": "window_adjustment"
+  },
+  {
+    "event_id": "evt_20251110_140312_104",
+    "timestamp": "2025-11-10T14:03:12.012Z",
+    "user_id": "expert_dr_johnson",
+    "session_id": "sess_20251110_johnson_001",
+    "tab": "editor",
+    "event_type": "annotation_created",
+    "component": "image_annotator",
+    "action": "polygon_drawn",
+    "metadata": {
+      "slice_index": 0,
+      "view_orientation": "LCC",
+      "annotation_type": "polygon",
+      "annotation_label": "Mass",
+      "polygon_points": [[234, 412], [298, 398], [315, 445], [289, 478], [241, 465]],
+      "annotation_area": 4567,
+      "window_level": 650,
+      "window_width": 1100,
+      "ai_assistance": false,
+      "tool_active": "drawclosedpath",
+      "creation_time_ms": 87000
+    },
+    "sequence_number": 4,
+    "prev_event": "tool_selection"
+  },
+  {
+    "event_id": "evt_20251110_140445_105",
+    "timestamp": "2025-11-10T14:04:45.345Z",
+    "user_id": "expert_dr_johnson",
+    "session_id": "sess_20251110_johnson_001",
+    "tab": "editor",
+    "event_type": "annotation_edited",
+    "component": "image_annotator",
+    "action": "shape_modified",
+    "metadata": {
+      "slice_index": 0,
+      "view_orientation": "LCC",
+      "annotation_label": "Mass",
+      "edit_type": "boundary_refinement",
+      "original_area": 4567,
+      "new_area": 4789,
+      "edit_duration_ms": 93000
+    },
+    "sequence_number": 5,
+    "prev_event": "annotation_created"
+  },
+  {
+    "event_id": "evt_20251110_140612_106",
+    "timestamp": "2025-11-10T14:06:12.678Z",
+    "user_id": "expert_dr_johnson",
+    "session_id": "sess_20251110_johnson_001",
+    "tab": "editor",
+    "event_type": "view_changed",
+    "component": "view_selector",
+    "action": "select",
+    "metadata": {
+      "slice_index": 0,
+      "from_view": "LCC",
+      "to_view": "RCC",
+      "view_change_reason": "contralateral_comparison"
+    },
+    "sequence_number": 6,
+    "prev_event": "annotation_edited"
+  },
+  {
+    "event_id": "evt_20251110_140745_107",
+    "timestamp": "2025-11-10T14:07:45.901Z",
+    "user_id": "expert_dr_johnson",
+    "session_id": "sess_20251110_johnson_001",
+    "tab": "editor",
+    "event_type": "annotation_created",
+    "component": "image_annotator",
+    "action": "polygon_drawn",
+    "metadata": {
+      "slice_index": 0,
+      "view_orientation": "RCC",
+      "annotation_type": "polygon",
+      "annotation_label": "Calcification",
+      "polygon_points": [[156, 287], [168, 283], [172, 295], [160, 299]],
+      "annotation_area": 192,
+      "window_level": 650,
+      "window_width": 1100,
+      "ai_assistance": false,
+      "tool_active": "drawclosedpath",
+      "creation_time_ms": 93222
+    },
+    "sequence_number": 7,
+    "prev_event": "view_changed"
+  },
+  {
+    "event_id": "evt_20251110_141018_108",
+    "timestamp": "2025-11-10T14:10:18.234Z",
+    "user_id": "expert_dr_johnson",
+    "session_id": "sess_20251110_johnson_001",
+    "tab": "editor",
+    "event_type": "view_changed",
+    "component": "view_selector",
+    "action": "select",
+    "metadata": {
+      "slice_index": 0,
+      "from_view": "RCC",
+      "to_view": "LMLO",
+      "view_change_reason": "multi_view_assessment"
+    },
+    "sequence_number": 8,
+    "prev_event": "annotation_created"
+  },
+  {
+    "event_id": "evt_20251110_141512_109",
+    "timestamp": "2025-11-10T14:15:12.567Z",
+    "user_id": "expert_dr_johnson",
+    "session_id": "sess_20251110_johnson_001",
+    "tab": "editor",
+    "event_type": "annotation_submission",
+    "component": "submit_btn",
+    "action": "click",
+    "metadata": {
+      "dataset": "MG",
+      "patient_id": "836163459",
+      "modality": "MG",
+      "total_annotations": 8,
+      "unique_labels": ["Mass", "Calcification", "Architectural Distortion"],
+      "views_annotated": 4,
+      "session_duration_minutes": 14.7,
+      "ai_assistance_used": false,
+      "annotations_edited": 3,
+      "edit_rate": 0.375
+    },
+    "sequence_number": 9,
+    "prev_event": "view_changed"
+  }
+]

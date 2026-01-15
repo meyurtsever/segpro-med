@@ -1,0 +1,99 @@
+% Expert Labeling Tables in LaTeX Format
+% Compile with pdflatex or xelatex
+
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage[margin=1in]{geometry}
+\usepackage{caption}
+\usepackage{float}
+
+\begin{document}
+
+\section*{Expert Labeling Tables}
+
+\begin{table}[H]
+    \caption{Expert Profile Example 1 - Dr. Smith (Brain MRI Specialist). This profile demonstrates an expert brain MRI specialist who achieves exceptional productivity without sacrificing quality. The zero percent edit rate combined with a 0.92 consistency score reveals an annotator who makes confident, accurate decisions on the first attempt. Despite working at speed demon pace (15.9 seconds per annotation), the high consistency indicates this velocity reflects expertise rather than carelessness.}
+    \centering
+    \small
+    \begin{tabular}{lp{10cm}}
+        \toprule
+        \textbf{Metric} & \textbf{Description} \\
+        \midrule
+        \multicolumn{2}{l}{\textit{\textbf{Session Overview}}} \\
+        Dataset \& Modality & Brain FLAIR (Patient 20005) - Brain MRI Specialist working on neuroimaging with tumor sequences \\
+        Session Duration & 12.5 minutes for 47 annotations - High Productivity ($\sim$4 annotations/min across 15 slices) \\
+        \midrule
+        \multicolumn{2}{l}{\textit{\textbf{AI Usage Patterns}}} \\
+        AI Assistance Rate & 26\% of annotations used AI - Hybrid User (near Manual-First): Uses AI selectively, mostly relies on manual tools \\
+        AI Acceptance Rate & 66.7\% (accepted 2 of 3) - Critical Evaluator: Rejects 1 in 3 AI suggestions, doesn't blindly accept \\
+        \midrule
+        \multicolumn{2}{l}{\textit{\textbf{Speed \& Quality}}} \\
+        Time per Annotation & 15.9 seconds average - Speed Demon: Under 45-second threshold = very fast \\
+        Edit Rate & 0\% (never edited) - One-Pass Expert: Gets it right the first time, no corrections needed \\
+        Deletion Rate & 0\% (never deleted) - Confident: No hesitation or trial-and-error \\
+        Consistency Score & 0.92 out of 1.0 - Expert Level: Highly reproducible workflow ($>0.85$ threshold) \\
+        Efficiency Score & 0.89 out of 1.0 - Optimized Workflow: Minimal time wasted on navigation or exploration \\
+        \midrule
+        \multicolumn{2}{l}{\textit{\textbf{Work Style}}} \\
+        Primary Tool & Rectangle (drawrect) - Rectangle Specialist: Prefers bounding boxes for quick localization \\
+        Label Focus & Tumor, Edema, Necrosis - Oncology Specialist: All labels are cancer-related pathology \\
+        Navigation & Sequential (70\%+ linear) - Methodical: Goes through slices in order, not jumping around \\
+        View Switching & 13\% of time - Single-Plane Focus: Mostly stays in axial view, rare coronal checks \\
+        VLM Usage & Never used - Traditional User: Hasn't adopted vision-language models yet \\
+        \midrule
+        \multicolumn{2}{l}{\textit{\textbf{Summary}}} \\
+        Assigned Persona & \textbf{``The Efficient Brain AI-Hybrid''} - Expert who works fast and accurately with selective AI help \\
+        Best Use Cases & Time-sensitive projects, high-volume campaigns, gold-standard creation (Speed + accuracy is rare) \\
+        Training Opportunities & VLM feature adoption, periodic quality checks to validate rapid pace \\
+        \bottomrule
+    \end{tabular}
+    \label{tab:expert-profile-smith}
+\end{table}
+
+\clearpage
+
+\begin{table}[H]
+    \caption{Expert Profile Example 2 - Dr. Johnson (Mammography Specialist). This profile illustrates a quality-prioritized workflow where precision trumps speed. The complete absence of AI assistance combined with exclusive use of freehand polygon tools reflects the realities of breast imaging where irregular mass margins and subtle architectural distortions demand careful manual tracing. The 37.5\% edit rate indicates iterative boundary refinement rather than uncertainty, as evidenced by zero deletions and 0.88 consistency score.}
+    \centering
+    \small
+    \begin{tabular}{lp{10cm}}
+        \toprule
+        \textbf{Metric} & \textbf{Description} \\
+        \midrule
+        \multicolumn{2}{l}{\textit{\textbf{Session Overview}}} \\
+        Dataset \& Modality & Mammography 4-view (Patient 836163459) - Mammography Specialist working on breast imaging \\
+        Session Duration & 14.7 minutes for 8 annotations - Quality-Focused ($\sim$1.8 min per annotation) \\
+        Views Covered & All 4 views (LCC, RCC, LMLO, RMLO) - Systematic Reviewer: Complete bilateral coverage \\
+        \midrule
+        \multicolumn{2}{l}{\textit{\textbf{AI Usage Patterns}}} \\
+        AI Assistance Rate & 0\% (never used AI) - Manual-First Expert: Pure manual workflow, no automation \\
+        \midrule
+        \multicolumn{2}{l}{\textit{\textbf{Speed \& Quality}}} \\
+        Time per Annotation & 100.9 seconds average - Meticulous Reviewer: Over 120-second threshold = very careful \\
+        Edit Rate & 37.5\% (edited 3 of 8) - Iterative Refiner: Frequently goes back to improve boundaries \\
+        Deletion Rate & 0\% (never deleted) - Confident Final Decisions: Refines work but doesn't start over \\
+        Consistency Score & 0.88 out of 1.0 - Expert Level: Highly reproducible workflow ($>0.85$ threshold) \\
+        Efficiency Score & 0.72 out of 1.0 - Quality Over Speed: More exploration time, less rush \\
+        \midrule
+        \multicolumn{2}{l}{\textit{\textbf{Work Style}}} \\
+        Primary Tool & Freehand polygon (drawclosedpath) - Precision Specialist: Traces exact boundaries, not boxes \\
+        Tool Diversity & Only 1 tool used - Highly Focused: Stick to what works best for breast imaging \\
+        Label Focus & Mass, Calcification, Architectural Distortion - Breast Pathology Expert: All standard findings \\
+        Navigation & Stationary within each view - View-by-View Systematic: Completes one view before moving \\
+        View Switching & 33\% of time - Multi-View Correlator: Frequently compares across views (LCC vs RCC) \\
+        Window Adjustment & 12.5\% of events - Active Optimizer: Adjusts contrast frequently for better visibility \\
+        VLM Usage & Never used - Traditional User: Hasn't adopted vision-language models yet \\
+        \midrule
+        \multicolumn{2}{l}{\textit{\textbf{Summary}}} \\
+        Assigned Persona & \textbf{``The Meticulous Mammography Craftsperson''} - Precision-focused expert who refines until perfect \\
+        Best Use Cases & Complex diagnostic cases, gold-standard creation, quality benchmarks (High quality justifies time) \\
+        Training Opportunities & AI adoption for efficiency gains, automated window optimization \\
+        \bottomrule
+    \end{tabular}
+    \label{tab:expert-profile-johnson}
+\end{table}
+
+\end{document}

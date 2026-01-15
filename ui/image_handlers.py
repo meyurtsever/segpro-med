@@ -9,15 +9,23 @@ import os
 import logging
 import gradio as gr
 import numpy as np
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 import time
 
 from utils.dicom_utils import get_dicom_metadata
 from utils.visualization import (display_slice, overlay_segmentation, make_image_for_gradio)
 from utils.debug_utils import log_exception
 from utils.metadata_sanitizer import sanitize_metadata_for_display
+from utils.annotation_manager import get_annotation_manager
+from utils.annotation_helpers import extract_coordinates, extract_bbox, calculate_area
 from ui.state import AppState
 from ui.export_handlers import ExportHandlers
+
+# Behavioral analytics tracking
+from analytics.tracking_integration import (
+    track_annotation, track_annotation_edit, track_annotation_delete,
+    track_slice_change
+)
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +43,10 @@ class ImageViewerHandlers:
         self.combined_annotations = {}
         # Initialize export handlers
         self.export_handlers = ExportHandlers(state)
+        # Initialize annotation manager for persistent storage
+        self.annotation_manager = get_annotation_manager()
+        # Current user ID (will be set when user logs in)
+        self.current_user_id = None
     
     @log_exception
     def update_slice(self, slider_value, view_type):
@@ -706,6 +718,73 @@ class ImageViewerHandlers:
         }
         
         return empty_annotated_value
+    
+    # ========== Persistent Storage Methods ==========
+    
+    def set_current_user(self, user_id: str):
+        """Set the current user ID for annotation management"""
+        self.current_user_id = user_id
+        logger.info(f"ImageViewerHandlers: Current user set to: {user_id}")
+        
+        # Load persistent annotations for the current user
+        self.load_persistent_annotations()
+    
+    def load_persistent_annotations(self):
+        """Load annotations from persistent storage for current study"""
+        try:
+            # Skip if no user is logged in
+            if not self.current_user_id:
+                logger.debug("ImageViewerHandlers: No user logged in, skipping annotation loading")
+                return
+            
+            # Skip if no data is loaded
+            if not self.state.current_directory:
+                logger.debug("ImageViewerHandlers: No data loaded, skipping annotation loading")
+                return
+            
+            # Load annotations from persistent storage
+            annotation_data = self.annotation_manager.load_annotations(
+                user_id=self.current_user_id,
+                study_path=self.state.current_directory
+            )
+            
+            if not annotation_data:
+                logger.info("ImageViewerHandlers: No persistent annotations found for current study")
+                return
+            
+            # Clear existing in-memory annotations
+            self.user_annotations.clear()
+            
+            # Reconstruct user_annotations from persistent storage
+            slice_annotations = annotation_data.get('slice_annotations', [])
+            
+            for ann_record in slice_annotations:
+                slice_idx = ann_record.get('slice_idx')
+                view_type = ann_record.get('view_type', 'axial')
+                
+                # Only load annotations for current view
+                if view_type != self.state.current_view:
+                    continue
+                
+                # Initialize slice annotations if needed
+                if slice_idx not in self.user_annotations:
+                    self.user_annotations[slice_idx] = []
+                
+                # Reconstruct annotation in the format used internally
+                user_annotation = {
+                    'type': ann_record.get('annotation_type', 'user_drawn'),
+                    'data': ann_record.get('original_data', {}),
+                    'timestamp': ann_record.get('timestamp', time.time()),
+                    'slice_idx': slice_idx
+                }
+                
+                self.user_annotations[slice_idx].append(user_annotation)
+            
+            logger.info(f"ImageViewerHandlers: Loaded {len(slice_annotations)} annotations from persistent storage "
+                       f"for {len(self.user_annotations)} slices")
+            
+        except Exception as e:
+            logger.error(f"ImageViewerHandlers: Error loading persistent annotations: {e}", exc_info=True)
 
 
 class ImagePlotToolHandlers:
@@ -725,6 +804,10 @@ class ImagePlotToolHandlers:
         self._last_saved_slice = None
         # Track last save time to prevent rapid saves
         self._last_save_time = 0
+        # Initialize annotation manager for persistent storage
+        self.annotation_manager = get_annotation_manager()
+        # Current user ID (will be set when user logs in)
+        self.current_user_id = None
     
     def update_plot_tool(self, tool_name):
         """Since we're using gr.Image now, this method just returns the current image"""
@@ -874,8 +957,10 @@ class ImagePlotToolHandlers:
                 for user_ann in user_annotation_objects:
                     if isinstance(user_ann, dict) and 'data' in user_ann:
                         annotation_shapes.append(user_ann['data'])
+                        logger.debug(f"Loaded annotation: {user_ann['data'].get('type', 'unknown')} with label '{user_ann['data'].get('label', '')}'")
                     else:                        # For backward compatibility, if it's not in the expected format
                         annotation_shapes.append(user_ann)
+                        logger.debug(f"Loaded annotation (legacy format): {type(user_ann)}")
                 
                 logger.info(f"Loaded {len(user_annotation_objects)} user annotations for slice {self.state.current_slice_idx} (replaces MEDSAM2)")
             elif has_user_annotations and user_annotation_count == 0:
@@ -1264,6 +1349,8 @@ class ImagePlotToolHandlers:
                 logger.info(f"No annotations to save for slice {slice_idx}")
                 # Update stored fingerprint to reflect empty state
                 self._loaded_fingerprints[slice_idx] = current_fingerprint
+                # Save empty state to persistent storage
+                self._save_to_persistent_storage()
                 return
             
             # Extract annotations from the AnnotatedImageValue
@@ -1282,6 +1369,33 @@ class ImagePlotToolHandlers:
             
             if annotations:
                 for annotation in annotations:
+                    # Skip incomplete freehand/polygon annotations (in-progress drawings)
+                    ann_type = annotation.get('type', '')
+                    ann_points = annotation.get('points', [])
+                    
+                    # Only save completed shapes:
+                    # - For point-based shapes (freehand, polygon, polyline), require at least 3 points
+                    # - For box/rect shapes, require minimum area (skip tiny in-progress boxes)
+                    # - This filters out intermediate drawing states
+                    if ann_type in ('freehand', 'polygon', 'polyline'):
+                        if not ann_points or len(ann_points) < 3:
+                            logger.debug(f"Skipping incomplete {ann_type} annotation with {len(ann_points)} points")
+                            continue
+                    elif ann_type in ('box', 'rect', 'rectangle'):
+                        # Skip very small boxes that are likely in-progress drawings
+                        xmin = annotation.get('xmin', 0)
+                        ymin = annotation.get('ymin', 0)
+                        xmax = annotation.get('xmax', 0)
+                        ymax = annotation.get('ymax', 0)
+                        width = abs(xmax - xmin)
+                        height = abs(ymax - ymin)
+                        area = width * height
+                        
+                        # Skip boxes smaller than 25 pixels (5x5) - likely accidental clicks or in-progress
+                        if area < 25:
+                            logger.debug(f"Skipping tiny {ann_type} annotation with area {area} (likely in-progress)")
+                            continue
+                    
                     # Create a complete copy of the annotation with all properties
                     # This preserves shape, color, label, and any other modifications
                     user_annotation = {
@@ -1311,10 +1425,336 @@ class ImagePlotToolHandlers:
             # Update stored fingerprint to reflect the new saved state
             self._loaded_fingerprints[slice_idx] = current_fingerprint
             
+            # Save to persistent storage
+            self._save_to_persistent_storage()
+            
         except Exception as e:
             logger.error(f"Error saving user annotations for slice {slice_idx}: {e}")
             import traceback
             logger.error(f"Traceback: {traceback.format_exc()}")
+    
+    def _save_to_persistent_storage(self):
+        """Save all annotations to persistent storage using AnnotationManager"""
+        import hashlib
+        import json
+        from datetime import datetime
+        
+        try:
+            # Skip if no user is logged in
+            if not self.current_user_id:
+                logger.debug("No user logged in, skipping persistent storage")
+                return
+            
+            # Skip if no data is loaded
+            if not self.state.current_directory:
+                logger.debug("No data loaded, skipping persistent storage")
+                return
+            
+            # Load existing annotations to preserve annotations from other slices/views
+            existing_data = self.annotation_manager.load_annotations(
+                user_id=self.current_user_id,
+                study_path=self.state.current_directory
+            )
+            
+            if existing_data:
+                logger.info(f"[ImagePlotToolHandlers] Loaded existing data with {len(existing_data.get('slice_annotations', []))} annotations")
+            else:
+                logger.info("[ImagePlotToolHandlers] No existing annotation data found")
+            
+            # Get the set of slice indices we're currently saving
+            current_slice_indices = set(self.user_annotations.keys())
+            logger.info(f"[ImagePlotToolHandlers] Current slice indices to save: {current_slice_indices}")
+            
+            # Filter out old annotations from slices we're updating
+            # Keep annotations from other slices and other views
+            preserved_annotations = []
+            if existing_data and 'slice_annotations' in existing_data:
+                for ann in existing_data['slice_annotations']:
+                    slice_idx = ann.get('slice_idx')
+                    view_type = ann.get('view_type', 'axial')
+                    
+                    # Keep annotation if it's from a different slice or different view
+                    if slice_idx not in current_slice_indices or view_type != self.state.current_view:
+                        preserved_annotations.append(ann)
+                    else:
+                        logger.debug(f"Removing old annotation {ann.get('annotation_id')} from slice {slice_idx} (will be replaced)")
+            
+            logger.info(f"Preserved {len(preserved_annotations)} annotations from other slices/views")
+            
+            # Prepare NEW slice annotations for slices in self.user_annotations
+            new_slice_annotations = []
+            
+            for slice_idx, annotations in self.user_annotations.items():
+                for ann in annotations:
+                    # Extract the annotation data
+                    ann_data = ann.get('data', {})
+                    
+                    # Generate stable annotation ID based on shape geometry
+                    # This ensures the same shape keeps the same ID even if label/color changes
+                    # Create geometry signature from points or bbox
+                    geometry_data = {}
+                    if 'points' in ann_data and ann_data['points']:
+                        # Round points to avoid floating point differences
+                        geometry_data['points'] = [
+                            [round(p.get('x', 0), 1), round(p.get('y', 0), 1)] 
+                            if isinstance(p, dict) else [round(p[0], 1), round(p[1], 1)]
+                            for p in ann_data['points']
+                        ]
+                    elif 'xmin' in ann_data:
+                        geometry_data['bbox'] = [
+                            round(ann_data.get('xmin', 0), 1),
+                            round(ann_data.get('ymin', 0), 1),
+                            round(ann_data.get('xmax', 0), 1),
+                            round(ann_data.get('ymax', 0), 1)
+                        ]
+                    
+                    geometry_data['type'] = ann_data.get('type', 'unknown')
+                    geometry_str = json.dumps(geometry_data, sort_keys=True)
+                    geometry_hash = hashlib.md5(geometry_str.encode()).hexdigest()[:8]
+                    stable_id = f"slice_{slice_idx}_{geometry_hash}"
+                    
+                    # Create a comprehensive annotation record
+                    annotation_record = {
+                        'slice_idx': slice_idx,
+                        'view_type': self.state.current_view,
+                        'annotation_id': stable_id,
+                        'timestamp': ann.get('timestamp', time.time()),
+                        'annotation_type': 'manual',  # Manual drawing
+                        'shape_type': ann_data.get('type', 'unknown'),
+                        'label': ann_data.get('label', ''),
+                        'color': ann_data.get('color', None),
+                        'coordinates': extract_coordinates(ann_data),
+                        'bbox': extract_bbox(ann_data),
+                        'area': calculate_area(ann_data),
+                        'original_data': ann_data  # Store complete original data
+                    }
+                    
+                    new_slice_annotations.append(annotation_record)
+            
+            # Combine preserved and new annotations
+            all_slice_annotations = preserved_annotations + new_slice_annotations
+            
+            logger.info(f"Total annotations to save: {len(all_slice_annotations)} "
+                       f"(preserved: {len(preserved_annotations)}, new: {len(new_slice_annotations)})")
+            
+            # Prepare study metadata
+            study_metadata = {
+                'data_type': self.state.current_data_type,
+                'view': self.state.current_view,
+                'shape': list(self.state.current_shape) if self.state.current_shape else None,
+                'num_slices': len(self.state.file_list) if self.state.file_list else None,
+            }
+            
+            # Add DICOM-specific metadata if available
+            if self.state.current_metadata:
+                study_metadata['modality'] = self.state.current_metadata.get('Modality', 'Unknown')
+                study_metadata['series_description'] = self.state.current_metadata.get('SeriesDescription', '')
+            
+            # Manually build the complete annotation data structure to REPLACE (not merge)
+            annotation_file = self.annotation_manager._get_annotation_file(
+                self.current_user_id,
+                self.state.current_directory
+            )
+            
+            if existing_data:
+                # Update existing record
+                annotation_data = existing_data
+                from datetime import datetime
+                annotation_data['modified_at'] = datetime.now().isoformat()
+                annotation_data['modification_count'] = annotation_data.get('modification_count', 0) + 1
+            else:
+                # Create new record
+                from datetime import datetime
+                annotation_data = {
+                    'user_id': self.current_user_id,
+                    'study_path': os.path.normpath(self.state.current_directory),
+                    'study_hash': self.annotation_manager._get_study_hash(self.state.current_directory),
+                    'created_at': datetime.now().isoformat(),
+                    'modified_at': datetime.now().isoformat(),
+                    'modification_count': 0,
+                }
+            
+            # Replace slice_annotations completely (no merging by annotation_id)
+            annotation_data['slice_annotations'] = all_slice_annotations
+            annotation_data['annotation_type'] = 'manual'
+            annotation_data['study_metadata'] = study_metadata
+            
+            # Write to file
+            with open(annotation_file, 'w', encoding='utf-8') as f:
+                json.dump(annotation_data, f, indent=2, ensure_ascii=False)
+            
+            logger.info(f"Successfully saved {len(all_slice_annotations)} total annotations to persistent storage "
+                       f"({len(new_slice_annotations)} from current session)")
+                
+        except Exception as e:
+            logger.error(f"Error saving to persistent storage: {e}", exc_info=True)
+    
+    def _extract_coordinates(self, ann_data: Dict[str, Any]) -> List:
+        """Extract coordinates from annotation data"""
+        try:
+            shape_type = ann_data.get('type', '')
+            
+            if shape_type == 'polygon' and 'points' in ann_data:
+                points = ann_data['points']
+                if isinstance(points, list):
+                    return [[p.get('x', p[0]) if isinstance(p, dict) else p[0], 
+                            p.get('y', p[1]) if isinstance(p, dict) else p[1]] 
+                            for p in points]
+            elif shape_type == 'box' or shape_type == 'rect':
+                if 'xmin' in ann_data and 'ymin' in ann_data:
+                    return [
+                        [ann_data['xmin'], ann_data['ymin']],
+                        [ann_data['xmax'], ann_data['ymin']],
+                        [ann_data['xmax'], ann_data['ymax']],
+                        [ann_data['xmin'], ann_data['ymax']]
+                    ]
+            
+            return []
+        except Exception as e:
+            logger.error(f"Error extracting coordinates: {e}")
+            return []
+    
+    def _extract_bbox(self, ann_data: Dict[str, Any]) -> List:
+        """Extract bounding box from annotation data"""
+        try:
+            if 'xmin' in ann_data:
+                return [
+                    ann_data.get('xmin', 0),
+                    ann_data.get('ymin', 0),
+                    ann_data.get('xmax', 0),
+                    ann_data.get('ymax', 0)
+                ]
+            elif 'points' in ann_data:
+                points = ann_data['points']
+                if isinstance(points, list) and points:
+                    xs = [p.get('x', p[0]) if isinstance(p, dict) else p[0] for p in points]
+                    ys = [p.get('y', p[1]) if isinstance(p, dict) else p[1] for p in points]
+                    return [min(xs), min(ys), max(xs), max(ys)]
+            
+            return []
+        except Exception as e:
+            logger.error(f"Error extracting bbox: {e}")
+            return []
+    
+    def _calculate_area(self, ann_data: Dict[str, Any]) -> float:
+        """Calculate area of annotation"""
+        try:
+            shape_type = ann_data.get('type', '')
+            
+            if shape_type == 'polygon' and 'points' in ann_data:
+                points = ann_data['points']
+                if isinstance(points, list) and len(points) >= 3:
+                    # Shoelace formula
+                    area = 0
+                    n = len(points)
+                    for i in range(n):
+                        j = (i + 1) % n
+                        x1 = points[i].get('x', points[i][0]) if isinstance(points[i], dict) else points[i][0]
+                        y1 = points[i].get('y', points[i][1]) if isinstance(points[i], dict) else points[i][1]
+                        x2 = points[j].get('x', points[j][0]) if isinstance(points[j], dict) else points[j][0]
+                        y2 = points[j].get('y', points[j][1]) if isinstance(points[j], dict) else points[j][1]
+                        area += x1 * y2 - x2 * y1
+                    return abs(area) / 2.0
+            elif shape_type == 'box' or shape_type == 'rect':
+                if 'xmin' in ann_data and 'ymin' in ann_data:
+                    width = ann_data.get('xmax', 0) - ann_data.get('xmin', 0)
+                    height = ann_data.get('ymax', 0) - ann_data.get('ymin', 0)
+                    return abs(width * height)
+            
+            return 0.0
+        except Exception as e:
+            logger.error(f"Error calculating area: {e}")
+            return 0.0
+    
+    def load_persistent_annotations(self):
+        """Load annotations from persistent storage for current study"""
+        try:
+            # Skip if no user is logged in
+            if not self.current_user_id:
+                logger.debug("No user logged in, skipping annotation loading")
+                return
+            
+            # Skip if no data is loaded
+            if not self.state.current_directory:
+                logger.debug("No data loaded, skipping annotation loading")
+                return
+            
+            # Load annotations from persistent storage
+            annotation_data = self.annotation_manager.load_annotations(
+                user_id=self.current_user_id,
+                study_path=self.state.current_directory
+            )
+            
+            if not annotation_data:
+                logger.info("No persistent annotations found for current study")
+                # Only clear memory if we're actually switching studies AND there's nothing to load
+                # Don't clear if we're just loading the same study
+                if self.user_annotations:
+                    logger.debug("Keeping current in-memory annotations (no file to overwrite with)")
+                return
+            
+            # We have persistent annotations - safe to clear memory and reload
+            self.user_annotations.clear()
+            self._loaded_fingerprints.clear()
+            
+            # Reconstruct user_annotations from persistent storage
+            slice_annotations = annotation_data.get('slice_annotations', [])
+            
+            logger.info(f"Found {len(slice_annotations)} total annotations in storage for this study")
+            
+            for ann_record in slice_annotations:
+                slice_idx = ann_record.get('slice_idx')
+                view_type = ann_record.get('view_type', 'axial')
+                
+                # Only load annotations for current view
+                if view_type != self.state.current_view:
+                    logger.debug(f"Skipping annotation for slice {slice_idx} (view: {view_type}, current: {self.state.current_view})")
+                    continue
+                
+                # Initialize slice annotations if needed
+                if slice_idx not in self.user_annotations:
+                    self.user_annotations[slice_idx] = []
+                
+                # Reconstruct annotation in the format used by save_user_annotations
+                user_annotation = {
+                    'type': ann_record.get('annotation_type', 'user_drawn'),
+                    'data': ann_record.get('original_data', {}),
+                    'timestamp': ann_record.get('timestamp', time.time()),
+                    'slice_idx': slice_idx
+                }
+                
+                self.user_annotations[slice_idx].append(user_annotation)
+                logger.debug(f"Loaded annotation for slice {slice_idx}: {ann_record.get('shape_type')} with label '{ann_record.get('label')}'")
+            
+            # CRITICAL: Set fingerprints for loaded slices to prevent unnecessary re-saves
+            # Generate fingerprint from the loaded annotation data in UI format
+            for slice_idx, annotations in self.user_annotations.items():
+                # Convert to UI format (boxes) for fingerprint generation
+                ui_boxes = []
+                for ann in annotations:
+                    ann_data = ann.get('data', {})
+                    if ann_data:
+                        ui_boxes.append(ann_data)
+                
+                # Generate and store fingerprint
+                ui_format = {'boxes': ui_boxes}
+                fingerprint = self._get_annotation_fingerprint(ui_format)
+                self._loaded_fingerprints[slice_idx] = fingerprint
+                logger.info(f"Set fingerprint for loaded slice {slice_idx}: '{fingerprint}' ({len(ui_boxes)} annotations)")
+            
+            logger.info(f"Loaded {len(slice_annotations)} annotations from persistent storage "
+                       f"for {len(self.user_annotations)} slices")
+            
+        except Exception as e:
+            logger.error(f"Error loading persistent annotations: {e}", exc_info=True)
+    
+    def set_current_user(self, user_id: str):
+        """Set the current user ID for annotation management"""
+        self.current_user_id = user_id
+        logger.info(f"Current user set to: {user_id}")
+        
+        # Load persistent annotations for the current user
+        self.load_persistent_annotations()
 
     def get_all_annotations_for_slice(self, slice_idx: int) -> List:
         """Get all annotations (MEDSAM2 + user) for a specific slice"""
@@ -1376,6 +1816,211 @@ class ImagePlotToolHandlers:
                     current_count = 0
                     
                 logger.info(f"Saved {current_count} annotations for slice {current_slice}")
+                
+                # Track annotation changes for behavioral analytics
+                try:
+                    # Get previous count FOR THIS SPECIFIC SLICE to detect additions/deletions
+                    # This prevents false events when navigating between slices
+                    slice_annotation_counts = getattr(self, '_slice_annotation_counts', {})
+                    prev_count = slice_annotation_counts.get(current_slice, None)
+                    
+                    # Track creation time per slice to suppress immediate "edit" events after creation
+                    # (Gradio fires multiple change events while drawing a shape)
+                    slice_creation_times = getattr(self, '_slice_creation_times', {})
+                    creation_cooldown_sec = 2.0  # Suppress edits within 2 seconds of creation
+                    
+                    # If we don't have a previous count for this slice, initialize it
+                    # This happens on first visit to a slice - don't track as "created"
+                    if prev_count is None:
+                        slice_annotation_counts[current_slice] = current_count
+                        self._slice_annotation_counts = slice_annotation_counts
+                        logger.debug(f"Initialized annotation count for slice {current_slice}: {current_count}")
+                    elif current_count > prev_count:
+                        # New annotations added - FIRST CHANGE (shape drawn, no label yet)
+                        logger.info(f"🔢 Count increased from {prev_count} to {current_count} - annotation added to boxes!")
+                        
+                        # Check if we have a tool timestamp
+                        if self.state.last_tool_timestamp:
+                            elapsed = int(time.time() * 1000) - self.state.last_tool_timestamp
+                            logger.info(f"⏰ Time since tool selected: {elapsed}ms (waiting for modal confirmation)")
+                        
+                        boxes = annotated_image_value.get('boxes', []) if isinstance(annotated_image_value, dict) else []
+                        
+                        # Check if this is an AI-assisted annotation (has label already)
+                        is_ai_annotation = False
+                        if boxes and len(boxes) > 0:
+                            last_box = boxes[-1]
+                            label = last_box.get('label', '')
+                            if label and ('MEDSAM2' in label.upper() or 'MEDSAM' in label.upper() or 
+                                        'SAM2' in label.upper() or 'AUTO MASK' in label.upper()):
+                                is_ai_annotation = True
+                                logger.info(f"✅ AI-assisted annotation detected - tracking immediately")
+                                
+                                # IMMEDIATELY set annotation timestamp to filter automatic tool switches
+                                self.state.last_annotation_timestamp = int(time.time() * 1000)
+                                
+                                # Track AI annotation immediately (no modal)
+                                # Use last_tool_selected from state for accurate annotation_type
+                                ann_type = self.state.last_tool_selected if self.state.last_tool_selected else last_box.get('type', 'unknown')
+                                track_annotation(
+                                    slice_idx=current_slice,
+                                    annotation_type=ann_type,
+                                    label=label,
+                                    ai_assisted=True,
+                                    duration_ms=None
+                                )
+
+                                # Reset tool timestamp
+                                self.state.last_tool_selected = None
+                                self.state.last_tool_timestamp = None
+                        
+                        if not is_ai_annotation:
+                            # Manual annotation - store as PENDING (waiting for modal confirmation)
+                            # IMMEDIATELY set annotation timestamp to filter automatic tool switches
+                            self.state.last_annotation_timestamp = int(time.time() * 1000)
+                            
+                            # Create fingerprint of unlabeled annotation
+                            unlabeled_fingerprint = self._get_annotation_fingerprint({'boxes': boxes})
+                            
+                            # CRITICAL: Store timestamp AND tool name in pending dict
+                            # For box/circle: setDragMode() fires AFTER modal (in onModalNewChange)
+                            # For polygon/freehand: setDragMode() fires BEFORE modal (in onPolygonFinishCreation)
+                            # So we need to preserve both timestamp and tool_selected for all cases
+                            # IMPORTANT: New annotations are inserted at index 0 (not at the end)
+                            self.state.pending_modal_confirmations[current_slice] = {
+                                'count': current_count,
+                                'unlabeled_fingerprint': unlabeled_fingerprint,
+                                'annotation_index': 0,  # NEW annotation is always at index 0
+                                'timestamp': self.state.last_tool_timestamp,  # Preserve original tool selection timestamp
+                                'tool_name': self.state.last_tool_selected  # Preserve tool name for accurate annotation_type
+                            }
+                            logger.info(f"📝 Pending manual annotation on slice {current_slice} - waiting for modal OK (tool: {self.state.last_tool_selected})")
+                            
+                            # DON'T reset state timestamp yet - polygon/freehand need it until modal shows
+                            # It will be overwritten by setDragMode() but that's OK - we have it in pending dict
+                        
+                        # Update the slice count and record creation time
+                        slice_annotation_counts[current_slice] = current_count
+                        self._slice_annotation_counts = slice_annotation_counts
+                        slice_creation_times[current_slice] = time.time()
+                        self._slice_creation_times = slice_creation_times
+                        
+                    elif current_count < prev_count:
+                        # Annotations deleted by user
+                        for _ in range(prev_count - current_count):
+                            track_annotation_delete(slice_idx=current_slice)
+                        
+                        # Update the slice count
+                        slice_annotation_counts[current_slice] = current_count
+                        self._slice_annotation_counts = slice_annotation_counts
+                        
+                    elif current_count > 0 and prev_count > 0:
+                        # Same count - could be edit OR modal confirmation
+                        
+                        # Check if this is a pending modal confirmation (SECOND CHANGE)
+                        if current_slice in self.state.pending_modal_confirmations:
+                            pending = self.state.pending_modal_confirmations[current_slice]
+                            
+                            # Verify count matches
+                            if pending['count'] == current_count:
+                                boxes = annotated_image_value.get('boxes', []) if isinstance(annotated_image_value, dict) else []
+                                current_fingerprint = self._get_annotation_fingerprint({'boxes': boxes})
+                                
+                                # Check if fingerprint changed (label was applied)
+                                if current_fingerprint != pending['unlabeled_fingerprint']:
+                                    logger.info(f"✅ Modal confirmed! Label applied to annotation on slice {current_slice}")
+                                    
+                                    # Find the annotation that matches the tool type we were tracking
+                                    # For polygon/freehand, the annotation might have moved in the array
+                                    annotation = None
+                                    ann_idx = -1
+                                    tool_name = pending.get('tool_name')
+                                    
+                                    # Search for the FIRST annotation that matches the tool type
+                                    # (This will be the one we just created)
+                                    for i, box in enumerate(boxes):
+                                        if isinstance(box, dict) and box.get('type') == tool_name:
+                                            annotation = box
+                                            ann_idx = i
+                                            break
+                                    
+                                    # Fallback: if we didn't find by type, use the stored index
+                                    if annotation is None and boxes:
+                                        ann_idx = pending.get('annotation_index', 0)
+                                        if ann_idx < len(boxes):
+                                            annotation = boxes[ann_idx]
+                                            logger.info(f"⚠️ Using fallback index {ann_idx}")
+                                    
+                                    if annotation:
+                                        # Extract label - ensure we get the actual string label, not color
+                                        label = annotation.get('label', '')
+                                        
+                                        # If label is empty or is a color array/tuple, it means label wasn't set yet
+                                        # This happens for polygon/freehand where modal fires before label is applied
+                                        if not label or isinstance(label, (list, tuple)):
+                                            # Don't track this annotation yet - wait for next change when label is actually set
+                                            return None
+                                        
+                                        # Use tool_name from pending dict for accurate annotation_type
+                                        # This ensures we track the correct shape type (box/circle/polygon/freehand)
+                                        ann_type = pending.get('tool_name', annotation.get('type', 'unknown'))
+                                        
+                                        # Calculate duration NOW (includes drawing + modal time)
+                                        # Use timestamp from pending dict (preserved from original tool selection)
+                                        duration_ms = None
+                                        original_timestamp = pending.get('timestamp')
+                                        if original_timestamp:
+                                            current_time_ms = int(time.time() * 1000)
+                                            duration_ms = current_time_ms - original_timestamp
+                                            logger.info(f"⏱️ Manual annotation complete - Total time: {duration_ms}ms (drawing + modal) - Type: {ann_type}")
+                                        else:
+                                            logger.warning("⚠️ No timestamp found in pending confirmation")
+                                        
+                                        # Track the completed annotation
+                                        track_annotation(
+                                            slice_idx=current_slice,
+                                            annotation_type=ann_type,
+                                            label=label if label else 'unlabeled',
+                                            ai_assisted=False,
+                                            duration_ms=duration_ms
+                                        )
+                                        
+                                        # NOTE: Don't track tool_usage here - it's already tracked by tool_selected event handler
+                                        # This was causing duplicate tool_usage events
+                                    
+                                    # Clear pending confirmation
+                                    del self.state.pending_modal_confirmations[current_slice]
+                        
+                        # Only check for edits if this wasn't a modal confirmation
+                        if current_slice not in self.state.pending_modal_confirmations or current_fingerprint == pending.get('unlabeled_fingerprint', ''):
+                            # Regular edit detection (not a modal confirmation)
+                            # BUT: Skip if within cooldown period after creation
+                            # (Gradio fires multiple change events while drawing shapes)
+                            last_creation_time = slice_creation_times.get(current_slice, 0)
+                            time_since_creation = time.time() - last_creation_time
+                            
+                            # Also check if we're within 500ms of annotation being tracked (from last_annotation_timestamp)
+                            # This filters out automatic "edit" events that fire immediately after annotation_created
+                            time_since_annotation_ms = (int(time.time() * 1000) - self.state.last_annotation_timestamp) if hasattr(self.state, 'last_annotation_timestamp') else 999999
+                            
+                            if time_since_creation < creation_cooldown_sec:
+                                # Still within cooldown - this is part of the drawing action, not a real edit
+                                logger.debug(f"Skipping edit tracking - within {creation_cooldown_sec}s cooldown after creation")
+                            elif time_since_annotation_ms < 1800:
+                                # Within 1800ms of annotation_created event - this is an automatic edit, not user action
+                                logger.debug(f"Skipping edit tracking - within {time_since_annotation_ms}ms of annotation_created (automatic component behavior)")
+                            else:
+                                # Outside cooldown - check if actually edited
+                                slice_fingerprints = getattr(self, '_slice_fingerprints', {})
+                                prev_fingerprint = slice_fingerprints.get(current_slice, '')
+                                boxes = annotated_image_value.get('boxes', []) if isinstance(annotated_image_value, dict) else []
+                                current_fingerprint = str(sorted([str(b.get('points', b.get('xmin', ''))) for b in boxes]))
+                                if prev_fingerprint and prev_fingerprint != current_fingerprint:
+                                    track_annotation_edit(slice_idx=current_slice)
+                                slice_fingerprints[current_slice] = current_fingerprint
+                                self._slice_fingerprints = slice_fingerprints
+                except Exception as track_e:
+                    logger.debug(f"Behavioral tracking skipped: {track_e}")
               # Don't return anything to avoid circular dependency with image_display.change
             return None
             
@@ -1394,11 +2039,25 @@ class ImagePlotToolHandlers:
             self._navigation_lock = True
             logger.info(f"Starting slider navigation to slice {slider_value}")
             
+            # Capture current slice index BEFORE any changes
+            previous_slice_idx = self.state.current_slice_idx
+            new_slice_idx = int(slider_value)
+            
             # Save current annotations if provided - use the CURRENT slice before it changes
             if current_annotated_value is not None:
-                previous_slice_idx = self.state.current_slice_idx  # This is the slice we're leaving
-                logger.info(f"Saving annotations for previous slice {previous_slice_idx} before moving to slice {slider_value}")
+                logger.info(f"Saving annotations for previous slice {previous_slice_idx} before moving to slice {new_slice_idx}")
                 self.save_user_annotations(current_annotated_value, previous_slice_idx)
+            
+            # Track slice navigation for behavioral analytics (only if actually changing slices)
+            if previous_slice_idx != new_slice_idx:
+                try:
+                    track_slice_change(
+                        from_slice=previous_slice_idx,
+                        to_slice=new_slice_idx,
+                        method="slider"
+                    )
+                except Exception as track_e:
+                    logger.debug(f"Behavioral tracking skipped: {track_e}")
             
             # Update to new slice
             result = self.update_slice_for_annotator(slider_value, self.state.current_view)
@@ -1428,11 +2087,14 @@ class ImagePlotToolHandlers:
                 return (None, f"{current_slider_value}/0", "x: 0, y: 0, z: 0", {}, None, None), current_slider_value
             
             self._navigation_lock = True
-            logger.info(f"Starting {direction} navigation from slice {current_slider_value}")
+            
+            # Capture previous slice BEFORE any changes
+            previous_slice_idx = self.state.current_slice_idx
+            
+            logger.info(f"Starting {direction} navigation from slice {previous_slice_idx}")
             
             # Save current annotations if provided - use the CURRENT slice before it changes
             if current_annotated_value is not None:
-                previous_slice_idx = self.state.current_slice_idx  # This is the slice we're leaving
                 logger.info(f"Saving annotations for previous slice {previous_slice_idx} before navigation")
                 self.save_user_annotations(current_annotated_value, previous_slice_idx)
             
@@ -1443,6 +2105,17 @@ class ImagePlotToolHandlers:
                 new_value = self.prev_slice(current_slider_value)
             else:
                 new_value = current_slider_value
+            
+            # Track slice navigation for behavioral analytics (only if actually changing slices)
+            if previous_slice_idx != new_value:
+                try:
+                    track_slice_change(
+                        from_slice=previous_slice_idx,
+                        to_slice=new_value,
+                        method="button"
+                    )
+                except Exception as track_e:
+                    logger.debug(f"Behavioral tracking skipped: {track_e}")
             
             # Update to new slice
             result = self.update_slice_for_annotator(new_value, self.state.current_view), new_value
@@ -1626,4 +2299,308 @@ class ImagePlotToolHandlers:
         
         return empty_annotated_value
     
+    # ========== Persistent Storage Methods (shared with ImageViewerHandlers) ==========
     
+    def _save_to_persistent_storage(self):
+        """Save all annotations to persistent storage using AnnotationManager"""
+        import hashlib
+        import json
+        from datetime import datetime
+        
+        try:
+            # Skip if no user is logged in
+            if not self.current_user_id:
+                logger.debug("No user logged in, skipping persistent storage")
+                return
+            
+            # Skip if no data is loaded
+            if not self.state.current_directory:
+                logger.debug("No data loaded, skipping persistent storage")
+                return
+            
+            # Load existing annotations to preserve annotations from other slices/views
+            existing_data = self.annotation_manager.load_annotations(
+                user_id=self.current_user_id,
+                study_path=self.state.current_directory
+            )
+            
+            if existing_data:
+                logger.info(f"[ImageViewerHandlers] Loaded existing data with {len(existing_data.get('slice_annotations', []))} annotations")
+            else:
+                logger.info("[ImageViewerHandlers] No existing annotation data found")
+            
+            # Get the set of slice indices we're currently saving
+            current_slice_indices = set(self.user_annotations.keys())
+            logger.info(f"[ImageViewerHandlers] Current slice indices to save: {current_slice_indices}")
+            
+            # Filter out old annotations from slices we're updating
+            # Keep annotations from other slices and other views
+            preserved_annotations = []
+            if existing_data and 'slice_annotations' in existing_data:
+                for ann in existing_data['slice_annotations']:
+                    slice_idx = ann.get('slice_idx')
+                    view_type = ann.get('view_type', 'axial')
+                    
+                    # Keep annotation if it's from a different slice or different view
+                    if slice_idx not in current_slice_indices or view_type != self.state.current_view:
+                        preserved_annotations.append(ann)
+                    else:
+                        logger.debug(f"Removing old annotation {ann.get('annotation_id')} from slice {slice_idx} (will be replaced)")
+            
+            logger.info(f"Preserved {len(preserved_annotations)} annotations from other slices/views")
+            
+            # Prepare NEW slice annotations for slices in self.user_annotations
+            new_slice_annotations = []
+            
+            logger.info(f"[ImageViewerHandlers] Processing {len(self.user_annotations)} slices from user_annotations")
+            for slice_idx, annotations in self.user_annotations.items():
+                logger.info(f"[ImageViewerHandlers]   Slice {slice_idx}: {len(annotations)} annotations, type: {type(annotations)}")
+                for ann in annotations:
+                    # Extract the annotation data
+                    ann_data = ann.get('data', {})
+                    
+                    # Generate stable annotation ID based on shape geometry
+                    # This ensures the same shape keeps the same ID even if label/color changes
+                    # Create geometry signature from points or bbox
+                    geometry_data = {}
+                    if 'points' in ann_data and ann_data['points']:
+                        # Round points to avoid floating point differences
+                        geometry_data['points'] = [
+                            [round(p.get('x', 0), 1), round(p.get('y', 0), 1)] 
+                            if isinstance(p, dict) else [round(p[0], 1), round(p[1], 1)]
+                            for p in ann_data['points']
+                        ]
+                    elif 'xmin' in ann_data:
+                        geometry_data['bbox'] = [
+                            round(ann_data.get('xmin', 0), 1),
+                            round(ann_data.get('ymin', 0), 1),
+                            round(ann_data.get('xmax', 0), 1),
+                            round(ann_data.get('ymax', 0), 1)
+                        ]
+                    
+                    geometry_data['type'] = ann_data.get('type', 'unknown')
+                    geometry_str = json.dumps(geometry_data, sort_keys=True)
+                    geometry_hash = hashlib.md5(geometry_str.encode()).hexdigest()[:8]
+                    stable_id = f"slice_{slice_idx}_{geometry_hash}"
+                    
+                    # Create a comprehensive annotation record
+                    annotation_record = {
+                        'slice_idx': slice_idx,
+                        'view_type': self.state.current_view,
+                        'annotation_id': stable_id,
+                        'timestamp': ann.get('timestamp', time.time()),
+                        'annotation_type': 'manual',  # Manual drawing
+                        'shape_type': ann_data.get('type', 'unknown'),
+                        'label': ann_data.get('label', ''),
+                        'color': ann_data.get('color', None),
+                        'coordinates': extract_coordinates(ann_data),
+                        'bbox': extract_bbox(ann_data),
+                        'area': calculate_area(ann_data),
+                        'original_data': ann_data  # Store complete original data
+                    }
+                    
+                    new_slice_annotations.append(annotation_record)
+            
+            # Combine preserved and new annotations
+            all_slice_annotations = preserved_annotations + new_slice_annotations
+            
+            logger.info(f"Total annotations to save: {len(all_slice_annotations)} "
+                       f"(preserved: {len(preserved_annotations)}, new: {len(new_slice_annotations)})")
+            
+            # Prepare study metadata
+            study_metadata = {
+                'data_type': self.state.current_data_type,
+                'view': self.state.current_view,
+                'shape': list(self.state.current_shape) if self.state.current_shape else None,
+                'num_slices': len(self.state.file_list) if self.state.file_list else None,
+            }
+            
+            # Add DICOM-specific metadata if available
+            if self.state.current_metadata:
+                study_metadata['modality'] = self.state.current_metadata.get('Modality', 'Unknown')
+                study_metadata['series_description'] = self.state.current_metadata.get('SeriesDescription', '')
+            
+            # Manually build the complete annotation data structure to REPLACE (not merge)
+            annotation_file = self.annotation_manager._get_annotation_file(
+                self.current_user_id,
+                self.state.current_directory
+            )
+            
+            if existing_data:
+                # Update existing record
+                annotation_data = existing_data
+                from datetime import datetime
+                annotation_data['modified_at'] = datetime.now().isoformat()
+                annotation_data['modification_count'] = annotation_data.get('modification_count', 0) + 1
+            else:
+                # Create new record
+                from datetime import datetime
+                annotation_data = {
+                    'user_id': self.current_user_id,
+                    'study_path': os.path.normpath(self.state.current_directory),
+                    'study_hash': self.annotation_manager._get_study_hash(self.state.current_directory),
+                    'created_at': datetime.now().isoformat(),
+                    'modified_at': datetime.now().isoformat(),
+                    'modification_count': 0,
+                }
+            
+            # Replace slice_annotations completely (no merging by annotation_id)
+            annotation_data['slice_annotations'] = all_slice_annotations
+            annotation_data['annotation_type'] = 'manual'
+            annotation_data['study_metadata'] = study_metadata
+            
+            # Write to file
+            with open(annotation_file, 'w', encoding='utf-8') as f:
+                json.dump(annotation_data, f, indent=2, ensure_ascii=False)
+            
+            logger.info(f"Successfully saved {len(all_slice_annotations)} total annotations to persistent storage "
+                       f"({len(new_slice_annotations)} from current session)")
+                
+        except Exception as e:
+            logger.error(f"Error saving to persistent storage: {e}", exc_info=True)
+    
+    def _extract_coordinates(self, ann_data: Dict[str, Any]) -> List:
+        """Extract coordinates from annotation data"""
+        try:
+            shape_type = ann_data.get('type', '')
+            
+            if shape_type == 'polygon' and 'points' in ann_data:
+                points = ann_data['points']
+                if isinstance(points, list):
+                    return [[p.get('x', p[0]) if isinstance(p, dict) else p[0], 
+                            p.get('y', p[1]) if isinstance(p, dict) else p[1]] 
+                            for p in points]
+            elif shape_type == 'box' or shape_type == 'rect':
+                if 'xmin' in ann_data and 'ymin' in ann_data:
+                    return [
+                        [ann_data['xmin'], ann_data['ymin']],
+                        [ann_data['xmax'], ann_data['ymin']],
+                        [ann_data['xmax'], ann_data['ymax']],
+                        [ann_data['xmin'], ann_data['ymax']]
+                    ]
+            
+            return []
+        except Exception as e:
+            logger.error(f"Error extracting coordinates: {e}")
+            return []
+    
+    def _extract_bbox(self, ann_data: Dict[str, Any]) -> List:
+        """Extract bounding box from annotation data"""
+        try:
+            if 'xmin' in ann_data:
+                return [
+                    ann_data.get('xmin', 0),
+                    ann_data.get('ymin', 0),
+                    ann_data.get('xmax', 0),
+                    ann_data.get('ymax', 0)
+                ]
+            elif 'points' in ann_data:
+                points = ann_data['points']
+                if isinstance(points, list) and points:
+                    xs = [p.get('x', p[0]) if isinstance(p, dict) else p[0] for p in points]
+                    ys = [p.get('y', p[1]) if isinstance(p, dict) else p[1] for p in points]
+                    return [min(xs), min(ys), max(xs), max(ys)]
+            
+            return []
+        except Exception as e:
+            logger.error(f"Error extracting bbox: {e}")
+            return []
+    
+    def _calculate_area(self, ann_data: Dict[str, Any]) -> float:
+        """Calculate area of annotation"""
+        try:
+            shape_type = ann_data.get('type', '')
+            
+            if shape_type == 'polygon' and 'points' in ann_data:
+                points = ann_data['points']
+                if isinstance(points, list) and len(points) >= 3:
+                    # Shoelace formula
+                    area = 0
+                    n = len(points)
+                    for i in range(n):
+                        j = (i + 1) % n
+                        x1 = points[i].get('x', points[i][0]) if isinstance(points[i], dict) else points[i][0]
+                        y1 = points[i].get('y', points[i][1]) if isinstance(points[i], dict) else points[i][1]
+                        x2 = points[j].get('x', points[j][0]) if isinstance(points[j], dict) else points[j][0]
+                        y2 = points[j].get('y', points[j][1]) if isinstance(points[j], dict) else points[j][1]
+                        area += x1 * y2 - x2 * y1
+                    return abs(area) / 2.0
+            elif shape_type == 'box' or shape_type == 'rect':
+                if 'xmin' in ann_data and 'ymin' in ann_data:
+                    width = ann_data.get('xmax', 0) - ann_data.get('xmin', 0)
+                    height = ann_data.get('ymax', 0) - ann_data.get('ymin', 0)
+                    return abs(width * height)
+            
+            return 0.0
+        except Exception as e:
+            logger.error(f"Error calculating area: {e}")
+            return 0.0
+    
+    def load_persistent_annotations(self):
+        """Load annotations from persistent storage for current study"""
+        try:
+            # Skip if no user is logged in
+            if not self.current_user_id:
+                logger.debug("No user logged in, skipping annotation loading")
+                return
+            
+            # Skip if no data is loaded
+            if not self.state.current_directory:
+                logger.debug("No data loaded, skipping annotation loading")
+                return
+            
+            # Load annotations from persistent storage
+            annotation_data = self.annotation_manager.load_annotations(
+                user_id=self.current_user_id,
+                study_path=self.state.current_directory
+            )
+            
+            if not annotation_data:
+                logger.info("No persistent annotations found for current study")
+                return
+            
+            # Clear existing in-memory annotations
+            self.user_annotations.clear()
+            self._loaded_fingerprints.clear()
+            
+            # Reconstruct user_annotations from persistent storage
+            slice_annotations = annotation_data.get('slice_annotations', [])
+            
+            for ann_record in slice_annotations:
+                slice_idx = ann_record.get('slice_idx')
+                view_type = ann_record.get('view_type', 'axial')
+                
+                # Only load annotations for current view
+                if view_type != self.state.current_view:
+                    continue
+                
+                # Initialize slice annotations if needed
+                if slice_idx not in self.user_annotations:
+                    self.user_annotations[slice_idx] = []
+                
+                # Reconstruct annotation in the format used by save_user_annotations
+                user_annotation = {
+                    'type': ann_record.get('annotation_type', 'user_drawn'),
+                    'data': ann_record.get('original_data', {}),
+                    'timestamp': ann_record.get('timestamp', time.time()),
+                    'slice_idx': slice_idx
+                }
+                
+                self.user_annotations[slice_idx].append(user_annotation)
+            
+            logger.info(f"Loaded {len(slice_annotations)} annotations from persistent storage "
+                       f"for {len(self.user_annotations)} slices")
+            
+        except Exception as e:
+            logger.error(f"Error loading persistent annotations: {e}", exc_info=True)
+    
+    def set_current_user(self, user_id: str):
+        """Set the current user ID for annotation management"""
+        self.current_user_id = user_id
+        logger.info(f"Current user set to: {user_id}")
+        
+        # Load persistent annotations for the current user
+        self.load_persistent_annotations()
+    
+    
+

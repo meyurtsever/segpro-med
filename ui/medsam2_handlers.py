@@ -26,6 +26,11 @@ from utils.debug_utils import log_exception
 from utils.visualization import display_slice, overlay_segmentation
 from utils.brain_roi_detector import BrainROIDetector
 
+# Behavioral analytics tracking
+from analytics.tracking_integration import (
+    track_ai_segmentation, track_automatic_segmentation
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -607,6 +612,15 @@ class MEDSAM2Handlers:
                     status_msg += f"Error output:\n{result.stderr[:500]}"
                 if result.stdout:                    status_msg += f"\nStandard output:\n{result.stdout[:500]}"
             
+            # Track automatic segmentation for behavioral analytics
+            try:
+                track_automatic_segmentation(
+                    model="medsam2",
+                    slice_idx=self.state.current_slice_idx if self.state else 0
+                )
+            except Exception as track_e:
+                logger.debug(f"Behavioral tracking skipped: {track_e}")
+            
             return status_msg, annotated_result, success_flag
             
         except Exception as e:
@@ -711,9 +725,33 @@ class MEDSAM2Handlers:
                 expected_file_slice = self.annotated_slice  # Same as UI slice with our +1 adjustment
                 slice_num_padded = str(expected_file_slice).zfill(4)
                 logger.info(f"Will look for slice_{slice_num_padded}_mask.npy for UI slice {self.annotated_slice}")
+                
+                # Track AI segmentation for behavioral analytics
+                try:
+                    track_ai_segmentation(
+                        model="medsam2",
+                        processing_mode="single",
+                        slice_idx=self.annotated_slice,
+                        prompt_type=prompt_type
+                    )
+                except Exception as track_e:
+                    logger.debug(f"Behavioral tracking skipped: {track_e}")
+                
                 return f"Annotation completed successfully using {prompt_type} prompts! Results saved to: {output_dir}"
             else:
-                logger.error(f"MEDSAM2 failed: {result.stderr}")            
+                logger.error(f"MEDSAM2 failed: {result.stderr}")
+                
+                # Track failed AI segmentation
+                try:
+                    track_ai_segmentation(
+                        model="medsam2",
+                        processing_mode="single",
+                        slice_idx=self.annotated_slice,
+                        prompt_type=prompt_type
+                    )
+                except Exception as track_e:
+                    logger.debug(f"Behavioral tracking skipped: {track_e}")
+                
                 return f"Error running MEDSAM2: {result.stderr}"
         except Exception as e:
             logger.error(f"Error running MEDSAM2 annotation: {str(e)}")
@@ -1796,6 +1834,15 @@ class MEDSAM2Handlers:
             Tuple of (status_message, annotated_image_data, success_flag)        """
         import time
         import torch
+        
+        # Track automatic segmentation for behavioral analytics
+        try:
+            track_automatic_segmentation(
+                model="sam2_fast",
+                slice_idx=self.state.current_slice_idx if self.state else 0
+            )
+        except Exception as track_e:
+            logger.debug(f"Behavioral tracking skipped: {track_e}")
         
         logger.debug("🚀 Starting SAM2 Fast Masking Pipeline - Import Phase")        
         # Simple and effective Hydra clearing (adapted from working test_comprehensive_mask_generator.py)

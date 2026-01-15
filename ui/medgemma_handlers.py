@@ -36,6 +36,11 @@ except ImportError:
     cleanup_service = None
     get_medical_prompt = None
 
+# Behavioral analytics tracking
+from analytics.tracking_integration import (
+    track_vlm_analysis, track_label_suggestion, track_label_accepted
+)
+
 logger = logging.getLogger(__name__)
 
 # Load modality-specific prompts
@@ -124,12 +129,36 @@ class MedGemmaHandlers:
                 )
                 
                 if response and len(response.strip()) > 0:
+                    # Track VLM analysis for behavioral analytics
+                    try:
+                        analysis_type = self._get_prompt_type(identify_anomalies, describe_slice)
+                        current_slice_idx = getattr(self.state, 'current_slice_idx', None)
+                        track_vlm_analysis(
+                            model="medgemma",
+                            analysis_type=analysis_type,
+                            slice_idx=current_slice_idx
+                        )
+                    except Exception as track_e:
+                        logger.debug(f"Behavioral tracking skipped: {track_e}")
+                    
                     return f"MedGemma-4B Analysis:\n\n{response}"
                 else:
                     return "MedGemma generated an empty response. The image might not be suitable for analysis or the model encountered an issue."
                     
             except Exception as e:
                 logger.error(f"MedGemma inference failed: {e}")
+                
+                # Track failed VLM analysis
+                try:
+                    current_slice_idx = getattr(self.state, 'current_slice_idx', None)
+                    track_vlm_analysis(
+                        model="medgemma",
+                        analysis_type=self._get_prompt_type(identify_anomalies, describe_slice),
+                        slice_idx=current_slice_idx
+                    )
+                except Exception as track_e:
+                    logger.debug(f"Behavioral tracking skipped: {track_e}")
+                
                 return f"MedGemma inference failed: {str(e)}"
                 
         except Exception as e:
@@ -179,12 +208,47 @@ class MedGemmaHandlers:
                 )
                 
                 if response and len(response.strip()) > 0:
+                    # Track label suggestion for behavioral analytics
+                    try:
+                        # Parse suggested labels from response
+                        # Handle both comma-separated and list-format responses
+                        import re
+                        suggested_labels = []
+                        
+                        # Try to find "item:" format first (list format)
+                        item_matches = re.findall(r'item:\s*([^\n]+)', response, re.IGNORECASE)
+                        if item_matches:
+                            # Remove duplicates while preserving order
+                            seen = set()
+                            for item in item_matches:
+                                item_clean = item.strip().strip('"\'')
+                                if item_clean and item_clean.lower() not in seen:
+                                    seen.add(item_clean.lower())
+                                    suggested_labels.append(item_clean)
+                        else:
+                            # Fallback to comma-separated format
+                            suggested_labels = [l.strip() for l in response.split(',') if l.strip()]
+                        
+                        track_label_suggestion(
+                            model="medgemma",
+                            labels=suggested_labels
+                        )
+                    except Exception as track_e:
+                        logger.debug(f"Behavioral tracking skipped: {track_e}")
+                    
                     return f"MedGemma Label Suggestions:\n{response}"
                 else:
                     return "MedGemma could not generate label suggestions for this image."
                     
             except Exception as e:
                 logger.error(f"MedGemma label suggestion failed: {e}")
+                
+                # Track failed label suggestion
+                try:
+                    track_label_suggestion(model="medgemma", labels=[])
+                except Exception as track_e:
+                    logger.debug(f"Behavioral tracking skipped: {track_e}")
+                
                 return f"Label suggestion failed: {str(e)}"
                 
         except Exception as e:

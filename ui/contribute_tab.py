@@ -373,11 +373,11 @@ def create_contribute_tab():
             <div style='padding: 16px; background: linear-gradient(135deg, #374151 0%, #4b5563 100%); border-radius: 12px; border: 1px solid #6b7280; margin: 8px 0;'>
                 <div style='display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px;'>
                     <div style='width: 12px; height: 12px; background: #3b82f6; border-radius: 50%; flex-shrink: 0; margin-top: 4px;'></div>
-                    <div style='color: #f9fafb; font-weight: 600; font-size: 14px;'>
+                    <div style='color: #f9fafb; font-weight: 600; font-size: 16px;'>
                         Instructions:
                     </div>
                 </div>
-                <div style='color: #d1d5db; font-size: 13px; line-height: 1.6; margin-left: 24px;'>
+                <div style='color: #d1d5db; font-size: 14px; line-height: 1.6; margin-left: 24px;'>
                     <div style='margin-bottom: 6px;'><strong>1.</strong> Click on any pending task (🟡) in the table below to load it</div>
                     <div style='margin-bottom: 6px;'><strong>2.</strong> The Editor tab will open automatically with your selected patient data</div>
                     <div style='margin-bottom: 6px;'><strong>3.</strong> Complete your annotations using the tools in the Editor tab</div>

@@ -1,0 +1,397 @@
+[
+  {
+    "session_id": "sess_20251110_smith_001",
+    "user_id": "expert_dr_smith",
+    "state_transition_log": [
+      {
+        "transition_id": "trans_smith_001",
+        "timestamp": "2025-11-10T09:00:15.234Z",
+        "from_state": "idle",
+        "to_state": "data_loading",
+        "trigger": "load_button_click",
+        "context": {
+          "tab": "editor",
+          "dataset": "brain",
+          "patient_id": "20005",
+          "modality": "flair"
+        }
+      },
+      {
+        "transition_id": "trans_smith_002",
+        "timestamp": "2025-11-10T09:00:45.567Z",
+        "from_state": "data_loading",
+        "to_state": "slice_exploration",
+        "trigger": "data_loaded_success",
+        "context": {
+          "total_slices": 155,
+          "initial_view": "axial",
+          "window_level": 500,
+          "window_width": 1000
+        }
+      },
+      {
+        "transition_id": "trans_smith_003",
+        "timestamp": "2025-11-10T09:01:02.891Z",
+        "from_state": "slice_exploration",
+        "to_state": "image_optimization",
+        "trigger": "window_adjustment_initiated",
+        "context": {
+          "slice_index": 45,
+          "adjustment_type": "manual",
+          "new_window_level": 600
+        }
+      },
+      {
+        "transition_id": "trans_smith_004",
+        "timestamp": "2025-11-10T09:01:25.123Z",
+        "from_state": "image_optimization",
+        "to_state": "manual_annotation_mode",
+        "trigger": "annotation_tool_selected",
+        "context": {
+          "tool": "drawrect",
+          "slice_index": 45,
+          "view": "axial"
+        }
+      },
+      {
+        "transition_id": "trans_smith_005",
+        "timestamp": "2025-11-10T09:01:42.456Z",
+        "from_state": "manual_annotation_mode",
+        "to_state": "annotation_in_progress",
+        "trigger": "annotation_started",
+        "context": {
+          "tool": "drawrect",
+          "slice_index": 45
+        }
+      },
+      {
+        "transition_id": "trans_smith_006",
+        "timestamp": "2025-11-10T09:01:42.456Z",
+        "from_state": "annotation_in_progress",
+        "to_state": "annotation_complete",
+        "trigger": "annotation_finalized",
+        "context": {
+          "annotation_label": "Tumor",
+          "annotation_area": 12321,
+          "creation_time_ms": 17333
+        }
+      },
+      {
+        "transition_id": "trans_smith_007",
+        "timestamp": "2025-11-10T09:01:58.789Z",
+        "from_state": "annotation_complete",
+        "to_state": "slice_exploration",
+        "trigger": "navigation_to_next_slice",
+        "context": {
+          "from_slice": 45,
+          "to_slice": 46,
+          "navigation_method": "next_button"
+        }
+      },
+      {
+        "transition_id": "trans_smith_008",
+        "timestamp": "2025-11-10T09:03:02.345Z",
+        "from_state": "manual_annotation_mode",
+        "to_state": "ai_invocation_mode",
+        "trigger": "ai_model_button_clicked",
+        "context": {
+          "model": "MedSAM2",
+          "slice_index": 47,
+          "prompt_type": "automatic"
+        }
+      },
+      {
+        "transition_id": "trans_smith_009",
+        "timestamp": "2025-11-10T09:03:18.678Z",
+        "from_state": "ai_invocation_mode",
+        "to_state": "ai_review_mode",
+        "trigger": "ai_suggestions_received",
+        "context": {
+          "model": "MedSAM2",
+          "suggestions_count": 3,
+          "inference_time_ms": 16333
+        }
+      },
+      {
+        "transition_id": "trans_smith_010",
+        "timestamp": "2025-11-10T09:03:35.901Z",
+        "from_state": "ai_review_mode",
+        "to_state": "annotation_refinement",
+        "trigger": "ai_suggestions_partially_accepted",
+        "context": {
+          "accepted_count": 2,
+          "rejected_count": 1,
+          "review_time_ms": 17223
+        }
+      },
+      {
+        "transition_id": "trans_smith_011",
+        "timestamp": "2025-11-10T09:05:12.234Z",
+        "from_state": "annotation_refinement",
+        "to_state": "multi_view_review",
+        "trigger": "view_orientation_changed",
+        "context": {
+          "from_view": "axial",
+          "to_view": "coronal",
+          "purpose": "cross_reference"
+        }
+      },
+      {
+        "transition_id": "trans_smith_012",
+        "timestamp": "2025-11-10T09:05:45.567Z",
+        "from_state": "multi_view_review",
+        "to_state": "slice_exploration",
+        "trigger": "returned_to_primary_view",
+        "context": {
+          "from_view": "coronal",
+          "to_view": "axial"
+        }
+      },
+      {
+        "transition_id": "trans_smith_013",
+        "timestamp": "2025-11-10T09:12:45.890Z",
+        "from_state": "slice_exploration",
+        "to_state": "submission_complete",
+        "trigger": "annotation_submitted",
+        "context": {
+          "total_annotations": 47,
+          "session_duration_minutes": 12.5
+        }
+      }
+    ],
+    "state_duration_summary": {
+      "idle": 0,
+      "data_loading": 30,
+      "slice_exploration": 289,
+      "image_optimization": 23,
+      "manual_annotation_mode": 114,
+      "annotation_in_progress": 17,
+      "annotation_complete": 76,
+      "ai_invocation_mode": 16,
+      "ai_review_mode": 17,
+      "annotation_refinement": 97,
+      "multi_view_review": 33,
+      "submission_complete": 38
+    },
+    "transition_matrix": {
+      "idle->data_loading": 1,
+      "data_loading->slice_exploration": 1,
+      "slice_exploration->image_optimization": 1,
+      "image_optimization->manual_annotation_mode": 1,
+      "manual_annotation_mode->annotation_in_progress": 2,
+      "annotation_in_progress->annotation_complete": 2,
+      "annotation_complete->slice_exploration": 2,
+      "manual_annotation_mode->ai_invocation_mode": 1,
+      "ai_invocation_mode->ai_review_mode": 1,
+      "ai_review_mode->annotation_refinement": 1,
+      "annotation_refinement->multi_view_review": 1,
+      "multi_view_review->slice_exploration": 1,
+      "slice_exploration->submission_complete": 1
+    },
+    "state_hierarchy": {
+      "top_level_states": ["idle", "active_session", "submission_complete"],
+      "active_session_substates": [
+        "data_loading",
+        "slice_exploration",
+        "image_optimization",
+        "annotation_workflow",
+        "review_workflow"
+      ],
+      "annotation_workflow_substates": [
+        "manual_annotation_mode",
+        "annotation_in_progress",
+        "annotation_complete",
+        "ai_invocation_mode",
+        "ai_review_mode",
+        "annotation_refinement"
+      ],
+      "review_workflow_substates": [
+        "multi_view_review",
+        "quality_check"
+      ]
+    },
+    "behavioral_patterns": {
+      "state_switching_frequency": 0.17,
+      "avg_state_duration_seconds": 58.3,
+      "most_frequent_transition": "annotation_in_progress->annotation_complete",
+      "longest_state": "slice_exploration",
+      "annotation_workflow_dominance": 0.44,
+      "review_workflow_engagement": 0.17,
+      "ai_workflow_integration": 0.055
+    }
+  },
+  {
+    "session_id": "sess_20251110_johnson_001",
+    "user_id": "expert_dr_johnson",
+    "state_transition_log": [
+      {
+        "transition_id": "trans_johnson_001",
+        "timestamp": "2025-11-10T14:00:30.123Z",
+        "from_state": "idle",
+        "to_state": "data_loading",
+        "trigger": "load_button_click",
+        "context": {
+          "tab": "editor",
+          "dataset": "MG",
+          "patient_id": "836163459",
+          "modality": "MG"
+        }
+      },
+      {
+        "transition_id": "trans_johnson_002",
+        "timestamp": "2025-11-10T14:01:15.456Z",
+        "from_state": "data_loading",
+        "to_state": "image_optimization",
+        "trigger": "data_loaded_with_immediate_window_adjustment",
+        "context": {
+          "total_views": 4,
+          "initial_view": "LCC",
+          "window_adjustment": true
+        }
+      },
+      {
+        "transition_id": "trans_johnson_003",
+        "timestamp": "2025-11-10T14:01:45.789Z",
+        "from_state": "image_optimization",
+        "to_state": "manual_annotation_mode",
+        "trigger": "annotation_tool_selected",
+        "context": {
+          "tool": "drawclosedpath",
+          "view": "LCC"
+        }
+      },
+      {
+        "transition_id": "trans_johnson_004",
+        "timestamp": "2025-11-10T14:03:12.012Z",
+        "from_state": "manual_annotation_mode",
+        "to_state": "annotation_in_progress",
+        "trigger": "complex_annotation_started",
+        "context": {
+          "tool": "drawclosedpath",
+          "annotation_type": "polygon"
+        }
+      },
+      {
+        "transition_id": "trans_johnson_005",
+        "timestamp": "2025-11-10T14:03:12.012Z",
+        "from_state": "annotation_in_progress",
+        "to_state": "annotation_complete",
+        "trigger": "annotation_finalized",
+        "context": {
+          "annotation_label": "Mass",
+          "creation_time_ms": 87000,
+          "complexity": "high"
+        }
+      },
+      {
+        "transition_id": "trans_johnson_006",
+        "timestamp": "2025-11-10T14:04:45.345Z",
+        "from_state": "annotation_complete",
+        "to_state": "annotation_refinement",
+        "trigger": "edit_initiated",
+        "context": {
+          "edit_type": "boundary_refinement",
+          "annotation_label": "Mass"
+        }
+      },
+      {
+        "transition_id": "trans_johnson_007",
+        "timestamp": "2025-11-10T14:06:12.678Z",
+        "from_state": "annotation_refinement",
+        "to_state": "multi_view_review",
+        "trigger": "view_orientation_changed",
+        "context": {
+          "from_view": "LCC",
+          "to_view": "RCC",
+          "purpose": "contralateral_comparison"
+        }
+      },
+      {
+        "transition_id": "trans_johnson_008",
+        "timestamp": "2025-11-10T14:07:45.901Z",
+        "from_state": "multi_view_review",
+        "to_state": "manual_annotation_mode",
+        "trigger": "new_finding_identified",
+        "context": {
+          "view": "RCC",
+          "finding_type": "Calcification"
+        }
+      },
+      {
+        "transition_id": "trans_johnson_009",
+        "timestamp": "2025-11-10T14:10:18.234Z",
+        "from_state": "manual_annotation_mode",
+        "to_state": "multi_view_review",
+        "trigger": "systematic_view_navigation",
+        "context": {
+          "from_view": "RCC",
+          "to_view": "LMLO"
+        }
+      },
+      {
+        "transition_id": "trans_johnson_010",
+        "timestamp": "2025-11-10T14:15:12.567Z",
+        "from_state": "multi_view_review",
+        "to_state": "submission_complete",
+        "trigger": "annotation_submitted",
+        "context": {
+          "total_annotations": 8,
+          "views_annotated": 4,
+          "session_duration_minutes": 14.7
+        }
+      }
+    ],
+    "state_duration_summary": {
+      "idle": 0,
+      "data_loading": 45,
+      "image_optimization": 30,
+      "manual_annotation_mode": 566,
+      "annotation_in_progress": 87,
+      "annotation_complete": 93,
+      "annotation_refinement": 87,
+      "multi_view_review": 214,
+      "submission_complete": 0
+    },
+    "transition_matrix": {
+      "idle->data_loading": 1,
+      "data_loading->image_optimization": 1,
+      "image_optimization->manual_annotation_mode": 1,
+      "manual_annotation_mode->annotation_in_progress": 1,
+      "annotation_in_progress->annotation_complete": 1,
+      "annotation_complete->annotation_refinement": 1,
+      "annotation_refinement->multi_view_review": 1,
+      "multi_view_review->manual_annotation_mode": 1,
+      "manual_annotation_mode->multi_view_review": 1,
+      "multi_view_review->submission_complete": 1
+    },
+    "state_hierarchy": {
+      "top_level_states": ["idle", "active_session", "submission_complete"],
+      "active_session_substates": [
+        "data_loading",
+        "image_optimization",
+        "annotation_workflow",
+        "review_workflow"
+      ],
+      "annotation_workflow_substates": [
+        "manual_annotation_mode",
+        "annotation_in_progress",
+        "annotation_complete",
+        "annotation_refinement"
+      ],
+      "review_workflow_substates": [
+        "multi_view_review",
+        "quality_check"
+      ]
+    },
+    "behavioral_patterns": {
+      "state_switching_frequency": 0.11,
+      "avg_state_duration_seconds": 152.5,
+      "most_frequent_transition": "manual_annotation_mode->multi_view_review",
+      "longest_state": "manual_annotation_mode",
+      "annotation_workflow_dominance": 0.81,
+      "review_workflow_engagement": 0.24,
+      "ai_workflow_integration": 0.0,
+      "refinement_focus": 0.096
+    }
+  }
+]

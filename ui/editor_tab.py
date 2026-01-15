@@ -1584,11 +1584,11 @@ def create_editor_tab(current_user=None) -> dict:
                     <div style='padding: 16px; background: linear-gradient(135deg, #374151 0%, #4b5563 100%); border-radius: 12px; border: 1px solid #6b7280; margin: 8px 0;'>
                         <div style='display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px;'>
                             <div style='width: 12px; height: 12px; background: #3b82f6; border-radius: 50%; flex-shrink: 0; margin-top: 4px;'></div>
-                            <div style='color: #f9fafb; font-weight: 600; font-size: 14px;'>
+                            <div style='color: #f9fafb; font-weight: 600; font-size: 17px;'>
                                 Instructions:
                             </div>
                         </div>
-                        <div style='color: #d1d5db; font-size: 13px; line-height: 1.6; margin-left: 24px;'>
+                        <div style='color: #d1d5db; font-size: 15px; line-height: 1.6; margin-left: 24px;'>
                             <div style='margin-bottom: 6px;'><strong>1.</strong> Use the annotation tools above to complete your work</div>
                             <div style='margin-bottom: 6px;'><strong>2.</strong> Review your annotations carefully</div>
                             <div style='margin-bottom: 6px;'><strong>3.</strong> Click 'Submit Annotation' when finished</div>
@@ -1637,10 +1637,10 @@ def create_editor_tab(current_user=None) -> dict:
                     with gr.Row(elem_classes="label-suggestion-info-row", visible=False) as label_suggestion_info_row:
                         gr.HTML("""
                         <div style='padding: 8px; background: linear-gradient(135deg, #065f46 0%, #047857 100%); border-radius: 6px; margin-bottom: 8px; border-left: 3px solid #10b981;'>
-                            <div style='color: #d1fae5; font-size: 13px; font-weight: 600; margin-bottom: 2px;'>
+                            <div style='color: #d1fae5; font-size: 16px; font-weight: 600; margin-bottom: 2px;'>
                                 🏷️ Label Suggestions Ready
                             </div>
-                            <div style='color: #a7f3d0; font-size: 11px; line-height: 1.3;'>
+                            <div style='color: #a7f3d0; font-size: 14px; line-height: 1.3;'>
                                 Click on the suggested labels below to select them, then click "Accept Selected Suggestions" to add them to your current labels
                             </div>
                         </div>
@@ -1761,10 +1761,10 @@ def create_editor_tab(current_user=None) -> dict:
                     with gr.Row(elem_classes="voice-analysis-row", visible=False) as voice_analysis_row:
                         gr.HTML("""
                         <div style='padding: 8px; background: linear-gradient(135deg, #065f46 0%, #047857 100%); border-radius: 6px; margin-bottom: 8px; border-left: 3px solid #10b981;'>
-                            <div style='color: #d1fae5; font-size: 13px; font-weight: 600; margin-bottom: 2px;'>
+                            <div style='color: #d1fae5; font-size: 16px; font-weight: 600; margin-bottom: 2px;'>
                                 🎙️ Voice Analysis Notes
                             </div>
-                            <div style='color: #a7f3d0; font-size: 11px; line-height: 1.3;'>
+                            <div style='color: #a7f3d0; font-size: 14px; line-height: 1.3;'>
                                 Record additional voice analysis or type notes to append to the VLM analysis above
                             </div>
                         </div>
@@ -1786,9 +1786,9 @@ def create_editor_tab(current_user=None) -> dict:
                         )
                         save_to_analysis_btn = gr.Button(
                             "Save to Analysis",
-                            variant="secondary",
-                            size="sm",
-                            scale=1
+                            variant="primary",
+                            size="lg",
+                            scale=2
                         )
                 
                 # VLM Prompt Selection
@@ -1824,8 +1824,8 @@ def create_editor_tab(current_user=None) -> dict:
                     with gr.Accordion("Output & Device Settings", open=False):
                         output_dir = gr.Textbox(
                             label="Output Directory",
-                            value="brain_target_results",
-                            info="Directory to save annotation results"
+                            value="db/annotation_records",
+                            info="Directory to save annotation results (user-specific persistent storage)"
                         )
                         save_visualizations = gr.Checkbox(
                             label="Save Visualizations",
