@@ -1408,10 +1408,18 @@ def create_editor_tab(current_user=None) -> dict:
                         label="View Orientation",
                         info="Orientation changes based on modality (MG: LCC, LMLO, RCC, RMLO)"
                     )
+                    # De-identification checkbox (hidden)
                     deidentification_checkbox = gr.Checkbox(
                         label="De Identification",
                         value=False,
-                        info="Remove faces from DICOM images using pydeface"
+                        info="Remove faces from DICOM images using pydeface",
+                        visible=False  # Hidden as per XAI implementation
+                    )
+                    # XAI: Gradient Decision Map Visualization checkbox
+                    xai_attention_checkbox = gr.Checkbox(
+                        label="Show AI Decision Map",
+                        value=False,
+                        info="Visualizes spatial regions that influenced the AI's segmentation decision using gradient-based analysis. Works with point clicks and bounding boxes in Guided Annotation mode."
                     )                # Image and 3D Viewer - dynamic layout based on processing mode
                 with gr.Row(equal_height=True) as main_viewer_row:
                     # Image annotator column - dynamic scaling
@@ -1800,7 +1808,7 @@ def create_editor_tab(current_user=None) -> dict:
                 with gr.Accordion("Metadata", open=False):
                     metadata_display = gr.JSON(label=None, visible=True)
                 
-                col2 = (error_display, metadata_display, view_selector, deidentification_checkbox, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, 
+                col2 = (error_display, metadata_display, view_selector, deidentification_checkbox, xai_attention_checkbox, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, 
                         crowdsourcing_accordion, submit_annotation_btn, assignments_remaining, next_assignment_btn, crowdsourcing_status,
                         current_labels_dataset, current_labels_placeholder, suggested_vlm_selector, suggest_labels_btn, suggested_labels_dataset, suggested_labels_placeholder, accept_suggestions_btn, label_suggestion_info_row, vlm_model_selector, vlm_run_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn, voice_prompt_text, voice_audio_input, voice_analysis_row, voice_analysis_controls, voice_analysis_audio, voice_analysis_text, save_to_analysis_btn, vlm_info_accordion, vlm_tools_info_accordion, vlm_custom_prompt_info_accordion)
             
@@ -2057,5 +2065,8 @@ def create_editor_tab(current_user=None) -> dict:
             'get_orientations_from_directory': get_mg_orientations_from_directory,
             'update_view_selector': update_view_selector_for_modality,
             'get_file_for_orientation': get_file_for_mg_orientation
+        },
+        'xai': {
+            'attention_checkbox': xai_attention_checkbox
         }
     }

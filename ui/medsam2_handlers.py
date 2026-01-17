@@ -19,6 +19,7 @@ import subprocess
 import gradio as gr
 import numpy as np
 import sys
+import torch
 from typing import Optional, List, Tuple, Dict, Any
 from PIL import Image
 
@@ -30,6 +31,19 @@ from utils.brain_roi_detector import BrainROIDetector
 from analytics.tracking_integration import (
     track_ai_segmentation, track_automatic_segmentation
 )
+
+# XAI (Explainable AI) integration
+try:
+    from xai.integration.medsam2_hooks import (
+        get_xai_integration,
+        initialize_xai_for_medsam2,
+        XAIMedSAM2Integration
+    )
+    from xai.config import get_xai_config, xai_config
+    XAI_AVAILABLE = True
+except ImportError as e:
+    XAI_AVAILABLE = False
+    logging.getLogger(__name__).warning(f"XAI module not available: {e}")
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +68,203 @@ class MEDSAM2Handlers:
         
         # Initialize brain ROI detector for automatic prompts
         self.brain_roi_detector = BrainROIDetector()
+        
+        # XAI (Explainable AI) state - XAI always computes, checkbox controls visibility
+        self.xai_show_overlay = False  # Checkbox controls show/hide
+        self._xai_integration = None  # XAI integration instance
+        self.xai_computed_slice = None  # Track which slice XAI was computed for
+    
+    # ========== XAI (Explainable AI) Methods ==========
+    
+    def is_xai_valid_for_current_slice(self) -> tuple[bool, str]:
+        """
+        Check if XAI overlay is valid for the current slice.
+        
+        Returns:
+            Tuple of (is_valid, error_message)
+            - is_valid: True if XAI can be shown on current slice
+            - error_message: Descriptive message if not valid, empty string if valid
+        """
+        # Check if XAI has been computed at all
+        if self._xai_integration is None:
+            return False, "XAI not computed yet. Run AI-guided annotation first."
+        
+        if self.xai_computed_slice is None:
+            return False, "XAI not computed yet. Run AI-guided annotation first."
+        
+        # Check if current slice matches the computed slice
+        current_slice = self.state.current_slice_idx
+        if current_slice != self.xai_computed_slice:
+            return False, f"XAI was computed for slice {self.xai_computed_slice}, but you're on slice {current_slice}. Navigate to slice {self.xai_computed_slice} or run new AI annotation on this slice."
+        
+        return True, ""
+    
+    def set_xai_show_overlay(self, show: bool) -> None:
+        """
+        Set whether to show XAI overlay (checkbox state).
+        XAI always computes in background, this just controls visibility.
+        
+        Args:
+            show: Whether to show the XAI overlay
+        """
+        self.xai_show_overlay = show
+        if self._xai_integration is not None:
+            self._xai_integration.toggle_overlay(show)
+        logger.info(f"XAI overlay visibility: {'SHOW' if show else 'HIDE'}")
+    
+    def _prepare_xai_for_inference(self, model) -> bool:
+        """
+        Prepare XAI before running inference. XAI always computes.
+        
+        Args:
+            model: The SAM2 model
+            
+        Returns:
+            True if XAI is prepared
+        """
+        if not XAI_AVAILABLE:
+            return False
+        
+        try:
+            self._xai_integration = get_xai_integration()
+            return self._xai_integration.prepare_for_inference(
+                model, 
+                show_overlay=self.xai_show_overlay
+            )
+        except Exception as e:
+            logger.warning(f"Failed to prepare XAI: {e}")
+            return False
+    
+    def _capture_xai_data(
+        self, 
+        image: np.ndarray,
+        mask: np.ndarray = None,
+        prompts: list = None,
+        boxes: list = None
+    ) -> None:
+        """
+        Capture XAI data after inference.
+        
+        Args:
+            image: Original input image
+            mask: Segmentation mask
+            prompts: Point prompts used
+            boxes: Box prompts in XYXY format [[x1, y1, x2, y2], ...]
+        """
+        logger.info(f"🔥 _capture_xai_data WRAPPER CALLED: XAI_AVAILABLE={XAI_AVAILABLE}, integration={self._xai_integration is not None}, prompts={prompts}, boxes={boxes}")
+        
+        if not XAI_AVAILABLE or self._xai_integration is None:
+            logger.warning(f"⚠️ XAI capture skipped: XAI_AVAILABLE={XAI_AVAILABLE}, integration exists={self._xai_integration is not None}")
+            return
+        
+        try:
+            # Record which slice this XAI was computed for
+            self.xai_computed_slice = self.state.current_slice_idx
+            logger.info(f"✅ Calling integration.capture_xai_data with boxes={boxes}, recording for slice {self.xai_computed_slice}")
+            self._xai_integration.capture_xai_data(
+                image=image,
+                mask=mask,
+                prompts=prompts,
+                boxes=boxes
+            )
+        except Exception as e:
+            logger.warning(f"Failed to capture XAI data: {e}")
+    
+    def get_xai_display_image(self, base_image: np.ndarray) -> np.ndarray:
+        """
+        Get display image with or without XAI overlay based on checkbox state.
+        
+        Args:
+            base_image: The base image
+            
+        Returns:
+            Image with or without XAI overlay
+        """
+        if not XAI_AVAILABLE or self._xai_integration is None:
+            return base_image
+        
+        try:
+            return self._xai_integration.get_display_image(
+                base_image=base_image,
+                show_overlay=self.xai_show_overlay
+            )
+        except Exception as e:
+            logger.warning(f"Failed to get XAI display image: {e}")
+            return base_image
+    
+    def toggle_xai_overlay(self) -> Optional[np.ndarray]:
+        """
+        Toggle XAI overlay and return the appropriate cached image.
+        
+        Returns:
+            Cached image (with or without overlay) or None
+        """
+        if not XAI_AVAILABLE or self._xai_integration is None:
+            return None
+        
+        self.xai_show_overlay = not self.xai_show_overlay
+        return self._xai_integration.toggle_overlay(self.xai_show_overlay)
+    
+    def _get_combined_mask_for_xai(self) -> Optional[np.ndarray]:
+        """
+        Get mask for XAI visualization.
+        
+        IMPORTANT: Returns ONLY the most recent annotation's mask, not all combined.
+        This ensures XAI explains "Why did you segment THIS specific structure?"
+        not "Why did you segment everything on this slice?"
+        
+        Returns:
+            Most recent annotation's mask or None if no masks available
+        """
+        if not hasattr(self, 'annotation_overlays') or not self.annotation_overlays:
+            return None
+        
+        # Get masks for current slice
+        current_slice = self.state.current_slice_idx
+        if current_slice not in self.annotation_overlays:
+            return None
+        
+        slice_overlays = self.annotation_overlays[current_slice]
+        
+        # Get the MOST RECENT annotation (highest annotation_id)
+        # This is the one the user just created
+        if not slice_overlays:
+            return None
+        
+        # Find most recent annotation by max annotation_id
+        max_annotation_id = max(slice_overlays.keys())
+        most_recent_annotation = slice_overlays[max_annotation_id]
+        
+        if isinstance(most_recent_annotation, dict) and 'mask' in most_recent_annotation:
+            return most_recent_annotation['mask'].astype(np.float32)
+        
+        return None
+    
+    def _cleanup_xai(self) -> None:
+        """Clean up XAI resources after inference."""
+        if self._xai_integration is not None:
+            try:
+                self._xai_integration.cleanup()
+            except Exception as e:
+                logger.debug(f"XAI cleanup: {e}")
+    
+    def get_xai_stats(self) -> Dict[str, Any]:
+        """
+        Get XAI statistics for debugging/display.
+        
+        Returns:
+            Dictionary with XAI stats
+        """
+        if self._xai_integration is not None:
+            return {
+                'available': XAI_AVAILABLE,
+                'show_overlay': self.xai_show_overlay,
+                'has_data': self._xai_integration.has_xai_data(),
+                'source': self._xai_integration.get_xai_source()
+            }
+        return {'available': XAI_AVAILABLE, 'show_overlay': self.xai_show_overlay, 'has_data': False}
+    
+    # ========== End XAI Methods ==========
     
     def handle_image_click(self, evt: gr.SelectData) -> str:
         """Handle click events on the image to capture coordinates"""
@@ -1056,7 +1267,133 @@ class MEDSAM2Handlers:
                     img_rgb = clean_img
                 if img_rgb.dtype != np.uint8:
                     img_rgb = (img_rgb * 255).astype(np.uint8)
-                  # Convert MEDSAM2 masks to polygon shapes
+                
+                # XAI: Point-based explanation (ENABLED for guided annotation)
+                # Shows what features around the click points drove the segmentation
+                # Prepare XAI with model AND predictor if not already initialized
+                if XAI_AVAILABLE and self.selected_coordinates and self._xai_integration is None:
+                    try:
+                        from models.medsam2.build_sam import build_sam2
+                        from models.medsam2.sam2_image_predictor import SAM2ImagePredictor
+                        
+                        config_path = os.path.join("models", "medsam2", "configs", "sam2.1_hiera_t512.yaml")
+                        checkpoint_path = os.path.join("models", "medsam2", "checkpoints", "MedSAM2_latest.pt")
+                        device = "cuda" if torch.cuda.is_available() else "cpu"
+                        
+                        # Build model
+                        sam2_model = build_sam2(config_path, checkpoint_path, device=device)
+                        
+                        # Create predictor (needed for gradient XAI)
+                        predictor = SAM2ImagePredictor(sam2_model)
+                        
+                        # Initialize XAI with both model and predictor
+                        self._xai_integration = get_xai_integration()
+                        self._xai_integration.prepare_for_inference(
+                            sam2_model,
+                            predictor=predictor,
+                            show_overlay=self.xai_show_overlay
+                        )
+                        
+                        logger.info("XAI: Initialized for guided annotation display (with predictor for gradient XAI)")
+                    except Exception as init_e:
+                        logger.warning(f"XAI initialization for guided annotation failed: {init_e}")
+                        import traceback
+                        logger.debug(f"XAI init traceback: {traceback.format_exc()}")
+                
+                if XAI_AVAILABLE and self.selected_coordinates:
+                    try:
+                        # Get most recent annotation mask (not all combined)
+                        combined_mask = self._get_combined_mask_for_xai()
+                        if combined_mask is not None:
+                            # Convert selected coordinates to prompt points
+                            prompt_points = [(int(x), int(y)) for x, y in self.selected_coordinates]
+                            
+                            logger.info(f"XAI: Computing explanation for {len(prompt_points)} prompt point(s)")
+                            
+                            # Capture XAI data with prompt context
+                            self._capture_xai_data(img_rgb, mask=combined_mask, prompts=prompt_points)
+                            
+                            # Apply overlay based on checkbox state (CRITICAL: img_rgb is updated with overlay)
+                            img_rgb_with_xai = self.get_xai_display_image(img_rgb)
+                            if img_rgb_with_xai is not None:
+                                img_rgb = img_rgb_with_xai  # Replace with XAI-overlayed version
+                            
+                            if self.xai_show_overlay:
+                                logger.info(f"XAI overlay applied: showing features around {len(prompt_points)} click point(s)")
+                            else:
+                                logger.info(f"XAI computed for {len(prompt_points)} point(s), but overlay hidden (checkbox off)")
+                                logger.info(f"✅ TIP: Enable 'Show AI Decision Map' checkbox to see XAI explanation overlay")
+                    except Exception as xai_e:
+                        logger.warning(f"Failed to apply XAI in guided annotation: {xai_e}")
+                        import traceback
+                        logger.debug(f"XAI error traceback: {traceback.format_exc()}")
+                
+                # XAI: Box-based explanation (ENABLED for guided annotation with box prompts)
+                # Shows what features within the box drove the segmentation
+                # Prepare XAI with model AND predictor if not already initialized
+                if XAI_AVAILABLE and self.prompt_boxes and self._xai_integration is None:
+                    try:
+                        from models.medsam2.build_sam import build_sam2
+                        from models.medsam2.sam2_image_predictor import SAM2ImagePredictor
+                        
+                        config_path = os.path.join("models", "medsam2", "configs", "sam2.1_hiera_t512.yaml")
+                        checkpoint_path = os.path.join("models", "medsam2", "checkpoints", "MedSAM2_latest.pt")
+                        device = "cuda" if torch.cuda.is_available() else "cpu"
+                        
+                        # Build model
+                        sam2_model = build_sam2(config_path, checkpoint_path, device=device)
+                        
+                        # Create predictor (needed for gradient XAI)
+                        predictor = SAM2ImagePredictor(sam2_model)
+                        
+                        # Initialize XAI with both model and predictor
+                        self._xai_integration = get_xai_integration()
+                        self._xai_integration.prepare_for_inference(
+                            sam2_model,
+                            predictor=predictor,
+                            show_overlay=self.xai_show_overlay
+                        )
+                        
+                        logger.info("XAI: Initialized for box-based guided annotation (with predictor for gradient XAI)")
+                    except Exception as init_e:
+                        logger.warning(f"XAI initialization for box prompts failed: {init_e}")
+                        import traceback
+                        logger.debug(f"XAI init traceback: {traceback.format_exc()}")
+                
+                if XAI_AVAILABLE and self.prompt_boxes:
+                    try:
+                        # Get most recent annotation mask
+                        combined_mask = self._get_combined_mask_for_xai()
+                        if combined_mask is not None:
+                            # Convert prompt_boxes to format expected by XAI
+                            box_coords = []
+                            for box in self.prompt_boxes:
+                                box_coords.append([int(box['x1']), int(box['y1']), int(box['x2']), int(box['y2'])])
+                            
+                            logger.info(f"XAI: Computing explanation for {len(box_coords)} box prompt(s)")
+                            
+                            # Capture XAI data with box prompt context
+                            self._capture_xai_data(img_rgb, mask=combined_mask, boxes=box_coords)
+                            
+                            # Apply overlay based on checkbox state (CRITICAL: img_rgb is updated with overlay)
+                            img_rgb_with_xai = self.get_xai_display_image(img_rgb)
+                            if img_rgb_with_xai is not None:
+                                img_rgb = img_rgb_with_xai  # Replace with XAI-overlayed version
+                            
+                            if self.xai_show_overlay:
+                                logger.info(f"XAI overlay applied: showing gradient map for {len(box_coords)} box prompt(s)")
+                            else:
+                                logger.info(f"XAI computed for {len(box_coords)} box(es), but overlay hidden (checkbox off)")
+                                logger.info(f"✅ TIP: Enable 'Show AI Decision Map' checkbox to see XAI explanation overlay")
+                    except Exception as xai_e:
+                        logger.warning(f"Failed to apply XAI for box prompts: {xai_e}")
+                        import traceback
+                        logger.debug(f"XAI error traceback: {traceback.format_exc()}")
+                
+                if XAI_AVAILABLE and not self.selected_coordinates and not self.prompt_boxes:
+                    logger.debug("XAI: No prompts available for guided annotation")
+                
+                # Convert MEDSAM2 masks to polygon shapes
                 annotation_shapes = []
                 if (hasattr(self, 'annotation_overlays') and 
                     self.state.current_slice_idx in self.annotation_overlays):
@@ -1585,17 +1922,17 @@ class MEDSAM2Handlers:
         try:
             if not self.box_mode_enabled:
                 logger.info("Box mode not enabled, ignoring box annotation")
-                return "Box mode not enabled"
+                return None  # Return None if not in box mode
             
             if not annotated_image_value or not isinstance(annotated_image_value, dict):
                 logger.info("No valid annotation data received")
-                return "No annotation data"
+                return None
             
             boxes = annotated_image_value.get('boxes', [])
             if not boxes:
                 logger.info("No boxes found in annotation data")
                 self.prompt_boxes = []  # Clear if no boxes
-                return "No boxes found"
+                return None
             
             # Store the latest box as the prompt box for MEDSAM2
             # We'll use the most recent box as the prompt
@@ -1614,15 +1951,19 @@ class MEDSAM2Handlers:
                 
                 logger.info(f"Stored prompt box from coordinates: ({x1}, {y1}) to ({x2}, {y2})")
                 logger.info(f"Box details: {prompt_box}")
+                
+                # Store box for XAI computation (will be applied during annotation run, not immediately)
+                # This prevents refresh loops while drawing/moving boxes
+                
                 return self.update_box_prompt_display()
             else:
                 logger.warning(f"Invalid box format: {latest_box}")
                 logger.info(f"Expected keys: xmin, ymin, xmax, ymax. Got keys: {list(latest_box.keys())}")
-                return "Invalid box format"
+                return None
                 
         except Exception as e:
             logger.error(f"Error handling box annotation: {str(e)}")
-            return f"Error: {str(e)}"
+            return None
     
     def clear_prompt_boxes(self):
         """Clear all stored prompt boxes"""
@@ -2068,6 +2409,18 @@ class MEDSAM2Handlers:
             )
             generator_time = time.time() - generator_start_time
             status_msg += f"✅ Mask generator created in {generator_time:.3f}s\n"
+            
+            # XAI: Always prepare (XAI computes in background, checkbox controls display)
+            xai_prepared = False
+            if XAI_AVAILABLE:
+                try:
+                    xai_prepared = self._prepare_xai_for_inference(sam2_model)
+                    if xai_prepared:
+                        status_msg += "🔍 XAI ready (use checkbox to show/hide overlay)\n"
+                        logger.info("XAI prepared for inference")
+                except Exception as xai_e:
+                    logger.warning(f"XAI preparation failed: {xai_e}")
+                    status_msg += f"⚠️ XAI preparation failed (continuing without): {xai_e}\n"
               # Find DICOM files and sort them properly to match UI ordering
             status_msg += "🔍 Finding DICOM files...\n"
             dicom_files = [f for f in os.listdir(dicom_folder) if f.endswith('.dcm')]
@@ -2178,6 +2531,18 @@ class MEDSAM2Handlers:
                 status_msg += f"   • Total masks generated: {total_masks}\n"
                 status_msg += f"   • Average masks per slice: {avg_masks:.1f}\n"                # Create annotation overlays for UI
                 self._create_annotation_overlays_from_fast_results(results, output_dir)
+                
+                # XAI: DISABLED for fast-masking mode
+                # Fast-masking has no user prompts, making XAI meaningless
+                # XAI is only enabled for point-based (guided) annotation
+                # if xai_prepared and XAI_AVAILABLE:
+                #     try:
+                #         combined_mask = self._get_combined_mask_for_xai()
+                #         if combined_mask is not None:
+                #             self._capture_xai_data(current_slice_data, mask=combined_mask)
+                #             status_msg += "🔍 XAI visualization ready (toggle checkbox to show)\n"
+                #     except Exception as xai_e:
+                #         logger.warning(f"XAI capture failed: {xai_e}")
                 
                 # Load and display results
                 try:
@@ -2666,6 +3031,15 @@ class MEDSAM2Handlers:
                 img_rgb = clean_img
             if img_rgb.dtype != np.uint8:
                 img_rgb = (img_rgb * 255).astype(np.uint8)
+            
+            # XAI: Apply overlay based on checkbox state
+            if XAI_AVAILABLE and self._xai_integration is not None:
+                try:
+                    img_rgb = self.get_xai_display_image(img_rgb)
+                    if self.xai_show_overlay:
+                        logger.info("XAI overlay applied to result image")
+                except Exception as xai_e:
+                    logger.warning(f"Failed to apply XAI overlay: {xai_e}")
             
             # Define a palette of distinct colors for unique shape coloring
             color_palette = [

@@ -86,6 +86,28 @@ class DebugFilter(logging.Filter):
                 "Saved behavioral ",
                 "Detected AI",
                 "Tool selection",
+                "XAI",
+                "xai",
+                "xAi",
+                "xAI",
+                "GradCAM",
+                "LayerCAM",
+                "Hiera",
+                "Processing layer",
+                "Attention",
+                "Embedding",
+                "Encoder",
+                "High res",
+                "scales",
+                "feats",
+                "SHAPES",
+                "📊",
+                "Using last",
+                "get_display_image",
+                "capture_xai_data",
+                "XAI capture",
+                "integration.capture_xai_data",
+                "🔥",
             ]
             message = record.getMessage()
             return any(keyword in message for keyword in allowed_keywords)
@@ -1253,7 +1275,7 @@ class SegMedPro:
         # Unpack components
         (file_input, dir_input, load_btn, reset_dir_btn, file_browser, label_file,
          metadata_display_dl, error_display_dl, window_level, window_width, apply_window_btn, debug_btn) = data_loading
-        (error_display, metadata_display, view_selector, deidentification_checkbox, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, 
+        (error_display, metadata_display, view_selector, deidentification_checkbox, xai_attention_checkbox, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, 
          crowdsourcing_accordion, submit_annotation_btn, assignments_remaining, next_assignment_btn, crowdsourcing_status,
          current_labels_dataset, current_labels_placeholder, suggested_vlm_selector, suggest_labels_btn, suggested_labels_dataset, suggested_labels_placeholder, accept_suggestions_btn, label_suggestion_info_row, vlm_model_selector, vlm_run_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn, voice_prompt_text, voice_audio_input, voice_analysis_row, voice_analysis_controls, voice_analysis_audio, voice_analysis_text, save_to_analysis_btn, vlm_info_accordion, vlm_tools_info_accordion, vlm_custom_prompt_info_accordion) = visualization        
         (point_prompt_checkbox, box_prompt_checkbox, coordinates_text, clear_coords_btn, ai_model_selector, 
@@ -1300,6 +1322,106 @@ class SegMedPro:
             """Show/hide box info box when box checkbox changes"""
             return gr.update(visible=is_checked)
         
+        def handle_xai_attention_change(is_checked):
+            """Toggle XAI overlay visibility. XAI always computes, this just shows/hides."""
+            # If disabling XAI, just proceed normally
+            if not is_checked:
+                if hasattr(self, 'editor_medsam2_handlers'):
+                    self.editor_medsam2_handlers.set_xai_show_overlay(False)
+                    logger.info(f"XAI overlay disabled")
+                # Continue to rebuild image without XAI
+            
+            # If enabling XAI, validate first
+            if is_checked and hasattr(self, 'editor_medsam2_handlers'):
+                is_valid, error_msg = self.editor_medsam2_handlers.is_xai_valid_for_current_slice()
+                if not is_valid:
+                    logger.warning(f"XAI validation failed: {error_msg}")
+                    # Prepare return values first
+                    result = (gr.update(), gr.update(value=False))
+                    # Show warning AFTER preparing return values
+                    gr.Warning(error_msg)
+                    # Return with unchecked checkbox
+                    return result
+                
+                # Valid - set overlay state
+                self.editor_medsam2_handlers.set_xai_show_overlay(True)
+                logger.info(f"XAI overlay enabled")
+            
+            if hasattr(self, 'editor_medsam2_handlers'):
+                # Get the current display image and rebuild with current XAI state
+                try:
+                    from utils.visualization import display_slice, create_annotation_boxes_from_mask
+                    
+                    # Get clean image from current state
+                    clean_img = display_slice(
+                        self.editor_medsam2_handlers.state.current_data,
+                        self.editor_medsam2_handlers.state.current_slice_idx,
+                        self.editor_medsam2_handlers.state.current_view,
+                        window_level=self.editor_medsam2_handlers.state.window_level,
+                        window_width=self.editor_medsam2_handlers.state.window_width,
+                        crosshair=None  # No crosshair lines for annotation overlay
+                    )
+                    
+                    # Ensure it's RGB and uint8
+                    if len(clean_img.shape) == 2:
+                        img_rgb = np.stack([clean_img] * 3, axis=-1)
+                    else:
+                        img_rgb = clean_img
+                    if img_rgb.dtype != np.uint8:
+                        img_rgb = (img_rgb * 255).astype(np.uint8)
+                    
+                    # Check if XAI integration is initialized
+                    xai_integration = self.editor_medsam2_handlers._xai_integration
+                    logger.info(f"XAI checkbox handler: XAI integration exists={xai_integration is not None}")
+                    
+                    # Apply or remove XAI overlay based on checkbox state
+                    img_with_xai = self.editor_medsam2_handlers.get_xai_display_image(img_rgb)
+                    if img_with_xai is not None:
+                        img_rgb = img_with_xai
+                        logger.info(f"XAI overlay {'applied' if is_checked else 'removed'} from display image")
+                    else:
+                        logger.warning("XAI get_xai_display_image returned None")
+                    
+                    # Rebuild annotated result with current annotations and XAI state
+                    current_slice = self.editor_medsam2_handlers.state.current_slice_idx
+                    annotation_shapes = []
+                    
+                    # Get annotation masks for current slice
+                    if (hasattr(self.editor_medsam2_handlers, 'annotation_overlays') and 
+                        current_slice in self.editor_medsam2_handlers.annotation_overlays):
+                        overlay_data = self.editor_medsam2_handlers.annotation_overlays[current_slice]
+                        
+                        # Convert masks to polygon shapes
+                        if isinstance(overlay_data, dict):
+                            if 'mask' in overlay_data:
+                                # Old format - single annotation
+                                mask_array = overlay_data['mask']
+                                annotation_shapes = create_annotation_boxes_from_mask(
+                                    mask_array, label="MEDSAM2 Annotation", label_index=1
+                                )
+                            else:
+                                # New format - multiple annotations
+                                for annotation_id, annotation_data in overlay_data.items():
+                                    if isinstance(annotation_data, dict) and 'mask' in annotation_data:
+                                        mask_array = annotation_data['mask']
+                                        shapes = create_annotation_boxes_from_mask(
+                                            mask_array, label=f"MEDSAM2 Annotation {annotation_id}", label_index=1
+                                        )
+                                        annotation_shapes.extend(shapes)
+                    
+                    # Return AnnotatedImageValue with updated XAI overlay state
+                    return {
+                        "image": img_rgb,
+                        "boxes": annotation_shapes,
+                        "orientation": 0
+                    }, gr.update()  # Keep checkbox as is
+                except Exception as e:
+                    logger.error(f"Error in XAI checkbox handler: {e}")
+                    import traceback
+                    logger.debug(f"Traceback: {traceback.format_exc()}")
+            
+            return gr.update(), gr.update()  # No change if handler fails
+        
         # Event handlers for dynamic info boxes
         point_prompt_checkbox.change(
             fn=handle_point_prompt_change,
@@ -1311,6 +1433,13 @@ class SegMedPro:
             fn=handle_box_prompt_change,
             inputs=[box_prompt_checkbox],
             outputs=[box_info_accordion]
+        )
+        
+        # XAI attention visualization toggle - updates image display
+        xai_attention_checkbox.change(
+            fn=handle_xai_attention_change,
+            inputs=[xai_attention_checkbox],
+            outputs=[image_display, xai_attention_checkbox]
         )
         
           # Data loading handlers (updated for annotator compatibility)
@@ -1950,7 +2079,7 @@ class SegMedPro:
                 
                 # Return gr.Dataset update with combined labels and placeholder visibility
                 has_labels = len(all_labels) > 0
-                return gr.Dataset(samples=samples, visible=has_labels), gr.update(visible=not has_labels)
+                return gr.update(samples=samples), gr.update(visible=not has_labels)
             except Exception as e:
                 logger.error(f"Error handling image annotation change: {str(e)}")
                 import traceback
@@ -3464,11 +3593,11 @@ class SegMedPro:
                 outputs=[
                     contribute_components['load_status'],           # Status message
                     editor_components['crowdsourcing']['accordion'], # Show crowdsourcing controls
-                    editor_components['visualization'][4],          # image_display
+                    editor_components['visualization'][5],          # image_display
                     editor_components['visualization'][1],          # metadata_display  
-                    editor_components['visualization'][8],          # slice_slider
-                    editor_components['visualization'][10],         # slice_text
-                    editor_components['visualization'][11],         # crosshair_info
+                    editor_components['visualization'][9],          # slice_slider
+                    editor_components['visualization'][11],         # slice_text
+                    editor_components['visualization'][12],         # crosshair_info
                     # Window level and width are in data_loading section
                     editor_components['data_loading'][8],           # window_level
                     editor_components['data_loading'][9]            # window_width
@@ -3491,8 +3620,8 @@ class SegMedPro:
             # Connect crowdsourcing controls in editor tab
             editor_components['crowdsourcing']['submit_btn'].click(
                 fn=handle_submit_and_clear,
-                inputs=[contribute_components['selected_task_info'], contribute_components['current_user_state'], editor_components['visualization'][4]],  # image_display is at index 4 in visualization
-                outputs=[editor_components['crowdsourcing']['status'], editor_components['visualization'][4]]  # Also update image_annotator to clear overlays
+                inputs=[contribute_components['selected_task_info'], contribute_components['current_user_state'], editor_components['visualization'][5]],  # image_display is at index 5 in visualization
+                outputs=[editor_components['crowdsourcing']['status'], editor_components['visualization'][5]]  # Also update image_annotator to clear overlays
             ).then(
                 # Update assignment progress after submission and control button visibility - hide submit button
                 fn=lambda user_id: get_remaining_assignments_info(user_id, hide_submit_btn=True),
@@ -3600,10 +3729,10 @@ class SegMedPro:
                 outputs=[
                     tabs,  # tabs
                     editor_components['visualization'][0],                       # error_display (status/errors)
-                    editor_components['visualization'][4],                       # image_display
-                    editor_components['visualization'][8],                       # slice_slider
-                    editor_components['visualization'][7],                       # prev_slice_btn
-                    editor_components['visualization'][9],                       # next_slice_btn
+                    editor_components['visualization'][5],                       # image_display
+                    editor_components['visualization'][9],                       # slice_slider
+                    editor_components['visualization'][8],                       # prev_slice_btn
+                    editor_components['visualization'][10],                      # next_slice_btn
                     editor_components['visualization'][1],                       # metadata_display
                     editor_components['crowdsourcing']['submit_btn'],            # submit_btn
                     editor_components['crowdsourcing']['status'],                # submission_status
@@ -3654,7 +3783,7 @@ class SegMedPro:
                 elif is_auto_switch:
                     logger.debug(f"⏭️ Skipped tracking {tool} - automatic tool switch after annotation (within {time_since_annotation}ms)")
             
-            editor_components['visualization'][4].tool_selected(
+            editor_components['visualization'][5].tool_selected(
                 fn=handle_editor_tool_selected,
                 inputs=[],  # Tool data comes from event
                 outputs=[]
