@@ -73,6 +73,10 @@ class MEDSAM2Handlers:
         self.xai_show_overlay = False  # Checkbox controls show/hide
         self._xai_integration = None  # XAI integration instance
         self.xai_computed_slice = None  # Track which slice XAI was computed for
+        
+        # Uncertainty Maps (confidence-based XAI)
+        self.last_mask_logits = None  # Store raw logits for uncertainty computation
+        self.uncertainty_overlay_enabled = False  # Checkbox for uncertainty visualization
     
     # ========== XAI (Explainable AI) Methods ==========
     
@@ -111,6 +115,62 @@ class MEDSAM2Handlers:
         if self._xai_integration is not None:
             self._xai_integration.toggle_overlay(show)
         logger.info(f"XAI overlay visibility: {'SHOW' if show else 'HIDE'}")
+    
+    def compute_uncertainty_map(
+        self,
+        method: str = "margin"
+    ) -> tuple[Optional[np.ndarray], Optional[dict]]:
+        """
+        Compute confidence/uncertainty map from mask logits.
+        
+        Args:
+            method: Uncertainty computation method ("margin", "entropy", or "variance")
+            
+        Returns:
+            Tuple of (uncertainty_overlay, stats):
+            - uncertainty_overlay: RGB image with colored uncertainty heatmap
+            - stats: Dictionary with uncertainty statistics
+        """
+        if not XAI_AVAILABLE or self._xai_integration is None:
+            logger.warning("XAI not available - cannot compute uncertainty")
+            return None, None
+        
+        # Get mask logits from XAI integration
+        mask_logits = self._xai_integration.get_mask_logits()
+        
+        if mask_logits is None:
+            logger.warning("No mask logits available - run segmentation first")
+            return None, None
+        
+        try:
+            from xai.segmentation.uncertainty_maps import UncertaintyMapGenerator
+            
+            logger.info(f"Computing uncertainty map using method: {method}")
+            
+            # Create uncertainty generator
+            generator = UncertaintyMapGenerator()
+            
+            # Compute uncertainty
+            uncertainty_map, stats = generator.compute_from_logits(
+                mask_logits,
+                method=method
+            )
+            
+            # Create colored overlay
+            colored_overlay = generator.create_colored_overlay(
+                uncertainty_map,
+                colormap="RdYlGn_r"  # Red = uncertain, Green = certain
+            )
+            
+            logger.info(f"Uncertainty map computed: {stats}")
+            
+            return colored_overlay, stats
+            
+        except Exception as e:
+            logger.error(f"Failed to compute uncertainty map: {e}")
+            import traceback
+            logger.debug(f"Traceback: {traceback.format_exc()}")
+            return None, None
     
     def _prepare_xai_for_inference(self, model) -> bool:
         """
@@ -2290,10 +2350,108 @@ class MEDSAM2Handlers:
             return f"Error importing required modules: {e}", None, False
         
         try:
-            # Configuration
-            logger.debug("Loading brain configuration...")
-            brain_config = get_brain_config('fast')  # Use fast configuration as requested
-            logger.debug(f"✅ Brain config loaded: {brain_config}")
+            # Configuration - detect modality and choose appropriate config
+            logger.debug("Detecting modality and loading configuration...")
+            
+            # Detect MG modality from DICOM metadata
+            is_mammography = False
+            config_name = 'fast'  # Default configuration
+            
+            # Check if we have DICOM metadata available
+            if hasattr(self.state, 'current_metadata') and self.state.current_metadata:
+                modality = self.state.current_metadata.get('Modality', '')
+                if modality == 'MG':
+                    is_mammography = True
+                    config_name = 'mammography'
+                    logger.info(f"🔍 Detected MG modality - using mammography-optimized configuration")
+            
+            # If metadata not in state, try reading from DICOM file directly
+            if not is_mammography and os.path.exists(dicom_folder):
+                try:
+                    import pydicom
+                    dicom_files_check = [f for f in os.listdir(dicom_folder) if f.endswith('.dcm')]
+                    if dicom_files_check:
+                        sample_dicom_path = os.path.join(dicom_folder, dicom_files_check[0])
+                        ds = pydicom.dcmread(sample_dicom_path)
+                        modality_from_file = getattr(ds, 'Modality', '')
+                        if modality_from_file == 'MG':
+                            is_mammography = True
+                            config_name = 'mammography'
+                            logger.info(f"🔍 Detected MG modality from DICOM file - using mammography-optimized configuration")
+                except Exception as e:
+                    logger.debug(f"Could not check modality from DICOM file: {e}")
+            
+            brain_config = get_brain_config(config_name)
+            
+            # ADAPTIVE ADJUSTMENT: For large MG images, reduce parameters to avoid OOM
+            if is_mammography and processing_mode == "Single Slice":
+                # Get image dimensions to check if we need to adjust parameters
+                image_dimensions = None
+                try:
+                    if hasattr(self.state, 'current_data') and self.state.current_data is not None:
+                        # Get current slice data
+                        from utils.visualization import display_slice
+                        current_slice_data = display_slice(
+                            self.state.current_data,
+                            self.state.current_slice_idx,
+                            self.state.current_view,
+                            window_level=self.state.window_level,
+                            window_width=self.state.window_width,
+                            crosshair=None,
+                            add_orientation_marker=False
+                        )
+                        image_dimensions = current_slice_data.shape[:2]  # (height, width)
+                        max_dim = max(image_dimensions)
+                        
+                        logger.info(f"🖼️ Detected image size: {image_dimensions[0]}×{image_dimensions[1]} pixels (max: {max_dim})")
+                        
+                        # Adaptive thresholds for large mammography images (inclusive: >=)
+                        # Note: breast region cropping will further reduce the effective size
+                        if max_dim >= 3500:
+                            # Extremely large image (>= 3500 pixels) - most conservative
+                            logger.warning(f"⚠️ EXTREMELY large MG image detected ({max_dim}px) - using minimal parameters")
+                            brain_config['points_per_side'] = 24  # Very low grid
+                            brain_config['crop_n_layers'] = 0     # Disable multi-scale
+                            brain_config['min_mask_region_area'] = 15  # Higher threshold
+                            brain_config['points_per_batch'] = 32  # Reduce batch size
+                            status_msg = f"🔬 EXTREMELY LARGE MG IMAGE ({max_dim}px) - Using minimal parameters + breast cropping:\n"
+                        elif max_dim >= 2500:
+                            # Very large image (2500-3499 pixels) - conservative
+                            logger.warning(f"⚠️ Very large MG image detected ({max_dim}px) - adjusting parameters to prevent OOM")
+                            brain_config['points_per_side'] = 28  # Reduced from 32
+                            brain_config['crop_n_layers'] = 0     # Disable multi-scale
+                            brain_config['min_mask_region_area'] = 10  # Increase slightly from 5
+                            brain_config['points_per_batch'] = 48  # Reduce batch size
+                            status_msg = f"🔬 LARGE MG IMAGE DETECTED ({max_dim}px) - Using adapted parameters + breast cropping:\n"
+                        elif max_dim >= 1800:
+                            # Large image (1800-2499 pixels) - moderate reduction
+                            logger.info(f"📏 Large MG image detected ({max_dim}px) - using moderate adaptation")
+                            brain_config['points_per_side'] = 36  # Moderate grid
+                            brain_config['crop_n_layers'] = 0     # Disable multi-scale for safety
+                            brain_config['min_mask_region_area'] = 5  # Keep low
+                            status_msg = f"🔬 LARGE MG IMAGE ({max_dim}px) - Using adapted parameters:\n"
+                        else:
+                            # For all smaller MG images, use balanced config
+                            brain_config['points_per_side'] = 40
+                            brain_config['crop_n_layers'] = 1
+                            brain_config['min_mask_region_area'] = 5
+                            status_msg = f"🔬 MG IMAGE ({max_dim}px) - Using mammography parameters:\n"
+                    else:
+                        status_msg = f"🔬 Using mammography configuration:\n"
+                except Exception as e:
+                    logger.warning(f"Could not determine image dimensions for adaptation: {e}")
+                    status_msg = f"🔬 Using mammography configuration:\n"
+            else:
+                status_msg = "🚀 Starting SAM2 Fast Masking Pipeline...\n"
+            
+            if is_mammography:
+                logger.info(f"✅ Mammography config loaded: points_per_side={brain_config['points_per_side']}, "
+                          f"pred_iou_thresh={brain_config['pred_iou_thresh']}, "
+                          f"min_mask_region_area={brain_config['min_mask_region_area']}, "
+                          f"crop_n_layers={brain_config['crop_n_layers']}")
+            else:
+                logger.debug(f"✅ Brain config loaded: {brain_config}")
+                status_msg = "🚀 Starting SAM2 Fast Masking Pipeline...\n"
             
             # Setup paths
             config_path = os.path.join(models_dir, "configs", "sam2.1_hiera_b+.yaml")
@@ -2317,7 +2475,10 @@ class MEDSAM2Handlers:
             os.makedirs(output_dir, exist_ok=True)
             logger.debug("✅ Output directory created")
             
-            status_msg = "🚀 Starting SAM2 Fast Masking Pipeline...\n"
+            # Continue building status message
+            if not status_msg.startswith("🔬"):
+                status_msg = "🚀 Starting SAM2 Fast Masking Pipeline...\n"
+            
             overall_start_time = time.time()
             
             # Setup device
@@ -2397,10 +2558,18 @@ class MEDSAM2Handlers:
                     return f"❌ Model loading failed: {e}", None, False
             
             # Create mask generator with fast configuration
-            status_msg += f"🔄 Creating mask generator with 'fast' configuration...\n"
+            if is_mammography:
+                status_msg += f"🔬 Creating mask generator with 'MAMMOGRAPHY' configuration (optimized for small masses)...\n"
+            else:
+                status_msg += f"🔄 Creating mask generator with 'fast' configuration...\n"
+            
             status_msg += f"   • Grid resolution: {brain_config['points_per_side']}x{brain_config['points_per_side']} points\n"
             status_msg += f"   • IoU threshold: {brain_config['pred_iou_thresh']}\n"
             status_msg += f"   • Min region area: {brain_config['min_mask_region_area']} pixels\n"
+            
+            if is_mammography:
+                status_msg += f"   • Multi-scale layers: {brain_config['crop_n_layers']} (for small masses)\n"
+                status_msg += f"   • ⚠️ MAMMOGRAPHY MODE: Optimized for detecting tiny masses/white spots\n"
             
             generator_start_time = time.time()
             mask_generator = SAM2AutomaticMaskGenerator(
@@ -2488,13 +2657,18 @@ class MEDSAM2Handlers:
                         add_orientation_marker=False
                     )
                     
-                    # Process this slice data directly
+                    # Process this slice data directly (pass is_mammography for smart cropping)
                     result = self._process_slice_data_fast(
-                        mask_generator, current_slice_data, output_dir, ui_slice_idx, save_visualizations
+                        mask_generator, current_slice_data, output_dir, ui_slice_idx, save_visualizations,
+                        is_mammography=is_mammography
                     )
                     if result and result.get('success', False):
                         results.append(result)
-                        status_msg += f"✅ Processed UI slice {ui_slice_idx}: {result.get('num_masks', 0)} masks\n"
+                        crop_info = result.get('crop_info')
+                        if crop_info:
+                            status_msg += f"✅ Processed UI slice {ui_slice_idx}: {result.get('num_masks', 0)} masks (cropped: {crop_info['reduction_ratio']*100:.0f}% reduction)\n"
+                        else:
+                            status_msg += f"✅ Processed UI slice {ui_slice_idx}: {result.get('num_masks', 0)} masks\n"
                     else:
                         status_msg += f"⚠️ Failed to process UI slice {ui_slice_idx}\n"
                 else:
@@ -2731,32 +2905,221 @@ class MEDSAM2Handlers:
         except Exception as e:
             logger.error(f"Error processing slice {slice_idx}: {e}")
             return None
-    
-    def _process_slice_data_fast(self, mask_generator, slice_data, output_dir, slice_idx, save_visualizations):
-        """Process slice data directly from state - for single slice mode"""
+
+    def _detect_breast_region_bbox(self, image, threshold_percentile=5, min_region_ratio=0.05, padding=50):
+        """
+        Detect the bounding box of the breast region in a mammography image.
+        
+        Mammography images typically have large black (air) regions that don't contain
+        useful information. This function finds the actual breast tissue region to
+        allow cropping before processing, dramatically reducing memory usage.
+        
+        Args:
+            image: Input image (grayscale or RGB, numpy array)
+            threshold_percentile: Percentile above which pixels are considered non-background (default: 5)
+            min_region_ratio: Minimum ratio of image that should be detected as region (default: 0.05)
+            padding: Pixels to add around detected region (default: 50)
+            
+        Returns:
+            tuple: (x_min, y_min, x_max, y_max, crop_info) or None if detection fails
+                   crop_info contains metadata for mapping masks back to original coordinates
+        """
+        try:
+            # Convert to grayscale if needed
+            if len(image.shape) == 3:
+                gray = np.mean(image, axis=2).astype(np.float32)
+            else:
+                gray = image.astype(np.float32)
+            
+            original_height, original_width = gray.shape
+            
+            # Calculate threshold based on percentile (to handle different exposure levels)
+            # Use a low percentile to identify background (typically very dark)
+            threshold = np.percentile(gray, threshold_percentile)
+            
+            # Add a small margin above the threshold to ensure we capture the breast
+            # Mammography backgrounds are typically very close to 0, breast tissue is much brighter
+            threshold = max(threshold + 10, np.percentile(gray, 10))
+            
+            # Create binary mask of non-background pixels
+            foreground_mask = gray > threshold
+            
+            # Check if we have enough foreground
+            foreground_ratio = np.sum(foreground_mask) / foreground_mask.size
+            if foreground_ratio < min_region_ratio:
+                logger.warning(f"⚠️ Breast region detection: Only {foreground_ratio*100:.1f}% foreground detected, using full image")
+                return None
+            
+            # Find bounding box of foreground region
+            rows = np.any(foreground_mask, axis=1)
+            cols = np.any(foreground_mask, axis=0)
+            
+            if not np.any(rows) or not np.any(cols):
+                logger.warning("⚠️ Breast region detection: No foreground found, using full image")
+                return None
+            
+            y_min, y_max = np.where(rows)[0][[0, -1]]
+            x_min, x_max = np.where(cols)[0][[0, -1]]
+            
+            # Add padding (but stay within image bounds)
+            y_min = max(0, y_min - padding)
+            y_max = min(original_height, y_max + padding + 1)
+            x_min = max(0, x_min - padding)
+            x_max = min(original_width, x_max + padding + 1)
+            
+            # Calculate crop dimensions
+            crop_width = x_max - x_min
+            crop_height = y_max - y_min
+            
+            # Check if cropping provides meaningful benefit (at least 20% reduction)
+            original_pixels = original_height * original_width
+            cropped_pixels = crop_height * crop_width
+            reduction_ratio = 1 - (cropped_pixels / original_pixels)
+            
+            if reduction_ratio < 0.20:
+                logger.info(f"📏 Breast region covers {(1-reduction_ratio)*100:.1f}% of image, cropping not beneficial")
+                return None
+            
+            crop_info = {
+                'original_shape': (original_height, original_width),
+                'crop_bbox': (x_min, y_min, x_max, y_max),
+                'crop_shape': (crop_height, crop_width),
+                'offset_x': x_min,
+                'offset_y': y_min,
+                'reduction_ratio': reduction_ratio,
+                'threshold_used': threshold
+            }
+            
+            logger.info(f"✂️ Breast region detected: ({x_min}, {y_min}) to ({x_max}, {y_max})")
+            logger.info(f"   Original: {original_width}×{original_height} = {original_pixels/1e6:.2f} MP")
+            logger.info(f"   Cropped:  {crop_width}×{crop_height} = {cropped_pixels/1e6:.2f} MP")
+            logger.info(f"   Reduction: {reduction_ratio*100:.1f}% fewer pixels to process")
+            
+            return (x_min, y_min, x_max, y_max, crop_info)
+            
+        except Exception as e:
+            logger.warning(f"⚠️ Breast region detection failed: {e}, using full image")
+            return None
+
+    def _map_masks_to_original_coordinates(self, masks, crop_info):
+        """
+        Map mask coordinates from cropped image back to original image coordinates.
+        
+        Args:
+            masks: List of mask dictionaries from SAM
+            crop_info: Dictionary containing offset information from _detect_breast_region_bbox
+            
+        Returns:
+            List of masks with updated coordinates
+        """
+        if crop_info is None:
+            return masks
+        
+        offset_x = crop_info['offset_x']
+        offset_y = crop_info['offset_y']
+        original_height, original_width = crop_info['original_shape']
+        
+        mapped_masks = []
+        for mask in masks:
+            mapped_mask = mask.copy()
+            
+            # Update bounding box
+            if 'bbox' in mapped_mask and len(mapped_mask['bbox']) == 4:
+                x, y, w, h = mapped_mask['bbox']
+                mapped_mask['bbox'] = [x + offset_x, y + offset_y, w, h]
+            
+            # Update point coordinates
+            if 'point_coords' in mapped_mask and mapped_mask['point_coords']:
+                mapped_coords = []
+                for coord in mapped_mask['point_coords']:
+                    if len(coord) == 2:
+                        mapped_coords.append([coord[0] + offset_x, coord[1] + offset_y])
+                    else:
+                        mapped_coords.append(coord)
+                mapped_mask['point_coords'] = mapped_coords
+            
+            # Update segmentation mask (expand to original size)
+            if 'segmentation' in mapped_mask and mapped_mask['segmentation'] is not None:
+                crop_seg = mapped_mask['segmentation']
+                # Create full-size mask initialized to False
+                full_seg = np.zeros((original_height, original_width), dtype=bool)
+                # Place cropped segmentation at correct position
+                crop_h, crop_w = crop_seg.shape
+                full_seg[offset_y:offset_y+crop_h, offset_x:offset_x+crop_w] = crop_seg
+                mapped_mask['segmentation'] = full_seg
+            
+            mapped_masks.append(mapped_mask)
+        
+        logger.debug(f"📍 Mapped {len(mapped_masks)} masks back to original coordinates (offset: +{offset_x}, +{offset_y})")
+        return mapped_masks
+
+    def _process_slice_data_fast(self, mask_generator, slice_data, output_dir, slice_idx, save_visualizations, is_mammography=False):
+        """Process slice data directly from state - for single slice mode
+        
+        For mammography images, this function will:
+        1. Detect the breast region (non-black area)
+        2. Crop to that region to reduce memory usage
+        3. Process the cropped image
+        4. Map masks back to original coordinates
+        """
         import json
         import time
         
         try:
             slice_start_time = time.time()
+            crop_info = None
+            original_image_for_viz = None
             
             # Convert slice data to format expected by SAM
             preprocess_start_time = time.time()
             try:
                 rgb_image = self._preprocess_slice_data_for_sam(slice_data)
                 preprocess_time = time.time() - preprocess_start_time
+                
+                original_height, original_width = rgb_image.shape[:2]
+                logger.info(f"🖼️ Original image dimensions: {rgb_image.shape} ({original_height}×{original_width} pixels)")
+                
+                # For mammography: detect and crop to breast region to save memory
+                if is_mammography:
+                    logger.info("🔬 Mammography mode: Detecting breast region to optimize memory usage...")
+                    
+                    # Store original for visualization
+                    original_image_for_viz = rgb_image.copy()
+                    
+                    # Detect breast region
+                    bbox_result = self._detect_breast_region_bbox(rgb_image)
+                    
+                    if bbox_result is not None:
+                        x_min, y_min, x_max, y_max, crop_info = bbox_result
+                        
+                        # Crop the image
+                        rgb_image = rgb_image[y_min:y_max, x_min:x_max].copy()
+                        
+                        cropped_height, cropped_width = rgb_image.shape[:2]
+                        logger.info(f"✂️ Cropped to breast region: {cropped_width}×{cropped_height} pixels")
+                        logger.info(f"   Memory reduction: {crop_info['reduction_ratio']*100:.1f}%")
+                    else:
+                        logger.info("📏 Using full image (cropping not beneficial or detection failed)")
+                
             except Exception as e:
                 logger.error(f"Error preprocessing slice data: {e}")
                 return None
             
-            # Generate masks
+            # Generate masks on (potentially cropped) image
             mask_start_time = time.time()
             try:
+                logger.info(f"🎯 Generating masks on {rgb_image.shape[1]}×{rgb_image.shape[0]} image...")
                 masks = mask_generator.generate(rgb_image)
                 mask_time = time.time() - mask_start_time
+                logger.info(f"✅ Generated {len(masks)} raw masks in {mask_time:.2f}s")
             except Exception as e:
                 logger.error(f"Error generating masks: {e}")
                 return None
+            
+            # Map masks back to original coordinates if we cropped
+            if crop_info is not None:
+                logger.info(f"📍 Mapping {len(masks)} masks back to original coordinates...")
+                masks = self._map_masks_to_original_coordinates(masks, crop_info)
             
             # Filter masks based on UI annotation rules: area >= 500 and IoU >= 0.8
             filtered_masks = []
@@ -2796,13 +3159,15 @@ class MEDSAM2Handlers:
             with open(json_path, 'w') as f:
                 json.dump(mask_data, f, indent=2)
             
-            # Save visualization if requested
+            # Save visualization if requested (use original image if we cropped)
             if save_visualizations and filtered_masks:
-                self._save_fast_visualization(rgb_image, filtered_masks, output_dir, slice_name)
+                viz_image = original_image_for_viz if original_image_for_viz is not None else rgb_image
+                self._save_fast_visualization(viz_image, filtered_masks, output_dir, slice_name)
             
             total_time = time.time() - slice_start_time
             
-            return {
+            # Include crop info in result for debugging
+            result = {
                 "success": True,
                 "slice_idx": slice_idx,
                 "slice_name": slice_name,
@@ -2812,8 +3177,11 @@ class MEDSAM2Handlers:
                     "preprocess": preprocess_time,
                     "mask_generation": mask_time
                 },
-                "masks": filtered_masks
+                "masks": filtered_masks,
+                "crop_info": crop_info  # Include crop info for debugging (None if not cropped)
             }
+            
+            return result
             
         except Exception as e:
             logger.error(f"Error processing slice data for slice {slice_idx}: {e}")

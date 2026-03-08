@@ -40,6 +40,7 @@ class MedGemmaService:
         self.processor = None
         self.model_name = "google/medgemma-4b-it"
         self.using_device_map = False  # Track if using device_map for multi-GPU
+        self.visual_grounding = None  # XAI visual grounding system
         self._initialize_model()
     
     def _get_device(self, device: str) -> str:
@@ -187,6 +188,50 @@ class MedGemmaService:
             # Set model to evaluation mode
             self.model.eval()
             
+            # Initialize visual grounding XAI systems (gradient-based and attention-based)
+            try:
+                # Import visual grounding modules dynamically to avoid circular imports
+                import sys
+                import os
+                project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+                if project_root not in sys.path:
+                    sys.path.insert(0, project_root)
+                
+                # Original gradient-based approach (fallback)
+                from xai.vlm.visual_grounding import MedGemmaVisualGrounding
+                self.visual_grounding = MedGemmaVisualGrounding(
+                    model=self.model,
+                    processor=self.processor,
+                    device=self.device
+                )
+                logger.info("Gradient-based visual grounding XAI initialized (fallback)")
+                
+                # Fast attention-based approach (previous attempt)
+                from xai.vlm.attention_visual_grounding import AttentionVisualGrounding
+                self.attention_grounding = AttentionVisualGrounding(
+                    model=self.model,
+                    processor=self.processor,
+                    device=self.device
+                )
+                logger.info("Attention-based visual grounding initialized")
+                
+                # NEW: Proper VLM XAI (Input×Gradient + Decoder Attention)
+                from xai.vlm.vlm_visual_grounding import VLMVisualGrounding
+                self.vlm_grounding = VLMVisualGrounding(
+                    model=self.model,
+                    processor=self.processor,
+                    device=self.device
+                )
+                logger.info("VLM visual grounding XAI initialized (Input×Gradient + Decoder Attention)")
+                
+            except Exception as e:
+                logger.warning(f"Could not initialize visual grounding XAI: {e}")
+                import traceback
+                logger.debug(traceback.format_exc())
+                self.visual_grounding = None
+                self.attention_grounding = None
+                self.vlm_grounding = None
+            
         except Exception as e:
             logger.error(f"Failed to initialize MedGemma service: {e}")
             raise RuntimeError(f"MedGemma initialization failed: {e}")
@@ -307,12 +352,37 @@ class MedGemmaService:
                     top_p=0.9,
                     pad_token_id=self.processor.tokenizer.eos_token_id,
                     eos_token_id=self.processor.tokenizer.eos_token_id,
+                    return_dict_in_generate=True,  # Enable dict output for caching
+                    output_attentions=False,  # Attentions during generation are complex, use forward pass instead
+                    output_hidden_states=False,
                 )
+            
+            # Handle both dict and tensor outputs
+            if hasattr(outputs, 'sequences'):
+                generation = outputs.sequences
+            else:
+                generation = outputs
             
             # Extract the new tokens (response only)
             input_length = inputs['input_ids'].shape[1]
-            generated_tokens = outputs[0][input_length:]
+            generated_tokens = generation[0][input_length:]
             response = self.processor.decode(generated_tokens, skip_special_tokens=True)
+            
+            # Cache generation outputs for attention-based XAI (FAST path)
+            if hasattr(self, 'attention_grounding') and self.attention_grounding is not None:
+                try:
+                    self.attention_grounding.cache_generation_outputs(
+                        image=processed_image,
+                        prompt=prompt,
+                        generated_text=response.strip(),
+                        inputs=inputs,
+                        generation=generation,
+                        attentions=getattr(outputs, 'attentions', None),
+                        hidden_states=getattr(outputs, 'hidden_states', None)
+                    )
+                    logger.info("Cached generation outputs for fast XAI")
+                except Exception as e:
+                    logger.warning(f"Could not cache generation outputs: {e}")
             
             return response.strip()
             
@@ -341,7 +411,103 @@ class MedGemmaService:
             
         except Exception as e:
             logger.error(f"Error during MedGemma cleanup: {e}")
-
+    
+    def compute_visual_grounding(
+        self,
+        image: Union[Image.Image, np.ndarray],
+        prompt: str,
+        target_token: str,
+        generated_text: Optional[str] = None,
+        xai_method: str = "input_gradient"
+    ) -> tuple:
+        """
+        Compute visual grounding heatmap for a specific token.
+        
+        Shows which image regions influenced the model to generate a specific token/label.
+        
+        Args:
+            image: Input image (PIL Image or numpy array)
+            prompt: Text prompt used for generation
+            target_token: Token/word to visualize (e.g., "tumor", "lesion")
+            generated_text: Pre-generated text (optional)
+            xai_method: XAI method to use:
+                - "input_gradient" (RECOMMENDED): Input×Gradient on projected image tokens
+                - "decoder_attention": Decoder attention weights (SDPA workaround)
+                - "attention": Legacy embedding similarity (fast but less accurate)
+                - "hirescam", "gradcam", etc.: Legacy gradient-based (slow)
+        
+        Returns:
+            Tuple of (heatmap, metadata):
+                - heatmap: numpy array with spatial attribution (H, W), values in [0, 1]
+                - metadata: dict with statistics and method information
+        """
+        try:
+            # Preprocess image
+            image_pil = self.preprocess_image(image)
+            
+            # Strategy 1: Input × Gradient (RECOMMENDED - proper VLM XAI)
+            if xai_method == "input_gradient" and hasattr(self, 'vlm_grounding') and self.vlm_grounding is not None:
+                logger.info("Using Input×Gradient XAI (proper VLM approach)")
+                heatmap, metadata = self.vlm_grounding.compute_visual_grounding(
+                    image=image_pil,
+                    prompt=prompt,
+                    target_label=target_token,
+                    method="input_gradient"
+                )
+                if heatmap is not None and metadata.get('success'):
+                    return heatmap, metadata
+                else:
+                    error_msg = metadata.get('error', 'Unknown error')
+                    logger.info(f"Input×Gradient failed: {error_msg}, trying decoder attention...")
+            
+            # Strategy 2: Decoder Attention (SDPA workaround)
+            if xai_method in ["decoder_attention", "input_gradient"] and hasattr(self, 'vlm_grounding') and self.vlm_grounding is not None:
+                logger.info("Using Decoder Attention XAI (SDPA workaround)")
+                heatmap, metadata = self.vlm_grounding.compute_visual_grounding(
+                    image=image_pil,
+                    prompt=prompt,
+                    target_label=target_token,
+                    method="decoder_attention"
+                )
+                if heatmap is not None and metadata.get('success'):
+                    return heatmap, metadata
+                else:
+                    error_msg = metadata.get('error', 'Unknown error')
+                    logger.info(f"Decoder attention failed: {error_msg}, trying legacy methods...")
+            
+            # Legacy: Attention-based (embedding similarity - fast but less principled)
+            if xai_method == "attention" and hasattr(self, 'attention_grounding') and self.attention_grounding is not None:
+                logger.info("Using legacy attention-based XAI (embedding similarity)")
+                xai_image = self.attention_grounding._cache.get('preprocessed_image', image_pil)
+                heatmap, metadata = self.attention_grounding.compute_visual_grounding(
+                    image=xai_image,
+                    prompt=prompt,
+                    target_token=target_token
+                )
+                if heatmap is not None and metadata.get('success'):
+                    metadata['method'] = 'embedding_similarity (legacy)'
+                    return heatmap, metadata
+            
+            # Legacy: Gradient-based (slow but works)
+            if self.visual_grounding is not None:
+                logger.info(f"Using legacy gradient-based XAI: {xai_method}")
+                heatmap, metadata = self.visual_grounding.compute_visual_grounding(
+                    image=image_pil,
+                    prompt=prompt,
+                    target_token=target_token,
+                    generated_text=generated_text,
+                    xai_method=xai_method if xai_method in ["hirescam", "gradcam", "gradcam++", "guided_gradcam"] else "hirescam"
+                )
+                return heatmap, metadata
+            
+            logger.error("No visual grounding system available")
+            return None, {"error": "Visual grounding not available", "success": False}
+        
+        except Exception as e:
+            logger.error(f"Error computing visual grounding: {e}")
+            import traceback
+            logger.debug(traceback.format_exc())
+            return None, {"error": str(e), "success": False}
 
 def get_service(device: str = "auto") -> MedGemmaService:
     """

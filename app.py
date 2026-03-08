@@ -11,6 +11,8 @@ import numpy as np
 import os
 import sys
 import threading
+import cv2
+import traceback
 
 # ===== CROWDSOURCING CONFIGURATION =====
 ENABLE_AUTH = True  # Set to False to disable authentication and crowdsourcing features
@@ -108,6 +110,22 @@ class DebugFilter(logging.Filter):
                 "XAI capture",
                 "integration.capture_xai_data",
                 "🔥",
+                "Error",
+                "Traceback",
+                "Visual grounding",
+                "Visual",
+                "Target",
+                "logit",
+                "Generated",
+                "Generating",
+                "generated_text",
+                "Matched",
+                "Loss",
+                "Attention-based",
+                "Cache state:",
+                "MAMMOGRAPHY",
+                "mg",
+                "Image dimensions:",
             ]
             message = record.getMessage()
             return any(keyword in message for keyword in allowed_keywords)
@@ -1275,7 +1293,7 @@ class SegMedPro:
         # Unpack components
         (file_input, dir_input, load_btn, reset_dir_btn, file_browser, label_file,
          metadata_display_dl, error_display_dl, window_level, window_width, apply_window_btn, debug_btn) = data_loading
-        (error_display, metadata_display, view_selector, deidentification_checkbox, xai_attention_checkbox, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, 
+        (error_display, metadata_display, view_selector, deidentification_checkbox, xai_attention_checkbox, uncertainty_checkbox, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, 
          crowdsourcing_accordion, submit_annotation_btn, assignments_remaining, next_assignment_btn, crowdsourcing_status,
          current_labels_dataset, current_labels_placeholder, suggested_vlm_selector, suggest_labels_btn, suggested_labels_dataset, suggested_labels_placeholder, accept_suggestions_btn, label_suggestion_info_row, vlm_model_selector, vlm_run_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn, voice_prompt_text, voice_audio_input, voice_analysis_row, voice_analysis_controls, voice_analysis_audio, voice_analysis_text, save_to_analysis_btn, vlm_info_accordion, vlm_tools_info_accordion, vlm_custom_prompt_info_accordion) = visualization        
         (point_prompt_checkbox, box_prompt_checkbox, coordinates_text, clear_coords_btn, ai_model_selector, 
@@ -1440,6 +1458,218 @@ class SegMedPro:
             fn=handle_xai_attention_change,
             inputs=[xai_attention_checkbox],
             outputs=[image_display, xai_attention_checkbox]
+        )
+        
+        def handle_uncertainty_map_change(is_checked):
+            """Toggle uncertainty map overlay visibility."""
+            # If disabling, just rebuild without uncertainty
+            if not is_checked:
+                logger.info("Uncertainty overlay disabled")
+            
+            # If enabling, validate that we have logits
+            if is_checked and hasattr(self, 'editor_medsam2_handlers'):
+                # Check if we have XAI integration with logits
+                if self.editor_medsam2_handlers._xai_integration is None:
+                    result = (gr.update(), gr.update(value=False))
+                    gr.Warning("Run AI-guided annotation first to compute uncertainty map")
+                    return result
+                
+                mask_logits = self.editor_medsam2_handlers._xai_integration.get_mask_logits()
+                if mask_logits is None:
+                    result = (gr.update(), gr.update(value=False))
+                    gr.Warning("No mask logits available. Run segmentation first (point or box prompts)")
+                    return result
+                
+                # Check slice validity (same as XAI)
+                is_valid, error_msg = self.editor_medsam2_handlers.is_xai_valid_for_current_slice()
+                if not is_valid:
+                    result = (gr.update(), gr.update(value=False))
+                    gr.Warning(error_msg)
+                    return result
+                
+                logger.info("Uncertainty overlay enabled")
+            
+            if hasattr(self, 'editor_medsam2_handlers'):
+                try:
+                    from utils.visualization import display_slice, create_annotation_boxes_from_mask
+                    
+                    # Get clean image
+                    clean_img = display_slice(
+                        self.editor_medsam2_handlers.state.current_data,
+                        self.editor_medsam2_handlers.state.current_slice_idx,
+                        self.editor_medsam2_handlers.state.current_view,
+                        window_level=self.editor_medsam2_handlers.state.window_level,
+                        window_width=self.editor_medsam2_handlers.state.window_width,
+                        crosshair=None
+                    )
+                    
+                    # Ensure RGB uint8
+                    if len(clean_img.shape) == 2:
+                        img_rgb = np.stack([clean_img] * 3, axis=-1)
+                    else:
+                        img_rgb = clean_img
+                    if img_rgb.dtype != np.uint8:
+                        img_rgb = (img_rgb * 255).astype(np.uint8)
+                    
+                    # Apply uncertainty overlay if checked
+                    if is_checked:
+                        # Get mask logits and compute uncertainty map
+                        mask_logits = self.editor_medsam2_handlers._xai_integration.get_mask_logits()
+                        if mask_logits is not None:
+                            from xai.segmentation.uncertainty_maps import UncertaintyMapGenerator
+                            generator = UncertaintyMapGenerator()
+                            
+                            # Compute uncertainty from logits (returns values in [0,1])
+                            uncertainty_map, stats = generator.compute_from_logits(mask_logits, method="margin")
+                            
+                            # Resize uncertainty map to match base image size
+                            import cv2
+                            target_h, target_w = img_rgb.shape[:2]
+                            if uncertainty_map.shape[:2] != (target_h, target_w):
+                                uncertainty_map_resized = cv2.resize(
+                                    uncertainty_map,
+                                    (target_w, target_h),
+                                    interpolation=cv2.INTER_LINEAR
+                                )
+                            else:
+                                uncertainty_map_resized = uncertainty_map
+                            
+                            # Create colored overlay at full resolution
+                            uncertainty_colored = generator.create_colored_overlay(
+                                uncertainty_map_resized,
+                                colormap="RdYlGn_r"
+                            )
+                            
+                            # Collect all segmentation masks from current slice
+                            current_slice = self.editor_medsam2_handlers.state.current_slice_idx
+                            combined_mask = None
+                            
+                            if (hasattr(self.editor_medsam2_handlers, 'annotation_overlays') and 
+                                current_slice in self.editor_medsam2_handlers.annotation_overlays):
+                                overlay_data = self.editor_medsam2_handlers.annotation_overlays[current_slice]
+                                
+                                # Collect all masks
+                                masks = []
+                                if isinstance(overlay_data, dict):
+                                    if 'mask' in overlay_data:
+                                        masks.append(overlay_data['mask'])
+                                    else:
+                                        for annotation_id, annotation_data in overlay_data.items():
+                                            if isinstance(annotation_data, dict) and 'mask' in annotation_data:
+                                                masks.append(annotation_data['mask'])
+                                
+                                # Combine all masks into union
+                                if masks:
+                                    combined_mask = np.zeros_like(masks[0], dtype=bool)
+                                    for mask in masks:
+                                        combined_mask = combined_mask | (mask > 0)
+                                    logger.info(f"Created combined mask from {len(masks)} segmentation(s)")
+                            
+                            # Resize combined mask if needed
+                            if combined_mask is not None and combined_mask.shape[:2] != (target_h, target_w):
+                                combined_mask = cv2.resize(
+                                    combined_mask.astype(np.uint8),
+                                    (target_w, target_h),
+                                    interpolation=cv2.INTER_NEAREST
+                                ) > 0
+                            
+                            # Apply masked blending
+                            if combined_mask is not None:
+                                # Dilate mask to include boundary region
+                                kernel = np.ones((15, 15), np.uint8)
+                                mask_dilated = cv2.dilate(combined_mask.astype(np.uint8), kernel, iterations=1)
+                                mask_3ch = np.stack([mask_dilated] * 3, axis=-1).astype(bool)
+                                
+                                # Blend only within masked region
+                                alpha = 0.4
+                                img_rgb[mask_3ch] = ((1 - alpha) * img_rgb[mask_3ch] + alpha * uncertainty_colored[mask_3ch]).astype(np.uint8)
+                                logger.info(f"Applied masked uncertainty overlay: {mask_dilated.sum()} pixels affected")
+                            else:
+                                # No mask - blend everywhere (fallback)
+                                alpha = 0.4
+                                img_rgb = ((1 - alpha) * img_rgb + alpha * uncertainty_colored).astype(np.uint8)
+                                logger.warning("No segmentation mask found - showing uncertainty everywhere")
+                            
+                            # Add text overlay with confidence statistics and color legend (top-right)
+                            h, w = img_rgb.shape[:2]
+                            
+                            # Background box for text (semi-transparent black)
+                            box_height = 70
+                            box_width = 200
+                            overlay_box = img_rgb.copy()
+                            cv2.rectangle(overlay_box, (w - box_width - 5, 10), (w - 5, 10 + box_height), (0, 0, 0), -1)
+                            img_rgb = cv2.addWeighted(img_rgb, 0.6, overlay_box, 0.4, 0)
+                            
+                            # Text parameters
+                            font = cv2.FONT_HERSHEY_SIMPLEX
+                            font_scale = 0.45
+                            thickness = 1
+                            color = (255, 255, 255)
+                            
+                            # Confidence statistics
+                            y_offset = 28
+                            cv2.putText(img_rgb, f"Avg Confidence: {stats['mean_confidence']*100:.0f}%", 
+                                       (w - box_width + 5, y_offset), font, font_scale, color, thickness, cv2.LINE_AA)
+                            
+                            y_offset += 18
+                            cv2.putText(img_rgb, f"Uncertain: {stats['uncertain_pixels_ratio']*100:.0f}%", 
+                                       (w - box_width + 5, y_offset), font, font_scale, color, thickness, cv2.LINE_AA)
+                            
+                            # Color legend
+                            y_offset += 20
+                            # Green square
+                            cv2.rectangle(img_rgb, (w - box_width + 3, y_offset - 8), (w - box_width + 17, y_offset + 4), (0, 200, 0), -1)
+                            cv2.putText(img_rgb, "Confident", (w - box_width + 23, y_offset), font, font_scale, color, thickness, cv2.LINE_AA)
+                            
+                            y_offset += 18
+                            # Red square
+                            cv2.rectangle(img_rgb, (w - box_width + 3, y_offset - 8), (w - box_width + 17, y_offset + 4), (255, 0, 0), -1)
+                            cv2.putText(img_rgb, "Uncertain", (w - box_width + 23, y_offset), font, font_scale, color, thickness, cv2.LINE_AA)
+                            
+                            gr.Info(f"Confidence: {stats['mean_confidence']*100:.1f}% | Uncertain pixels: {stats['uncertain_pixels_ratio']*100:.1f}%")
+                        else:
+                            logger.warning("No mask logits available")
+                    
+                    # Rebuild with current annotations
+                    current_slice = self.editor_medsam2_handlers.state.current_slice_idx
+                    annotation_shapes = []
+                    
+                    if (hasattr(self.editor_medsam2_handlers, 'annotation_overlays') and 
+                        current_slice in self.editor_medsam2_handlers.annotation_overlays):
+                        overlay_data = self.editor_medsam2_handlers.annotation_overlays[current_slice]
+                        
+                        if isinstance(overlay_data, dict):
+                            if 'mask' in overlay_data:
+                                mask_array = overlay_data['mask']
+                                annotation_shapes = create_annotation_boxes_from_mask(
+                                    mask_array, label="MEDSAM2 Annotation", label_index=1
+                                )
+                            else:
+                                for annotation_id, annotation_data in overlay_data.items():
+                                    if isinstance(annotation_data, dict) and 'mask' in annotation_data:
+                                        mask_array = annotation_data['mask']
+                                        shapes = create_annotation_boxes_from_mask(
+                                            mask_array, label=f"MEDSAM2 Annotation {annotation_id}", label_index=1
+                                        )
+                                        annotation_shapes.extend(shapes)
+                    
+                    return {
+                        "image": img_rgb,
+                        "boxes": annotation_shapes,
+                        "orientation": 0
+                    }, gr.update()
+                except Exception as e:
+                    logger.error(f"Error in uncertainty checkbox handler: {e}")
+                    import traceback
+                    logger.debug(f"Traceback: {traceback.format_exc()}")
+            
+            return gr.update(), gr.update()
+        
+        # Uncertainty map visualization toggle
+        uncertainty_checkbox.change(
+            fn=handle_uncertainty_map_change,
+            inputs=[uncertainty_checkbox],
+            outputs=[image_display, uncertainty_checkbox]
         )
         
           # Data loading handlers (updated for annotator compatibility)
@@ -2029,16 +2259,22 @@ class SegMedPro:
             if (hasattr(self.editor_medsam2_handlers, 'point_mode_enabled') and 
                 self.editor_medsam2_handlers.point_mode_enabled and 
                 not getattr(self.editor_medsam2_handlers, 'box_mode_enabled', False)):
-                return self.editor_medsam2_handlers.handle_image_click(evt)
+                
+                # Get coordinates from handler
+                coords_text = self.editor_medsam2_handlers.handle_image_click(evt)
+                
+                # Draw red X markers (Dead-Eye style!) using external module
+                from ui.point_marker_overlay import draw_point_markers_on_image
+                return draw_point_markers_on_image(self.editor_medsam2_handlers, coords_text)
             else:
                 # In box mode or when point mode is disabled, don't process select events at all
-                return ""
+                return "", gr.update()
         
         # Connect MEDSAM2 handlers - conditional based on mode (EDITOR-SPECIFIC)
         image_display.select(
             fn=handle_image_select_conditionally,
             inputs=[],
-            outputs=[coordinates_text]
+            outputs=[coordinates_text, image_display]
         )
         
         def handle_image_annotation_change(annotated_image_value):
@@ -2406,6 +2642,27 @@ class SegMedPro:
                 # Get current slice index for slice-specific storage
                 current_slice_idx = self.state.current_slice_idx
                 
+                # Determine modality from loaded data metadata
+                modality = "MRI"  # Default
+                if self.state.current_metadata:
+                    dicom_modality = self.state.current_metadata.get('Modality', '')
+                    if dicom_modality == 'MG':
+                        modality = "MG"
+                    elif dicom_modality == 'CT':
+                        modality = "CT"
+                    elif dicom_modality in ['MR', 'MRI']:
+                        modality = "MRI"
+                    else:
+                        # Try to infer from directory path
+                        if self.state.current_directory:
+                            dir_lower = self.state.current_directory.lower()
+                            if 'abdomen' in dir_lower or 'ct' in dir_lower:
+                                modality = "CT"
+                            elif 'mg' in dir_lower or 'mammo' in dir_lower:
+                                modality = "MG"
+                
+                logger.info(f"Detected modality for VLM suggestions: {modality}")
+                
                 # Get current labels for this slice to filter duplicates
                 current_labels = []
                 if self.state.current_directory:
@@ -2413,9 +2670,9 @@ class SegMedPro:
                     current_labels = saved_labels if saved_labels else []
                 
                 if vlm_model == "MedGemma-4B":
-                    result_samples = create_medgemma_label_suggestions(image_annotator_value, current_slice_idx, current_labels)
+                    result_samples = create_medgemma_label_suggestions(image_annotator_value, current_slice_idx, current_labels, modality=modality)
                 else:
-                    result_samples = create_other_vlm_label_suggestions(vlm_model, image_annotator_value, current_slice_idx, current_labels)
+                    result_samples = create_other_vlm_label_suggestions(vlm_model, image_annotator_value, current_slice_idx, current_labels, modality=modality)
                 
                 logger.info(f"VLM suggestions result: {len(result_samples)} samples for slice {current_slice_idx}")
                 
@@ -2462,7 +2719,7 @@ class SegMedPro:
                 return "Error selecting label"
         
         def handle_suggested_label_selection(evt: gr.SelectData):
-            """Handle toggle selection from suggested labels dataset"""
+            """Handle toggle selection from suggested labels dataset with visual grounding XAI"""
             try:
                 from ui.editor_tab import toggle_suggested_label_selection, get_selected_suggested_labels_for_slice, get_suggested_labels_for_slice
                 
@@ -2478,7 +2735,7 @@ class SegMedPro:
                     label_text = ""
                 
                 if not label_text or label_text.startswith("⏳"):
-                    return gr.update(), gr.update(visible=False)  # Ignore loading or empty labels
+                    return gr.update(), gr.update(visible=False), gr.update()  # Ignore loading or empty labels
                 
                 # Clean the label text (remove selection indicators if present)
                 clean_label_text = label_text.replace("✅ ", "").strip()
@@ -2488,6 +2745,112 @@ class SegMedPro:
                 
                 # Show/hide accept button based on whether anything is selected
                 accept_btn_visible = len(selected_labels) > 0
+                
+                # Compute visual grounding for the clicked label (MedGemma only)
+                image_with_grounding = None
+                try:
+                    # Check if we have MedGemma handlers and the label was just selected (not deselected)
+                    if hasattr(self, 'editor_medgemma_handlers') and clean_label_text in selected_labels:
+                        logger.info(f"Computing visual grounding for label: '{clean_label_text}'")
+                        
+                        # Get the current image from state
+                        from utils.visualization import display_slice, create_annotation_boxes_from_mask
+                        import cv2
+                        
+                        # Get clean image from current state
+                        clean_img = display_slice(
+                            self.state.current_data,
+                            self.state.current_slice_idx,
+                            self.state.current_view,
+                            window_level=self.state.window_level,
+                            window_width=self.state.window_width,
+                            crosshair=None
+                        )
+                        
+                        # Ensure RGB uint8
+                        if len(clean_img.shape) == 2:
+                            img_rgb = np.stack([clean_img] * 3, axis=-1)
+                        else:
+                            img_rgb = clean_img.copy()
+                        if img_rgb.dtype != np.uint8:
+                            img_rgb = (img_rgb * 255).astype(np.uint8)
+                        
+                        # Compute visual grounding using MedGemma service
+                        # Using Input×Gradient XAI (proper VLM approach - analyzes decoder)
+                        heatmap, metadata = self.editor_medgemma_handlers.compute_visual_grounding_for_label(
+                            image=img_rgb,
+                            target_label=clean_label_text,
+                            xai_method="input_gradient"  # Input×Gradient: proper VLM XAI
+                        )
+                        
+                        if heatmap is not None and metadata.get('success', False):
+                            # Create heatmap overlay
+                            import matplotlib.pyplot as plt
+                            
+                            # Apply colormap to heatmap (jet: blue → green → yellow → red)
+                            cmap = plt.get_cmap('jet')
+                            heatmap_colored = cmap(heatmap)[:, :, :3]  # Remove alpha channel
+                            heatmap_colored = (heatmap_colored * 255).astype(np.uint8)
+                            
+                            # Resize heatmap to match image if needed
+                            if heatmap_colored.shape[:2] != img_rgb.shape[:2]:
+                                heatmap_colored = cv2.resize(heatmap_colored, (img_rgb.shape[1], img_rgb.shape[0]))
+                            
+                            # Blend with original image (alpha = 0.5)
+                            img_with_heatmap = cv2.addWeighted(img_rgb, 0.5, heatmap_colored, 0.5, 0)
+                            
+                            # Add legend/info text
+                            h, w = img_with_heatmap.shape[:2]
+                            
+                            # Semi-transparent background for text (expanded for method info)
+                            overlay = img_with_heatmap.copy()
+                            cv2.rectangle(overlay, (w - 220, 10), (w - 10, 110), (0, 0, 0), -1)
+                            img_with_heatmap = cv2.addWeighted(img_with_heatmap, 0.6, overlay, 0.4, 0)
+                            
+                            # Text parameters
+                            font = cv2.FONT_HERSHEY_SIMPLEX
+                            font_scale = 0.42
+                            thickness = 1
+                            color = (255, 255, 255)
+                            
+                            # XAI Method used
+                            y_offset = 25
+                            xai_method = metadata.get('method', 'attention')
+                            # Make display name more user-friendly
+                            if 'attention' in xai_method.lower() or 'embedding' in xai_method.lower() or 'similarity' in xai_method.lower():
+                                xai_display = "Embedding Sim (FAST)"
+                            else:
+                                xai_display = xai_method[:20]
+                            cv2.putText(img_with_heatmap, f"XAI: {xai_display}", 
+                                       (w - 215, y_offset), font, font_scale, color, thickness, cv2.LINE_AA)
+                            
+                            # Label text
+                            y_offset += 20
+                            cv2.putText(img_with_heatmap, f"Label: {clean_label_text[:18]}", 
+                                       (w - 215, y_offset), font, font_scale, color, thickness, cv2.LINE_AA)
+                            
+                            y_offset += 20
+                            mean_attr = metadata.get('mean_attribution', 0)
+                            cv2.putText(img_with_heatmap, f"Mean Attribution: {mean_attr:.3f}", 
+                                       (w - 215, y_offset), font, font_scale, color, thickness, cv2.LINE_AA)
+                            
+                            y_offset += 20
+                            max_attr = metadata.get('max_attribution', 0)
+                            cv2.putText(img_with_heatmap, f"Max Attribution: {max_attr:.3f}", 
+                                       (w - 215, y_offset), font, font_scale, color, thickness, cv2.LINE_AA)
+                            
+                            image_with_grounding = img_with_heatmap
+                            
+                            gr.Info(f"Visual evidence ({xai_method}) for '{clean_label_text}' | Mean: {mean_attr:.3f}, Max: {max_attr:.3f}")
+                            logger.info(f"Visual grounding ({xai_method}) for '{clean_label_text}': mean={mean_attr:.3f}, max={max_attr:.3f}")
+                        else:
+                            logger.warning(f"Visual grounding failed for '{clean_label_text}': {metadata.get('error', 'Unknown error')}")
+                            gr.Warning(f"Could not compute visual evidence for '{clean_label_text}'")
+                
+                except Exception as e:
+                    logger.error(f"Error computing visual grounding: {e}")
+                    import traceback
+                    logger.debug(f"Traceback: {traceback.format_exc()}")
                 
                 # Update the suggested labels dataset to show selection state
                 all_suggestions = get_suggested_labels_for_slice(current_slice_idx)
@@ -2503,13 +2866,50 @@ class SegMedPro:
                         else:
                             updated_samples.append([suggestion_label])  # Not selected
                     
-                    return gr.Dataset(samples=updated_samples), gr.update(visible=accept_btn_visible)
+                    # If we have visual grounding, update the image display
+                    if image_with_grounding is not None:
+                        # Get existing annotation shapes
+                        annotation_shapes = []
+                        current_slice = self.state.current_slice_idx
+                        
+                        if (hasattr(self.editor_medsam2_handlers, 'annotation_overlays') and 
+                            current_slice in self.editor_medsam2_handlers.annotation_overlays):
+                            overlay_data = self.editor_medsam2_handlers.annotation_overlays[current_slice]
+                            
+                            if isinstance(overlay_data, dict):
+                                if 'mask' in overlay_data:
+                                    mask_array = overlay_data['mask']
+                                    annotation_shapes = create_annotation_boxes_from_mask(
+                                        mask_array, label="MEDSAM2 Annotation", label_index=1
+                                    )
+                                else:
+                                    for annotation_id, annotation_data in overlay_data.items():
+                                        if isinstance(annotation_data, dict) and 'mask' in annotation_data:
+                                            mask_array = annotation_data['mask']
+                                            shapes = create_annotation_boxes_from_mask(
+                                                mask_array, label=f"MEDSAM2 Annotation {annotation_id}", label_index=1
+                                            )
+                                            annotation_shapes.extend(shapes)
+                        
+                        return (
+                            gr.Dataset(samples=updated_samples), 
+                            gr.update(visible=accept_btn_visible),
+                            {
+                                "image": image_with_grounding,
+                                "boxes": annotation_shapes,
+                                "orientation": 0
+                            }
+                        )
+                    else:
+                        return gr.Dataset(samples=updated_samples), gr.update(visible=accept_btn_visible), gr.update()
                 else:
-                    return gr.update(), gr.update(visible=accept_btn_visible)
+                    return gr.update(), gr.update(visible=accept_btn_visible), gr.update()
                     
             except Exception as e:
                 logger.error(f"Error handling suggested label selection: {e}")
-                return gr.update(), gr.update(visible=False)
+                import traceback
+                logger.debug(f"Traceback: {traceback.format_exc()}")
+                return gr.update(), gr.update(visible=False), gr.update()
         
         # Connect dataset selection handlers
         current_labels_dataset.select(
@@ -2521,7 +2921,7 @@ class SegMedPro:
         suggested_labels_dataset.select(
             fn=handle_suggested_label_selection,
             inputs=[],
-            outputs=[suggested_labels_dataset, accept_suggestions_btn]
+            outputs=[suggested_labels_dataset, accept_suggestions_btn, image_display]
         )
         
         # Handle accepting suggested labels
@@ -3593,11 +3993,11 @@ class SegMedPro:
                 outputs=[
                     contribute_components['load_status'],           # Status message
                     editor_components['crowdsourcing']['accordion'], # Show crowdsourcing controls
-                    editor_components['visualization'][5],          # image_display
+                    editor_components['visualization'][6],          # image_display
                     editor_components['visualization'][1],          # metadata_display  
-                    editor_components['visualization'][9],          # slice_slider
-                    editor_components['visualization'][11],         # slice_text
-                    editor_components['visualization'][12],         # crosshair_info
+                    editor_components['visualization'][10],         # slice_slider
+                    editor_components['visualization'][12],         # slice_text
+                    editor_components['visualization'][13],         # crosshair_info
                     # Window level and width are in data_loading section
                     editor_components['data_loading'][8],           # window_level
                     editor_components['data_loading'][9]            # window_width
@@ -3620,8 +4020,8 @@ class SegMedPro:
             # Connect crowdsourcing controls in editor tab
             editor_components['crowdsourcing']['submit_btn'].click(
                 fn=handle_submit_and_clear,
-                inputs=[contribute_components['selected_task_info'], contribute_components['current_user_state'], editor_components['visualization'][5]],  # image_display is at index 5 in visualization
-                outputs=[editor_components['crowdsourcing']['status'], editor_components['visualization'][5]]  # Also update image_annotator to clear overlays
+                inputs=[contribute_components['selected_task_info'], contribute_components['current_user_state'], editor_components['visualization'][6]],  # image_display is at index 6 in visualization
+                outputs=[editor_components['crowdsourcing']['status'], editor_components['visualization'][6]]  # Also update image_annotator to clear overlays
             ).then(
                 # Update assignment progress after submission and control button visibility - hide submit button
                 fn=lambda user_id: get_remaining_assignments_info(user_id, hide_submit_btn=True),
@@ -3729,10 +4129,10 @@ class SegMedPro:
                 outputs=[
                     tabs,  # tabs
                     editor_components['visualization'][0],                       # error_display (status/errors)
-                    editor_components['visualization'][5],                       # image_display
-                    editor_components['visualization'][9],                       # slice_slider
-                    editor_components['visualization'][8],                       # prev_slice_btn
-                    editor_components['visualization'][10],                      # next_slice_btn
+                    editor_components['visualization'][6],                       # image_display
+                    editor_components['visualization'][10],                      # slice_slider
+                    editor_components['visualization'][9],                       # prev_slice_btn
+                    editor_components['visualization'][11],                      # next_slice_btn
                     editor_components['visualization'][1],                       # metadata_display
                     editor_components['crowdsourcing']['submit_btn'],            # submit_btn
                     editor_components['crowdsourcing']['status'],                # submission_status
@@ -3783,7 +4183,7 @@ class SegMedPro:
                 elif is_auto_switch:
                     logger.debug(f"⏭️ Skipped tracking {tool} - automatic tool switch after annotation (within {time_since_annotation}ms)")
             
-            editor_components['visualization'][5].tool_selected(
+            editor_components['visualization'][6].tool_selected(
                 fn=handle_editor_tool_selected,
                 inputs=[],  # Tool data comes from event
                 outputs=[]

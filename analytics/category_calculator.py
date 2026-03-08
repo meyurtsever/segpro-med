@@ -536,19 +536,74 @@ class BehavioralCategoryCalculator:
         
         return category, metrics, round(confidence, 3)
     
+    def _metrics_to_counters(self, metrics: Dict) -> Dict:
+        """
+        Convert profile metrics back to counter format for category recomputation.
+        
+        This allows categories to be recomputed from merged/accumulated metrics.
+        """
+        counters = {}
+        
+        # AI dependency metrics
+        ai = metrics.get("ai_dependency", {})
+        counters["ai_segmentation_runs"] = ai.get("ai_segmentation_runs", 0)
+        counters["automatic_segmentation_runs"] = ai.get("automatic_segmentation_runs", 0)
+        counters["ai_assisted_annotations"] = ai.get("ai_assisted_annotations", 0)
+        counters["manual_annotations"] = ai.get("manual_annotations", 0)
+        counters["ai_suggestions_accepted"] = ai.get("ai_suggestions_accepted", 0)
+        counters["ai_suggestions_rejected"] = ai.get("ai_suggestions_rejected", 0)
+        
+        # Speed metrics
+        speed = metrics.get("speed", {})
+        counters["total_annotation_time_ms"] = speed.get("total_annotation_time_ms", 0)
+        counters["annotation_count"] = speed.get("annotation_count", 0)
+        
+        # Experience metrics
+        exp = metrics.get("experience", {})
+        counters["annotation_edits"] = exp.get("annotation_edits", 0)
+        counters["annotation_deletions"] = exp.get("annotation_deletions", 0)
+        counters["tool_switches"] = exp.get("tool_switches", 0)
+        # Use experience annotation_count if speed doesn't have it
+        if counters["annotation_count"] == 0:
+            counters["annotation_count"] = exp.get("annotation_count", 0)
+        
+        # Modality metrics
+        mod = metrics.get("modality", {})
+        counters["datasets_loaded"] = mod.get("datasets_loaded", {})
+        counters["modalities_used"] = mod.get("modalities_used", {})
+        counters["labels_created"] = {}  # Not stored in profile
+        
+        # VLM metrics
+        vlm = metrics.get("vlm_usage", {})
+        counters["vlm_analyses_run"] = vlm.get("vlm_analyses_run", 0)
+        counters["vlm_label_suggestions"] = vlm.get("vlm_label_suggestions", 0)
+        counters["vlm_labels_accepted"] = vlm.get("vlm_labels_accepted", 0)
+        counters["voice_prompts_used"] = vlm.get("voice_prompts_used", 0)
+        counters["vlm_model_usage"] = vlm.get("vlm_model_usage", {})
+        
+        # Crowdsourcing metrics
+        crowd = metrics.get("crowdsourcing", {})
+        counters["assignments_loaded"] = crowd.get("assignments_loaded", 0)
+        counters["assignments_submitted"] = crowd.get("assignments_submitted", 0)
+        counters["assignments_completed"] = crowd.get("assignments_completed", 0)
+        
+        # Tool usage for primary tool computation
+        tool = metrics.get("primary_tool", {})
+        counters["tool_usage"] = tool.get("tool_distribution", {})
+        
+        return counters
+
     def merge_profiles(self, existing: Dict, new: Dict) -> Dict:
         """
         Merge a new session profile with existing historical profile.
         
         This accumulates metrics over time for more accurate long-term
-        category classification.
+        category classification. Categories are recomputed from merged metrics.
         """
         if not existing:
             return new
         
         merged = {
-            "categories": new.get("categories", {}),
-            "confidence_scores": new.get("confidence_scores", {}),
             "last_updated": new.get("last_updated"),
             "session_id": new.get("session_id"),
             "user_id": new.get("user_id")
@@ -596,6 +651,64 @@ class BehavioralCategoryCalculator:
             merged_metrics[category_key] = merged_cat
         
         merged["metrics"] = merged_metrics
+        
+        # Recompute categories from merged metrics to get accurate classifications
+        # This ensures accumulated data leads to proper category assignment
+        merged_counters = self._metrics_to_counters(merged_metrics)
+        
+        # Recompute each category from merged metrics - also get the recomputed metrics
+        ai_level, ai_metrics, ai_conf = self._compute_ai_dependency(merged_counters)
+        speed, speed_metrics, speed_conf = self._compute_speed_profile(merged_counters)
+        experience, exp_metrics, exp_conf = self._compute_experience_level(merged_counters)
+        modality, mod_metrics, mod_conf = self._compute_modality_expertise(merged_counters)
+        vlm, vlm_metrics, vlm_conf = self._compute_vlm_usage(merged_counters)
+        crowd, crowd_metrics, crowd_conf = self._compute_crowdsourcing(merged_counters)
+        
+        # Recompute primary tool
+        primary_tool_data = self._compute_primary_tool(merged_counters)
+        
+        # Update metrics with correctly recomputed values (fixes rate averaging issues)
+        # Keep accumulated counts from merged_metrics, update calculated rates from recomputed metrics
+        for key in ["ai_assistance_rate", "ai_acceptance_rate"]:
+            if key in ai_metrics:
+                merged_metrics.get("ai_dependency", {})[key] = ai_metrics[key]
+        for key in ["average_annotation_time_sec"]:
+            if key in speed_metrics:
+                merged_metrics.get("speed", {})[key] = speed_metrics[key]
+        for key in ["edit_rate", "deletion_rate"]:
+            if key in exp_metrics:
+                merged_metrics.get("experience", {})[key] = exp_metrics[key]
+        for key in ["primary_dataset", "primary_ratio"]:
+            if key in mod_metrics:
+                merged_metrics.get("modality", {})[key] = mod_metrics[key]
+        for key in ["vlm_usage_rate"]:
+            if key in vlm_metrics:
+                merged_metrics.get("vlm_usage", {})[key] = vlm_metrics[key]
+        for key in ["completion_rate"]:
+            if key in crowd_metrics:
+                merged_metrics.get("crowdsourcing", {})[key] = crowd_metrics[key]
+        
+        merged_metrics["primary_tool"] = primary_tool_data
+        merged["metrics"] = merged_metrics
+        
+        merged["categories"] = {
+            "ai_dependency_level": ai_level,
+            "speed_profile": speed,
+            "experience_level": experience,
+            "modality_expertise": modality,
+            "vlm_usage_pattern": vlm,
+            "crowdsourcing_participation": crowd
+        }
+        
+        merged["confidence_scores"] = {
+            "ai_dependency_level": ai_conf,
+            "speed_profile": speed_conf,
+            "experience_level": exp_conf,
+            "modality_expertise": mod_conf,
+            "vlm_usage_pattern": vlm_conf,
+            "crowdsourcing_participation": crowd_conf,
+            "primary_tool": primary_tool_data.get("confidence", 0.0)
+        }
         
         # Track session history - make a copy to avoid mutating existing
         session_history = list(existing.get("session_history", []))

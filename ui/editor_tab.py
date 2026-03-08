@@ -1076,8 +1076,15 @@ def load_labels_from_file(data_directory, slice_index):
         logger.error(f"Error loading labels from file: {e}")
         return []
 
-def create_medgemma_label_suggestions(image_annotator_value, slice_index=None, current_labels=None):
-    """Generate label suggestions using MedGemma and return as dataset samples"""
+def create_medgemma_label_suggestions(image_annotator_value, slice_index=None, current_labels=None, modality: str = "MRI"):
+    """Generate label suggestions using MedGemma and return as dataset samples
+    
+    Args:
+        image_annotator_value: Image annotator value containing the image
+        slice_index: Current slice index
+        current_labels: List of existing labels to filter from suggestions
+        modality: Imaging modality (MRI, MG, CT) for modality-specific prompts
+    """
     try:
         if current_labels is None:
             current_labels = []
@@ -1090,8 +1097,9 @@ def create_medgemma_label_suggestions(image_annotator_value, slice_index=None, c
         temp_state = AppState()
         medgemma_handler = MedGemmaHandlers(temp_state)
         
-        # Get label suggestions using MedGemma
-        suggestions_text = medgemma_handler.suggest_labels_for_annotations(image_annotator_value)
+        # Get label suggestions using MedGemma with modality-specific prompts
+        logger.info(f"Requesting MedGemma label suggestions for modality: {modality}")
+        suggestions_text = medgemma_handler.suggest_labels_for_annotations(image_annotator_value, modality=modality)
         
         # Parse the suggestions text to extract individual labels
         suggestions = []
@@ -1161,8 +1169,16 @@ def create_medgemma_label_suggestions(image_annotator_value, slice_index=None, c
         logger.error(f"Error generating MedGemma label suggestions: {e}")
         return []
 
-def create_other_vlm_label_suggestions(vlm_model, image_annotator_value, slice_index=None, current_labels=None):
-    """Generate label suggestions using other VLM models and return as dataset samples"""
+def create_other_vlm_label_suggestions(vlm_model, image_annotator_value, slice_index=None, current_labels=None, modality: str = "MRI"):
+    """Generate label suggestions using other VLM models and return as dataset samples
+    
+    Args:
+        vlm_model: VLM model name (SmolVLM, Med-R1)
+        image_annotator_value: Image annotator value containing the image
+        slice_index: Current slice index
+        current_labels: List of existing labels to filter from suggestions
+        modality: Imaging modality (MRI, MG, CT) for modality-specific prompts
+    """
     try:
         if current_labels is None:
             current_labels = []
@@ -1174,29 +1190,50 @@ def create_other_vlm_label_suggestions(vlm_model, image_annotator_value, slice_i
             from .state import AppState
             temp_state = AppState()
             handler = SmolVLMHandlers(temp_state)
-            # SmolVLM doesn't have specific label suggestion method, use general inference
-            response = handler.run_vlm_inference(image_annotator_value, True, False)
+            # SmolVLM doesn't have specific label suggestion method, use general inference with modality
+            response = handler.run_vlm_inference(image_annotator_value, True, False, modality=modality)
             
         elif vlm_model == "Med-R1":
             from .med_r1_handlers import MedR1Handlers
             from .state import AppState
             temp_state = AppState()
             handler = MedR1Handlers(temp_state)
-            response = handler.suggest_labels_for_annotations(image_annotator_value)
+            response = handler.suggest_labels_for_annotations(image_annotator_value, modality=modality)
             
         else:
             return []
         
         # Parse response for potential labels
         if response:
-            # Look for common medical terms and anatomical structures (including multi-word)
-            medical_terms = [
-                'eye', 'tumor', 'lesion', 'ventricle', 'lvent', 'rvent', 'tvent', 
-                'cortex', 'cerebellum', 'brainstem', 'hippocampus', 'thalamus',
-                'skull', 'csf', 'white matter', 'gray matter', 'edema', 'hemorrhage',
-                'frontal lobe', 'parietal lobe', 'temporal lobe', 'occipital lobe',
-                'left ventricle', 'right ventricle', 'third ventricle', 'fourth ventricle'
-            ]
+            # Define modality-specific medical terms
+            if modality == "CT":
+                # Abdominal CT terms
+                medical_terms = [
+                    'liver', 'kidney', 'spleen', 'pancreas', 'stomach', 'intestine',
+                    'aorta', 'vertebra', 'ribs', 'gallbladder', 'adrenal gland',
+                    'tumor', 'cyst', 'calcification', 'mass', 'lesion',
+                    'portal vein', 'inferior vena cava', 'renal artery',
+                    'right kidney', 'left kidney', 'small intestine', 'large intestine',
+                    'ascending colon', 'descending colon', 'bladder', 'prostate',
+                    'psoas muscle', 'diaphragm', 'mesentery', 'peritoneum'
+                ]
+            elif modality == "MG":
+                # Mammography terms
+                medical_terms = [
+                    'dense tissue', 'mass', 'calcifications', 'nipple', 'pectoral muscle',
+                    'fatty tissue', 'breast tissue', 'skin', 'axilla', 'lymph node',
+                    'microcalcifications', 'architectural distortion', 'asymmetry',
+                    'fibroadenoma', 'cyst', 'ductal', 'lobular'
+                ]
+            else:
+                # Brain MRI terms (default)
+                medical_terms = [
+                    'eye', 'tumor', 'lesion', 'ventricle', 'lvent', 'rvent', 'tvent', 
+                    'cortex', 'cerebellum', 'brainstem', 'hippocampus', 'thalamus',
+                    'skull', 'csf', 'white matter', 'gray matter', 'edema', 'hemorrhage',
+                    'frontal lobe', 'parietal lobe', 'temporal lobe', 'occipital lobe',
+                    'left ventricle', 'right ventricle', 'third ventricle', 'fourth ventricle'
+                ]
             
             response_lower = response.lower()
             # Check for multi-word terms first (longer matches take priority)
@@ -1420,7 +1457,14 @@ def create_editor_tab(current_user=None) -> dict:
                         label="Show AI Decision Map",
                         value=False,
                         info="Visualizes spatial regions that influenced the AI's segmentation decision using gradient-based analysis. Works with point clicks and bounding boxes in Guided Annotation mode."
-                    )                # Image and 3D Viewer - dynamic layout based on processing mode
+                    )
+                    # XAI: Uncertainty/Confidence Map Visualization checkbox
+                    uncertainty_checkbox = gr.Checkbox(
+                        label="Show Confidence Map",
+                        value=False,
+                        info="Shows per-pixel confidence/uncertainty. Red regions = uncertain (need manual review), Green regions = confident. Computed from mask logits instantly."
+                    )
+                # Image and 3D Viewer - dynamic layout based on processing mode
                 with gr.Row(equal_height=True) as main_viewer_row:
                     # Image annotator column - dynamic scaling
                     image_column = gr.Column(scale=10)  # Full width initially
@@ -1808,7 +1852,7 @@ def create_editor_tab(current_user=None) -> dict:
                 with gr.Accordion("Metadata", open=False):
                     metadata_display = gr.JSON(label=None, visible=True)
                 
-                col2 = (error_display, metadata_display, view_selector, deidentification_checkbox, xai_attention_checkbox, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, 
+                col2 = (error_display, metadata_display, view_selector, deidentification_checkbox, xai_attention_checkbox, uncertainty_checkbox, image_display, image_column, viewer_3d_column, prev_btn, slice_slider, next_btn, slice_text, crosshair_info, 
                         crowdsourcing_accordion, submit_annotation_btn, assignments_remaining, next_assignment_btn, crowdsourcing_status,
                         current_labels_dataset, current_labels_placeholder, suggested_vlm_selector, suggest_labels_btn, suggested_labels_dataset, suggested_labels_placeholder, accept_suggestions_btn, label_suggestion_info_row, vlm_model_selector, vlm_run_btn, vlm_suggest_labels_btn, vlm_caption, vlm_prompt_anomalies, vlm_prompt_describe, viewer_3d, viewer_3d_controls, refresh_3d_btn, export_3d_btn, voice_prompt_text, voice_audio_input, voice_analysis_row, voice_analysis_controls, voice_analysis_audio, voice_analysis_text, save_to_analysis_btn, vlm_info_accordion, vlm_tools_info_accordion, vlm_custom_prompt_info_accordion)
             
@@ -2067,6 +2111,7 @@ def create_editor_tab(current_user=None) -> dict:
             'get_file_for_orientation': get_file_for_mg_orientation
         },
         'xai': {
-            'attention_checkbox': xai_attention_checkbox
+            'attention_checkbox': xai_attention_checkbox,
+            'uncertainty_checkbox': uncertainty_checkbox
         }
     }

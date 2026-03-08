@@ -203,7 +203,7 @@ class MedR1Handlers:
             logger.error(f"Error in Med-R1 inference: {e}")
             return f"Error: {str(e)}"
     
-    def suggest_labels_for_annotations(self, image_annotator_value: Optional[dict]) -> str:
+    def suggest_labels_for_annotations(self, image_annotator_value: Optional[dict], modality: str = "MRI") -> str:
         """
         Suggest semantic labels for user-drawn annotations using Med-R1 VLM
         
@@ -213,6 +213,7 @@ class MedR1Handlers:
         Args:
             image_annotator_value: Current value from the image_annotator component
                                  including both the image and annotations
+            modality: Imaging modality (MRI, MG, CT) for modality-specific prompts
             
         Returns:
             str: Med-R1 generated label suggestions or error message
@@ -293,6 +294,30 @@ class MedR1Handlers:
     f"Region 1: [label], Region 2: [label], etc. "
     f"First output the thinking process in <think> </think> and final choice in <answer> </answer> tags."
 )
+            
+            # Use modality-specific prompts
+            if modality == "CT":
+                prompt = (
+                    f"This is an abdominal CT image with {len(boxes)} bounding box annotation(s), each highlighting a region of interest. "
+                    f"The image includes visible overlays. Your task is to identify what organ, structure, or abnormality is inside each box. "
+                    f"For each region, suggest a single semantic label such as an organ (e.g., liver, kidney, spleen, pancreas, stomach), "
+                    f"a vessel (e.g., aorta, portal vein, inferior vena cava), a bone (e.g., vertebra, rib), "
+                    f"or a pathology (e.g., tumor, cyst, calcification, mass, lesion). "
+                    f"Use standard medical terminology and format your response like this: "
+                    f"Region 1: [label], Region 2: [label], etc. "
+                    f"First output the thinking process in <think> </think> and final choice in <answer> </answer> tags."
+                )
+            elif modality == "MG":
+                prompt = (
+                    f"This is a mammogram image with {len(boxes)} bounding box annotation(s), each highlighting a region of interest. "
+                    f"The image includes visible overlays. Your task is to identify what tissue, structure, or abnormality is inside each box. "
+                    f"For each region, suggest a single semantic label such as tissue types (e.g., dense tissue, fatty tissue, breast tissue), "
+                    f"anatomical structures (e.g., nipple, pectoral muscle, axilla), or findings using BI-RADS terminology "
+                    f"(e.g., mass, calcifications, microcalcifications, architectural distortion, asymmetry). "
+                    f"Use standard medical terminology and format your response like this: "
+                    f"Region 1: [label], Region 2: [label], etc. "
+                    f"First output the thinking process in <think> </think> and final choice in <answer> </answer> tags."
+                )
 
 
 

@@ -39,6 +39,7 @@ class XAIState:
     # Gradient-based Decoder XAI (PRIMARY AND ONLY METHOD)
     gradient_xai: Optional[GradientDecoderXAI] = None
     last_gradient_map: Optional[np.ndarray] = None
+    last_mask_logits: Optional[np.ndarray] = None  # Store for uncertainty computation
     
     # Configuration - XAI always computes, checkbox just controls display
     show_overlay: bool = False  # Checkbox controls this
@@ -176,13 +177,19 @@ class XAIMedSAM2Integration:
                 boxes_np = np.array(boxes, dtype=np.float32)
                 logger.info(f"XAI: Converted {len(boxes)} box prompts to numpy: {boxes_np}")
             
-            # Compute gradient map
-            gradient_map = self.state.gradient_xai.compute_gradient_map(
+            # Compute gradient map and mask logits
+            gradient_map, mask_logits = self.state.gradient_xai.compute_gradient_map(
                 image=image,
                 points=points_np,
                 labels=labels_np,
                 boxes=boxes_np
             )
+            
+            # Store mask logits for uncertainty computation
+            if mask_logits is not None:
+                self.state.last_mask_logits = mask_logits
+                logger.info(f"✅ XAI: Captured mask logits: {mask_logits.shape}, "
+                          f"range=[{mask_logits.min():.3f}, {mask_logits.max():.3f}]")
             
             if gradient_map is not None and gradient_map.max() > 0:
                 self.state.last_gradient_map = gradient_map
@@ -309,6 +316,15 @@ class XAIMedSAM2Integration:
     def has_xai_data(self) -> bool:
         """Check if XAI data is available."""
         return self.state.last_gradient_map is not None
+    
+    def get_mask_logits(self) -> Optional[np.ndarray]:
+        """
+        Get the last computed mask logits for uncertainty computation.
+        
+        Returns:
+            Mask logits (H, W) pre-sigmoid values, or None if not available
+        """
+        return self.state.last_mask_logits
     
     def is_overlay_visible(self) -> bool:
         """Check if overlay is shown."""

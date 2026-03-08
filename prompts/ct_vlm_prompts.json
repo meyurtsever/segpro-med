@@ -1,0 +1,48 @@
+{
+  "identify_anomalies": "As a medical AI assistant, carefully analyze this abdominal CT slice. Identify any abnormal findings, anomalies, or pathological regions. Describe the location, characteristics, and potential clinical significance of any abnormalities you observe. If no clear abnormalities are visible, state that the slice appears normal.",
+  "describe_slice": "As a medical AI assistant, provide a detailed description of this abdominal CT slice. Identify the anatomical structures visible, the imaging plane (axial, sagittal, or coronal), and describe the overall tissue contrast and image quality. Mention any notable anatomical landmarks or organs that are clearly visible.",
+  "suggest_labels": "This is an abdominal CT slice. Please list the anatomical structures and any pathological findings that are visible. Return a comma-separated list of possible labels (e.g., liver, kidney, spleen, pancreas, stomach, intestine, aorta, vertebra, ribs, gallbladder, adrenal gland, tumor, cyst, calcification, etc.).",
+  "ct_label_suggestions": {
+    "title": "Abdominal CT Label Suggestion Prompt",
+    "description": "Specialized prompt for generating anatomical structure labels in abdominal CT scans",
+    "prompt": "You are an expert radiologist examining an abdominal CT scan. Please analyze this medical image and suggest appropriate anatomical labels for the visible structures. For each structure you identify, provide:\n\n1. Structure name (e.g., 'Liver', 'Right Kidney', 'Spleen', 'Aorta')\n2. Approximate location or region\n3. Confidence level (High/Medium/Low)\n4. Clinical significance if relevant\n\nFocus on clearly visible and clinically relevant anatomical structures. If pathological findings are visible, note them separately.\n\nFormat your response as a structured list with clear labels and descriptions.",
+    "use_cases": [
+      "Anatomical structure identification",
+      "Abdominal organ labeling",
+      "Clinical documentation support",
+      "Radiology training assistance"
+    ],
+    "parameters": {
+      "max_tokens": 512,
+      "temperature": 0.3,
+      "focus": "abdominal_structures"
+    }
+  },
+  "abdominal_organs": {
+    "title": "Abdominal Organ Detection",
+    "description": "Focused prompt for identifying major abdominal organs",
+    "prompt": "Identify all major abdominal organs visible in this CT slice. For each organ, specify:\n- Name of the organ\n- Whether it appears normal or abnormal\n- Any notable characteristics\n\nCommon organs to look for: liver, gallbladder, spleen, kidneys, pancreas, stomach, small intestine, large intestine, bladder, adrenal glands.",
+    "parameters": {
+      "max_tokens": 256,
+      "temperature": 0.2
+    }
+  },
+  "vascular_structures": {
+    "title": "Vascular Structure Identification",
+    "description": "Focused prompt for identifying blood vessels in abdominal CT",
+    "prompt": "Identify all major blood vessels visible in this abdominal CT slice. Look for: aorta, inferior vena cava, portal vein, hepatic veins, renal arteries, mesenteric vessels. Note any abnormalities such as aneurysms, stenosis, or thrombosis.",
+    "parameters": {
+      "max_tokens": 256,
+      "temperature": 0.2
+    }
+  },
+  "pathology_detection": {
+    "title": "Abdominal Pathology Detection",
+    "description": "Focused prompt for identifying pathological findings",
+    "prompt": "Carefully examine this abdominal CT slice for any pathological findings. Look for:\n- Masses or tumors\n- Cysts\n- Calcifications\n- Fluid collections\n- Organ enlargement or atrophy\n- Bowel obstruction signs\n- Free air or fluid\n\nDescribe location, size, and characteristics of any findings.",
+    "parameters": {
+      "max_tokens": 512,
+      "temperature": 0.3
+    }
+  }
+}

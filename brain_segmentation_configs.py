@@ -93,6 +93,20 @@ BRAIN_CONFIGS = {
         'crop_n_layers': 0,                 # Single scale sufficient
         'min_mask_region_area': 100,        # Filter small artifacts
         'use_m2m': True                     # Smooth boundaries
+    },
+    
+    # Mammography (MG) focused - optimized for small masses and white spots
+    'mammography': {
+        **BASE_BRAIN_CONFIG,
+        'points_per_side': 40,              # Safer for 16GB VRAM, still high resolution
+        'points_per_batch': 96,             # Larger batch for efficiency
+        'pred_iou_thresh': 0.50,            # Very permissive for tiny masses
+        'stability_score_thresh': 0.60,     # Lower for subtle features
+        'crop_n_layers': 1,                 # Single scale for memory safety
+        'min_mask_region_area': 5,          # Capture very small masses (critical!)
+        'box_nms_thresh': 0.5,              # Less aggressive NMS for clustered masses
+        'use_m2m': True,                    # Refinement for precise boundaries
+        'multimask_output': True            # Multiple candidates for ambiguous masses
     }
 }
 
@@ -128,7 +142,8 @@ CONFIG_DESCRIPTIONS = {
     'balanced': "Recommended default configuration with good speed/quality balance",
     'fast': "Faster processing with reasonable quality for quick analysis",
     'tumor_detection': "Specialized for pathology and abnormal tissue detection",
-    'skull_stripping': "Optimized for brain extraction and skull removal"
+    'skull_stripping': "Optimized for brain extraction and skull removal",
+    'mammography': "Optimized for mammography - detects small masses and microcalcifications with minimal area filtering"
 }
 
 def print_config_info():

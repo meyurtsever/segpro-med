@@ -12,7 +12,7 @@ import tempfile
 import sys
 import json
 from pathlib import Path
-from typing import Optional, Tuple, Dict
+from typing import Optional, Tuple, Dict, List
 import numpy as np
 from PIL import Image
 
@@ -45,15 +45,23 @@ logger = logging.getLogger(__name__)
 
 # Load modality-specific prompts
 def load_vlm_prompts(modality: str = "MRI") -> Dict:
-    """Load VLM prompts based on modality"""
+    """Load VLM prompts based on modality
+    
+    Args:
+        modality: Imaging modality - "MRI", "MG" (mammography), "CT" (abdomen/chest)
+    """
     try:
         # Get base directory
         base_dir = os.path.dirname(os.path.dirname(__file__))
         
-        # Determine which prompt file to use
-        if modality == "MG":
+        # Determine which prompt file to use based on modality
+        modality_upper = modality.upper() if modality else "MRI"
+        if modality_upper == "MG":
             prompt_file = "mg_vlm_prompts.json"
+        elif modality_upper == "CT":
+            prompt_file = "ct_vlm_prompts.json"
         else:
+            # Default to MRI for brain and unknown modalities
             prompt_file = "mri_vlm_prompts.json"
         
         prompt_path = os.path.join(base_dir, "prompts", prompt_file)
@@ -165,12 +173,13 @@ class MedGemmaHandlers:
             logger.error(f"Error in MedGemma VLM inference: {e}")
             return f"Error during MedGemma analysis: {str(e)}"
     
-    def suggest_labels_for_annotations(self, image_annotator_value: Optional[dict]) -> str:
+    def suggest_labels_for_annotations(self, image_annotator_value: Optional[dict], modality: str = "MRI") -> str:
         """
         Use MedGemma to suggest labels for anatomical/pathological structures in the image
         
         Args:
             image_annotator_value: Value from the image_annotator component
+            modality: Imaging modality (MRI, MG, CT) for modality-specific prompts
             
         Returns:
             Suggested labels as a comma-separated string
@@ -190,14 +199,21 @@ class MedGemmaHandlers:
             if image_data is None:
                 return "Could not extract image for label suggestions."
             
-            # Use label suggestion prompt
-            if get_medical_prompt:
+            # Load modality-specific prompts
+            prompts = load_vlm_prompts(modality)
+            
+            # Use modality-specific label suggestion prompt
+            if prompts and "suggest_labels" in prompts:
+                prompt = prompts["suggest_labels"]
+                logger.info(f"Using {modality} specific prompt for label suggestions")
+            elif get_medical_prompt:
                 prompt = get_medical_prompt("suggest_labels")
             else:
-                prompt = ("This is a brain MRI slice. Please list the anatomical or pathological structures that are visible. "
-                         "Return a comma-separated list of possible labels (e.g., eye, lvent, tvent, tumor, lesion, etc.).")
+                # Fallback generic prompt
+                prompt = ("Please list the anatomical structures and any pathological findings that are visible in this medical image. "
+                         "Return a comma-separated list of possible labels.")
             
-            logger.info("Running MedGemma label suggestion inference")
+            logger.info(f"Running MedGemma label suggestion inference for modality: {modality}")
             
             # Run inference
             try:
@@ -389,6 +405,103 @@ class MedGemmaHandlers:
             return "general description"
         else:
             return "default analysis"
+    
+    def compute_visual_grounding_for_label(
+        self, 
+        image: np.ndarray, 
+        target_label: str,
+        xai_method: str = "input_gradient",
+        use_cached_generation: bool = True
+    ) -> Tuple[Optional[np.ndarray], dict]:
+        """
+        Compute visual grounding (token-specific XAI) for a specific label.
+        
+        Uses the proper VLM XAI approach:
+        1. Input×Gradient: Computes which image regions CAUSED the word generation
+        2. Decoder Attention: Which image tokens the decoder attended to
+        
+        These methods analyze the DECODER behavior, not just the encoder features,
+        which is the correct approach for VLMs.
+        
+        Args:
+            image: RGB image as numpy array (H, W, 3), uint8
+            target_label: The label text to compute attribution for
+            xai_method: XAI method to use:
+                - "input_gradient" (RECOMMENDED): Input×Gradient on projected image tokens
+                - "decoder_attention": Decoder attention weights (SDPA workaround)
+                - "attention": Legacy embedding similarity
+                - "hirescam", "gradcam": Legacy encoder-only methods (slow)
+            use_cached_generation: If True, tries to use cached generation for consistency
+            
+        Returns:
+            Tuple of (heatmap: np.ndarray or None, metadata: dict)
+            - heatmap: Spatial attribution heatmap (H, W) with values in [0, 1]
+            - metadata: Dict with 'success', 'error', 'mean_attribution', 'max_attribution', etc.
+        """
+        try:
+            # Get the service
+            service = self._get_service()
+            if service is None or not hasattr(service, 'compute_visual_grounding'):
+                logger.warning("MedGemma service not available or visual grounding not supported")
+                return None, {'success': False, 'error': 'Service not available'}
+            
+            # CRITICAL: Use the SAME prompt as label suggestion for consistent attribution
+            # This is the key insight from HistoLens - different prompts = different attention
+            if get_medical_prompt:
+                prompt = get_medical_prompt("suggest_labels")
+            else:
+                prompt = (
+                    "This is a brain MRI slice. Please list the anatomical or pathological structures that are visible. "
+                    "Return a comma-separated list of possible labels (e.g., eye, lvent, tvent, tumor, lesion, etc.)."
+                )
+            
+            logger.info(f"Computing visual grounding ({xai_method}) for label '{target_label}'")
+            logger.info(f"Using label suggestion prompt for consistent attribution")
+            
+            # Compute visual grounding with selected method
+            heatmap, metadata = service.compute_visual_grounding(
+                image=image,
+                prompt=prompt,
+                target_token=target_label,
+                xai_method=xai_method
+            )
+            
+            if metadata.get('success', False):
+                logger.info(f"Visual grounding success - Method: {metadata.get('method', xai_method)}, "
+                           f"Mean: {metadata.get('mean_attribution', 0):.3f}, "
+                           f"Max: {metadata.get('max_attribution', 0):.3f}")
+            else:
+                logger.warning(f"Visual grounding failed: {metadata.get('error', 'Unknown error')}")
+            
+            return heatmap, metadata
+            
+        except Exception as e:
+            logger.error(f"Error computing visual grounding: {e}")
+            import traceback
+            logger.debug(f"Traceback: {traceback.format_exc()}")
+            return None, {'success': False, 'error': str(e)}
+    
+    def get_available_xai_methods(self) -> List[Tuple[str, str]]:
+        """
+        Get list of available XAI methods for visual grounding.
+        
+        Methods are ordered by recommendation:
+        1. Input×Gradient: The standard VLM XAI approach - computes which image 
+           regions CAUSED the word to be generated (gradient-based on projector output)
+        2. Decoder Attention: Extracts attention from LLM decoder to see which
+           image tokens the model "looked at" (SDPA workaround)
+        3. Legacy methods: Previous approaches kept for comparison
+        
+        Returns:
+            List of (method_key, display_name) tuples
+        """
+        return [
+            ("input_gradient", "Input×Gradient (RECOMMENDED - Proper VLM XAI)"),
+            ("decoder_attention", "Decoder Attention (SDPA Workaround)"),
+            ("attention", "Embedding Similarity (Legacy, fast)"),
+            ("hirescam", "HiResCAM (Legacy, encoder-only, slow)"),
+            ("gradcam", "GradCAM (Legacy, encoder-only, slow)"),
+        ]
     
     def cleanup(self):
         """Clean up MedGemma service resources"""

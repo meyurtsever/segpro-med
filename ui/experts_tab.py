@@ -174,11 +174,17 @@ def get_users_dataframe() -> pd.DataFrame:
             except:
                 pass
         
+        # Helper to format category values - convert 'unknown' to dash
+        def format_category(value):
+            if not value or value == 'unknown':
+                return '—'
+            return value.replace('_', ' ').title()
+        
         rows.append({
             'User': user_id,
-            'Experience': categories.get('experience_level', '—').replace('_', ' ').title(),
-            'AI Style': categories.get('ai_dependency_level', '—').replace('_', ' ').title(),
-            'Speed': categories.get('speed_profile', '—').replace('_', ' ').title(),
+            'Experience': format_category(categories.get('experience_level')),
+            'AI Style': format_category(categories.get('ai_dependency_level')),
+            'Speed': format_category(categories.get('speed_profile')),
             'Annotations': annotation_count,
             'Sessions': session_count,
             'Last Active': last_active
@@ -194,9 +200,11 @@ def get_users_dataframe() -> pd.DataFrame:
 def create_category_badge(value: str) -> str:
     """Create a compact badge for category values."""
     badge_config = {
+        'unknown': ('#4b5563', '—'),  # Gray for unknown/no data
         'manual_first': ('#22c55e', 'Manual First'),
         'hybrid': ('#eab308', 'Hybrid'),
         'ai_reliant': ('#3b82f6', 'AI Reliant'),
+        'ai_heavy': ('#3b82f6', 'AI Heavy'),  # Added alias
         'speed_demon': ('#ef4444', 'Speed Demon'),
         'balanced': ('#eab308', 'Balanced'),
         'methodical': ('#22c55e', 'Methodical'),
@@ -205,6 +213,8 @@ def create_category_badge(value: str) -> str:
         'novice': ('#f97316', 'Novice'),
         'brain_mri_specialist': ('#a855f7', 'Brain MRI'),
         'abdomen_ct_specialist': ('#06b6d4', 'Abdomen CT'),
+        'mammography_expert': ('#ec4899', 'Mammography'),  # Added
+        'abdominal_specialist': ('#06b6d4', 'Abdominal'),  # Added
         'multi_modality_expert': ('#ec4899', 'Multi-Modal'),
         'generalist': ('#71717a', 'Generalist'),
         'vlm_power_user': ('#3b82f6', 'Power User'),
@@ -280,7 +290,16 @@ def create_profile_display_html(profile: Dict, user_id: str) -> str:
         </div>'''
     
     # Build compact metric cards
-    primary_tool_display = primary_tool.get('primary_tool_display', primary_tool.get('primary_tool', '—'))
+    # Handle both old and new primary_tool formats, and handle 'unknown' values
+    if isinstance(primary_tool, dict):
+        raw_tool = primary_tool.get('primary_tool', 'unknown')
+        if raw_tool == 'unknown' or not raw_tool:
+            primary_tool_display = '—'
+        else:
+            # Use display name if available, otherwise format the raw tool name
+            primary_tool_display = primary_tool.get('primary_tool_display', raw_tool.replace('_', ' ').title())
+    else:
+        primary_tool_display = '—'
     
     ai_card = f'''<div style="background:#1a1a1a;border:1px solid #252525;border-radius:8px;padding:12px;flex:1;">
         <div style="color:#60a5fa;font-size:12px;font-weight:600;margin-bottom:8px;border-bottom:1px solid #3b82f630;padding-bottom:6px;">AI Usage</div>
@@ -298,10 +317,14 @@ def create_profile_display_html(profile: Dict, user_id: str) -> str:
         {create_metric_row("Delete Rate", format_metric_value(experience_metrics.get('deletion_rate'), 'percentage'))}
     </div>'''
     
+    # Safely get primary_dataset - handle None values
+    primary_dataset = modality_metrics.get('primary_dataset')
+    primary_dataset_display = primary_dataset.title() if primary_dataset else '—'
+    
     work_card = f'''<div style="background:#1a1a1a;border:1px solid #252525;border-radius:8px;padding:12px;flex:1;">
         <div style="color:#c084fc;font-size:12px;font-weight:600;margin-bottom:8px;border-bottom:1px solid #a855f730;padding-bottom:6px;">Work Style</div>
         {create_metric_row("Tool", primary_tool_display)}
-        {create_metric_row("Dataset", modality_metrics.get('primary_dataset', '—').title())}
+        {create_metric_row("Dataset", primary_dataset_display)}
         {create_metric_row("VLM Rate", format_metric_value(vlm_metrics.get('vlm_usage_rate'), 'percentage'))}
         {create_metric_row("VLM Runs", str(vlm_metrics.get('vlm_analyses_run', 0)))}
     </div>'''

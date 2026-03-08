@@ -13,7 +13,7 @@ from utils.debug_utils import logger
 class PatientRetrieval:
     """Handle patient data retrieval from the medical imaging directory structure"""
     
-    def __init__(self, root_directory: str = r"D:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR"):
+    def __init__(self, root_directory: str = r"C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR"):
         """
         Initialize the patient retrieval system
         

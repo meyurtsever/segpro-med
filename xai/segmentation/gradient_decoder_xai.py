@@ -147,7 +147,7 @@ class GradientDecoderXAI:
         points: Optional[np.ndarray] = None,
         labels: Optional[np.ndarray] = None,
         boxes: Optional[np.ndarray] = None
-    ) -> Optional[np.ndarray]:
+    ) -> Tuple[Optional[np.ndarray], Optional[np.ndarray]]:
         """
         Compute gradient-based explanation for SAM2 prediction.
         
@@ -158,9 +158,20 @@ class GradientDecoderXAI:
             boxes: Box prompts (M, 4)
             
         Returns:
-            Gradient heatmap (H, W) normalized to [0, 1], or None if failed
+            Tuple of (gradient_heatmap, mask_logits):
+            - gradient_heatmap: (H, W) normalized to [0, 1], or None if failed
+            - mask_logits: (H, W) raw logits (pre-sigmoid), or None if failed
         """
         try:
+            # Validate inputs
+            if image is None:
+                logger.warning("No image provided for gradient XAI")
+                return None, None
+            
+            if self._predictor is None:
+                logger.error("Predictor not set up - call setup() first")
+                return None, None
+            
             # Get the model (not predictor, to avoid caching)
             model = self._predictor.model
             
@@ -324,6 +335,12 @@ class GradientDecoderXAI:
                 
                 logger.debug(f"Decoder output: low_res_masks={low_res_masks.shape}, scores={scores.shape}")
                 
+                # Store mask logits (pre-sigmoid) for uncertainty computation
+                # Get best mask based on IoU score
+                best_mask_idx = scores.argmax(dim=1)
+                best_mask_logits = low_res_masks[0, best_mask_idx[0]].detach().cpu().numpy()
+                logger.info(f"Captured mask logits: {best_mask_logits.shape}, range=[{best_mask_logits.min():.3f}, {best_mask_logits.max():.3f}]")
+                
                 # Get best mask score
                 if isinstance(scores, torch.Tensor):
                     best_score = scores.max()
@@ -363,20 +380,20 @@ class GradientDecoderXAI:
                     
                     self.gradient_map = grad_map_resized
                     logger.info(f"✅ Gradient map ready: {grad_map_resized.shape}")
-                    return grad_map_resized
+                    return grad_map_resized, best_mask_logits
                 else:
                     logger.warning("No gradients on image tensor")
-                    return None
+                    return None, best_mask_logits
             else:
                 logger.warning("Best score doesn't require gradients")
-                return None
+                return None, best_mask_logits
             
         except Exception as e:
             logger.error(f"Gradient computation failed: {e}")
             import traceback
             logger.debug(f"Traceback: {traceback.format_exc()}")
             self._remove_hook()
-            return None
+            return None, None
     
     def get_last_gradient_map(self) -> Optional[np.ndarray]:
         """
