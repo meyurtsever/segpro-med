@@ -299,6 +299,34 @@ def create_load_medical_data_header():
         title_level="##"
     )
 
+def create_retrieval_system_header():
+    """
+    Create the Retrieval System section header with Material-UI style tooltip.
+    Explains the ICD-10 bidirectional search capability to end users.
+    """
+    info_text = """
+    <strong>Patient Retrieval System</strong><br><br>
+    Search patients using <em>disease names</em>, <em>short aliases</em>, or official
+    <em>ICD-10 codes</em> — all resolve to the correct dataset folder automatically.
+    <br><br>
+    <strong>Examples:</strong><br>
+    &bull; <code>cvm</code> &nbsp;&rarr;&nbsp; CAVERNOMA folder (Gazi 2020 &amp; 2025)<br>
+    &bull; <code>D18.02</code> &nbsp;&rarr;&nbsp; same result via ICD-10 code<br>
+    &bull; <code>glioblastoma</code> &nbsp;&rarr;&nbsp; HGG folder<br>
+    &bull; <code>C71.9</code> &nbsp;&rarr;&nbsp; HGG + GERMINOMA (shared code)<br>
+    &bull; <code>D33.2</code> &nbsp;&rarr;&nbsp; DERMOID_TUMOR + EPIDERMOID_CYST<br>
+    &bull; <code>acoustic neuroma</code> &nbsp;&rarr;&nbsp; SCHWANNOMA<br>
+    &bull; <code>20005</code> &nbsp;&rarr;&nbsp; direct patient-ID match<br><br>
+    Codes work with or without the dot&nbsp;(<code>d1802</code> = <code>D18.02</code>).
+    """
+
+    return create_section_header_with_info(
+        title="Retrieval System",
+        info_text=info_text,
+        title_level="###"
+    )
+
+
 def create_segmentation_with_ai_header():
     """
     Create the Segmentation with AI header with Material-UI style tooltip

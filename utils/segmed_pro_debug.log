@@ -32275,3 +32275,66 @@ ValueError: No DICOM files found in directory: D:\Gazi\TR_TBP_Anonymised_enc\Ano
 2026-03-08 22:11:27,798 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\CAVERNOMA\cvm (29)\flair\1.3.12.2.1107.5.2.36.40496.2022070211392279498136691_MR.dcm
 2026-03-08 22:11:27,806 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\CAVERNOMA\cvm (29)\flair\1.3.12.2.1107.5.2.36.40496.202207021139231376236696_MR.dcm
 2026-03-08 22:11:27,818 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\CAVERNOMA\cvm (29)\flair\1.3.12.2.1107.5.2.36.40496.2022070211392322982736701_MR.dcm
+2026-03-08 22:23:03,092 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\OSTEOMA\ost\flair\1.3.12.2.1107.5.2.18.42451.2022062323233666423803910_MR.dcm
+2026-03-08 22:23:03,098 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\OSTEOMA\ost\flair\1.3.12.2.1107.5.2.18.42451.2022062323233666751103911_MR.dcm
+2026-03-08 22:23:03,107 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\OSTEOMA\ost\flair\1.3.12.2.1107.5.2.18.42451.2022062323233667083103914_MR.dcm
+2026-03-08 22:23:03,115 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\OSTEOMA\ost\flair\1.3.12.2.1107.5.2.18.42451.2022062323233667249103915_MR.dcm
+2026-03-08 22:23:03,122 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\OSTEOMA\ost\flair\1.3.12.2.1107.5.2.18.42451.2022062323233667305103916_MR.dcm
+2026-03-08 22:23:03,130 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\OSTEOMA\ost\flair\1.3.12.2.1107.5.2.18.42451.2022062323233668118203923_MR.dcm
+2026-03-08 22:23:03,135 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\OSTEOMA\ost\flair\1.3.12.2.1107.5.2.18.42451.2022062323233668450603924_MR.dcm
+2026-03-08 22:23:03,143 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\OSTEOMA\ost\flair\1.3.12.2.1107.5.2.18.42451.2022062323233668818403925_MR.dcm
+2026-03-08 22:23:03,150 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\OSTEOMA\ost\flair\1.3.12.2.1107.5.2.18.42451.2022062323233669159303926_MR.dcm
+2026-03-08 22:23:03,157 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\OSTEOMA\ost\flair\1.3.12.2.1107.5.2.18.42451.2022062323233691684803930_MR.dcm
+2026-03-08 22:23:03,163 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\OSTEOMA\ost\flair\1.3.12.2.1107.5.2.18.42451.2022062323233693783803933_MR.dcm
+2026-03-08 22:23:03,168 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\OSTEOMA\ost\flair\1.3.12.2.1107.5.2.18.42451.2022062323245582102103942_MR.dcm
+2026-03-08 22:23:03,186 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\OSTEOMA\ost\flair\1.3.12.2.1107.5.2.18.42451.2022062323245598566803947_MR.dcm
+2026-03-08 22:23:03,196 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\OSTEOMA\ost\flair\1.3.12.2.1107.5.2.18.42451.2022062323245623428603952_MR.dcm
+2026-03-08 22:23:03,203 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\OSTEOMA\ost\flair\1.3.12.2.1107.5.2.18.42451.2022062323245636534603957_MR.dcm
+2026-03-08 22:23:03,209 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\OSTEOMA\ost\flair\1.3.12.2.1107.5.2.18.42451.2022062323245654460203962_MR.dcm
+2026-03-08 22:23:03,214 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\OSTEOMA\ost\flair\1.3.12.2.1107.5.2.18.42451.2022062323245673656603967_MR.dcm
+2026-03-08 22:23:03,219 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\OSTEOMA\ost\flair\1.3.12.2.1107.5.2.18.42451.2022062323245693905603972_MR.dcm
+2026-03-08 22:23:03,224 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\OSTEOMA\ost\flair\1.3.12.2.1107.5.2.18.42451.2022062323245710582303977_MR.dcm
+2026-03-08 22:23:03,229 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\OSTEOMA\ost\flair\1.3.12.2.1107.5.2.18.42451.2022062323245729990903980_MR.dcm
+2026-03-08 22:23:03,233 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\OSTEOMA\ost\flair\1.3.12.2.1107.5.2.18.42451.2022062323245748488503983_MR.dcm
+2026-03-08 22:31:12,665 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\GERMINOMA\grm (2)\flair\1.3.12.2.1107.5.2.18.42451.2021110110170973813853534_MR.dcm
+2026-03-08 22:31:12,674 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\GERMINOMA\grm (2)\flair\1.3.12.2.1107.5.2.18.42451.2021110110170974447353543_MR.dcm
+2026-03-08 22:31:12,682 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\GERMINOMA\grm (2)\flair\1.3.12.2.1107.5.2.18.42451.2021110110170974710853544_MR.dcm
+2026-03-08 22:31:12,692 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\GERMINOMA\grm (2)\flair\1.3.12.2.1107.5.2.18.42451.2021110110170974945453545_MR.dcm
+2026-03-08 22:31:12,700 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\GERMINOMA\grm (2)\flair\1.3.12.2.1107.5.2.18.42451.2021110110170975000153546_MR.dcm
+2026-03-08 22:31:12,705 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\GERMINOMA\grm (2)\flair\1.3.12.2.1107.5.2.18.42451.2021110110170975469053547_MR.dcm
+2026-03-08 22:31:12,711 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\GERMINOMA\grm (2)\flair\1.3.12.2.1107.5.2.18.42451.2021110110170976406053550_MR.dcm
+2026-03-08 22:31:12,731 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\GERMINOMA\grm (2)\flair\1.3.12.2.1107.5.2.18.42451.2021110110170976837653551_MR.dcm
+2026-03-08 22:31:12,736 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\GERMINOMA\grm (2)\flair\1.3.12.2.1107.5.2.18.42451.2021110110170978702353554_MR.dcm
+2026-03-08 22:31:12,742 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\GERMINOMA\grm (2)\flair\1.3.12.2.1107.5.2.18.42451.2021110110170997863653560_MR.dcm
+2026-03-08 22:31:12,747 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\GERMINOMA\grm (2)\flair\1.3.12.2.1107.5.2.18.42451.2021110110171015383053563_MR.dcm
+2026-03-08 22:31:12,753 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\GERMINOMA\grm (2)\flair\1.3.12.2.1107.5.2.18.42451.2021110110182931902253570_MR.dcm
+2026-03-08 22:31:12,759 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\GERMINOMA\grm (2)\flair\1.3.12.2.1107.5.2.18.42451.2021110110182949266153575_MR.dcm
+2026-03-08 22:31:12,775 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\GERMINOMA\grm (2)\flair\1.3.12.2.1107.5.2.18.42451.2021110110182969636553580_MR.dcm
+2026-03-08 22:31:12,788 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\GERMINOMA\grm (2)\flair\1.3.12.2.1107.5.2.18.42451.2021110110182986258053585_MR.dcm
+2026-03-08 22:31:12,799 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\GERMINOMA\grm (2)\flair\1.3.12.2.1107.5.2.18.42451.2021110110183026236153595_MR.dcm
+2026-03-08 22:31:12,809 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\GERMINOMA\grm (2)\flair\1.3.12.2.1107.5.2.18.42451.2021110110183040425553600_MR.dcm
+2026-03-08 22:31:12,821 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\GERMINOMA\grm (2)\flair\1.3.12.2.1107.5.2.18.42451.202111011018304384353590_MR.dcm
+2026-03-08 22:31:12,828 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\GERMINOMA\grm (2)\flair\1.3.12.2.1107.5.2.18.42451.2021110110183058802053605_MR.dcm
+2026-03-08 22:31:12,838 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\GERMINOMA\grm (2)\flair\1.3.12.2.1107.5.2.18.42451.2021110110183076906553610_MR.dcm
+2026-03-08 22:31:12,847 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\GERMINOMA\grm (2)\flair\1.3.12.2.1107.5.2.18.42451.2021110110183095499753613_MR.dcm
+2026-03-08 22:44:25,485 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\DERMOID_TUMOR\drm (2)\FLAIR\1.3.12.2.1107.5.2.18.42451.2021100319330725362401731.dcm
+2026-03-08 22:44:25,500 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\DERMOID_TUMOR\drm (2)\FLAIR\1.3.12.2.1107.5.2.18.42451.2021100319330745401701734.dcm
+2026-03-08 22:44:25,512 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\DERMOID_TUMOR\drm (2)\FLAIR\1.3.12.2.1107.5.2.18.42451.202110031933076205901717.dcm
+2026-03-08 22:44:25,521 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\DERMOID_TUMOR\drm (2)\FLAIR\1.3.12.2.1107.5.2.18.42451.202110031933076490301718.dcm
+2026-03-08 22:44:25,529 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\DERMOID_TUMOR\drm (2)\FLAIR\1.3.12.2.1107.5.2.18.42451.202110031933076651601719.dcm
+2026-03-08 22:44:25,535 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\DERMOID_TUMOR\drm (2)\FLAIR\1.3.12.2.1107.5.2.18.42451.202110031933076932201720.dcm
+2026-03-08 22:44:25,542 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\DERMOID_TUMOR\drm (2)\FLAIR\1.3.12.2.1107.5.2.18.42451.202110031933077023801721.dcm
+2026-03-08 22:44:25,550 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\DERMOID_TUMOR\drm (2)\FLAIR\1.3.12.2.1107.5.2.18.42451.202110031933077120501722.dcm
+2026-03-08 22:44:25,558 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\DERMOID_TUMOR\drm (2)\FLAIR\1.3.12.2.1107.5.2.18.42451.202110031933077240801723.dcm
+2026-03-08 22:44:25,564 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\DERMOID_TUMOR\drm (2)\FLAIR\1.3.12.2.1107.5.2.18.42451.202110031933077280801724.dcm
+2026-03-08 22:44:25,574 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\DERMOID_TUMOR\drm (2)\FLAIR\1.3.12.2.1107.5.2.18.42451.202110031933079129701727.dcm
+2026-03-08 22:44:25,583 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\DERMOID_TUMOR\drm (2)\FLAIR\1.3.12.2.1107.5.2.18.42451.2021100319342659691701743.dcm
+2026-03-08 22:44:25,598 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\DERMOID_TUMOR\drm (2)\FLAIR\1.3.12.2.1107.5.2.18.42451.2021100319342675252101748.dcm
+2026-03-08 22:44:25,609 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\DERMOID_TUMOR\drm (2)\FLAIR\1.3.12.2.1107.5.2.18.42451.2021100319342694285201753.dcm
+2026-03-08 22:44:25,624 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\DERMOID_TUMOR\drm (2)\FLAIR\1.3.12.2.1107.5.2.18.42451.2021100319342713905801758.dcm
+2026-03-08 22:44:25,630 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\DERMOID_TUMOR\drm (2)\FLAIR\1.3.12.2.1107.5.2.18.42451.2021100319342732852501763.dcm
+2026-03-08 22:44:25,636 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\DERMOID_TUMOR\drm (2)\FLAIR\1.3.12.2.1107.5.2.18.42451.2021100319342750841101768.dcm
+2026-03-08 22:44:25,642 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\DERMOID_TUMOR\drm (2)\FLAIR\1.3.12.2.1107.5.2.18.42451.2021100319342768764401773.dcm
+2026-03-08 22:44:25,647 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\DERMOID_TUMOR\drm (2)\FLAIR\1.3.12.2.1107.5.2.18.42451.2021100319342788610601778.dcm
+2026-03-08 22:44:25,653 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\DERMOID_TUMOR\drm (2)\FLAIR\1.3.12.2.1107.5.2.18.42451.2021100319342823382301784.dcm
+2026-03-08 22:44:25,657 - segmed_pro - DEBUG - Reading DICOM file: C:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\DERMOID_TUMOR\drm (2)\FLAIR\1.3.12.2.1107.5.2.18.42451.202110031934286240201781.dcm

@@ -9,6 +9,11 @@ import os
 import glob
 from typing import List, Tuple, Dict, Optional
 from utils.debug_utils import logger
+from utils.icd10_mapping import (
+    resolve_query_to_folders,
+    get_icd10_for_folder,
+    ICD10_MAPPING,
+)
 
 class PatientRetrieval:
     """Handle patient data retrieval from the medical imaging directory structure"""
@@ -147,38 +152,69 @@ class PatientRetrieval:
     
     def search_patients(self, query: str) -> List[str]:
         """
-        Search for patients matching the query string
-        
+        Search for patients matching the query string.
+
+        Supports three complementary lookup strategies:
+
+        1. **ICD-10 code lookup** – typing an ICD-10 code (e.g. ``D18.02``)
+           returns every patient in the corresponding diagnostic folder(s).
+
+        2. **Clinical alias lookup** – typing a short alias or synonym
+           (e.g. ``cvm``, ``glioblastoma``, ``acoustic neuroma``) resolves to
+           the appropriate folder(s) via the ICD-10 mapping table.
+
+        3. **Full-text / folder search** – original behaviour; matches against
+           the display name, anomaly-class folder, and patient-folder string.
+           Also fires when the ICD mapping returns no hits (e.g. for raw
+           patient IDs like ``"20005"``).
+
+        Strategies 2 & 3 are *additive*: if a query matches both an ICD alias
+        and a literal substring in the cache, the union is returned (ICD hits
+        ranked first).
+
         Args:
-            query: Search query string
-            
+            query: Free-text search string (case-insensitive).
+
         Returns:
-            List of matching patient display names
+            Up to 50 matching patient display names, ranked by relevance.
         """
         self._initialize_patient_cache()
-        
+
         if not query.strip():
             return []
-        
-        query_lower = query.lower()
-        matches = []
-        
+
+        query_lower = query.strip().lower()
+
+        # ── Step 1 : ICD-10 / alias resolution ──────────────────────────────
+        # Returns the set of diagnostic folder names (UPPERCASE) that the
+        # query maps to via the ICD-10 mapping table.
+        icd_resolved: set[str] = {
+            f.upper() for f in resolve_query_to_folders(query_lower)
+        }
+
+        matches: List[str] = []
+
         for display_name, patient_info in self._patient_cache.items():
-            # Search in display name, anomaly class, and patient folder
-            search_text = f"{display_name} {patient_info['anomaly_class']} {patient_info['patient_folder']}".lower()
-            
-            if query_lower in search_text:
+            anomaly_class = patient_info["anomaly_class"].upper()
+            search_text = (
+                f"{display_name} {patient_info['anomaly_class']} "
+                f"{patient_info['patient_folder']}"
+            ).lower()
+
+            # Include if ICD mapping resolved to this folder OR plain-text hit
+            if anomaly_class in icd_resolved or query_lower in search_text:
                 matches.append(display_name)
-        
-        # Sort matches to prioritize exact matches and closer matches
-        matches.sort(key=lambda x: (
-            query_lower not in x.lower().split('/')[0],  # Anomaly class exact match first
-            query_lower not in x.lower().split('/')[-1],  # Patient folder exact match second
-            x.lower().find(query_lower),  # Then by position of match
-            x  # Finally alphabetically
-        ))
-        
-        return matches[:50]  # Limit to 50 results for performance
+
+        # ── Step 2 : sort – ICD-resolved classes first, then text hits ───────
+        def _sort_key(display: str) -> tuple:
+            anomaly = display.split("/")[0].upper()
+            icd_hit  = anomaly not in icd_resolved                  # False → ranked higher
+            text_hit = query_lower not in display.lower()           # False → ranked higher
+            pos      = display.lower().find(query_lower) if not text_hit else 9999
+            return (icd_hit, text_hit, pos, display)
+
+        matches.sort(key=_sort_key)
+        return matches[:50]  # limit to 50 results for UI performance
     
     def get_patient_info(self, display_name: str) -> Optional[Dict]:
         """
@@ -193,6 +229,21 @@ class PatientRetrieval:
         self._initialize_patient_cache()
         return self._patient_cache.get(display_name)
     
+    def get_icd10_info(self, display_name: str) -> Optional[Dict]:
+        """
+        Return the ICD-10 mapping entry for the anomaly class of a patient.
+
+        Args:
+            display_name: Patient display name (e.g. ``"MENINGIOMA/MNG_001"``).
+
+        Returns:
+            ICD-10 info dict from :mod:`utils.icd10_mapping`, or ``None``.
+        """
+        patient_info = self.get_patient_info(display_name)
+        if not patient_info:
+            return None
+        return get_icd10_for_folder(patient_info["anomaly_class"])
+
     def get_all_patients(self) -> List[str]:
         """
         Get all available patient display names

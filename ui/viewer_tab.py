@@ -8,6 +8,7 @@ including data loading, visualization, and segmentation tools.
 import gradio as gr
 import os
 from gradio_image_annotation import image_annotator
+from ui.info_tooltips import create_retrieval_system_header
 
 
 def update_image_annotator_labels(image_annotator_component, label_list, label_colors):
@@ -92,7 +93,10 @@ def create_data_loading_section() -> tuple:
                                value=r"D:\Gazi\TR_TBP_Anonymised_enc\Anonymised\500 MR\NORMAL\normal (50)\flair")
         load_btn = gr.Button("Load Data")
         reset_dir_btn = gr.Button("Reset Directory")
-        
+
+        # Section header with ICD-10 tooltip — display only, not in return tuple
+        create_retrieval_system_header()
+
         # Patient Retrieval System Section
         with gr.Accordion("Retrieval System", open=True):
             with gr.Row():
