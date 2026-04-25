@@ -8,20 +8,95 @@ import nibabel as nib
 import pydicom
 import matplotlib.pyplot as plt
 
+
+def _dicom_to_nifti_dcm2niix(dicom_dir, output_path):
+    """Convert DICOM to NIfTI using the dcm2niix CLI tool."""
+    output_dir = os.path.dirname(output_path) or "."
+    temp_dir = tempfile.mkdtemp()
+
+    try:
+        cmd = ["dcm2niix", "-z", "y", "-f", "%f", "-o", temp_dir, dicom_dir]
+        result = subprocess.run(cmd, capture_output=True, text=True)
+
+        if result.returncode != 0:
+            raise RuntimeError(f"dcm2niix failed: {result.stderr}")
+
+        nifti_files = [f for f in os.listdir(temp_dir) if f.endswith(".nii") or f.endswith(".nii.gz")]
+
+        if not nifti_files:
+            raise RuntimeError("No NIfTI files were created by dcm2niix")
+
+        source_file = os.path.join(temp_dir, nifti_files[0])
+        os.makedirs(output_dir, exist_ok=True)
+        shutil.move(source_file, output_path)
+        return output_path
+    finally:
+        shutil.rmtree(temp_dir)
+
+
+def _dicom_to_nifti_python(dicom_dir, output_path):
+    """Pure Python DICOM to NIfTI fallback using pydicom + nibabel."""
+    output_dir = os.path.dirname(output_path) or "."
+
+    dicom_files = []
+    for fname in sorted(os.listdir(dicom_dir)):
+        fpath = os.path.join(dicom_dir, fname)
+        if not os.path.isfile(fpath):
+            continue
+        try:
+            ds = pydicom.dcmread(fpath)
+            if hasattr(ds, 'pixel_array'):
+                dicom_files.append(ds)
+        except Exception:
+            continue
+
+    if not dicom_files:
+        raise RuntimeError(f"No valid DICOM files with pixel data in: {dicom_dir}")
+
+    try:
+        dicom_files.sort(key=lambda d: int(d.InstanceNumber))
+    except (AttributeError, ValueError):
+        pass
+
+    volume = np.stack([ds.pixel_array.astype(np.float32) for ds in dicom_files], axis=0)
+
+    ds0 = dicom_files[0]
+    affine = np.eye(4)
+    try:
+        ipp = [float(x) for x in ds0.ImagePositionPatient]
+        ps = [float(x) for x in ds0.PixelSpacing]
+        st = float(getattr(ds0, 'SliceThickness', 1.0))
+        iop = [float(x) for x in ds0.ImageOrientationPatient]
+        row_cos, col_cos = np.array(iop[:3]), np.array(iop[3:])
+        slc_cos = np.cross(row_cos, col_cos)
+        affine[:3, 0] = row_cos * ps[0]
+        affine[:3, 1] = col_cos * ps[1]
+        affine[:3, 2] = slc_cos * st
+        affine[:3, 3] = ipp
+    except (AttributeError, ValueError, TypeError):
+        pass  # keep identity if headers are incomplete
+
+    nifti_img = nib.Nifti1Image(volume, affine)
+    os.makedirs(output_dir, exist_ok=True)
+    nib.save(nifti_img, output_path)
+    return output_path
+
+
 def dicom_to_nifti(dicom_dir, output_path=None):
     """
-    Convert DICOM series to NIfTI format using dcm2niix.
-    
+    Convert DICOM series to NIfTI format.
+    Tries dcm2niix first; falls back to pure Python (pydicom + nibabel).
+
     Args:
         dicom_dir (str): Directory containing DICOM files
         output_path (str, optional): Output NIfTI file path. If None, uses same name as directory.
-        
+
     Returns:
         str: Path to output NIfTI file
     """
     if not os.path.isdir(dicom_dir):
         raise ValueError(f"Directory {dicom_dir} does not exist")
-    
+
     if output_path is None:
         output_dir = os.path.dirname(dicom_dir)
         output_filename = os.path.basename(dicom_dir)
@@ -30,40 +105,17 @@ def dicom_to_nifti(dicom_dir, output_path=None):
         output_dir = os.path.dirname(output_path)
         if not output_dir:
             output_dir = "."
-    
-    # Create temporary directory for output
-    temp_dir = tempfile.mkdtemp()
-    
+
+    # Ensure correct extension
+    if not (output_path.endswith(".nii") or output_path.endswith(".nii.gz")):
+        output_path += ".nii.gz"
+
     try:
-        # Execute dcm2niix
-        cmd = ["dcm2niix", "-z", "y", "-f", "%f", "-o", temp_dir, dicom_dir]
-        result = subprocess.run(cmd, capture_output=True, text=True)
-        
-        if result.returncode != 0:
-            raise RuntimeError(f"dcm2niix failed: {result.stderr}")
-        
-        # Find the generated NIfTI file
-        nifti_files = [f for f in os.listdir(temp_dir) if f.endswith(".nii") or f.endswith(".nii.gz")]
-        
-        if not nifti_files:
-            raise RuntimeError("No NIfTI files were created")
-        
-        # Move the file to the desired location
-        source_file = os.path.join(temp_dir, nifti_files[0])
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
-        
-        # Ensure output_path has the correct extension
-        if not (output_path.endswith(".nii") or output_path.endswith(".nii.gz")):
-            output_path += ".nii.gz"
-        
-        shutil.move(source_file, output_path)
-        
-        return output_path
-    
-    finally:
-        # Clean up temporary directory
-        shutil.rmtree(temp_dir)
+        return _dicom_to_nifti_dcm2niix(dicom_dir, output_path)
+    except FileNotFoundError:
+        print("[conversion] dcm2niix not found — using pydicom + nibabel fallback")
+        return _dicom_to_nifti_python(dicom_dir, output_path)
+
 
 def dicom_to_mat(dicom_dir, output_path=None):
     """

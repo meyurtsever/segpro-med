@@ -13,6 +13,16 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# Lazy import to avoid circular dependencies
+_audit_logger = None
+
+def _get_audit_logger():
+    global _audit_logger
+    if _audit_logger is None:
+        from utils.audit_logger import log_metadata_sanitization
+        _audit_logger = log_metadata_sanitization
+    return _audit_logger
+
 # Patient Module Tags from DICOM Standard
 # Reference: https://dicom.innolitics.com/ciods/computed-radiography-image/patient
 PATIENT_IDENTIFIABLE_FIELDS = [
@@ -72,6 +82,28 @@ PATIENT_IDENTIFIABLE_FIELDS = [
     # Military rank and occupation (personal identifiers)
     'MilitaryRank',                       # (0010,1080)
     'Occupation',                         # (0010,2180)
+    
+    # HIPAA Safe Harbor §164.514(b)(2)(i): All dates (except year) directly related
+    # to an individual, including birth date, admission date, discharge date, date of
+    # death, and all ages over 89. Study/series dates are included because they can
+    # be cross-referenced with hospital records to re-identify patients.
+    'StudyDate',                          # (0008,0020)
+    'SeriesDate',                         # (0008,0021)
+    'AcquisitionDate',                    # (0008,0022)
+    'ContentDate',                        # (0008,0023)
+    'StudyTime',                          # (0008,0030)
+    'SeriesTime',                         # (0008,0031)
+    'AcquisitionTime',                    # (0008,0032)
+    'ContentTime',                        # (0008,0033)
+    'AccessionNumber',                    # (0008,0050) - links to hospital RIS/PACS
+    'InstitutionName',                    # (0008,0080) - geographic/institutional identifier
+    'InstitutionAddress',                 # (0008,0081)
+    'ReferringPhysicianName',             # (0008,0090)
+    'StationName',                        # (0008,1010) - device identifier
+    'InstitutionalDepartmentName',        # (0008,1040)
+    'PerformingPhysicianName',            # (0008,1050)
+    'OperatorsName',                      # (0008,1070)
+    'StudyID',                            # (0020,0010) - hospital study number
     
     # Pregnancy status fields (keep for clinical value but mark as clinical, not PHI)
     # 'PatientSexNeutered',               # (0010,2203) - Keep for veterinary
@@ -147,6 +179,14 @@ def sanitize_metadata_for_display(metadata):
     
     if sanitized_fields:
         logger.info(f"Sanitized {len(sanitized_fields)} PHI fields for display: {', '.join(sanitized_fields)}")
+        try:
+            _get_audit_logger()(
+                fields_sanitized=sanitized_fields,
+                fields_retained=[f for f in CLINICAL_FIELDS_TO_KEEP if f in sanitized],
+                trigger="display",
+            )
+        except Exception:
+            pass  # Audit failure must not block display
     else:
         logger.debug("No PHI fields found in metadata")
     
@@ -262,12 +302,10 @@ def create_display_metadata_summary(metadata):
     if 'SeriesDescription' in metadata:
         summary_lines.append(f"Series: {metadata['SeriesDescription']}")
     
-    # Add study date if available (not PHI)
-    if 'StudyDate' in metadata:
-        summary_lines.append(f"Study Date: {metadata['StudyDate']}")
+    # StudyDate is PHI per HIPAA Safe Harbor §164.514(b)(2)(i) — omitted from display
     
     # Note about sanitization
-    summary_lines.append("\n[Patient information has been anonymized for display]")
+    summary_lines.append("\n[Patient information has been anonymized for display per HIPAA Safe Harbor]")
     
     return "\n".join(summary_lines)
 

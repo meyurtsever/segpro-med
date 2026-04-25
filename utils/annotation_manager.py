@@ -46,15 +46,27 @@ class AnnotationManager:
         """
         Generate a unique hash for a study/dataset
         
+        Uses SHA-256 (truncated) for new entries.  Falls back to the legacy
+        MD5 hash when an existing directory is found under the old scheme so
+        that previously saved annotations remain accessible.
+        
         Args:
             study_path: Absolute path to the study directory or file
             
         Returns:
-            str: MD5 hash of the study path
+            str: Hash prefix of the study path (irreversible)
         """
-        # Normalize path for consistent hashing
         normalized_path = os.path.normpath(study_path).lower()
-        return hashlib.md5(normalized_path.encode()).hexdigest()[:16]
+        sha_hash = hashlib.sha256(normalized_path.encode()).hexdigest()[:16]
+        md5_hash = hashlib.md5(normalized_path.encode()).hexdigest()[:16]
+        
+        # Check if a legacy MD5-based directory already exists for any user
+        if self.base_dir.exists():
+            for user_dir in self.base_dir.iterdir():
+                if user_dir.is_dir() and (user_dir / md5_hash).is_dir():
+                    return md5_hash  # Preserve backward compatibility
+        
+        return sha_hash
     
     def _get_annotation_dir(self, user_id: str, study_path: str) -> Path:
         """
@@ -121,10 +133,12 @@ class AnnotationManager:
                 annotation_data['modified_at'] = datetime.now().isoformat()
                 annotation_data['modification_count'] = annotation_data.get('modification_count', 0) + 1
             else:
-                # Create new record
+                # Create new record — store only the study hash and basename,
+                # never the full filesystem path which may contain patient
+                # identifiers in parent directory names.
                 annotation_data = {
                     'user_id': user_id,
-                    'study_path': os.path.normpath(study_path),
+                    'study_name': os.path.basename(os.path.normpath(study_path)),
                     'study_hash': self._get_study_hash(study_path),
                     'created_at': datetime.now().isoformat(),
                     'modified_at': datetime.now().isoformat(),
@@ -470,6 +484,51 @@ class AnnotationManager:
         except Exception as e:
             logger.error(f"Error exporting annotations: {e}", exc_info=True)
             return None
+    
+    def erase_user_data(self, user_id: str) -> bool:
+        """
+        Delete ALL annotation data for a user (GDPR Article 17 — Right to Erasure).
+        
+        This permanently removes the user's annotation directory and all its
+        contents.  The operation is logged to the anonymization audit trail.
+        
+        Args:
+            user_id: User ID whose data should be erased
+            
+        Returns:
+            bool: True if erasure succeeded or no data existed
+        """
+        import shutil
+        try:
+            user_dir = self.base_dir / user_id
+            
+            if not user_dir.exists():
+                logger.info(f"No data to erase for user '{user_id}'")
+                return True
+            
+            # Count records before deletion for audit
+            study_count = sum(1 for d in user_dir.iterdir() if d.is_dir())
+            
+            shutil.rmtree(user_dir)
+            logger.info(f"Erased all data for user '{user_id}' ({study_count} studies removed)")
+            
+            # Audit the erasure
+            try:
+                from utils.audit_logger import log_data_erasure
+                log_data_erasure(user_id=user_id, scope="all_user_data", success=True)
+            except Exception:
+                pass
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error erasing data for user '{user_id}': {e}", exc_info=True)
+            try:
+                from utils.audit_logger import log_data_erasure
+                log_data_erasure(user_id=user_id, scope="all_user_data", success=False)
+            except Exception:
+                pass
+            return False
 
 
 # Global instance

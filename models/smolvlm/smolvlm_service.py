@@ -32,8 +32,17 @@ class SmolVLMService:
         self.uses_device_map = False  # Track if we're using device_map
         
         logger.info(f"Initializing SmolVLM Service on device: {self.device}")
+        self._ensure_model_available()
         self._load_model()
-    
+
+    def _ensure_model_available(self):
+        """Auto-download SmolVLM if not already cached."""
+        try:
+            from download_smolvlm import ensure_smolvlm_available
+            ensure_smolvlm_available()
+        except Exception as e:
+            logger.debug(f"Pre-download check skipped: {e} — will attempt loading directly.")
+
     def _load_model(self):
         """Load the SmolVLM model and processor"""
         try:

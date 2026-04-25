@@ -1,4 +1,5 @@
-# MedSAM2 Model Files (too large for GitHub)
+# Model checkpoints (weights too large for GitHub — auto-downloaded at runtime)
+**/checkpoints/
 models/medsam2/checkpoints/*.pt
 models/medsam2/checkpoints/*.pth
 models/medsam2/checkpoints/*.ckpt
@@ -7,7 +8,30 @@ models/medgemma/*.safetensors
 models/medgemma/*.pt
 models/medgemma/model.safetensors.index.json
 
+# Documentation-only markdown files (keep README tracked)
 *.md
+!README.md
+
+# Archives and PDFs
+*.zip
+*.pdf
+*.tar.gz
+*.tar.bz2
+*.7z
+*.rar
+cvm_48_t1/
+cvm_t1/
+custom_components/
+abdomen/
+
+# Workflow UI (not included in this release)
+workflow-ui/
+
+# REST API backend (part of workflow implementation, not included in this release)
+api/
+
+# Evaluation / benchmark scripts (not part of open-source release)
+scripts/
 
 # Keep Python code but ignore large model files
 
@@ -83,9 +107,6 @@ coverage.xml
 
 # Test scripts
 test_*.py
-
-# Download scripts
-download_*.py
 
 # Django stuff:
 *.log
@@ -208,6 +229,7 @@ results/
 outputs/
 logs/
 *.log
+*.yaml
 
 # Backup files
 *.bak
@@ -220,3 +242,5 @@ cvm (7)/
 dist_custom_annotator/
 brain_target_results/
 brain_target_prompts.json
+abdomen/
+MG/

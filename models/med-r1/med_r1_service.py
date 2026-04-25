@@ -38,9 +38,26 @@ class MedR1Service:
         self.processor = None
         self.model_loaded = False
         
-        # Load model components
+        # Auto-download checkpoint if missing, then load
+        self._ensure_model_available()
         self._load_model()
     
+    def _ensure_model_available(self):
+        """Auto-download Med-R1 from HuggingFace if the local checkpoint is missing."""
+        try:
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            download_script = os.path.join(script_dir, "download_med_r1.py")
+            if os.path.exists(download_script):
+                import importlib.util
+                spec = importlib.util.spec_from_file_location("download_med_r1", download_script)
+                mod = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(mod)
+                mod.ensure_med_r1_available()
+            else:
+                logger.debug("Med-R1 download script not found — skipping pre-download check.")
+        except Exception as e:
+            logger.debug(f"Med-R1 pre-download check skipped: {e}")
+
     def _resolve_checkpoint_path(self, checkpoint_path: Optional[str]) -> str:
         """Resolve the checkpoint path to use local MRI checkpoint if available"""
         if checkpoint_path is not None:

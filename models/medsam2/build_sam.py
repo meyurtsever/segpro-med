@@ -67,6 +67,27 @@ def get_best_available_device():
         return "cpu"
 
 
+def _ensure_medsam2_checkpoints(ckpt_path=None):
+    """Auto-download MedSAM2 checkpoints if the requested path is missing."""
+    try:
+        _dir = os.path.dirname(os.path.abspath(__file__))
+        _dl_script = os.path.join(_dir, "download_medsam2.py")
+        if not os.path.exists(_dl_script):
+            return
+
+        # Only trigger download if the checkpoint file doesn't exist
+        if ckpt_path and os.path.exists(ckpt_path):
+            return
+
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("download_medsam2", _dl_script)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        mod.ensure_default_checkpoint_available()
+    except Exception as e:
+        logging.warning(f"MedSAM2 auto-download check skipped: {e}")
+
+
 def build_sam2(
     config_file,
     ckpt_path=None,
@@ -76,6 +97,9 @@ def build_sam2(
     apply_postprocessing=True,
     **kwargs,
 ):
+    # Auto-download checkpoints if missing
+    _ensure_medsam2_checkpoints(ckpt_path)
+
     # Use the provided device or get the best available one
     device = device or get_best_available_device()
     logging.info(f"Using device: {device}")

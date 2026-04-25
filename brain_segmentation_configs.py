@@ -75,7 +75,7 @@ BRAIN_CONFIGS = {
     # Tumor segmentation focused
     'tumor_detection': {
         **BASE_BRAIN_CONFIG,
-        'points_per_side': 32,
+        'points_per_side': 16,              # 256 grid points (vs 1024 at 32) — 4× faster
         'pred_iou_thresh': 0.65,            # Good balance for pathology
         'stability_score_thresh': 0.75,     # Stable boundaries important
         'crop_n_layers': 1,                 # Multi-scale for complex shapes

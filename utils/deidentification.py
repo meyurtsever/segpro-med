@@ -11,6 +11,19 @@ import time
 
 logger = logging.getLogger(__name__)
 
+# Lazy import for audit logger
+_audit_log_fn = None
+
+def _audit_deidentification(**kwargs):
+    global _audit_log_fn
+    try:
+        if _audit_log_fn is None:
+            from utils.audit_logger import log_deidentification
+            _audit_log_fn = log_deidentification
+        _audit_log_fn(**kwargs)
+    except Exception:
+        pass  # Audit failure must not block processing
+
 class DeidentificationError(Exception):
     """Custom exception for de-identification errors"""
     pass
@@ -111,6 +124,7 @@ def apply_deidentification(dicom_data, temp_dir=None):
             
             if deface_thread.is_alive():
                 logger.warning("pydeface operation timed out after 30s, using original data")
+                _audit_deidentification(method="pydeface", success=False, error_message="timeout_30s")
                 return dicom_data
             
             elapsed_time = time.time() - start_time
@@ -125,9 +139,11 @@ def apply_deidentification(dicom_data, temp_dir=None):
                     deidentified_data = deidentified_data[:, :, 0]
                 
                 logger.info("De-identification completed successfully")
+                _audit_deidentification(method="pydeface", success=True, elapsed_seconds=round(elapsed_time, 2))
                 return deidentified_data.astype(dicom_data.dtype)
             else:
                 logger.error("pydeface did not produce output file")
+                _audit_deidentification(method="pydeface", success=False, error_message="no_output_file")
                 return dicom_data
                 
         except Exception as pydeface_error:
@@ -153,9 +169,11 @@ def apply_deidentification(dicom_data, temp_dir=None):
                         deidentified_data = deidentified_data[:, :, 0]
                     
                     logger.info("De-identification completed successfully using CLI fallback")
+                    _audit_deidentification(method="pydeface_cli", success=True)
                     return deidentified_data.astype(dicom_data.dtype)
                 else:
                     logger.error(f"pydeface CLI fallback failed: {result.stderr}")
+                    _audit_deidentification(method="pydeface_cli", success=False, error_message=result.stderr[:200] if result.stderr else "unknown")
                     return dicom_data
                     
             except subprocess.TimeoutExpired:

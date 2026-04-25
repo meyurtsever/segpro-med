@@ -1567,7 +1567,7 @@ class ImagePlotToolHandlers:
                 from datetime import datetime
                 annotation_data = {
                     'user_id': self.current_user_id,
-                    'study_path': os.path.normpath(self.state.current_directory),
+                    'study_name': os.path.basename(os.path.normpath(self.state.current_directory)),
                     'study_hash': self.annotation_manager._get_study_hash(self.state.current_directory),
                     'created_at': datetime.now().isoformat(),
                     'modified_at': datetime.now().isoformat(),
@@ -2437,7 +2437,7 @@ class ImagePlotToolHandlers:
                 from datetime import datetime
                 annotation_data = {
                     'user_id': self.current_user_id,
-                    'study_path': os.path.normpath(self.state.current_directory),
+                    'study_name': os.path.basename(os.path.normpath(self.state.current_directory)),
                     'study_hash': self.annotation_manager._get_study_hash(self.state.current_directory),
                     'created_at': datetime.now().isoformat(),
                     'modified_at': datetime.now().isoformat(),
