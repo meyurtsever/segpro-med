@@ -470,7 +470,16 @@ def _load_dicom_series_standard(dicom_files, apply_deidentification=False):
     # Get metadata from the first slice
     metadata = get_dicom_metadata(ordered_files[0])
     logger.info("Extracted metadata from first slice")
-    
+
+    # Store last-slice IPP so callers can compute precise inter-slice direction/spacing
+    if len(ordered_files) > 1:
+        try:
+            last_meta = get_dicom_metadata(ordered_files[-1])
+            if last_meta.get('ImagePositionPatient'):
+                metadata['ImagePositionPatientLast'] = last_meta['ImagePositionPatient']
+        except Exception:
+            pass
+
     # Apply de-identification if requested
     if apply_deidentification:
         logger.info("Applying de-identification to DICOM series...")

@@ -1,0 +1,104 @@
+/* SegPro-Med Workflow Engine — Global Styles */
+:root {
+  --bg-primary: #1a1b2e;
+  --bg-secondary: #242640;
+  --bg-tertiary: #2d2f4e;
+  --bg-node: #2a2c48;
+  --border-color: #3d3f6a;
+  --text-primary: #e2e4f0;
+  --text-secondary: #9b9ec0;
+  --text-muted: #6b6e8f;
+  --accent-blue: #4f8df5;
+  --accent-green: #4caf8b;
+  --accent-orange: #e8a04c;
+  --accent-red: #e05c5c;
+  --accent-purple: #9b6dd7;
+  --handle-color: #4f8df5;
+  --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* React Flow overrides */
+.react-flow__background {
+  background: var(--bg-primary) !important;
+}
+
+.react-flow__minimap {
+  background: var(--bg-secondary) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 8px !important;
+}
+
+.react-flow__controls {
+  background: var(--bg-secondary) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 8px !important;
+  box-shadow: var(--shadow) !important;
+}
+
+.react-flow__controls-button {
+  background: var(--bg-tertiary) !important;
+  border-color: var(--border-color) !important;
+  fill: var(--text-secondary) !important;
+}
+
+.react-flow__controls-button:hover {
+  background: var(--accent-blue) !important;
+  fill: white !important;
+}
+
+/* Handle styles */
+.react-flow__handle {
+  width: 10px !important;
+  height: 10px !important;
+  border: 2px solid var(--handle-color) !important;
+  background: var(--bg-node) !important;
+}
+
+.react-flow__handle:hover {
+  background: var(--handle-color) !important;
+}
+
+/* Edge styles */
+.react-flow__edge-path {
+  stroke: var(--border-color) !important;
+  stroke-width: 2 !important;
+}
+
+.react-flow__edge.selected .react-flow__edge-path,
+.react-flow__edge:hover .react-flow__edge-path {
+  stroke: var(--accent-blue) !important;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}

@@ -25,10 +25,10 @@ custom_components/
 abdomen/
 
 # Workflow UI (not included in this release)
-workflow-ui/
+# workflow-ui/
 
 # REST API backend (part of workflow implementation, not included in this release)
-api/
+# api/
 
 # Evaluation / benchmark scripts (not part of open-source release)
 scripts/

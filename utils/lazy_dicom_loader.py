@@ -70,7 +70,16 @@ class LazyDICOMLoader:
             # Extract metadata
             from utils.dicom_utils import get_dicom_metadata
             self._metadata = get_dicom_metadata(self.dicom_files[0])
-            
+
+            # Store last-slice IPP for precise inter-slice direction/spacing computation
+            if len(self.dicom_files) > 1:
+                try:
+                    last_meta = get_dicom_metadata(self.dicom_files[-1])
+                    if last_meta.get('ImagePositionPatient'):
+                        self._metadata['ImagePositionPatientLast'] = last_meta['ImagePositionPatient']
+                except Exception:
+                    pass
+
             # Add series information
             self._metadata['SeriesInfo'] = {
                 'NumberOfSlices': len(self.dicom_files),
