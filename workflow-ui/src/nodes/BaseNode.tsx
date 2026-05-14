@@ -3,12 +3,14 @@
  * Provides consistent title bar, status indicator, handles, and "Inspect on Tool" button.
  */
 
-import { memo, useState, type ReactNode } from 'react';
+import { memo, useState, type MouseEvent, type ReactNode } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import type { NodeStatus } from '../types/nodes';
 import InfoModal, { type NodeInfo } from '../components/InfoModal';
 
 interface BaseNodeProps {
+  nodeId?: string;
+  nodeType?: string;
   title: string;
   icon: string;
   color: string;
@@ -29,6 +31,8 @@ const statusConfig: Record<NodeStatus, { icon: string; color: string; label: str
 };
 
 function BaseNode({
+  nodeId,
+  nodeType,
   title,
   icon,
   color,
@@ -42,6 +46,23 @@ function BaseNode({
 }: BaseNodeProps) {
   const s = statusConfig[status];
   const [showInfo, setShowInfo] = useState(false);
+
+  const handleHandleClick = (event: MouseEvent, direction: 'input' | 'output') => {
+    if (!nodeId || !nodeType) return;
+    event.preventDefault();
+    event.stopPropagation();
+    window.dispatchEvent(
+      new CustomEvent('segpro:open-node-suggestions', {
+        detail: {
+          sourceNodeId: nodeId,
+          sourceNodeType: nodeType,
+          direction,
+          clientX: event.clientX,
+          clientY: event.clientY,
+        },
+      }),
+    );
+  };
 
   return (
     <div
@@ -62,7 +83,9 @@ function BaseNode({
         <Handle
           type="target"
           position={Position.Left}
-          style={{ top: 24 }}
+          onClick={(event) => handleHandleClick(event, 'input')}
+          title="Click to add a compatible previous node, or drag to connect manually"
+          style={{ top: 24, cursor: 'pointer' }}
         />
       )}
 
@@ -203,7 +226,9 @@ function BaseNode({
         <Handle
           type="source"
           position={Position.Right}
-          style={{ top: 24 }}
+          onClick={(event) => handleHandleClick(event, 'output')}
+          title="Click to add a compatible next node, or drag to connect manually"
+          style={{ top: 24, cursor: 'pointer' }}
         />
       )}
     </div>

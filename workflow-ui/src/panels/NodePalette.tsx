@@ -3,22 +3,28 @@
  * Drag a node from here onto the canvas to add it to the workflow.
  */
 
-import { type DragEvent, useCallback } from 'react';
+import { type DragEvent, useCallback, useState } from 'react';
 import { nodePaletteItems } from '../nodes';
 
+const EXPANDED_WIDTH = 260;
+const COLLAPSED_WIDTH = 44;
+
 const sidebarStyle: React.CSSProperties = {
-  width: 260,
+  width: EXPANDED_WIDTH,
+  flexShrink: 0,
   height: '100%',
   background: 'var(--bg-secondary)',
   borderRight: '1px solid var(--border-color)',
   display: 'flex',
   flexDirection: 'column',
   overflow: 'hidden',
+  transition: 'width 0.18s ease',
 };
 
 const headerStyle: React.CSSProperties = {
   padding: '16px 16px 12px',
   borderBottom: '1px solid var(--border-color)',
+  position: 'relative',
 };
 
 const listStyle: React.CSSProperties = {
@@ -39,7 +45,24 @@ const itemStyle: React.CSSProperties = {
   alignItems: 'flex-start',
 };
 
+const collapseButtonStyle: React.CSSProperties = {
+  width: 28,
+  height: 28,
+  borderRadius: 6,
+  border: '1px solid var(--border-color)',
+  background: 'var(--bg-tertiary)',
+  color: 'var(--text-secondary)',
+  cursor: 'pointer',
+  fontSize: 13,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexShrink: 0,
+};
+
 export default function NodePalette() {
+  const [collapsed, setCollapsed] = useState(false);
+
   const onDragStart = useCallback(
     (event: DragEvent, nodeType: string, defaultData: Record<string, unknown>) => {
       event.dataTransfer.setData('application/reactflow-type', nodeType);
@@ -58,6 +81,53 @@ export default function NodePalette() {
     categories.get(item.category)!.push(item);
   }
 
+  if (collapsed) {
+    return (
+      <div style={{ ...sidebarStyle, width: COLLAPSED_WIDTH }}>
+        <div
+          style={{
+            padding: 8,
+            borderBottom: '1px solid var(--border-color)',
+            display: 'flex',
+            justifyContent: 'center',
+          }}
+        >
+          <button
+            onClick={() => setCollapsed(false)}
+            style={collapseButtonStyle}
+            title="Expand node palette"
+            aria-label="Expand node palette"
+          >
+            {'>'}
+          </button>
+        </div>
+        <div
+          style={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '8px 0',
+          }}
+        >
+          <div
+            style={{
+              transform: 'rotate(-90deg)',
+              whiteSpace: 'nowrap',
+              color: 'var(--text-secondary)',
+              fontSize: 11,
+              fontWeight: 800,
+              letterSpacing: 1,
+              textTransform: 'uppercase',
+            }}
+          >
+            Node Palette
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={sidebarStyle}>
       {/* Header */}
@@ -68,6 +138,19 @@ export default function NodePalette() {
         <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
           Drag nodes onto the canvas
         </div>
+        <button
+          onClick={() => setCollapsed(true)}
+          style={{
+            ...collapseButtonStyle,
+            position: 'absolute',
+            top: 14,
+            right: 12,
+          }}
+          title="Collapse node palette"
+          aria-label="Collapse node palette"
+        >
+          {'<'}
+        </button>
       </div>
 
       {/* Node list */}

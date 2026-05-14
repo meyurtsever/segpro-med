@@ -270,7 +270,7 @@ async function executeNode(
         imageBase64: annSliceRes.image_base64,
         annotations: [],
         sliceAnnotationsMap: {},
-        activeTool: 'select',
+        activeTool: 'rect',
         showLabels: true,
         volumeShape,
         metadata: upstreamMeta,

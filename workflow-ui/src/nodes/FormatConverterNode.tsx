@@ -13,6 +13,7 @@ import BaseNode from './BaseNode';
 import useWorkflowStore from '../store/workflowStore';
 import type { FormatConverterNodeData } from '../types/nodes';
 import type { NodeInfo } from '../components/InfoModal';
+import NodeHint from '../components/NodeHint';
 
 const CONVERSION_TYPES = [
   'DICOM to NIFTI',
@@ -107,6 +108,8 @@ function FormatConverterNode({ id, data }: NodeProps) {
 
   return (
     <BaseNode
+      nodeId={id}
+      nodeType="formatConverter"
       title="Format Converter"
       icon="🔄"
       color="var(--accent-orange)"
@@ -145,6 +148,12 @@ function FormatConverterNode({ id, data }: NodeProps) {
           style={inputStyle}
         />
       </div>
+
+      {!d.inputPath && (
+        <NodeHint>
+          Connect a Data Loader upstream or enter an input path before running conversion.
+        </NodeHint>
+      )}
 
       {/* Output path (optional) */}
       <div style={{ marginTop: 8 }}>

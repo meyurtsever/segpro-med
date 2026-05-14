@@ -86,7 +86,7 @@ export const nodePaletteItems = [
       totalSlices: 0,
       annotations: [],
       sliceAnnotationsMap: {},
-      activeTool: 'select' as const,
+      activeTool: 'rect' as const,
       zoom: 1,
       showLabels: true,
     },

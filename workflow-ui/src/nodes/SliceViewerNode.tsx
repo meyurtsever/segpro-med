@@ -22,6 +22,7 @@ import type { SliceViewerNodeData, SliceCoordinate } from '../types/nodes';
 import * as api from '../api/client';
 import type { PatientSearchResult } from '../api/client';
 import type { NodeInfo } from '../components/InfoModal';
+import NodeHint from '../components/NodeHint';
 
 // ---------------------------------------------------------------------------
 // Info modal content
@@ -215,6 +216,7 @@ function SliceViewerNode({ id, data }: NodeProps) {
   const [isSearching, setIsSearching] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [loadingPatient, setLoadingPatient] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const searchWrapperRef = useRef<HTMLDivElement>(null);
 
   const [fullscreen, setFullscreen] = useState(false);
@@ -235,6 +237,8 @@ function SliceViewerNode({ id, data }: NodeProps) {
         const res = await api.getSlice(sessionId, sliceIdx, view, segPath);
         if (fetchRef.current !== fetchId) return;
         updateNodeData(id, {
+          status: 'success',
+          error: undefined,
           imageBase64: res.image_base64,
           sliceIndex: res.slice_index,
           totalSlices: res.total_slices,
@@ -242,7 +246,10 @@ function SliceViewerNode({ id, data }: NodeProps) {
         setDimensions({ w: res.width, h: res.height });
       } catch (err) {
         if (fetchRef.current !== fetchId) return;
-        console.error('SliceViewer fetch error:', err);
+        updateNodeData(id, {
+          status: 'error',
+          error: err instanceof Error ? err.message : 'Failed to fetch slice',
+        });
       } finally {
         if (fetchRef.current === fetchId) setLoading(false);
       }
@@ -327,6 +334,7 @@ function SliceViewerNode({ id, data }: NodeProps) {
     if (searchQuery.trim().length < 2) {
       setSearchResults([]);
       setShowDropdown(false);
+      setSearchError(null);
       return;
     }
     setIsSearching(true);
@@ -335,8 +343,10 @@ function SliceViewerNode({ id, data }: NodeProps) {
         const res = await api.searchPatients(searchQuery.trim());
         setSearchResults(res.results);
         setShowDropdown(true);
-      } catch {
+        setSearchError(null);
+      } catch (err) {
         setSearchResults([]);
+        setSearchError(err instanceof Error ? err.message : 'Patient search failed');
       } finally {
         setIsSearching(false);
       }
@@ -371,6 +381,7 @@ function SliceViewerNode({ id, data }: NodeProps) {
       setSearchQuery('');
       if (!result.path) return;
       setLoadingPatient(true);
+      updateNodeData(id, { status: 'running', error: undefined });
       try {
         const loaded = await api.loadDataFromPath(result.path);
         const canonicalView =
@@ -381,6 +392,8 @@ function SliceViewerNode({ id, data }: NodeProps) {
           d.view ||
           'axial';
         updateNodeData(id, {
+          status: 'success',
+          error: undefined,
           sessionId: loaded.session_id,
           segPath: result.segmentation_path || undefined,
           showOverlay: false,
@@ -392,7 +405,10 @@ function SliceViewerNode({ id, data }: NodeProps) {
         });
         fetchSlice(loaded.session_id, 0, canonicalView);
       } catch (err) {
-        console.error('SliceViewer patient load error:', err);
+        updateNodeData(id, {
+          status: 'error',
+          error: err instanceof Error ? err.message : 'Failed to load patient',
+        });
       } finally {
         setLoadingPatient(false);
       }
@@ -467,6 +483,8 @@ function SliceViewerNode({ id, data }: NodeProps) {
   return (
     <>
     <BaseNode
+      nodeId={id}
+      nodeType="sliceViewer"
       title="Slice Viewer"
       icon="🖼️"
       color="var(--accent-purple)"
@@ -561,6 +579,12 @@ function SliceViewerNode({ id, data }: NodeProps) {
           </div>
         )}
       </div>
+
+      {searchError && (
+        <div style={{ marginBottom: 8, color: 'var(--accent-red)', fontSize: 10 }}>
+          {searchError}
+        </div>
+      )}
 
       <div style={viewerContainerStyle}>
         {/* View selector */}
@@ -680,7 +704,7 @@ function SliceViewerNode({ id, data }: NodeProps) {
             <div style={placeholderStyle}>
               {hasSession
                 ? 'Loading slice…'
-                : 'Connect a Data Loader or Format Converter to view slices'}
+                : <NodeHint style={{ marginTop: 0, textAlign: 'left' }}>Connect a Data Loader or Format Converter to view slices.</NodeHint>}
             </div>
           )}
 

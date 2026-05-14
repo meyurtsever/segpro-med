@@ -29,6 +29,7 @@ import type {
 } from '../types/nodes';
 import * as api from '../api/client';
 import type { NodeInfo } from '../components/InfoModal';
+import NodeHint from '../components/NodeHint';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -1345,13 +1346,18 @@ function InteractiveAnnotatorNode({ id, data }: NodeProps) {
         const res = await api.getSlice(sessionId, sliceIdx, view);
         if (fetchRef.current !== fetchId) return;
         updateNodeData(id, {
+          status: 'success',
+          error: undefined,
           imageBase64: res.image_base64,
           sliceIndex: res.slice_index,
           totalSlices: res.total_slices,
         } as Partial<InteractiveAnnotatorNodeData>);
       } catch (err) {
         if (fetchRef.current !== fetchId) return;
-        console.error('Annotator fetch error:', err);
+        updateNodeData(id, {
+          status: 'error',
+          error: err instanceof Error ? err.message : 'Failed to fetch slice',
+        } as Partial<InteractiveAnnotatorNodeData>);
       } finally {
         if (fetchRef.current === fetchId) setLoading(false);
       }
@@ -2678,6 +2684,8 @@ function InteractiveAnnotatorNode({ id, data }: NodeProps) {
   return (
     <>
       <BaseNode
+        nodeId={id}
+        nodeType="interactiveAnnotator"
         title="Interactive Annotator"
         icon="✏️"
         color="var(--accent-green)"
@@ -2790,16 +2798,9 @@ function InteractiveAnnotatorNode({ id, data }: NodeProps) {
 
           {/* Placeholder */}
           {!hasSession && (
-            <div
-              style={{
-                color: 'var(--text-muted)',
-                fontSize: 12,
-                textAlign: 'center',
-                padding: 20,
-              }}
-            >
-              Connect a Data Loader to start annotating
-            </div>
+            <NodeHint style={{ textAlign: 'left' }}>
+              Connect a Data Loader to start annotating.
+            </NodeHint>
           )}
 
           {/* Slice navigation */}

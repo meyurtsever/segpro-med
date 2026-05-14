@@ -165,11 +165,27 @@ export interface BrowseResponse {
   entries: BrowseEntry[];
 }
 
+export interface NativePathDialogResponse {
+  path: string | null;
+  cancelled: boolean;
+  mode: 'file' | 'directory';
+}
+
 /** Browse a filesystem directory (for file picker) */
 export async function browsePath(path: string): Promise<BrowseResponse> {
   return request<BrowseResponse>(
     `${API_BASE}/fs/browse?path=${encodeURIComponent(path)}`,
   );
+}
+
+/** Open a native OS file/folder selector on the local API host */
+export async function openNativePathDialog(
+  mode: 'file' | 'directory',
+  initialPath?: string,
+): Promise<NativePathDialogResponse> {
+  const params = new URLSearchParams({ mode });
+  if (initialPath) params.set('initial_path', initialPath);
+  return request<NativePathDialogResponse>(`${API_BASE}/fs/dialog?${params}`);
 }
 
 // ---------------------------------------------------------------------------

@@ -13,8 +13,8 @@ import { type NodeProps } from '@xyflow/react';
 import BaseNode from './BaseNode';
 import useWorkflowStore from '../store/workflowStore';
 import type { DataLoaderNodeData } from '../types/nodes';
-import FilePickerModal from '../components/FilePickerModal';
 import type { NodeInfo } from '../components/InfoModal';
+import NodeHint from '../components/NodeHint';
 import * as api from '../api/client';
 import type { PatientSearchResult } from '../api/client';
 
@@ -37,6 +37,25 @@ const labelStyle: React.CSSProperties = {
   marginBottom: 4,
   display: 'block',
 };
+
+const fieldWithButtonsStyle: React.CSSProperties = {
+  display: 'flex',
+  gap: 4,
+  alignItems: 'stretch',
+};
+
+const browseButtonStyle = (active = false): React.CSSProperties => ({
+  background: active ? 'rgba(79, 141, 245, 0.16)' : 'var(--bg-tertiary)',
+  border: `1px solid ${active ? 'var(--accent-blue)' : 'var(--border-color)'}`,
+  borderRadius: 5,
+  color: active ? 'var(--accent-blue)' : 'var(--text-secondary)',
+  cursor: active ? 'progress' : 'pointer',
+  padding: '6px 8px',
+  fontSize: 11,
+  fontWeight: 700,
+  flexShrink: 0,
+  minWidth: 38,
+});
 
 const badgeStyle = (color: string): React.CSSProperties => ({
   display: 'inline-block',
@@ -75,13 +94,15 @@ const DATA_LOADER_INFO: NodeInfo = {
 function DataLoaderNode({ id, data }: NodeProps) {
   const updateNodeData = useWorkflowStore((s) => s.updateNodeData);
   const d = data as unknown as DataLoaderNodeData;
-  const [showPicker, setShowPicker] = useState(false);
+  const [pickerBusy, setPickerBusy] = useState<string | null>(null);
+  const [pickerError, setPickerError] = useState<string | null>(null);
 
   // ── Patient search state ──────────────────────────────────────────────────
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<PatientSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const [showRootField, setShowRootField] = useState(false);
   const [serverRoot, setServerRoot] = useState<string>('');
   const [rootStatus, setRootStatus] = useState<'unknown' | 'ok' | 'missing'>('unknown');
@@ -99,9 +120,42 @@ function DataLoaderNode({ id, data }: NodeProps) {
 
   const handlePathChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
+      setPickerError(null);
       updateNodeData(id, { path: e.target.value });
     },
     [id, updateNodeData],
+  );
+
+  const handleNativePathPick = useCallback(
+    async (target: 'pathFile' | 'pathDirectory' | 'searchRoot') => {
+      const mode = target === 'pathFile' ? 'file' : 'directory';
+      const initialPath = target === 'searchRoot'
+        ? d.searchRoot || serverRoot
+        : d.path;
+
+      setPickerBusy(target);
+      setPickerError(null);
+
+      try {
+        const result = await api.openNativePathDialog(mode, initialPath || '');
+        if (result.cancelled || !result.path) return;
+
+        if (target === 'searchRoot') {
+          updateNodeData(id, { searchRoot: result.path });
+        } else {
+          updateNodeData(id, { path: result.path });
+        }
+      } catch (err) {
+        setPickerError(
+          err instanceof Error
+            ? err.message
+            : 'Native file selector could not be opened',
+        );
+      } finally {
+        setPickerBusy(null);
+      }
+    },
+    [d.path, d.searchRoot, id, serverRoot, updateNodeData],
   );
 
   // Debounced patient search
@@ -109,6 +163,7 @@ function DataLoaderNode({ id, data }: NodeProps) {
     if (searchQuery.trim().length < 2) {
       setSearchResults([]);
       setShowDropdown(false);
+      setSearchError(null);
       return;
     }
     setIsSearching(true);
@@ -117,8 +172,10 @@ function DataLoaderNode({ id, data }: NodeProps) {
         const res = await api.searchPatients(searchQuery.trim(), d.searchRoot || undefined);
         setSearchResults(res.results);
         setShowDropdown(true);
-      } catch {
+        setSearchError(null);
+      } catch (err) {
         setSearchResults([]);
+        setSearchError(err instanceof Error ? err.message : 'Patient search failed');
       } finally {
         setIsSearching(false);
       }
@@ -155,6 +212,8 @@ function DataLoaderNode({ id, data }: NodeProps) {
 
   return (
     <BaseNode
+      nodeId={id}
+      nodeType="dataLoader"
       title="Data Loader"
       icon="📂"
       color="var(--accent-blue)"
@@ -299,6 +358,19 @@ function DataLoaderNode({ id, data }: NodeProps) {
         )}
       </div>
 
+      {searchError && (
+        <div
+          style={{
+            marginTop: 4,
+            color: 'var(--accent-red)',
+            fontSize: 10,
+            lineHeight: 1.4,
+          }}
+        >
+          {searchError}
+        </div>
+      )}
+
       {/* Search root (advanced, collapsed by default) */}
       <div style={{ marginTop: 4 }}>
         <button
@@ -328,13 +400,24 @@ function DataLoaderNode({ id, data }: NodeProps) {
                 Server default: {serverRoot}
               </div>
             )}
-            <input
-              type="text"
-              value={d.searchRoot || ''}
-              onChange={(e) => updateNodeData(id, { searchRoot: e.target.value })}
-              placeholder={serverRoot || 'e.g. C:\\data\\500 MR'}
-              style={{ ...inputStyle, fontFamily: 'inherit', fontSize: 11 }}
-            />
+            <div style={fieldWithButtonsStyle}>
+              <input
+                type="text"
+                value={d.searchRoot || ''}
+                onChange={(e) => updateNodeData(id, { searchRoot: e.target.value })}
+                placeholder={serverRoot || 'e.g. C:\\data\\500 MR'}
+                style={{ ...inputStyle, fontFamily: 'inherit', fontSize: 11, flex: 1 }}
+              />
+              <button
+                type="button"
+                onClick={() => handleNativePathPick('searchRoot')}
+                style={browseButtonStyle(pickerBusy === 'searchRoot')}
+                disabled={pickerBusy !== null}
+                title="Select dataset root directory"
+              >
+                Dir
+              </button>
+            </div>
           </>
         )}
       </div>
@@ -357,29 +440,29 @@ function DataLoaderNode({ id, data }: NodeProps) {
 
       {/* Path input with file picker */}
       <label style={labelStyle}>File / Directory Path</label>
-      <div style={{ display: 'flex', gap: 4 }}>
+      <div style={fieldWithButtonsStyle}>
         <input
           type="text"
-          value={d.path || 'C://Users//Yurtsever//Downloads//segpro-med//cvm_48_t1'}
+          value={d.path || ''}
           onChange={handlePathChange}
           placeholder="C:\data\patient01 or /data/brain.nii.gz"
           style={{ ...inputStyle, flex: 1 }}
         />
         <button
-          onClick={() => setShowPicker(true)}
-          style={{
-            background: 'var(--bg-tertiary)',
-            border: '1px solid var(--border-color)',
-            borderRadius: 5,
-            color: 'var(--text-secondary)',
-            cursor: 'pointer',
-            padding: '6px 8px',
-            fontSize: 14,
-            flexShrink: 0,
-            display: 'flex',
-            alignItems: 'center',
-          }}
-          title="Browse filesystem"
+          type="button"
+          onClick={() => handleNativePathPick('pathFile')}
+          style={browseButtonStyle(pickerBusy === 'pathFile')}
+          disabled={pickerBusy !== null}
+          title="Select medical image file"
+        >
+          File
+        </button>
+        <button
+          type="button"
+          onClick={() => handleNativePathPick('pathDirectory')}
+          style={browseButtonStyle(pickerBusy === 'pathDirectory')}
+          disabled={pickerBusy !== null}
+          title="Select DICOM or dataset directory"
           onMouseEnter={(e) => {
             (e.target as HTMLElement).style.borderColor = 'var(--accent-blue)';
             (e.target as HTMLElement).style.color = 'var(--accent-blue)';
@@ -392,6 +475,18 @@ function DataLoaderNode({ id, data }: NodeProps) {
           📁
         </button>
       </div>
+
+      {pickerError && (
+        <NodeHint
+          style={{
+            color: 'var(--accent-red)',
+            background: 'rgba(224, 92, 92, 0.08)',
+            borderColor: 'rgba(224, 92, 92, 0.25)',
+          }}
+        >
+          {pickerError}
+        </NodeHint>
+      )}
 
       {/* Session info (shown after successful load) */}
       {d.sessionId && (
@@ -413,16 +508,6 @@ function DataLoaderNode({ id, data }: NodeProps) {
         </div>
       )}
 
-      {/* File Picker Modal */}
-      <FilePickerModal
-        isOpen={showPicker}
-        onClose={() => setShowPicker(false)}
-        onSelect={(selectedPath) => {
-          updateNodeData(id, { path: selectedPath });
-          setShowPicker(false);
-        }}
-        initialPath={d.path || ''}
-      />
     </BaseNode>
   );
 }

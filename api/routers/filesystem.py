@@ -9,10 +9,85 @@ Per §5.3: /api/v1/fs/*
 import os
 import platform
 import string
+from typing import Literal
 
 from fastapi import APIRouter, HTTPException, Query
+from pydantic import BaseModel
 
 router = APIRouter()
+
+
+class NativeDialogResponse(BaseModel):
+    """Response from the native OS file/folder picker."""
+
+    path: str | None
+    cancelled: bool
+    mode: Literal["file", "directory"]
+
+
+def _initial_directory(initial_path: str) -> str | None:
+    if not initial_path:
+        return None
+
+    normalized = os.path.normpath(initial_path)
+    if os.path.isdir(normalized):
+        return normalized
+
+    parent = os.path.dirname(normalized)
+    return parent if parent and os.path.isdir(parent) else None
+
+
+def _open_native_dialog(
+    mode: Literal["file", "directory"],
+    initial_path: str,
+) -> str | None:
+    try:
+        import tkinter as tk
+        from tkinter import filedialog
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Native OS file dialog is unavailable: {exc}",
+        ) from exc
+
+    options: dict[str, object] = {
+        "title": "Select medical image file" if mode == "file" else "Select directory",
+    }
+    initial_dir = _initial_directory(initial_path)
+    if initial_dir:
+        options["initialdir"] = initial_dir
+
+    root = None
+    try:
+        root = tk.Tk()
+        root.withdraw()
+        root.attributes("-topmost", True)
+        root.update()
+
+        if mode == "file":
+            selected = filedialog.askopenfilename(
+                **options,
+                filetypes=[
+                    ("Medical image files", "*.dcm *.nii *.nii.gz *.mat *.zip"),
+                    ("DICOM files", "*.dcm"),
+                    ("NIfTI files", "*.nii *.nii.gz"),
+                    ("MATLAB files", "*.mat"),
+                    ("ZIP archives", "*.zip"),
+                    ("All files", "*.*"),
+                ],
+            )
+        else:
+            selected = filedialog.askdirectory(**options)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Native OS file dialog failed: {exc}",
+        ) from exc
+    finally:
+        if root is not None:
+            root.destroy()
+
+    return os.path.abspath(selected) if selected else None
 
 
 @router.get(
@@ -90,3 +165,30 @@ async def browse_directory(
         "parent": parent,
         "entries": entries,
     }
+
+
+@router.get(
+    "/dialog",
+    response_model=NativeDialogResponse,
+    summary="Open native OS file/folder selector",
+    description=(
+        "Opens a native dialog on the API host and returns the selected absolute path. "
+        "This is intended for local desktop use where the React UI and API run on the same machine."
+    ),
+)
+def open_native_filesystem_dialog(
+    mode: Literal["file", "directory"] = Query(
+        ...,
+        description="Select a file or a directory.",
+    ),
+    initial_path: str = Query(
+        "",
+        description="Optional initial file/directory path.",
+    ),
+):
+    selected = _open_native_dialog(mode, initial_path)
+    return NativeDialogResponse(
+        path=selected,
+        cancelled=selected is None,
+        mode=mode,
+    )

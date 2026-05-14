@@ -22,6 +22,11 @@ interface WorkflowState {
   // Graph state
   nodes: Node<BaseNodeData>[];
   edges: Edge[];
+  selectedNodeId: string | null;
+  workflowNotice: {
+    type: 'info' | 'success' | 'warning' | 'error';
+    message: string;
+  } | null;
 
   // Actions — React Flow handlers
   onNodesChange: OnNodesChange;
@@ -32,6 +37,8 @@ interface WorkflowState {
   addNode: (node: Node<BaseNodeData>) => void;
   updateNodeData: (nodeId: string, data: Partial<BaseNodeData>) => void;
   removeNode: (nodeId: string) => void;
+  setSelectedNodeId: (nodeId: string | null) => void;
+  setWorkflowNotice: (notice: WorkflowState['workflowNotice']) => void;
 
   // Actions — workflow management
   clearWorkflow: () => void;
@@ -43,9 +50,23 @@ export const generateNodeId = () => `node_${++nodeCounter}`;
 const useWorkflowStore = create<WorkflowState>((set, get) => ({
   nodes: [],
   edges: [],
+  selectedNodeId: null,
+  workflowNotice: null,
 
   onNodesChange: (changes) => {
-    set({ nodes: applyNodeChanges(changes, get().nodes) as Node<BaseNodeData>[] });
+    const removedIds = new Set(
+      changes
+        .filter((change) => change.type === 'remove')
+        .map((change) => change.id),
+    );
+    const selectedNodeId = get().selectedNodeId;
+
+    set({
+      nodes: applyNodeChanges(changes, get().nodes) as Node<BaseNodeData>[],
+      selectedNodeId: selectedNodeId && removedIds.has(selectedNodeId)
+        ? null
+        : selectedNodeId,
+    });
   },
 
   onEdgesChange: (changes) => {
@@ -57,7 +78,12 @@ const useWorkflowStore = create<WorkflowState>((set, get) => ({
     const { nodes, edges } = get();
     const result = validateConnection(connection, nodes, edges);
     if (!result.valid) {
-      console.warn(`Connection rejected: ${result.reason}`);
+      set({
+        workflowNotice: {
+          type: 'warning',
+          message: result.reason || 'These nodes cannot be connected.',
+        },
+      });
       return;
     }
 
@@ -125,11 +151,22 @@ const useWorkflowStore = create<WorkflowState>((set, get) => ({
       }
     }
 
-    set({ edges: newEdges, nodes: newNodes });
+    set({
+      edges: newEdges,
+      nodes: newNodes,
+      workflowNotice: {
+        type: 'success',
+        message: 'Connection added.',
+      },
+    });
   },
 
   addNode: (node) => {
-    set({ nodes: [...get().nodes, node] });
+    set({
+      nodes: [...get().nodes, node],
+      selectedNodeId: node.id,
+      workflowNotice: null,
+    });
   },
 
   updateNodeData: (nodeId, data) => {
@@ -146,12 +183,34 @@ const useWorkflowStore = create<WorkflowState>((set, get) => ({
       edges: get().edges.filter(
         (e) => e.source !== nodeId && e.target !== nodeId,
       ),
+      selectedNodeId: get().selectedNodeId === nodeId ? null : get().selectedNodeId,
     });
+  },
+
+  setSelectedNodeId: (nodeId) => {
+    if (get().selectedNodeId === nodeId) return;
+    set({ selectedNodeId: nodeId });
+  },
+
+  setWorkflowNotice: (notice) => {
+    const current = get().workflowNotice;
+    if (
+      current?.type === notice?.type &&
+      current?.message === notice?.message
+    ) {
+      return;
+    }
+    set({ workflowNotice: notice });
   },
 
   clearWorkflow: () => {
     nodeCounter = 0;
-    set({ nodes: [], edges: [] });
+    set({
+      nodes: [],
+      edges: [],
+      selectedNodeId: null,
+      workflowNotice: null,
+    });
   },
 }));
 

@@ -19,6 +19,7 @@ import useWorkflowStore from '../store/workflowStore';
 import type { AutoSegmentationNodeData } from '../types/nodes';
 import * as api from '../api/client';
 import type { NodeInfo } from '../components/InfoModal';
+import NodeHint from '../components/NodeHint';
 
 // ---------------------------------------------------------------------------
 // Info modal content
@@ -78,14 +79,6 @@ const detailBoxStyle: React.CSSProperties = {
   lineHeight: 1.5,
 };
 
-const metaRowStyle: React.CSSProperties = {
-  display: 'flex',
-  justifyContent: 'space-between',
-  fontSize: 10,
-  color: 'var(--text-muted)',
-  marginTop: 6,
-};
-
 const statusDotStyle = (connected: boolean): React.CSSProperties => ({
   width: 8,
   height: 8,
@@ -105,6 +98,7 @@ function AutoSegmentationNode({ id, data }: NodeProps) {
   const d = data as unknown as AutoSegmentationNodeData;
 
   const [loadingConfigs, setLoadingConfigs] = useState(false);
+  const [configError, setConfigError] = useState<string | null>(null);
 
   // Fetch available configs from backend on mount
   useEffect(() => {
@@ -112,12 +106,13 @@ function AutoSegmentationNode({ id, data }: NodeProps) {
       setLoadingConfigs(true);
       api.getSegmentationConfigs()
         .then((res) => {
+          setConfigError(null);
           updateNodeData(id, {
             availableConfigs: res.configs,
           } as Partial<AutoSegmentationNodeData>);
         })
         .catch((err) => {
-          console.warn('Failed to load segmentation configs:', err);
+          setConfigError(err instanceof Error ? err.message : 'Failed to load segmentation configs');
         })
         .finally(() => setLoadingConfigs(false));
     }
@@ -135,6 +130,8 @@ function AutoSegmentationNode({ id, data }: NodeProps) {
 
   return (
     <BaseNode
+      nodeId={id}
+      nodeType="autoSegmentation"
       title="Auto Segmentation"
       icon="🔬"
       color="var(--accent-purple)"
@@ -195,14 +192,31 @@ function AutoSegmentationNode({ id, data }: NodeProps) {
           </div>
         )}
 
+        {configError && (
+          <div
+            style={{
+              marginTop: 8,
+              padding: '6px 8px',
+              background: 'rgba(224, 92, 92, 0.08)',
+              border: '1px solid rgba(224, 92, 92, 0.25)',
+              borderRadius: 6,
+              color: 'var(--accent-red)',
+              fontSize: 10,
+              lineHeight: 1.4,
+            }}
+          >
+            {configError}. Using local fallback profiles.
+          </div>
+        )}
+
         {/* Hint */}
-        <div style={metaRowStyle}>
+        <NodeHint>
           <span>
             {hasSession
               ? '→ Connect to Interactive Annotator to run'
               : '← Connect Data Loader first'}
           </span>
-        </div>
+        </NodeHint>
       </div>
     </BaseNode>
   );
