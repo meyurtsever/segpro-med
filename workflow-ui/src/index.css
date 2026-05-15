@@ -64,16 +64,45 @@ body {
   fill: white !important;
 }
 
+@keyframes segpro-handle-breathe {
+  0%, 100% {
+    box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 0 rgba(79, 141, 245, 0);
+  }
+  50% {
+    box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 5px rgba(79, 141, 245, 0.24);
+  }
+}
+
+@keyframes segpro-handle-hover-breathe {
+  0%, 100% {
+    box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 3px rgba(79, 141, 245, 0.22);
+  }
+  50% {
+    box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 7px rgba(79, 141, 245, 0.34);
+  }
+}
+
 /* Handle styles */
 .react-flow__handle {
   width: 10px !important;
   height: 10px !important;
   border: 2px solid var(--handle-color) !important;
   background: var(--bg-node) !important;
+  z-index: 3 !important;
+  box-shadow: 0 0 0 2px var(--bg-primary);
+  animation: segpro-handle-breathe 1.8s ease-in-out infinite;
+  transition: background 120ms ease, border-color 120ms ease;
 }
 
 .react-flow__handle:hover {
   background: var(--handle-color) !important;
+  animation: segpro-handle-hover-breathe 0.95s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .react-flow__handle {
+    animation: none;
+  }
 }
 
 /* Edge styles */

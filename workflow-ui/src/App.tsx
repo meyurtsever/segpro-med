@@ -11,16 +11,21 @@ import {
   Background,
   Controls,
   MiniMap,
-  ViewportPortal,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
 import useWorkflowStore, { generateNodeId } from './store/workflowStore';
 import { nodePaletteItems, nodeTypes } from './nodes';
+import { edgeTypes } from './edges';
 import NodePalette from './panels/NodePalette';
 import { executeWorkflow } from './engine/executor';
 import { createIsValidConnection, getAllowedSources, getAllowedTargets } from './engine/compatibility';
+import { getConnectionEdgeData } from './engine/nodeContracts';
 import NodeInspector from './panels/NodeInspector';
+import WorkflowValidationPanel from './panels/WorkflowValidationPanel';
+import NodeSuggestionMenu from './components/NodeSuggestionMenu';
+import CanvasEmptyState from './components/CanvasEmptyState';
+import { validateWorkflow, type WorkflowIssue } from './engine/workflowValidation';
 
 interface SuggestionMenuState {
   sourceNodeId: string;
@@ -95,76 +100,6 @@ const noticeStyle = (
   };
 };
 
-const suggestionMenuStyle: React.CSSProperties = {
-  position: 'absolute',
-  zIndex: 50,
-  width: SUGGESTION_MENU_WIDTH,
-  pointerEvents: 'all',
-  background: 'var(--bg-secondary)',
-  border: '1px solid var(--border-color)',
-  borderRadius: 7,
-  boxShadow: 'var(--shadow)',
-  overflow: 'hidden',
-};
-
-const suggestionHeaderStyle: React.CSSProperties = {
-  padding: '7px 9px',
-  borderBottom: '1px solid var(--border-color)',
-  color: 'var(--text-secondary)',
-  fontSize: 9,
-  fontWeight: 800,
-  textTransform: 'uppercase',
-  letterSpacing: 0.7,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  gap: 8,
-};
-
-const suggestionCloseButtonStyle: React.CSSProperties = {
-  width: 18,
-  height: 18,
-  borderRadius: 4,
-  border: '1px solid var(--border-color)',
-  background: 'var(--bg-tertiary)',
-  color: 'var(--text-secondary)',
-  cursor: 'pointer',
-  fontSize: 12,
-  lineHeight: 1,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  flexShrink: 0,
-};
-
-const suggestionItemStyle: React.CSSProperties = {
-  width: '100%',
-  border: 'none',
-  background: 'transparent',
-  color: 'var(--text-primary)',
-  padding: '7px 9px',
-  cursor: 'pointer',
-  display: 'flex',
-  alignItems: 'flex-start',
-  gap: 7,
-  textAlign: 'left',
-};
-
-const suggestionSectionTitleStyle: React.CSSProperties = {
-  padding: '7px 9px 3px',
-  color: 'var(--text-muted)',
-  fontSize: 9,
-  fontWeight: 800,
-  textTransform: 'uppercase',
-  letterSpacing: 0.7,
-};
-
-const suggestionDividerStyle: React.CSSProperties = {
-  height: 1,
-  background: 'var(--border-color)',
-  margin: '4px 0',
-};
-
 export default function App() {
   const {
     nodes,
@@ -174,12 +109,15 @@ export default function App() {
     onEdgesChange,
     onConnect,
     addNode,
+    addNodesAndConnect,
     updateNodeData,
     clearWorkflow,
     setSelectedNodeId,
+    setSelectedEdgeId,
     setWorkflowNotice,
   } = useWorkflowStore();
   const [suggestionMenu, setSuggestionMenu] = useState<SuggestionMenuState | null>(null);
+  const [showValidationPanel, setShowValidationPanel] = useState(false);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const reactFlowInstance = useRef<any>(null);
@@ -188,6 +126,16 @@ export default function App() {
   const isValidConnection = useMemo(
     () => createIsValidConnection(nodes, edges),
     [nodes, edges],
+  );
+
+  const validationIssues = useMemo(
+    () => validateWorkflow(nodes, edges),
+    [nodes, edges],
+  );
+
+  const blockingIssues = useMemo(
+    () => validationIssues.filter((issue) => issue.severity === 'error'),
+    [validationIssues],
   );
 
   useEffect(() => {
@@ -263,6 +211,21 @@ export default function App() {
       return;
     }
 
+    if (blockingIssues.length > 0) {
+      const firstIssue = blockingIssues[0];
+      if (firstIssue.nodeId) {
+        setSelectedNodeId(firstIssue.nodeId);
+      }
+      setShowValidationPanel(true);
+      setWorkflowNotice({
+        type: 'warning',
+        message: firstIssue.message,
+      });
+      return;
+    }
+
+    setShowValidationPanel(false);
+
     // Reset all nodes to idle first
     for (const node of nodes) {
       updateNodeData(node.id, { status: 'idle', error: undefined });
@@ -280,7 +243,7 @@ export default function App() {
         message: err instanceof Error ? err.message : String(err),
       });
     }
-  }, [nodes, edges, updateNodeData, setWorkflowNotice]);
+  }, [blockingIssues, nodes, edges, updateNodeData, setSelectedNodeId, setWorkflowNotice]);
 
   const handleClear = useCallback(() => {
     if (nodes.length > 0 && !confirm('Clear all nodes and edges?')) return;
@@ -294,16 +257,41 @@ export default function App() {
     [setSelectedNodeId],
   );
 
+  const handleEdgeClick = useCallback(
+    (_: React.MouseEvent, edge: { id: string }) => {
+      setSelectedEdgeId(edge.id);
+      setSuggestionMenu(null);
+    },
+    [setSelectedEdgeId],
+  );
+
   const handlePaneClick = useCallback(() => {
     setSelectedNodeId(null);
+    setSelectedEdgeId(null);
     setSuggestionMenu(null);
-  }, [setSelectedNodeId]);
+  }, [setSelectedEdgeId, setSelectedNodeId]);
 
-  const handleSelectionChange = useCallback(
-    ({ nodes: selectedNodes }: { nodes: Array<{ id: string }> }) => {
-      setSelectedNodeId(selectedNodes[0]?.id ?? null);
+  const handleValidationIssueClick = useCallback(
+    (issue: WorkflowIssue) => {
+      if (issue.nodeId) {
+        setSelectedNodeId(issue.nodeId);
+      }
     },
     [setSelectedNodeId],
+  );
+
+  const handleSelectionChange = useCallback(
+    ({
+      nodes: selectedNodes,
+      edges: selectedEdges,
+    }: {
+      nodes: Array<{ id: string }>;
+      edges: Array<{ id: string }>;
+    }) => {
+      setSelectedNodeId(selectedNodes[0]?.id ?? null);
+      setSelectedEdgeId(selectedNodes.length === 0 ? selectedEdges[0]?.id ?? null : null);
+    },
+    [setSelectedEdgeId, setSelectedNodeId],
   );
 
   const compatibleSuggestions = useMemo(() => {
@@ -339,9 +327,6 @@ export default function App() {
       );
     });
   }, [edges, nodes, suggestionMenu]);
-
-  const hasCompatibleExistingNodes = compatibleExistingNodes.length > 0;
-  const hasCompatibleSuggestions = compatibleSuggestions.length > 0;
 
   const suggestionMenuPosition = useMemo(() => {
     if (!suggestionMenu) return null;
@@ -427,6 +412,63 @@ export default function App() {
     [addNode, nodes, onConnect, setSelectedNodeId, suggestionMenu],
   );
 
+  const cloneDefaultData = useCallback((nodeType: string) => {
+    const item = nodePaletteItems.find((paletteNode) => paletteNode.type === nodeType);
+    return item ? JSON.parse(JSON.stringify(item.defaultData)) : { label: nodeType, status: 'idle' };
+  }, []);
+
+  const handleCreateDataLoader = useCallback(() => {
+    addNode({
+      id: generateNodeId(),
+      type: 'dataLoader',
+      position: { x: 80, y: 90 },
+      data: cloneDefaultData('dataLoader'),
+    });
+  }, [addNode, cloneDefaultData]);
+
+  const handleCreateStarterWorkflow = useCallback(() => {
+    const dataLoaderId = generateNodeId();
+    const autoSegmentationId = generateNodeId();
+    const annotatorId = generateNodeId();
+
+    addNodesAndConnect(
+      [
+        {
+          id: dataLoaderId,
+          type: 'dataLoader',
+          position: { x: 70, y: 90 },
+          data: cloneDefaultData('dataLoader'),
+        },
+        {
+          id: autoSegmentationId,
+          type: 'autoSegmentation',
+          position: { x: 430, y: 80 },
+          data: cloneDefaultData('autoSegmentation'),
+        },
+        {
+          id: annotatorId,
+          type: 'interactiveAnnotator',
+          position: { x: 790, y: 70 },
+          data: cloneDefaultData('interactiveAnnotator'),
+        },
+      ],
+      [
+        { source: dataLoaderId, target: autoSegmentationId, sourceHandle: null, targetHandle: null },
+        { source: autoSegmentationId, target: annotatorId, sourceHandle: null, targetHandle: null },
+      ],
+    );
+  }, [addNodesAndConnect, cloneDefaultData]);
+
+  const getSuggestionEdgeData = useCallback(
+    (candidateType: string | undefined) => {
+      if (!suggestionMenu) return undefined;
+      return suggestionMenu.direction === 'output'
+        ? getConnectionEdgeData(suggestionMenu.sourceNodeType, candidateType)
+        : getConnectionEdgeData(candidateType, suggestionMenu.sourceNodeType);
+    },
+    [suggestionMenu],
+  );
+
   return (
     <div style={appStyle}>
       {/* Left sidebar — Node Palette */}
@@ -439,6 +481,21 @@ export default function App() {
             {workflowNotice.message}
           </div>
         )}
+
+        {showValidationPanel && validationIssues.length > 0 ? (
+          <WorkflowValidationPanel
+            issues={validationIssues}
+            onIssueClick={handleValidationIssueClick}
+            onClose={() => setShowValidationPanel(false)}
+          />
+        ) : null}
+
+        {nodes.length === 0 ? (
+          <CanvasEmptyState
+            onCreateDataLoader={handleCreateDataLoader}
+            onCreateStarterWorkflow={handleCreateStarterWorkflow}
+          />
+        ) : null}
 
         {/* Toolbar */}
         <div style={toolbarStyle}>
@@ -477,118 +534,29 @@ export default function App() {
           isValidConnection={isValidConnection}
           onInit={(instance) => { reactFlowInstance.current = instance; }}
           onNodeClick={handleNodeClick}
+          onEdgeClick={handleEdgeClick}
           onPaneClick={handlePaneClick}
           onSelectionChange={handleSelectionChange}
           onDrop={onDrop}
           onDragOver={onDragOver}
           nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
           fitView
-          defaultEdgeOptions={{ animated: true }}
+          defaultEdgeOptions={{ animated: true, type: 'typed' }}
           deleteKeyCode={['Delete', 'Backspace']}
           proOptions={{ hideAttribution: true }}
         >
           {suggestionMenu && suggestionMenuPosition ? (
-            <ViewportPortal>
-              <div
-                style={{
-                  ...suggestionMenuStyle,
-                  transform: `translate(${suggestionMenuPosition.x}px, ${suggestionMenuPosition.y}px)`,
-                }}
-                className="nodrag nopan nowheel"
-                onPointerDown={(event) => event.stopPropagation()}
-                onMouseDown={(event) => event.stopPropagation()}
-                onClick={(event) => event.stopPropagation()}
-                onWheel={(event) => event.stopPropagation()}
-              >
-                <div style={suggestionHeaderStyle}>
-                  <span>
-                    {suggestionMenu.direction === 'output'
-                      ? 'Compatible next nodes'
-                      : 'Compatible previous nodes'}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setSuggestionMenu(null)}
-                    style={suggestionCloseButtonStyle}
-                    title="Close suggestions"
-                    aria-label="Close suggestions"
-                  >
-                    x
-                  </button>
-                </div>
-
-                {hasCompatibleExistingNodes ? (
-                  <>
-                    <div style={suggestionSectionTitleStyle}>Connect existing</div>
-                    {compatibleExistingNodes.map((node) => {
-                      const item = nodePaletteItems.find((paletteNode) => paletteNode.type === node.type);
-                      return (
-                        <button
-                          key={node.id}
-                          type="button"
-                          onClick={() => handleConnectExistingNode(node.id)}
-                          style={suggestionItemStyle}
-                          onMouseEnter={(event) => {
-                            event.currentTarget.style.background = 'var(--bg-tertiary)';
-                          }}
-                          onMouseLeave={(event) => {
-                            event.currentTarget.style.background = 'transparent';
-                          }}
-                        >
-                          <span style={{ fontSize: 15, lineHeight: 1 }}>{item?.icon || '*'}</span>
-                          <span style={{ minWidth: 0, fontSize: 11, fontWeight: 700 }}>
-                            {String(node.data.label || item?.label || node.type)}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </>
-                ) : null}
-
-                {hasCompatibleExistingNodes && hasCompatibleSuggestions ? (
-                  <div style={suggestionDividerStyle} />
-                ) : null}
-                <div style={suggestionSectionTitleStyle}>Create new</div>
-                {!hasCompatibleSuggestions ? (
-                  <div style={{ padding: 10, color: 'var(--text-muted)', fontSize: 12 }}>
-                    No compatible node types.
-                  </div>
-                ) : (
-                  compatibleSuggestions.map((item) => (
-                    <button
-                      key={item.type}
-                      type="button"
-                      onClick={() => handleCreateSuggestedNode(item.type, item.defaultData)}
-                      style={suggestionItemStyle}
-                      onMouseEnter={(event) => {
-                        event.currentTarget.style.background = 'var(--bg-tertiary)';
-                      }}
-                      onMouseLeave={(event) => {
-                        event.currentTarget.style.background = 'transparent';
-                      }}
-                    >
-                      <span style={{ fontSize: 15, lineHeight: 1 }}>{item.icon}</span>
-                      <span style={{ minWidth: 0 }}>
-                        <span style={{ display: 'block', fontSize: 11, fontWeight: 700 }}>
-                          {item.label}
-                        </span>
-                        <span
-                          style={{
-                            display: 'block',
-                            fontSize: 9,
-                            color: 'var(--text-muted)',
-                            marginTop: 1,
-                            lineHeight: 1.35,
-                          }}
-                        >
-                          {item.description}
-                        </span>
-                      </span>
-                    </button>
-                  ))
-                )}
-              </div>
-            </ViewportPortal>
+            <NodeSuggestionMenu
+              direction={suggestionMenu.direction}
+              position={suggestionMenuPosition}
+              existingNodes={compatibleExistingNodes}
+              suggestions={compatibleSuggestions}
+              getEdgePreview={getSuggestionEdgeData}
+              onClose={() => setSuggestionMenu(null)}
+              onConnectExisting={handleConnectExistingNode}
+              onCreateNode={handleCreateSuggestedNode}
+            />
           ) : null}
           <Background gap={20} size={1} color="var(--border-color)" />
           <Controls position="bottom-left" />

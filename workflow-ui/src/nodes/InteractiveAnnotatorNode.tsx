@@ -2101,7 +2101,7 @@ function InteractiveAnnotatorNode({ id, data }: NodeProps) {
 
   // --- Pointer up ---
   const handlePointerUp = useCallback(
-    (_e: React.PointerEvent) => {
+    () => {
       // Eraser stroke end: push history snapshot taken at stroke start
       if (eraserActiveRef.current) {
         eraserActiveRef.current = false;

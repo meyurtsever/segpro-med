@@ -97,13 +97,12 @@ function AutoSegmentationNode({ id, data }: NodeProps) {
   const updateNodeData = useWorkflowStore((s) => s.updateNodeData);
   const d = data as unknown as AutoSegmentationNodeData;
 
-  const [loadingConfigs, setLoadingConfigs] = useState(false);
+  const [loadingConfigs, setLoadingConfigs] = useState(() => d.availableConfigs.length === 0);
   const [configError, setConfigError] = useState<string | null>(null);
 
   // Fetch available configs from backend on mount
   useEffect(() => {
     if (d.availableConfigs.length === 0) {
-      setLoadingConfigs(true);
       api.getSegmentationConfigs()
         .then((res) => {
           setConfigError(null);

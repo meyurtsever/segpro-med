@@ -11,6 +11,7 @@ models/medgemma/model.safetensors.index.json
 # Documentation-only markdown files (keep README tracked)
 *.md
 !README.md
+WORKFLOW_NODE_IMPLEMENTATION_GUIDE.md
 
 # Archives and PDFs
 *.zip

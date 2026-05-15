@@ -10,6 +10,7 @@ import type { Node } from '@xyflow/react';
 import useWorkflowStore from '../store/workflowStore';
 import { nodePaletteItems } from '../nodes';
 import { getAllowedSources, getAllowedTargets } from '../engine/compatibility';
+import { getPortDefinition, type WorkflowPortKind } from '../engine/nodeContracts';
 import type { BaseNodeData } from '../types/nodes';
 import * as api from '../api/client';
 
@@ -245,15 +246,23 @@ export default function NodeInspector() {
     nodes,
     edges,
     selectedNodeId,
+    selectedEdgeId,
     updateNodeData,
     removeNode,
+    removeEdge,
     setSelectedNodeId,
+    setSelectedEdgeId,
     setWorkflowNotice,
   } = useWorkflowStore();
 
   const selectedNode = useMemo(
     () => nodes.find((node) => node.id === selectedNodeId),
     [nodes, selectedNodeId],
+  );
+
+  const selectedEdge = useMemo(
+    () => edges.find((edge) => edge.id === selectedEdgeId),
+    [edges, selectedEdgeId],
   );
 
   const selectedData = selectedNode?.data as Record<string, unknown> | undefined;
@@ -592,6 +601,90 @@ export default function NodeInspector() {
     );
   }
 
+  if (selectedEdge) {
+    const sourceNode = nodes.find((node) => node.id === selectedEdge.source);
+    const targetNode = nodes.find((node) => node.id === selectedEdge.target);
+    const edgeData = selectedEdge.data as {
+      kind?: WorkflowPortKind;
+      label?: string;
+      color?: string;
+    } | undefined;
+    const portDefinition = getPortDefinition(edgeData?.kind);
+    const edgeColor = edgeData?.color || portDefinition?.color || 'var(--accent-blue)';
+    const edgeLabel = edgeData?.label || portDefinition?.edgeLabel || 'data';
+
+    return (
+      <aside style={panelShellStyle}>
+        <div style={headerStyle}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 18 }}>{'->'}</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>
+                Connection
+              </div>
+              <div style={{ marginTop: 5 }}>
+                {renderNodeChip(edgeLabel, edgeColor)}
+              </div>
+            </div>
+            {renderCollapseButton('Collapse inspector')}
+          </div>
+        </div>
+
+        <div style={bodyStyle}>
+          <div style={connectionSectionStyle}>
+            <div
+              style={{
+                ...sectionTitleStyle,
+                color: 'var(--accent-blue)',
+                marginBottom: 10,
+              }}
+            >
+              Route
+            </div>
+            {renderConnectionBox(
+              'From',
+              [{ id: selectedEdge.source, node: sourceNode }],
+              'var(--accent-blue)',
+            )}
+            {renderConnectionBox(
+              'To',
+              [{ id: selectedEdge.target, node: targetNode }],
+              'var(--accent-green)',
+            )}
+          </div>
+
+          <div style={sectionStyle}>
+            <div style={sectionTitleStyle}>Guidance</div>
+            <div style={helpTextStyle}>
+              This connection passes {edgeLabel} data from the source node to the target node.
+              Select either endpoint to configure the node, or remove this connection below.
+            </div>
+          </div>
+
+          <button
+            onClick={() => {
+              removeEdge(selectedEdge.id);
+              setSelectedEdgeId(null);
+            }}
+            style={{
+              width: '100%',
+              padding: '8px 10px',
+              borderRadius: 6,
+              border: '1px solid var(--accent-red)',
+              background: 'rgba(224, 92, 92, 0.1)',
+              color: 'var(--accent-red)',
+              fontWeight: 700,
+              fontSize: 12,
+              cursor: 'pointer',
+            }}
+          >
+            Remove Connection
+          </button>
+        </div>
+      </aside>
+    );
+  }
+
   if (!selectedNode || !selectedData) {
     return (
       <aside style={panelShellStyle}>
@@ -612,7 +705,8 @@ export default function NodeInspector() {
           <div style={sectionStyle}>
             <div style={sectionTitleStyle}>Recommended first path</div>
             <div style={helpTextStyle}>
-              Data Loader {'->'} Slice Viewer {'->'} Auto Segmentation {'->'} Interactive Annotator.
+              Data Loader {'->'} Auto Segmentation {'->'} Interactive Annotator.
+              Add Slice Viewer separately when you want a read-only preview branch.
             </div>
           </div>
           <div style={sectionStyle}>

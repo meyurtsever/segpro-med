@@ -7,6 +7,7 @@ import { memo, useState, type MouseEvent, type ReactNode } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import type { NodeStatus } from '../types/nodes';
 import InfoModal, { type NodeInfo } from '../components/InfoModal';
+import useWorkflowStore from '../store/workflowStore';
 
 interface BaseNodeProps {
   nodeId?: string;
@@ -46,6 +47,10 @@ function BaseNode({
 }: BaseNodeProps) {
   const s = statusConfig[status];
   const [showInfo, setShowInfo] = useState(false);
+  const isSelected = useWorkflowStore((state) => (
+    nodeId ? state.selectedNodeId === nodeId : false
+  ));
+  const borderColor = isSelected && color ? color : 'var(--border-color)';
 
   const handleHandleClick = (event: MouseEvent, direction: 'input' | 'output') => {
     if (!nodeId || !nodeType) return;
@@ -68,14 +73,12 @@ function BaseNode({
     <div
       style={{
         background: 'var(--bg-node)',
-        border: `1px solid ${status === 'error' ? 'var(--accent-red)' : 'var(--border-color)'}`,
+        border: `1px solid ${borderColor}`,
         borderRadius: 10,
         minWidth: 280,
         maxWidth: 340,
-        boxShadow: status === 'running'
-          ? `0 0 12px ${color}40`
-          : 'var(--shadow)',
         overflow: 'hidden',
+        transition: 'border-color 120ms ease',
       }}
     >
       {/* Input handle */}
