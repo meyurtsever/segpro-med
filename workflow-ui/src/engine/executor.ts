@@ -1,90 +1,208 @@
 /**
  * Workflow Execution Engine
  * =========================
- * Topologically sorts the node graph and executes nodes
- * in dependency order, passing outputs as inputs to connected nodes.
+ * Executes React Flow graphs with branch-aware scheduling.
+ *
+ * Independent branches run in parallel when their dependencies are ready.
+ * If one branch fails, only its downstream descendants are skipped; unrelated
+ * branches can still complete. Scoped execution supports full workflow,
+ * selected-node, and downstream-branch runs.
  */
 
-import type { Node, Edge } from '@xyflow/react';
+import type { Edge, Node } from '@xyflow/react';
 import type { BaseNodeData } from '../types/nodes';
 import * as api from '../api/client';
 
-/** Get topologically sorted node IDs (Kahn's algorithm) */
-function topologicalSort(nodes: Node[], edges: Edge[]): string[] {
-  const inDegree = new Map<string, number>();
-  const adj = new Map<string, string[]>();
+export type WorkflowRunMode = 'all' | 'selected' | 'downstream';
 
-  for (const node of nodes) {
-    inDegree.set(node.id, 0);
-    adj.set(node.id, []);
-  }
-
-  for (const edge of edges) {
-    adj.get(edge.source)?.push(edge.target);
-    inDegree.set(edge.target, (inDegree.get(edge.target) || 0) + 1);
-  }
-
-  const queue: string[] = [];
-  for (const [id, deg] of inDegree) {
-    if (deg === 0) queue.push(id);
-  }
-
-  const sorted: string[] = [];
-  while (queue.length > 0) {
-    const id = queue.shift()!;
-    sorted.push(id);
-    for (const neighbor of adj.get(id) || []) {
-      inDegree.set(neighbor, (inDegree.get(neighbor) || 0) - 1);
-      if (inDegree.get(neighbor) === 0) queue.push(neighbor);
-    }
-  }
-
-  if (sorted.length !== nodes.length) {
-    throw new Error('Cycle detected in workflow graph');
-  }
-
-  return sorted;
+export interface ExecuteWorkflowOptions {
+  mode?: WorkflowRunMode;
+  startNodeId?: string;
+  signal?: AbortSignal;
 }
 
 /** Results stored per node after execution */
 export interface NodeResult {
   sessionId?: string;
   outputPath?: string;
+  filePath?: string;
   [key: string]: unknown;
+}
+
+export interface WorkflowExecutionResult {
+  mode: WorkflowRunMode;
+  nodeIds: string[];
+  executedNodeIds: string[];
+  failedNodeIds: string[];
+  skippedNodeIds: string[];
+  results: Map<string, NodeResult>;
+}
+
+export class WorkflowExecutionCancelledError extends Error {
+  constructor(message = 'Workflow run cancelled.') {
+    super(message);
+    this.name = 'WorkflowExecutionCancelledError';
+  }
+}
+
+export class WorkflowExecutionFailedError extends Error {
+  executedNodeIds: string[];
+  failedNodeIds: string[];
+  skippedNodeIds: string[];
+
+  constructor(
+    message: string,
+    executedNodeIds: string[],
+    failedNodeIds: string[],
+    skippedNodeIds: string[],
+  ) {
+    super(message);
+    this.name = 'WorkflowExecutionFailedError';
+    this.executedNodeIds = executedNodeIds;
+    this.failedNodeIds = failedNodeIds;
+    this.skippedNodeIds = skippedNodeIds;
+  }
+}
+
+export function isWorkflowExecutionCancelledError(
+  error: unknown,
+): error is WorkflowExecutionCancelledError {
+  return error instanceof WorkflowExecutionCancelledError ||
+    (error instanceof DOMException && error.name === 'AbortError') ||
+    (error instanceof Error && error.name === 'AbortError');
+}
+
+function assertNotAborted(signal?: AbortSignal) {
+  if (signal?.aborted) {
+    throw new WorkflowExecutionCancelledError();
+  }
+}
+
+function getDownstreamNodeIds(startNodeId: string, edges: Edge[]) {
+  const downstream = new Set<string>([startNodeId]);
+  const queue = [startNodeId];
+
+  while (queue.length > 0) {
+    const current = queue.shift();
+    if (!current) continue;
+
+    for (const edge of edges) {
+      if (edge.source !== current || downstream.has(edge.target)) continue;
+      downstream.add(edge.target);
+      queue.push(edge.target);
+    }
+  }
+
+  return downstream;
+}
+
+function getScopedNodeIds(
+  nodes: Node<BaseNodeData>[],
+  edges: Edge[],
+  options: ExecuteWorkflowOptions,
+) {
+  const mode = options.mode || 'all';
+  if (mode === 'all') {
+    return new Set(nodes.map((node) => node.id));
+  }
+
+  if (!options.startNodeId || !nodes.some((node) => node.id === options.startNodeId)) {
+    throw new Error('Select a node before running this action.');
+  }
+
+  return mode === 'selected'
+    ? new Set([options.startNodeId])
+    : getDownstreamNodeIds(options.startNodeId, edges);
+}
+
+function getNodeLabel(node: Node<BaseNodeData>) {
+  return node.data.label || node.type || node.id;
+}
+
+function getString(value: unknown) {
+  return typeof value === 'string' && value.trim() ? value : undefined;
+}
+
+function getNodeDataResult(node: Node<BaseNodeData> | undefined): NodeResult | undefined {
+  if (!node) return undefined;
+
+  const data = node.data as Record<string, unknown>;
+  const filePath = getString(data.filePath) ||
+    getString(data.path) ||
+    getString(data.outputPath) ||
+    getString(data.inputPath);
+
+  const result: NodeResult = {
+    sessionId: getString(data.sessionId),
+    outputPath: getString(data.outputPath),
+    filePath,
+    fileType: data.fileType,
+    volumeShape: data.volumeShape,
+    metadata: data.metadata,
+    configName: data.configName,
+    annotations: data.annotations,
+    sliceAnnotationsMap: data.sliceAnnotationsMap,
+  };
+
+  return Object.values(result).some((value) => value !== undefined)
+    ? result
+    : undefined;
+}
+
+function getUpstreamResults(
+  nodeId: string,
+  nodes: Node<BaseNodeData>[],
+  edges: Edge[],
+  results: Map<string, NodeResult>,
+) {
+  const upstreamResults: NodeResult[] = [];
+
+  for (const edge of edges) {
+    if (edge.target !== nodeId) continue;
+
+    const liveResult = results.get(edge.source);
+    if (liveResult) {
+      upstreamResults.push(liveResult);
+      continue;
+    }
+
+    const sourceNode = nodes.find((node) => node.id === edge.source);
+    const dataResult = getNodeDataResult(sourceNode);
+    if (dataResult) {
+      upstreamResults.push(dataResult);
+    }
+  }
+
+  return upstreamResults;
 }
 
 /**
  * Detect the acquisition view plane from metadata.
- * Uses DICOM ImageOrientationPatient or NIfTI affine to determine
- * whether the volume was acquired axially, coronally, or sagittally.
- * Falls back to 'axial' if undetermined.
+ * Uses DICOM ImageOrientationPatient or NIfTI affine to determine whether the
+ * volume was acquired axially, coronally, or sagittally. Falls back to axial.
  */
 function detectViewPlane(
   metadata?: Record<string, unknown>,
 ): 'axial' | 'coronal' | 'sagittal' {
   if (!metadata) return 'axial';
 
-  // --- DICOM: ImageOrientationPatient [row_x, row_y, row_z, col_x, col_y, col_z]
   const iop = metadata.ImageOrientationPatient as number[] | undefined;
   if (iop && iop.length === 6) {
-    // Cross product of row and column vectors gives slice normal
     const nx = Math.abs(iop[1] * iop[5] - iop[2] * iop[4]);
     const ny = Math.abs(iop[0] * iop[5] - iop[2] * iop[3]);
     const nz = Math.abs(iop[0] * iop[4] - iop[1] * iop[3]);
 
-    if (nz >= nx && nz >= ny) return 'axial';      // normal ≈ Z → axial
-    if (ny >= nx && ny >= nz) return 'coronal';     // normal ≈ Y → coronal
-    return 'sagittal';                                // normal ≈ X → sagittal
+    if (nz >= nx && nz >= ny) return 'axial';
+    if (ny >= nx && ny >= nz) return 'coronal';
+    return 'sagittal';
   }
 
-  // --- NIfTI: affine matrix (4×4 stored as nested arrays)
   const affine = metadata.affine as number[][] | undefined;
   if (affine && affine.length >= 3) {
-    // The third row (index 2) of the affine gives the slice direction
     const absRow = [
-      Math.abs(affine[0][2]),  // X component of slice direction
-      Math.abs(affine[1][2]),  // Y component
-      Math.abs(affine[2][2]),  // Z component
+      Math.abs(affine[0][2]),
+      Math.abs(affine[1][2]),
+      Math.abs(affine[2][2]),
     ];
     const maxIdx = absRow.indexOf(Math.max(...absRow));
     if (maxIdx === 2) return 'axial';
@@ -96,50 +214,135 @@ function detectViewPlane(
 }
 
 /**
- * Execute the entire workflow graph.
- * @param nodes - React Flow nodes
- * @param edges - React Flow edges
- * @param updateNodeData - callback to update node status/data in the store
+ * Execute the workflow graph.
  */
 export async function executeWorkflow(
   nodes: Node<BaseNodeData>[],
   edges: Edge[],
   updateNodeData: (nodeId: string, data: Partial<BaseNodeData>) => void,
-): Promise<Map<string, NodeResult>> {
+  options: ExecuteWorkflowOptions = {},
+): Promise<WorkflowExecutionResult> {
+  const mode = options.mode || 'all';
+  const scopeIds = getScopedNodeIds(nodes, edges, options);
+  const scopedNodes = nodes.filter((node) => scopeIds.has(node.id));
+  const scopedEdges = edges.filter((edge) =>
+    scopeIds.has(edge.source) && scopeIds.has(edge.target),
+  );
+  const pending = new Set(scopedNodes.map((node) => node.id));
   const results = new Map<string, NodeResult>();
+  const executedNodeIds: string[] = [];
+  const failedNodeIds: string[] = [];
+  const skippedNodeIds: string[] = [];
+  const failedOrSkipped = new Set<string>();
 
-  // Sort nodes in execution order
-  const sortedIds = topologicalSort(nodes, edges);
+  while (pending.size > 0) {
+    assertNotAborted(options.signal);
 
-  for (const nodeId of sortedIds) {
-    const node = nodes.find((n) => n.id === nodeId);
-    if (!node) continue;
+    let skippedThisPass = false;
+    for (const nodeId of [...pending]) {
+      const blockedByFailedUpstream = scopedEdges.some((edge) =>
+        edge.target === nodeId && failedOrSkipped.has(edge.source),
+      );
 
-    // Get upstream results (from connected source nodes)
-    const upstreamResults: NodeResult[] = [];
-    for (const edge of edges) {
-      if (edge.target === nodeId) {
-        const r = results.get(edge.source);
-        if (r) upstreamResults.push(r);
-      }
+      if (!blockedByFailedUpstream) continue;
+
+      updateNodeData(nodeId, {
+        status: 'skipped',
+        error: 'Skipped because an upstream node failed.',
+      });
+      skippedNodeIds.push(nodeId);
+      failedOrSkipped.add(nodeId);
+      pending.delete(nodeId);
+      skippedThisPass = true;
     }
 
-    // Mark as running
-    updateNodeData(nodeId, { status: 'running', error: undefined });
+    const readyNodeIds = [...pending].filter((nodeId) =>
+      scopedEdges
+        .filter((edge) => edge.target === nodeId)
+        .every((edge) => results.has(edge.source)),
+    );
 
-    try {
-      const result = await executeNode(node, upstreamResults);
-      results.set(nodeId, result);
-      updateNodeData(nodeId, { status: 'success', ...result });
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : String(err);
-      updateNodeData(nodeId, { status: 'error', error: errorMsg });
-      // Stop execution on error
-      throw new Error(`Node "${node.data.label}" failed: ${errorMsg}`);
+    if (readyNodeIds.length === 0) {
+      if (skippedThisPass) continue;
+      throw new Error('Cycle detected in workflow graph');
+    }
+
+    const outcomes = await Promise.all(readyNodeIds.map(async (nodeId) => {
+      const node = nodes.find((candidate) => candidate.id === nodeId);
+      if (!node) return { nodeId, error: new Error('Node not found.') };
+
+      const upstreamResults = getUpstreamResults(nodeId, nodes, edges, results);
+      updateNodeData(nodeId, { status: 'running', error: undefined });
+
+      try {
+        assertNotAborted(options.signal);
+        const result = await executeNode(node, upstreamResults, options.signal);
+        assertNotAborted(options.signal);
+        updateNodeData(nodeId, { status: 'success', ...result });
+        return { nodeId, result };
+      } catch (error) {
+        if (isWorkflowExecutionCancelledError(error) || options.signal?.aborted) {
+          updateNodeData(nodeId, {
+            status: 'cancelled',
+            error: 'Run cancelled.',
+          });
+          throw new WorkflowExecutionCancelledError();
+        }
+
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        updateNodeData(nodeId, { status: 'error', error: errorMsg });
+        return {
+          nodeId,
+          error: new Error(`Node "${getNodeLabel(node)}" failed: ${errorMsg}`),
+        };
+      }
+    })).catch((error) => {
+      if (isWorkflowExecutionCancelledError(error) || options.signal?.aborted) {
+        for (const nodeId of readyNodeIds) {
+          updateNodeData(nodeId, {
+            status: 'cancelled',
+            error: 'Run cancelled.',
+          });
+        }
+        throw new WorkflowExecutionCancelledError();
+      }
+      throw error;
+    });
+
+    for (const outcome of outcomes) {
+      pending.delete(outcome.nodeId);
+
+      if ('result' in outcome && outcome.result) {
+        results.set(outcome.nodeId, outcome.result);
+        executedNodeIds.push(outcome.nodeId);
+        continue;
+      }
+
+      failedNodeIds.push(outcome.nodeId);
+      failedOrSkipped.add(outcome.nodeId);
     }
   }
 
-  return results;
+  if (failedNodeIds.length > 0) {
+    const skippedSuffix = skippedNodeIds.length > 0
+      ? ` ${skippedNodeIds.length} downstream node(s) skipped.`
+      : '';
+    throw new WorkflowExecutionFailedError(
+      `${failedNodeIds.length} node(s) failed.${skippedSuffix}`,
+      executedNodeIds,
+      failedNodeIds,
+      skippedNodeIds,
+    );
+  }
+
+  return {
+    mode,
+    nodeIds: scopedNodes.map((node) => node.id),
+    executedNodeIds,
+    failedNodeIds,
+    skippedNodeIds,
+    results,
+  };
 }
 
 /**
@@ -148,6 +351,7 @@ export async function executeWorkflow(
 async function executeNode(
   node: Node<BaseNodeData>,
   upstreamResults: NodeResult[],
+  signal?: AbortSignal,
 ): Promise<NodeResult> {
   const data = node.data;
 
@@ -156,7 +360,7 @@ async function executeNode(
       const path = (data as { path?: string }).path;
       if (!path) throw new Error('No path specified for DataLoaderNode');
 
-      const res = await api.loadDataFromPath(path);
+      const res = await api.loadDataFromPath(path, signal);
       return {
         sessionId: res.session_id,
         fileType: res.file_type,
@@ -167,9 +371,14 @@ async function executeNode(
     }
 
     case 'formatConverter': {
-      const d = data as { inputPath?: string; conversionType?: string; outputPath?: string };
+      const d = data as {
+        inputPath?: string;
+        conversionType?: string;
+        outputPath?: string;
+        axis?: number;
+        compress?: boolean;
+      };
 
-      // If inputPath is not set, try to get it from upstream
       let inputPath = d.inputPath;
       if (!inputPath && upstreamResults.length > 0) {
         inputPath = upstreamResults[0].filePath as string | undefined;
@@ -180,18 +389,70 @@ async function executeNode(
       const convType = d.conversionType;
       if (!convType) throw new Error('No conversion type specified');
 
-      const res = await api.runConversion(inputPath, convType, d.outputPath);
+      const res = await api.runConversion(
+        inputPath,
+        convType,
+        d.outputPath,
+        {
+          axis: d.axis,
+          compress: d.compress,
+        },
+        signal,
+      );
       return {
         outputPath: res.output_path,
+        filePath: res.output_path,
         conversionType: res.conversion_type,
         outputSizeBytes: res.output_size_bytes,
       };
     }
 
+    case 'metadataViewer': {
+      const md = data as {
+        sessionId?: string;
+        sourcePath?: string;
+      };
+
+      let sessionId = md.sessionId;
+      let sourcePath = md.sourcePath;
+
+      for (const upstream of upstreamResults) {
+        if (!sessionId && upstream.sessionId) {
+          sessionId = upstream.sessionId;
+        }
+        if (!sourcePath) {
+          sourcePath = upstream.filePath || upstream.outputPath;
+        }
+      }
+
+      if (sessionId) {
+        const metadataRes = await api.getMetadata(sessionId, signal);
+        return {
+          sessionId: metadataRes.session_id,
+          filePath: metadataRes.file_path,
+          fileType: metadataRes.file_type,
+          volumeShape: metadataRes.volume_shape,
+          metadata: metadataRes.metadata,
+        };
+      }
+
+      if (sourcePath) {
+        const loadRes = await api.loadDataFromPath(sourcePath, signal);
+        return {
+          sessionId: loadRes.session_id,
+          filePath: loadRes.file_path,
+          fileType: loadRes.file_type,
+          volumeShape: loadRes.volume_shape,
+          metadata: loadRes.metadata,
+        };
+      }
+
+      throw new Error('No metadata source available - connect a Data Loader or Format Converter');
+    }
+
     case 'sliceViewer': {
       const sd = data as { sessionId?: string };
 
-      // Try to get sessionId from node data first, then from upstream
       let sessionId = sd.sessionId;
       let upstreamMeta: Record<string, unknown> | undefined;
       let volumeShape: number[] | undefined;
@@ -202,22 +463,18 @@ async function executeNode(
         upstreamMeta = upstream.metadata as Record<string, unknown> | undefined;
         volumeShape = upstream.volumeShape as number[] | undefined;
 
-        // If upstream is a FormatConverter, its output is a file path — load it first
         if (!sessionId && upstream.outputPath) {
-          const loadRes = await api.loadDataFromPath(upstream.outputPath);
+          const loadRes = await api.loadDataFromPath(upstream.outputPath, signal);
           sessionId = loadRes.session_id;
           upstreamMeta = loadRes.metadata;
           volumeShape = loadRes.volume_shape;
         }
       }
 
-      if (!sessionId) throw new Error('No data session available — connect a Data Loader or Format Converter');
+      if (!sessionId) throw new Error('No data session available - connect a Data Loader or Format Converter');
 
-      // Auto-detect best view plane from metadata
       const detectedView = detectViewPlane(upstreamMeta);
-
-      // Fetch the first slice to populate the viewer
-      const sliceRes = await api.getSlice(sessionId, 0, detectedView);
+      const sliceRes = await api.getSlice(sessionId, 0, detectedView, undefined, signal);
       return {
         sessionId,
         sliceIndex: sliceRes.slice_index,
@@ -232,22 +489,19 @@ async function executeNode(
     case 'interactiveAnnotator': {
       const ad = data as { sessionId?: string };
 
-      // Try to get sessionId from node data first, then from upstream
       let sessionId = ad.sessionId;
       let upstreamMeta: Record<string, unknown> | undefined;
       let volumeShape: number[] | undefined;
 
       if (!sessionId && upstreamResults.length > 0) {
-        // Look through all upstream results (may have data source + autoSegmentation)
         for (const upstream of upstreamResults) {
           if (upstream.sessionId && !sessionId) {
             sessionId = upstream.sessionId;
             upstreamMeta = upstream.metadata as Record<string, unknown> | undefined;
             volumeShape = upstream.volumeShape as number[] | undefined;
           }
-          // If upstream is a FormatConverter, load from its output
           if (!sessionId && upstream.outputPath) {
-            const loadRes = await api.loadDataFromPath(upstream.outputPath);
+            const loadRes = await api.loadDataFromPath(upstream.outputPath, signal);
             sessionId = loadRes.session_id;
             upstreamMeta = loadRes.metadata;
             volumeShape = loadRes.volume_shape;
@@ -255,13 +509,10 @@ async function executeNode(
         }
       }
 
-      if (!sessionId) throw new Error('No data session available — connect a Data Loader or Format Converter');
+      if (!sessionId) throw new Error('No data session available - connect a Data Loader or Format Converter');
 
-      // Auto-detect best view plane from metadata
       const annotatorView = detectViewPlane(upstreamMeta);
-
-      // Fetch the first slice to populate the annotator canvas
-      const annSliceRes = await api.getSlice(sessionId, 0, annotatorView);
+      const annSliceRes = await api.getSlice(sessionId, 0, annotatorView, undefined, signal);
       return {
         sessionId,
         sliceIndex: annSliceRes.slice_index,
@@ -280,7 +531,6 @@ async function executeNode(
     case 'autoSegmentation': {
       const asd = data as { sessionId?: string; configName?: string };
 
-      // Inherit sessionId from upstream
       let sessionId = asd.sessionId;
       let upstreamMeta: Record<string, unknown> | undefined;
       let volumeShape: number[] | undefined;
@@ -292,14 +542,14 @@ async function executeNode(
         volumeShape = upstream.volumeShape as number[] | undefined;
 
         if (!sessionId && upstream.outputPath) {
-          const loadRes = await api.loadDataFromPath(upstream.outputPath);
+          const loadRes = await api.loadDataFromPath(upstream.outputPath, signal);
           sessionId = loadRes.session_id;
           upstreamMeta = loadRes.metadata;
           volumeShape = loadRes.volume_shape;
         }
       }
 
-      if (!sessionId) throw new Error('No data session available — connect a Data Loader');
+      if (!sessionId) throw new Error('No data session available - connect a Data Loader');
 
       return {
         sessionId,

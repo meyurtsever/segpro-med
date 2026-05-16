@@ -8,6 +8,7 @@
 import type { NodeTypes } from '@xyflow/react';
 import DataLoaderNode from './DataLoaderNode';
 import FormatConverterNode from './FormatConverterNode';
+import MetadataViewerNode from './MetadataViewerNode';
 import SliceViewerNode from './SliceViewerNode';
 import InteractiveAnnotatorNode from './InteractiveAnnotatorNode';
 import AutoSegmentationNode from './AutoSegmentationNode';
@@ -17,6 +18,7 @@ export { nodePaletteItems } from '../engine/nodeContracts';
 export const nodeTypes: NodeTypes = {
   dataLoader: DataLoaderNode,
   formatConverter: FormatConverterNode,
+  metadataViewer: MetadataViewerNode,
   sliceViewer: SliceViewerNode,
   interactiveAnnotator: InteractiveAnnotatorNode,
   autoSegmentation: AutoSegmentationNode,

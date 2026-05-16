@@ -8,7 +8,7 @@
  * WF-1 Step 1: File Input + Format Detect
  */
 
-import { memo, useCallback, useState, useEffect, useRef } from 'react';
+import { memo, useCallback, useMemo, useState, useEffect, useRef } from 'react';
 import { type NodeProps } from '@xyflow/react';
 import BaseNode from './BaseNode';
 import useWorkflowStore from '../store/workflowStore';
@@ -17,6 +17,7 @@ import type { NodeInfo } from '../components/InfoModal';
 import NodeHint from '../components/NodeHint';
 import * as api from '../api/client';
 import type { PatientSearchResult } from '../api/client';
+import { buildMetadataRows, truncateMetadataValue } from '../utils/metadataRows';
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
@@ -68,6 +69,41 @@ const badgeStyle = (color: string): React.CSSProperties => ({
   border: `1px solid ${color}40`,
 });
 
+const metadataToggleStyle = (expanded: boolean): React.CSSProperties => ({
+  appearance: 'none',
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 4,
+  padding: '2px 8px',
+  borderRadius: 12,
+  border: '1px solid transparent',
+  background: 'transparent',
+  color: 'var(--accent-blue)',
+  fontSize: 10,
+  fontWeight: 600,
+  lineHeight: 1.2,
+  opacity: expanded ? 1 : 0.92,
+  cursor: 'pointer',
+  textTransform: 'uppercase',
+});
+
+const metadataPanelStyle: React.CSSProperties = {
+  marginTop: 6,
+  maxHeight: 150,
+  overflowY: 'auto',
+  paddingRight: 2,
+};
+
+const metadataRowStyle: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: '86px minmax(0, 1fr)',
+  gap: 8,
+  padding: '4px 0',
+  borderBottom: '1px solid rgba(255,255,255,0.05)',
+  fontSize: 10,
+  lineHeight: 1.35,
+};
+
 const DATA_LOADER_INFO: NodeInfo = {
   description:
     'Loads medical imaging data (DICOM series, NIfTI volumes, or MATLAB files) from a local filesystem path and creates a processing session for downstream nodes.',
@@ -96,6 +132,7 @@ function DataLoaderNode({ id, data }: NodeProps) {
   const d = data as unknown as DataLoaderNodeData;
   const [pickerBusy, setPickerBusy] = useState<string | null>(null);
   const [pickerError, setPickerError] = useState<string | null>(null);
+  const [showMetadata, setShowMetadata] = useState(false);
 
   // ── Patient search state ──────────────────────────────────────────────────
   const [searchQuery, setSearchQuery] = useState('');
@@ -209,6 +246,11 @@ function DataLoaderNode({ id, data }: NodeProps) {
   const inspectUrl = d.sessionId
     ? `http://localhost:7860?session_id=${d.sessionId}&tab=viewer`
     : undefined;
+  const metadataRows = useMemo(
+    () => buildMetadataRows(d.metadata, d.volumeShape),
+    [d.metadata, d.volumeShape],
+  );
+  const hasMetadata = metadataRows.length > 0;
 
   return (
     <BaseNode
@@ -493,8 +535,19 @@ function DataLoaderNode({ id, data }: NodeProps) {
         <div style={{ marginTop: 8 }}>
           <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 4 }}>
             <span style={badgeStyle('var(--accent-green)')}>
-              {d.fileType?.toUpperCase()}
+              {(d.fileType || 'loaded').toUpperCase()}
             </span>
+            {hasMetadata ? (
+              <button
+                type="button"
+                onClick={() => setShowMetadata((current) => !current)}
+                style={metadataToggleStyle(showMetadata)}
+                title="Show loaded image metadata"
+                aria-expanded={showMetadata}
+              >
+                Metadata {showMetadata ? '^' : 'v'}
+              </button>
+            ) : null}
             <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'monospace' }}>
               {d.sessionId}
             </span>
@@ -507,6 +560,38 @@ function DataLoaderNode({ id, data }: NodeProps) {
           )}
         </div>
       )}
+
+      {d.sessionId && hasMetadata && showMetadata ? (
+        <div style={metadataPanelStyle}>
+          {metadataRows.map((row, index) => (
+            <div
+              key={`${row.label}-${index}`}
+              style={{
+                ...metadataRowStyle,
+                borderBottom: index === metadataRows.length - 1
+                  ? 'none'
+                  : metadataRowStyle.borderBottom,
+              }}
+            >
+              <span style={{ color: 'var(--text-muted)', fontWeight: 800 }}>
+                {row.label}
+              </span>
+              <span
+                style={{
+                  color: 'var(--text-primary)',
+                  fontFamily: 'monospace',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+                title={row.value}
+              >
+                {truncateMetadataValue(row.value)}
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : null}
 
     </BaseNode>
   );

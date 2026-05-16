@@ -208,6 +208,12 @@ const CONVERSION_TYPES = [
   'NIFTI to PNG',
 ];
 
+const PNG_AXIS_OPTIONS = [
+  { value: 2, label: 'Axial (axis 2)' },
+  { value: 1, label: 'Coronal (axis 1)' },
+  { value: 0, label: 'Sagittal (axis 0)' },
+];
+
 const FALLBACK_SEGMENTATION_CONFIGS = [
   'fast',
   'balanced',
@@ -474,6 +480,30 @@ export default function NodeInspector() {
     );
   };
 
+  const renderNumberSelectField = (
+    label: string,
+    key: string,
+    options: Array<{ value: number; label: string }>,
+  ) => {
+    if (!selectedData) return null;
+    return (
+      <div style={rowStyle}>
+        <label style={labelStyle}>{label}</label>
+        <select
+          value={Number(selectedData[key] ?? options[0]?.value ?? 0)}
+          onChange={(event) => updateField(key, Number(event.target.value))}
+          style={inputStyle}
+        >
+          {options.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
+    );
+  };
+
   const renderCheckboxField = (label: string, key: string) => {
     if (!selectedData) return null;
     return (
@@ -520,6 +550,12 @@ export default function NodeInspector() {
           {renderSelectField('Conversion Type', 'conversionType', CONVERSION_TYPES)}
           {renderTextField('Input Path', 'inputPath', 'Auto-filled from upstream when possible')}
           {renderTextField('Output Path', 'outputPath', 'Auto-generated if empty')}
+          {selectedData.conversionType === 'DICOM to NIFTI'
+            ? renderCheckboxField('Compress NIfTI output (.nii.gz)', 'compress')
+            : null}
+          {selectedData.conversionType === 'NIFTI to PNG'
+            ? renderNumberSelectField('PNG Slice Axis', 'axis', PNG_AXIS_OPTIONS)
+            : null}
         </>
       );
     }
@@ -530,6 +566,20 @@ export default function NodeInspector() {
           {renderSelectField('View Plane', 'view', ['axial', 'coronal', 'sagittal'])}
           {renderNumberField('Slice Index', 'sliceIndex')}
           {selectedData.segPath ? renderTextField('Segmentation Path', 'segPath', '', true) : null}
+        </>
+      );
+    }
+
+    if (selectedNode.type === 'metadataViewer') {
+      return (
+        <>
+          {renderPathField(
+            'Standalone Source Path',
+            'sourcePath',
+            'Optional DICOM directory, NIfTI, or MAT file',
+            ['file', 'directory'],
+          )}
+          {renderTextField('Filter Text', 'filterText', 'Optional metadata filter')}
         </>
       );
     }

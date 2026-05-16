@@ -111,6 +111,12 @@ async def run_conversion(request: ConvertRequest):
                 detail=f"NIfTI conversion requires .nii or .nii.gz file, got: {input_path}",
             )
 
+    if conv_type == "NIFTI to PNG" and request.axis not in (0, 1, 2):
+        raise HTTPException(
+            status_code=400,
+            detail="NIfTI to PNG axis must be 0 (sagittal), 1 (coronal), or 2 (axial).",
+        )
+
     try:
         from utils.conversion import perform_conversion
 
@@ -118,6 +124,8 @@ async def run_conversion(request: ConvertRequest):
             input_path=request.input_path,
             output_path=request.output_path,
             conversion_type=request.conversion_type,
+            axis=request.axis if request.axis is not None else 2,
+            compress=True if request.compress is None else request.compress,
         )
 
         # Get output size

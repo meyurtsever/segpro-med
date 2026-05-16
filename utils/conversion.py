@@ -9,13 +9,13 @@ import pydicom
 import matplotlib.pyplot as plt
 
 
-def _dicom_to_nifti_dcm2niix(dicom_dir, output_path):
+def _dicom_to_nifti_dcm2niix(dicom_dir, output_path, compress=True):
     """Convert DICOM to NIfTI using the dcm2niix CLI tool."""
     output_dir = os.path.dirname(output_path) or "."
     temp_dir = tempfile.mkdtemp()
 
     try:
-        cmd = ["dcm2niix", "-z", "y", "-f", "%f", "-o", temp_dir, dicom_dir]
+        cmd = ["dcm2niix", "-z", "y" if compress else "n", "-f", "%f", "-o", temp_dir, dicom_dir]
         result = subprocess.run(cmd, capture_output=True, text=True)
 
         if result.returncode != 0:
@@ -82,7 +82,7 @@ def _dicom_to_nifti_python(dicom_dir, output_path):
     return output_path
 
 
-def dicom_to_nifti(dicom_dir, output_path=None):
+def dicom_to_nifti(dicom_dir, output_path=None, compress=True):
     """
     Convert DICOM series to NIfTI format.
     Tries dcm2niix first; falls back to pure Python (pydicom + nibabel).
@@ -106,12 +106,16 @@ def dicom_to_nifti(dicom_dir, output_path=None):
         if not output_dir:
             output_dir = "."
 
-    # Ensure correct extension
-    if not (output_path.endswith(".nii") or output_path.endswith(".nii.gz")):
-        output_path += ".nii.gz"
+    # Ensure extension matches the requested compression mode.
+    if output_path.endswith(".nii.gz") and not compress:
+        output_path = output_path[:-3]
+    elif output_path.endswith(".nii") and compress:
+        output_path += ".gz"
+    elif not (output_path.endswith(".nii") or output_path.endswith(".nii.gz")):
+        output_path += ".nii.gz" if compress else ".nii"
 
     try:
-        return _dicom_to_nifti_dcm2niix(dicom_dir, output_path)
+        return _dicom_to_nifti_dcm2niix(dicom_dir, output_path, compress)
     except FileNotFoundError:
         print("[conversion] dcm2niix not found — using pydicom + nibabel fallback")
         return _dicom_to_nifti_python(dicom_dir, output_path)
@@ -180,7 +184,7 @@ def nifti_to_png(nifti_path, output_dir=None, axis=2):
     from utils.nifti_utils import nifti_to_png as utils_nifti_to_png
     return utils_nifti_to_png(nifti_path, output_dir, axis)
 
-def perform_conversion(input_path, output_path, conversion_type):
+def perform_conversion(input_path, output_path, conversion_type, axis=2, compress=True):
     """
     Perform the specified conversion.
     
@@ -188,17 +192,19 @@ def perform_conversion(input_path, output_path, conversion_type):
         input_path (str): Path to input file or directory
         output_path (str): Path to output file or directory
         conversion_type (str): Type of conversion to perform
+        axis (int): Axis for NIfTI to PNG slicing
+        compress (bool): Whether DICOM to NIfTI should produce .nii.gz
         
     Returns:
         str: Path to output file or directory
     """
     if conversion_type == "DICOM to NIFTI":
-        return dicom_to_nifti(input_path, output_path)
+        return dicom_to_nifti(input_path, output_path, compress=compress)
     elif conversion_type == "NIFTI to MAT":
         return nifti_to_mat(input_path, output_path)
     elif conversion_type == "DICOM to MAT":
         return dicom_to_mat(input_path, output_path)
     elif conversion_type == "NIFTI to PNG":
-        return nifti_to_png(input_path, output_path)
+        return nifti_to_png(input_path, output_path, axis=axis)
     else:
         raise ValueError(f"Unsupported conversion type: {conversion_type}")

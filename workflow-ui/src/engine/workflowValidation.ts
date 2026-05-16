@@ -47,6 +47,30 @@ function hasValue(value: unknown) {
   return typeof value === 'string' ? value.trim().length > 0 : Boolean(value);
 }
 
+function getConverterInputPathIssue(conversionType: unknown, inputPath: unknown) {
+  if (typeof conversionType !== 'string' || typeof inputPath !== 'string') {
+    return undefined;
+  }
+
+  const normalizedPath = inputPath.trim().toLowerCase();
+  if (!normalizedPath) return undefined;
+
+  if (conversionType.startsWith('NIFTI') &&
+    !normalizedPath.endsWith('.nii') &&
+    !normalizedPath.endsWith('.nii.gz')
+  ) {
+    return 'NIfTI conversions require an input file ending in .nii or .nii.gz.';
+  }
+
+  if (conversionType.startsWith('DICOM') &&
+    (normalizedPath.endsWith('.nii') || normalizedPath.endsWith('.nii.gz') || normalizedPath.endsWith('.mat'))
+  ) {
+    return 'DICOM conversions require a DICOM directory or a single .dcm file.';
+  }
+
+  return undefined;
+}
+
 export function validateWorkflow(
   nodes: Node<BaseNodeData>[],
   edges: Edge[],
@@ -87,6 +111,16 @@ export function validateWorkflow(
           message: 'Format Converter needs an input path or a file-path connection.',
         });
       }
+
+      const pathIssue = getConverterInputPathIssue(data.conversionType, data.inputPath);
+      if (pathIssue) {
+        issues.push({
+          id: `${node.id}:inputPathType`,
+          severity: 'error',
+          nodeId: node.id,
+          message: pathIssue,
+        });
+      }
     }
 
     if (node.type === 'sliceViewer') {
@@ -98,6 +132,20 @@ export function validateWorkflow(
           severity: 'error',
           nodeId: node.id,
           message: 'Slice Viewer needs a Data Loader or Format Converter input.',
+        });
+      }
+    }
+
+    if (node.type === 'metadataViewer') {
+      const hasMetadataSource = hasValue(data.sessionId) ||
+        hasValue(data.sourcePath) ||
+        hasIncomingKind(node, nodes, edges, ['session', 'filePath']);
+      if (!hasMetadataSource) {
+        issues.push({
+          id: `${node.id}:source`,
+          severity: 'error',
+          nodeId: node.id,
+          message: 'Metadata Viewer needs a Data Loader, Format Converter, or source path.',
         });
       }
     }

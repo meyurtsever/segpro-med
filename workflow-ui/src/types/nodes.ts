@@ -3,7 +3,7 @@
  */
 
 /** Status of a node's execution */
-export type NodeStatus = 'idle' | 'running' | 'success' | 'error';
+export type NodeStatus = 'idle' | 'running' | 'success' | 'error' | 'cancelled' | 'skipped';
 
 /** Base data shared by all node types */
 export interface BaseNodeData {
@@ -29,7 +29,25 @@ export interface FormatConverterNodeData extends BaseNodeData {
   inputPath: string;
   outputPath: string;
   conversionType: string;
+  axis?: number;
+  compress?: boolean;
   outputSizeBytes?: number;
+  previewSessionId?: string;
+  previewFileType?: string;
+  previewImageBase64?: string;
+  previewTotalSlices?: number;
+  previewVolumeShape?: number[];
+  previewMetadata?: Record<string, unknown>;
+}
+
+/** MetadataViewerNode - inspects metadata from a loaded session or file path */
+export interface MetadataViewerNodeData extends BaseNodeData {
+  sessionId?: string;
+  sourcePath?: string;
+  fileType?: string;
+  volumeShape?: number[];
+  metadata?: Record<string, unknown>;
+  filterText?: string;
 }
 
 /** Coordinate selected on a slice image */

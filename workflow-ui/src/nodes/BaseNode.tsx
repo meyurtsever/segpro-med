@@ -29,6 +29,8 @@ const statusConfig: Record<NodeStatus, { icon: string; color: string; label: str
   running: { icon: '⏳', color: 'var(--accent-orange)', label: 'Running' },
   success: { icon: '✅', color: 'var(--accent-green)',  label: 'Done' },
   error:   { icon: '❌', color: 'var(--accent-red)',    label: 'Error' },
+  cancelled: { icon: '\u25cb', color: 'var(--accent-orange)', label: 'Cancelled' },
+  skipped: { icon: '\u21b7', color: 'var(--text-muted)', label: 'Skipped' },
 };
 
 function BaseNode({
@@ -51,6 +53,23 @@ function BaseNode({
     nodeId ? state.selectedNodeId === nodeId : false
   ));
   const borderColor = isSelected && color ? color : 'var(--border-color)';
+  const messageTone = status === 'cancelled'
+    ? {
+      color: 'var(--accent-orange)',
+      background: 'rgba(229, 162, 72, 0.08)',
+      border: '1px solid rgba(229, 162, 72, 0.2)',
+    }
+    : status === 'skipped'
+      ? {
+        color: 'var(--text-secondary)',
+        background: 'rgba(255, 255, 255, 0.04)',
+        border: '1px solid rgba(255, 255, 255, 0.08)',
+      }
+      : {
+        color: 'var(--accent-red)',
+        background: 'rgba(224, 92, 92, 0.08)',
+        border: '1px solid rgba(224, 92, 92, 0.2)',
+      };
 
   const handleHandleClick = (event: MouseEvent, direction: 'input' | 'output') => {
     if (!nodeId || !nodeType) return;
@@ -130,9 +149,9 @@ function BaseNode({
           style={{
             padding: '6px 12px',
             fontSize: 11,
-            color: 'var(--accent-red)',
-            background: 'rgba(224, 92, 92, 0.08)',
-            borderTop: '1px solid rgba(224, 92, 92, 0.2)',
+            color: messageTone.color,
+            background: messageTone.background,
+            borderTop: messageTone.border,
             wordBreak: 'break-word',
           }}
         >

@@ -61,9 +61,13 @@ export interface MetadataResponse {
 }
 
 /** Load data from a local filesystem path */
-export async function loadDataFromPath(path: string): Promise<LoadDataResponse> {
+export async function loadDataFromPath(
+  path: string,
+  signal?: AbortSignal,
+): Promise<LoadDataResponse> {
   return request<LoadDataResponse>(`${API_BASE}/data/load`, {
     method: 'POST',
+    signal,
     body: JSON.stringify({ path }),
   });
 }
@@ -89,18 +93,26 @@ export async function getSlice(
   sliceIndex: number = 0,
   view: string = 'axial',
   segPath?: string,
+  signal?: AbortSignal,
 ): Promise<SliceResponse> {
   const params = new URLSearchParams({
     slice: String(sliceIndex),
     view,
   });
   if (segPath) params.set('seg_path', segPath);
-  return request<SliceResponse>(`${API_BASE}/data/slice/${sessionId}?${params}`);
+  return request<SliceResponse>(`${API_BASE}/data/slice/${sessionId}?${params}`, {
+    signal,
+  });
 }
 
 /** Get volume metadata */
-export async function getMetadata(sessionId: string): Promise<MetadataResponse> {
-  return request<MetadataResponse>(`${API_BASE}/data/metadata/${sessionId}`);
+export async function getMetadata(
+  sessionId: string,
+  signal?: AbortSignal,
+): Promise<MetadataResponse> {
+  return request<MetadataResponse>(`${API_BASE}/data/metadata/${sessionId}`, {
+    signal,
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -126,6 +138,11 @@ export interface ConvertTypesResponse {
   }>;
 }
 
+export interface ConversionOptions {
+  axis?: number;
+  compress?: boolean;
+}
+
 /** List supported conversion types */
 export async function getConversionTypes(): Promise<ConvertTypesResponse> {
   return request<ConvertTypesResponse>(`${API_BASE}/convert/types`);
@@ -136,13 +153,18 @@ export async function runConversion(
   inputPath: string,
   conversionType: string,
   outputPath?: string,
+  options: ConversionOptions = {},
+  signal?: AbortSignal,
 ): Promise<ConvertResponse> {
   return request<ConvertResponse>(`${API_BASE}/convert/run`, {
     method: 'POST',
+    signal,
     body: JSON.stringify({
       input_path: inputPath,
       conversion_type: conversionType,
       output_path: outputPath,
+      axis: options.axis,
+      compress: options.compress,
     }),
   });
 }
