@@ -151,6 +151,17 @@ export function validateWorkflow(
     }
 
     if (node.type === 'autoSegmentation') {
+      if (getOutgoingEdges(node.id, edges).length === 0) {
+        issues.push({
+          id: `${node.id}:output`,
+          severity: 'warning',
+          nodeId: node.id,
+          message: 'Segmentation Profile is most useful when connected to Interactive Annotator or Batch SAM2 Segmenter.',
+        });
+      }
+    }
+
+    if (node.type === 'medsam2Segmenter') {
       const hasDataSource = hasValue(data.sessionId) ||
         hasIncomingKind(node, nodes, edges, ['session', 'filePath']);
       if (!hasDataSource) {
@@ -158,29 +169,187 @@ export function validateWorkflow(
           id: `${node.id}:session`,
           severity: 'error',
           nodeId: node.id,
-          message: 'Auto Segmentation needs a Data Loader or Format Converter input.',
+          message: 'Batch SAM2 Segmenter needs a Data Loader or Format Converter input.',
         });
       }
-
-      if (getOutgoingEdges(node.id, edges).length === 0) {
+      if (data.promptMode === 'prompt' &&
+        !hasValue(data.segmentationPrompt) &&
+        !hasIncomingKind(node, nodes, edges, ['segmentationPrompt'])
+      ) {
         issues.push({
-          id: `${node.id}:output`,
-          severity: 'warning',
+          id: `${node.id}:prompt`,
+          severity: 'error',
           nodeId: node.id,
-          message: 'Auto Segmentation is most useful when connected to Interactive Annotator.',
+          message: 'Prompt SAM2 mode needs a point or rectangle prompt from Interactive Annotator.',
         });
       }
     }
 
     if (node.type === 'interactiveAnnotator') {
       const hasDataSource = hasValue(data.sessionId) ||
-        hasIncomingKind(node, nodes, edges, ['session', 'filePath', 'segmentationConfig']);
+        hasIncomingKind(node, nodes, edges, ['session', 'filePath', 'segmentationResult', 'annotatedSession']);
       if (!hasDataSource) {
         issues.push({
           id: `${node.id}:session`,
           severity: 'error',
           nodeId: node.id,
           message: 'Interactive Annotator needs a data source before annotation.',
+        });
+      }
+    }
+
+    if (node.type === 'annotationStore') {
+      const hasAnnotations = hasIncomingKind(node, nodes, edges, ['annotatedSession']);
+      const hasStudyPath = hasValue(data.studyPath);
+      if (!hasAnnotations) {
+        issues.push({
+          id: `${node.id}:annotations`,
+          severity: 'error',
+          nodeId: node.id,
+          message: 'Annotation Store needs an annotated-session input.',
+        });
+      }
+      if (!hasStudyPath && !hasAnnotations) {
+        issues.push({
+          id: `${node.id}:studyPath`,
+          severity: 'warning',
+          nodeId: node.id,
+          message: 'Annotation Store needs a study path from configuration or upstream annotator data.',
+        });
+      }
+    }
+
+    if (node.type === 'annotationLoad') {
+      const hasStudyPath = hasValue(data.studyPath) ||
+        hasIncomingKind(node, nodes, edges, ['session', 'filePath']);
+      if (!hasStudyPath) {
+        issues.push({
+          id: `${node.id}:studyPath`,
+          severity: 'error',
+          nodeId: node.id,
+          message: 'Annotation Load needs a study path or data-source connection.',
+        });
+      }
+    }
+
+    if (node.type === 'exportNode') {
+      const hasExportSource = hasIncomingKind(node, nodes, edges, ['annotatedSession', 'annotationRecord']);
+      if (!hasExportSource) {
+        issues.push({
+          id: `${node.id}:source`,
+          severity: 'error',
+          nodeId: node.id,
+          message: 'Export needs annotations or an annotation record.',
+        });
+      }
+    }
+
+    if (node.type === 'medgemmaNode' || node.type === 'smolvlmNode' || node.type === 'medR1Node') {
+      const hasImageSource = hasValue(data.sessionId) ||
+        hasIncomingKind(node, nodes, edges, ['session', 'filePath', 'annotatedSession']);
+      if (!hasImageSource) {
+        issues.push({
+          id: `${node.id}:session`,
+          severity: 'error',
+          nodeId: node.id,
+          message: `${node.data.label || 'VLM node'} needs a loaded image source.`,
+        });
+      }
+      if (
+        !hasValue(data.promptKey) &&
+        !hasValue(data.customPrompt) &&
+        !hasIncomingKind(node, nodes, edges, ['voicePrompt'])
+      ) {
+        issues.push({
+          id: `${node.id}:prompt`,
+          severity: 'error',
+          nodeId: node.id,
+          message: `${node.data.label || 'VLM node'} needs a prompt preset or custom prompt.`,
+        });
+      }
+    }
+
+    if (node.type === 'voiceInput') {
+      if (!hasValue(data.transcript) && !hasValue(data.audioPath)) {
+        issues.push({
+          id: `${node.id}:voice`,
+          severity: 'error',
+          nodeId: node.id,
+          message: 'Voice Input needs a transcript or audio file path.',
+        });
+      }
+    }
+
+    if (node.type === 'labelSuggester') {
+      const hasSuggestionSource = hasValue(data.sessionId) ||
+        hasIncomingKind(node, nodes, edges, ['session', 'filePath', 'annotatedSession', 'vlmAnalysis']);
+      if (!hasSuggestionSource) {
+        issues.push({
+          id: `${node.id}:source`,
+          severity: 'error',
+          nodeId: node.id,
+          message: 'Label Suggester needs an image source or VLM analysis input.',
+        });
+      }
+    }
+
+    if (node.type === 'campaignSetup') {
+      if (!hasValue(data.campaignName)) {
+        issues.push({
+          id: `${node.id}:campaignName`,
+          severity: 'error',
+          nodeId: node.id,
+          message: 'Campaign Setup needs a campaign name.',
+        });
+      }
+      if (!hasValue(data.datasetPath)) {
+        issues.push({
+          id: `${node.id}:datasetPath`,
+          severity: 'error',
+          nodeId: node.id,
+          message: 'Campaign Setup needs a dataset root path.',
+        });
+      }
+    }
+
+    if (node.type === 'patientAssign') {
+      const hasCampaign = hasValue(data.campaignName) ||
+        hasIncomingKind(node, nodes, edges, ['campaign']);
+      if (!hasCampaign) {
+        issues.push({
+          id: `${node.id}:campaign`,
+          severity: 'error',
+          nodeId: node.id,
+          message: 'Patient Assign needs a campaign input or campaign name.',
+        });
+      }
+      if (!hasValue(data.expertId)) {
+        issues.push({
+          id: `${node.id}:expert`,
+          severity: 'error',
+          nodeId: node.id,
+          message: 'Patient Assign needs an expert ID.',
+        });
+      }
+      if (data.assignmentMode === 'selected' && !hasValue(data.patientIdsText)) {
+        issues.push({
+          id: `${node.id}:patients`,
+          severity: 'error',
+          nodeId: node.id,
+          message: 'Selected patient assignment needs patient IDs.',
+        });
+      }
+    }
+
+    if (node.type === 'campaignStatus') {
+      const hasCampaign = hasValue(data.campaignName) ||
+        hasIncomingKind(node, nodes, edges, ['campaign', 'assignment']);
+      if (!hasCampaign) {
+        issues.push({
+          id: `${node.id}:campaign`,
+          severity: 'error',
+          nodeId: node.id,
+          message: 'Campaign Status needs a campaign or assignment input.',
         });
       }
     }

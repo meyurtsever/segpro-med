@@ -243,6 +243,17 @@ class PointSchema(BaseModel):
     y: int
 
 
+class PromptPointSchema(PointSchema):
+    label: int = 1
+
+
+class BoxSchema(BaseModel):
+    x1: int
+    y1: int
+    x2: int
+    y2: int
+
+
 class AnnotationShapeSchema(BaseModel):
     type: str = "polygon"
     points: list[PointSchema] = []
@@ -266,8 +277,53 @@ class AutoSegmentResponse(BaseModel):
     message: str
 
 
+class PromptSegmentRequest(BaseModel):
+    session_id: str
+    slice_index: int = 0
+    view: str = "axial"
+    config_name: str = "fast"
+    points: list[PromptPointSchema] = []
+    boxes: list[BoxSchema] = []
+    multimask_output: bool = True
+
+
 class ConfigListResponse(BaseModel):
     configs: list[dict]
+
+
+def _prompt_masks_to_polygons(masks: list[np.ndarray], scores: list[float]) -> list:
+    """Convert prompt-predicted binary masks to editable polygon annotations."""
+    shapes = []
+    scored_masks = sorted(
+        zip(masks, scores),
+        key=lambda item: float(item[1]),
+        reverse=True,
+    )
+
+    for i, (mask, score) in enumerate(scored_masks):
+        mask_u8 = (mask > 0).astype(np.uint8)
+        contours, _ = cv2.findContours(
+            mask_u8,
+            cv2.RETR_EXTERNAL,
+            cv2.CHAIN_APPROX_SIMPLE,
+        )
+
+        for contour in contours:
+            if cv2.contourArea(contour) < _CONTOUR_MIN_AREA:
+                continue
+
+            approx = cv2.approxPolyDP(contour, _SIMPLIFY_TOLERANCE, True)
+            if len(approx) < 3:
+                continue
+
+            shapes.append({
+                "type": "polygon",
+                "points": [{"x": int(pt[0][0]), "y": int(pt[0][1])} for pt in approx],
+                "label": f"Prompt ROI {i + 1}  score={float(score):.2f}",
+                "color": MASK_COLORS[i % len(MASK_COLORS)],
+            })
+
+    return shapes
 
 
 # ---------------------------------------------------------------------------
@@ -353,6 +409,96 @@ async def auto_segment(req: AutoSegmentRequest):
             f"Generated {len(shapes)} polygons "
             f"({raw_count} raw masks, {raw_count - len(shapes)} filtered) "
             f"using '{req.config_name}' config in {elapsed:.2f}s"
+        ),
+    )
+
+
+@router.post("/prompt", response_model=AutoSegmentResponse)
+async def prompt_segment(req: PromptSegmentRequest):
+    """Run SAM2 on a single slice using point and/or box prompts."""
+    t0 = time.time()
+
+    if not req.points and not req.boxes:
+        raise HTTPException(status_code=400, detail="At least one point or box prompt is required")
+
+    mgr = get_session_manager()
+    session = mgr.get_session(req.session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail=f"Session not found: {req.session_id}")
+    if session.volume is None:
+        raise HTTPException(status_code=400, detail="Session has no loaded volume")
+
+    try:
+        session_axis_map = session.metadata.get("axis_map") or None
+        slice_2d = _extract_slice(session.volume, req.slice_index, req.view, session_axis_map)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Slice extraction failed: {e}")
+
+    rgb_image = _preprocess_for_sam(slice_2d)
+
+    try:
+        sam2_model = _get_or_load_sam2_model()
+        from sam2_image_predictor import SAM2ImagePredictor  # noqa
+        predictor = SAM2ImagePredictor(sam2_model)
+        predictor.set_image(rgb_image)
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"SAM2 predictor setup failed: {e}")
+
+    point_coords = None
+    point_labels = None
+    if req.points:
+        point_coords = np.array([[point.x, point.y] for point in req.points], dtype=np.float32)
+        point_labels = np.array([point.label for point in req.points], dtype=np.int32)
+
+    raw_masks: list[np.ndarray] = []
+    raw_scores: list[float] = []
+
+    try:
+        if req.boxes:
+            for box in req.boxes:
+                x1, x2 = sorted((box.x1, box.x2))
+                y1, y2 = sorted((box.y1, box.y2))
+                box_prompt = np.array([[x1, y1, x2, y2]], dtype=np.float32)
+                masks, scores, _ = predictor.predict(
+                    point_coords=point_coords,
+                    point_labels=point_labels,
+                    box=box_prompt,
+                    multimask_output=req.multimask_output,
+                )
+                if len(scores) == 0:
+                    continue
+                best_idx = int(np.argmax(scores))
+                raw_masks.append(masks[best_idx])
+                raw_scores.append(float(scores[best_idx]))
+        else:
+            masks, scores, _ = predictor.predict(
+                point_coords=point_coords,
+                point_labels=point_labels,
+                multimask_output=req.multimask_output,
+            )
+            if len(scores) == 0:
+                raise HTTPException(status_code=500, detail="SAM2 returned no prompt masks")
+            best_idx = int(np.argmax(scores))
+            raw_masks.append(masks[best_idx])
+            raw_scores.append(float(scores[best_idx]))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Prompt segmentation failed: {e}")
+
+    shapes = _prompt_masks_to_polygons(raw_masks, raw_scores)
+    elapsed = time.time() - t0
+
+    return AutoSegmentResponse(
+        shapes=shapes,
+        count=len(shapes),
+        raw_mask_count=len(raw_masks),
+        config_used=req.config_name,
+        elapsed_seconds=round(elapsed, 3),
+        message=(
+            f"Generated {len(shapes)} prompt polygon(s) "
+            f"from {len(req.points)} point(s) and {len(req.boxes)} box(es) "
+            f"in {elapsed:.2f}s"
         ),
     )
 

@@ -26,6 +26,7 @@ import type {
   AnnotationShape,
   AnnotationTool,
   ImagePoint,
+  SegmentationPrompt,
 } from '../types/nodes';
 import * as api from '../api/client';
 import type { NodeInfo } from '../components/InfoModal';
@@ -826,7 +827,7 @@ function InteractiveAnnotatorNode({ id, data }: NodeProps) {
   const storeEdges = useWorkflowStore((s) => s.edges);
   const d = data as unknown as InteractiveAnnotatorNodeData;
 
-  // --- Detect connected Auto Segmentation node ---
+  // --- Detect connected Segmentation Profile node ---
   const connectedAutoSeg = useMemo(() => {
     // Find edges where this node is the target and source is autoSegmentation
     for (const edge of storeEdges) {
@@ -939,6 +940,54 @@ function InteractiveAnnotatorNode({ id, data }: NodeProps) {
   const currentView = d.view || 'axial';
   const hasSession = Boolean(d.sessionId);
   const annotations = d.annotations || [];
+
+  const buildPromptFromAnnotation = useCallback(
+    (annotation: AnnotationShape | undefined): SegmentationPrompt | null => {
+      if (!annotation || !d.sessionId) return null;
+
+      if (annotation.type === 'point') {
+        return {
+          sessionId: d.sessionId,
+          sliceIndex: d.sliceIndex,
+          view: currentView,
+          points: [{ x: Math.round(annotation.x), y: Math.round(annotation.y), label: 1 }],
+          boxes: [],
+          source: 'interactiveAnnotator',
+        };
+      }
+
+      if (annotation.type === 'rect') {
+        return {
+          sessionId: d.sessionId,
+          sliceIndex: d.sliceIndex,
+          view: currentView,
+          points: [],
+          boxes: [{
+            x1: Math.round(annotation.x),
+            y1: Math.round(annotation.y),
+            x2: Math.round(annotation.x + annotation.width),
+            y2: Math.round(annotation.y + annotation.height),
+          }],
+          source: 'interactiveAnnotator',
+        };
+      }
+
+      return null;
+    },
+    [currentView, d.sessionId, d.sliceIndex],
+  );
+
+  const activePrompt = useMemo(() => {
+    const selectedPrompt = buildPromptFromAnnotation(annotations[selectedIdx]);
+    if (selectedPrompt) return selectedPrompt;
+
+    for (let index = annotations.length - 1; index >= 0; index -= 1) {
+      const prompt = buildPromptFromAnnotation(annotations[index]);
+      if (prompt) return prompt;
+    }
+
+    return null;
+  }, [annotations, buildPromptFromAnnotation, selectedIdx]);
 
   // --- Load image object from base64 ---
   useEffect(() => {
@@ -1439,19 +1488,20 @@ function InteractiveAnnotatorNode({ id, data }: NodeProps) {
     [d.sessionId, d.sliceAnnotationsMap, d.sliceIndex, annotations, id, updateNodeData, fetchSlice],
   );
 
-  // --- Auto Segmentation ---
+  // --- Current-slice SAM2 segmentation ---
   const handleRunAutoSegmentation = useCallback(async () => {
-    if (!connectedAutoSeg || !d.sessionId) return;
+    if (!d.sessionId) return;
 
     setSegRunning(true);
     setSegMessage(null);
 
     try {
+      const configName = connectedAutoSeg?.configName || 'fast';
       const res = await api.autoSegment(
         d.sessionId,
         d.sliceIndex,
         d.view || 'axial',
-        connectedAutoSeg.configName || 'fast',
+        configName,
       );
 
       // Log full API response for debugging
@@ -1485,15 +1535,65 @@ function InteractiveAnnotatorNode({ id, data }: NodeProps) {
       } as Partial<InteractiveAnnotatorNodeData>);
 
       setSegMessage(
-        `✅ ${res.count} ROIs (${res.raw_mask_count} raw → ${res.raw_mask_count - res.count} filtered) in ${res.elapsed_seconds.toFixed(1)}s — ${res.config_used}`,
+        `Done: ${res.count} ROI${res.count === 1 ? '' : 's'} (${res.raw_mask_count} raw, ${res.raw_mask_count - res.count} filtered) in ${res.elapsed_seconds.toFixed(1)}s using ${res.config_used}.`,
       );
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      setSegMessage(`❌ ${msg}`);
+      setSegMessage(`Error: ${msg}`);
     } finally {
       setSegRunning(false);
     }
   }, [connectedAutoSeg, d.sessionId, d.sliceIndex, d.view, d.sliceAnnotationsMap, annotations, id, updateNodeData, pushHistory]);
+
+  const handleRunPromptSegmentation = useCallback(async () => {
+    if (!d.sessionId || !activePrompt) {
+      setSegMessage('Error: draw or select a point/rectangle prompt first.');
+      return;
+    }
+
+    setSegRunning(true);
+    setSegMessage(null);
+
+    try {
+      const configName = connectedAutoSeg?.configName || 'fast';
+      const res = await api.promptSegment(
+        d.sessionId,
+        d.sliceIndex,
+        d.view || 'axial',
+        activePrompt.points,
+        activePrompt.boxes,
+        configName,
+      );
+
+      const newShapes: AnnotationShape[] = res.shapes.map((s) => ({
+        type: 'polygon' as const,
+        points: s.points.map((p) => ({ x: p.x, y: p.y })),
+        label: s.label,
+        color: s.color,
+      }));
+
+      pushHistory(annotations);
+      const merged = [...annotations, ...newShapes];
+      const map = { ...(d.sliceAnnotationsMap || {}) };
+      map[d.sliceIndex] = merged;
+
+      updateNodeData(id, {
+        annotations: merged,
+        sliceAnnotationsMap: map,
+        activeTool: 'pan',
+        segmentationPrompt: activePrompt,
+      } as Partial<InteractiveAnnotatorNodeData>);
+
+      setSegMessage(
+        `Done: prompt SAM2 added ${res.count} ROI${res.count === 1 ? '' : 's'} from ${activePrompt.points.length} point(s) and ${activePrompt.boxes.length} box(es) in ${res.elapsed_seconds.toFixed(1)}s.`,
+      );
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setSegMessage(`Error: ${msg}`);
+    } finally {
+      setSegRunning(false);
+    }
+  }, [activePrompt, annotations, connectedAutoSeg, d.sessionId, d.sliceAnnotationsMap, d.sliceIndex, d.view, id, pushHistory, updateNodeData]);
 
   // --- Tool selection ---
   const setTool = useCallback(
@@ -2734,8 +2834,8 @@ function InteractiveAnnotatorNode({ id, data }: NodeProps) {
           {/* Tool selector (below canvas) */}
           {hasSession && d.imageBase64 && renderToolbar()}
 
-          {/* Auto Segmentation button — visible when AutoSegmentation node is connected */}
-          {hasSession && d.imageBase64 && connectedAutoSeg && (
+          {/* AI Segmentation panel - runs SAM2 on the currently visible slice */}
+          {hasSession && d.imageBase64 && (
             <div style={{
               marginTop: 6,
               padding: '6px 8px',
@@ -2743,6 +2843,41 @@ function InteractiveAnnotatorNode({ id, data }: NodeProps) {
               borderRadius: 6,
               border: '1px solid var(--accent-purple)30',
             }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 8,
+                marginBottom: 6,
+              }}>
+                <div>
+                  <div style={{
+                    color: 'var(--accent-purple)',
+                    fontSize: 10,
+                    fontWeight: 800,
+                    letterSpacing: 0.6,
+                    textTransform: 'uppercase',
+                  }}>
+                    AI Segmentation
+                  </div>
+                  <div style={{
+                    color: 'var(--text-muted)',
+                    fontSize: 10,
+                    lineHeight: 1.35,
+                    marginTop: 2,
+                  }}>
+                    Current {d.view || 'axial'} slice {d.sliceIndex}
+                  </div>
+                </div>
+                <span style={{
+                  color: 'var(--accent-purple)',
+                  fontSize: 10,
+                  fontWeight: 800,
+                  whiteSpace: 'nowrap',
+                }}>
+                  {(connectedAutoSeg?.configName || 'fast').replace(/_/g, ' ')}
+                </span>
+              </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <button
                   onClick={handleRunAutoSegmentation}
@@ -2768,28 +2903,87 @@ function InteractiveAnnotatorNode({ id, data }: NodeProps) {
                   }}
                 >
                   {segRunning ? (
-                    <>⏳ Running SAM2...</>
+                    <>Running SAM2...</>
                   ) : (
-                    <>▶ Run Auto Segmentation</>
+                    <>Run SAM2 on Current Slice</>
                   )}
                 </button>
-                <span style={{
-                  fontSize: 10,
-                  color: 'var(--text-muted)',
-                  whiteSpace: 'nowrap',
-                }}>
-                  {connectedAutoSeg.configName?.replace(/_/g, ' ') || 'fast'}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6 }}>
+                <button
+                  onClick={handleRunPromptSegmentation}
+                  disabled={segRunning || !activePrompt}
+                  style={{
+                    flex: 1,
+                    padding: '7px 12px',
+                    borderRadius: 6,
+                    border: '1px solid var(--accent-orange)',
+                    background: activePrompt && !segRunning
+                      ? 'rgba(255, 152, 0, 0.14)'
+                      : 'var(--bg-secondary)',
+                    color: activePrompt ? 'var(--accent-orange)' : 'var(--text-muted)',
+                    fontSize: 12,
+                    fontWeight: 700,
+                    cursor: segRunning ? 'wait' : activePrompt ? 'pointer' : 'not-allowed',
+                  }}
+                >
+                  Run Prompt SAM2
+                </button>
+                <span style={{ fontSize: 10, color: 'var(--text-muted)', minWidth: 78, textAlign: 'right' }}>
+                  {activePrompt
+                    ? `${activePrompt.points.length} point / ${activePrompt.boxes.length} box`
+                    : 'No prompt'}
                 </span>
               </div>
               {segMessage && (
                 <div style={{
                   marginTop: 4,
                   fontSize: 10,
-                  color: segMessage.startsWith('✅') ? 'var(--accent-green)' : 'var(--accent-red)',
+                  color: segMessage.startsWith('Done:') ? 'var(--accent-green)' : 'var(--accent-red)',
                 }}>
                   {segMessage}
                 </div>
               )}
+            </div>
+          )}
+
+          {hasSession && d.imageBase64 && d.labelSuggestions && d.labelSuggestions.length > 0 && (
+            <div style={{
+              marginTop: 6,
+              padding: '7px 8px',
+              background: 'rgba(76, 175, 139, 0.08)',
+              borderRadius: 6,
+              border: '1px solid rgba(76, 175, 139, 0.25)',
+            }}>
+              <div style={{
+                color: 'var(--accent-green)',
+                fontSize: 10,
+                fontWeight: 800,
+                letterSpacing: 0.6,
+                textTransform: 'uppercase',
+                marginBottom: 6,
+              }}>
+                Suggested Labels
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                {d.labelSuggestions.map((label) => (
+                  <span
+                    key={label}
+                    style={{
+                      padding: '3px 7px',
+                      borderRadius: 4,
+                      border: '1px solid rgba(76, 175, 139, 0.34)',
+                      color: 'var(--accent-green)',
+                      background: 'rgba(76, 175, 139, 0.1)',
+                      fontSize: 10,
+                      fontWeight: 800,
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    {label}
+                  </span>
+                ))}
+              </div>
             </div>
           )}
 

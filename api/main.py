@@ -20,7 +20,18 @@ SEGPRO_ROOT = Path(__file__).resolve().parent.parent
 if str(SEGPRO_ROOT) not in sys.path:
     sys.path.insert(0, str(SEGPRO_ROOT))
 
-from api.routers import data, convert, filesystem, segmentation, patients
+from api.routers import (
+    annotations,
+    auth,
+    collaboration,
+    convert,
+    data,
+    filesystem,
+    patients,
+    segmentation,
+    vlm,
+    voice,
+)
 
 
 @asynccontextmanager
@@ -69,6 +80,11 @@ app.include_router(convert.router, prefix="/api/v1/convert", tags=["Format Conve
 app.include_router(filesystem.router, prefix="/api/v1/fs", tags=["Filesystem"])
 app.include_router(segmentation.router, prefix="/api/v1/segmentation", tags=["Segmentation"])
 app.include_router(patients.router, prefix="/api/v1/patients", tags=["Patients"])
+app.include_router(annotations.router, prefix="/api/v1/annotations", tags=["Annotations"])
+app.include_router(vlm.router, prefix="/api/v1/vlm", tags=["VLM"])
+app.include_router(voice.router, prefix="/api/v1/voice", tags=["Voice"])
+app.include_router(collaboration.router, prefix="/api/v1/collaboration", tags=["Collaboration"])
+app.include_router(auth.router, prefix="/api/v1/auth", tags=["Auth"])
 
 
 @app.get("/", tags=["Health"])

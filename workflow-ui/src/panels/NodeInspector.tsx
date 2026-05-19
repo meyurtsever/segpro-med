@@ -224,6 +224,17 @@ const FALLBACK_SEGMENTATION_CONFIGS = [
   'mammography',
 ];
 
+const SAM2_RUN_MODES = [
+  'single',
+  'range',
+  'wholeVolume',
+];
+
+const SAM2_PROMPT_MODES = [
+  'auto',
+  'prompt',
+];
+
 const ANNOTATION_TOOLS = [
   'rect',
   'polygon',
@@ -232,6 +243,45 @@ const ANNOTATION_TOOLS = [
   'point',
   'pan',
   'eraser',
+];
+
+const VLM_MODALITIES = ['MRI', 'CT', 'MG'];
+
+const VLM_MODELS = ['medgemma', 'smolvlm', 'med-r1'];
+
+const FALLBACK_VLM_PROMPTS = [
+  'describe_slice',
+  'identify_anomalies',
+  'pathology_detection',
+  'structured_radiology_review',
+  'annotation_label_candidates',
+];
+
+const FALLBACK_LABEL_PROMPTS = [
+  'suggest_labels',
+  'annotation_label_candidates',
+  'mri_label_suggestions',
+  'ct_label_suggestions',
+  'mg_label_suggestions',
+];
+
+const VOICE_INTENTS = [
+  'describe',
+  'anomaly',
+  'both',
+  'custom',
+];
+
+const VOICE_PROMPT_KEYS = [
+  'describe_slice',
+  'identify_anomalies',
+  'structured_radiology_review',
+  'pathology_detection',
+];
+
+const ASSIGNMENT_MODES = [
+  'allUnassigned',
+  'selected',
 ];
 
 function getNodeTitle(node: Node<BaseNodeData> | undefined): string {
@@ -397,6 +447,26 @@ export default function NodeInspector() {
             ...(readOnly ? monoInputStyle : inputStyle),
             opacity: readOnly ? 0.75 : 1,
           }}
+        />
+      </div>
+    );
+  };
+
+  const renderTextareaField = (
+    label: string,
+    key: string,
+    placeholder = '',
+  ) => {
+    if (!selectedData) return null;
+    return (
+      <div style={rowStyle}>
+        <label style={labelStyle}>{label}</label>
+        <textarea
+          value={String(selectedData[key] ?? '')}
+          onChange={(event) => updateField(key, event.target.value)}
+          placeholder={placeholder}
+          rows={4}
+          style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.4 }}
         />
       </div>
     );
@@ -612,6 +682,183 @@ export default function NodeInspector() {
       );
     }
 
+    if (selectedNode.type === 'medsam2Segmenter') {
+      const apiConfigs = Array.isArray(selectedData.availableConfigs)
+        ? (selectedData.availableConfigs as Array<{ name?: string }>)
+            .map((config) => config.name)
+            .filter((name): name is string => Boolean(name))
+        : [];
+
+      return (
+        <>
+          {renderSelectField('Prompt Mode', 'promptMode', SAM2_PROMPT_MODES)}
+          {renderSelectField('Run Mode', 'runMode', SAM2_RUN_MODES)}
+          {renderSelectField(
+            'Segmentation Profile',
+            'configName',
+            apiConfigs.length > 0 ? apiConfigs : FALLBACK_SEGMENTATION_CONFIGS,
+          )}
+          {renderSelectField('View Plane', 'view', ['axial', 'coronal', 'sagittal'])}
+          {selectedData.runMode === 'range' ? (
+            <>
+              {renderNumberField('Start Slice', 'sliceStart')}
+              {renderNumberField('End Slice', 'sliceEnd')}
+              {renderNumberField('Slice Step', 'sliceStep')}
+            </>
+          ) : selectedData.runMode === 'wholeVolume' ? (
+            <>
+              {renderNumberField('Slice Step', 'sliceStep')}
+            </>
+          ) : (
+            renderNumberField('Slice Index', 'sliceIndex')
+          )}
+        </>
+      );
+    }
+
+    if (selectedNode.type === 'annotationStore') {
+      return (
+        <>
+          {renderTextField('User ID', 'userId', 'workflow_user')}
+          {renderPathField('Study Path', 'studyPath', 'Source study path', ['file', 'directory'])}
+          {renderSelectField('Annotation Type', 'annotationType', [
+            'manual',
+            'guided_segmentation',
+            'whole_area_segmentation',
+          ])}
+        </>
+      );
+    }
+
+    if (selectedNode.type === 'annotationLoad') {
+      return (
+        <>
+          {renderTextField('User ID', 'userId', 'workflow_user')}
+          {renderPathField('Study Path', 'studyPath', 'Source study path', ['file', 'directory'])}
+        </>
+      );
+    }
+
+    if (selectedNode.type === 'exportNode') {
+      return (
+        <>
+          {renderTextField('User ID', 'userId', 'workflow_user')}
+          {renderPathField('Study Path', 'studyPath', 'Source study path', ['file', 'directory'])}
+          {renderSelectField('Export Format', 'exportFormat', ['json'])}
+          {selectedData.outputPath ? renderTextField('Output Path', 'outputPath', '', true) : null}
+        </>
+      );
+    }
+
+    if (selectedNode.type === 'medgemmaNode' ||
+      selectedNode.type === 'smolvlmNode' ||
+      selectedNode.type === 'medR1Node') {
+      const apiPrompts = Array.isArray(selectedData.availablePrompts)
+        ? (selectedData.availablePrompts as Array<{ key?: string }>)
+            .map((prompt) => prompt.key)
+            .filter((key): key is string => Boolean(key))
+        : [];
+
+      return (
+        <>
+          {renderSelectField(
+            'Prompt Preset',
+            'promptKey',
+            apiPrompts.length > 0 ? apiPrompts : FALLBACK_VLM_PROMPTS,
+          )}
+          {renderSelectField('Modality', 'modality', VLM_MODALITIES)}
+          {renderSelectField('View Plane', 'view', ['axial', 'coronal', 'sagittal'])}
+          {renderNumberField('Slice Index', 'sliceIndex')}
+          {renderNumberField('Max Tokens', 'maxTokens')}
+          {selectedNode.type === 'medR1Node'
+            ? renderCheckboxField('Ask Med-R1 for reasoning format', 'includeReasoning')
+            : null}
+          {renderCheckboxField('Use annotation overlays when available', 'useOverlay')}
+          {renderTextareaField(
+            'Custom Prompt',
+            'customPrompt',
+            'Optional. Leave empty to use the selected Gradio prompt preset.',
+          )}
+        </>
+      );
+    }
+
+    if (selectedNode.type === 'voiceInput') {
+      return (
+        <>
+          {renderTextareaField(
+            'Transcript',
+            'transcript',
+            'Spoken instruction for the VLM node.',
+          )}
+          {renderPathField('Audio File Path', 'audioPath', 'Optional local audio file', ['file'])}
+          {renderCheckboxField('Auto-detect intent while running', 'autoDetectIntent')}
+          {renderSelectField('Intent', 'intent', VOICE_INTENTS)}
+          {renderSelectField('Prompt Key', 'promptKey', VOICE_PROMPT_KEYS)}
+        </>
+      );
+    }
+
+    if (selectedNode.type === 'labelSuggester') {
+      const apiPrompts = Array.isArray(selectedData.availablePrompts)
+        ? (selectedData.availablePrompts as Array<{ key?: string }>)
+            .map((prompt) => prompt.key)
+            .filter((key): key is string => Boolean(key))
+        : [];
+
+      return (
+        <>
+          {renderSelectField('Model', 'model', VLM_MODELS)}
+          {renderSelectField(
+            'Prompt Preset',
+            'promptKey',
+            apiPrompts.length > 0 ? apiPrompts : FALLBACK_LABEL_PROMPTS,
+          )}
+          {renderSelectField('Modality', 'modality', VLM_MODALITIES)}
+          {renderSelectField('View Plane', 'view', ['axial', 'coronal', 'sagittal'])}
+          {renderNumberField('Slice Index', 'sliceIndex')}
+          {renderNumberField('Max Labels', 'maxLabels')}
+          {renderCheckboxField('Use annotation overlays when available', 'useOverlay')}
+          {renderTextareaField(
+            'Custom Prompt',
+            'customPrompt',
+            'Optional label-specific prompt.',
+          )}
+        </>
+      );
+    }
+
+    if (selectedNode.type === 'campaignSetup') {
+      return (
+        <>
+          {renderTextField('Campaign Name', 'campaignName', 'Brain MRI Expert Review')}
+          {renderPathField('Dataset Root', 'datasetPath', 'Dataset folder with patient subfolders', ['directory'])}
+          {renderTextareaField('Description', 'description', 'Optional campaign notes.')}
+        </>
+      );
+    }
+
+    if (selectedNode.type === 'patientAssign') {
+      return (
+        <>
+          {renderTextField('Campaign Name', 'campaignName', 'Auto-filled from Campaign Setup')}
+          {renderTextField('Expert ID', 'expertId', 'Expert user id')}
+          {renderSelectField('Assignment Mode', 'assignmentMode', ASSIGNMENT_MODES)}
+          {selectedData.assignmentMode === 'selected'
+            ? renderTextareaField('Patient IDs', 'patientIdsText', 'Comma or newline-separated patient IDs')
+            : null}
+        </>
+      );
+    }
+
+    if (selectedNode.type === 'campaignStatus') {
+      return (
+        <>
+          {renderTextField('Campaign Name', 'campaignName', 'Auto-filled from campaign branch')}
+        </>
+      );
+    }
+
     return (
       <div style={helpTextStyle}>
         No editable configuration is registered for this node type yet.
@@ -755,7 +1002,7 @@ export default function NodeInspector() {
           <div style={sectionStyle}>
             <div style={sectionTitleStyle}>Recommended first path</div>
             <div style={helpTextStyle}>
-              Data Loader {'->'} Auto Segmentation {'->'} Interactive Annotator.
+              Data Loader {'->'} Interactive Annotator, plus Segmentation Profile {'->'} Interactive Annotator for SAM2.
               Add Slice Viewer separately when you want a read-only preview branch.
             </div>
           </div>

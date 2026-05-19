@@ -1,52 +1,47 @@
 /**
- * AutoSegmentationNode
- * =====================
- * Configuration node for SAM2 automatic segmentation.
+ * SegmentationProfileNode
+ * =======================
+ * Configuration-only node for SAM2 profile selection.
  *
- * Provides a dropdown to select a segmentation profile (fast, balanced,
- * high_detail, tumor_detection, mammography, etc.) and shows profile details.
- *
- * This node acts as a "configuration provider" — it does NOT run segmentation
- * itself. When connected to an InteractiveAnnotator, it enables the
- * "▶ Run Auto Segmentation" button inside the annotator, which calls the
- * backend endpoint with the selected config.
+ * It does not run the model. Interactive Annotator runs SAM2 on the visible
+ * slice, while Batch SAM2 Segmenter uses this profile for automation.
  */
 
 import { memo, useCallback, useEffect, useState } from 'react';
 import { type NodeProps } from '@xyflow/react';
+
 import BaseNode from './BaseNode';
+import NodeHint from '../components/NodeHint';
+import type { NodeInfo } from '../components/InfoModal';
 import useWorkflowStore from '../store/workflowStore';
 import type { AutoSegmentationNodeData } from '../types/nodes';
 import * as api from '../api/client';
-import type { NodeInfo } from '../components/InfoModal';
-import NodeHint from '../components/NodeHint';
 
-// ---------------------------------------------------------------------------
-// Info modal content
-// ---------------------------------------------------------------------------
-
-const AUTO_SEG_INFO: NodeInfo = {
+const PROFILE_INFO: NodeInfo = {
   description:
-    'Configures SAM2 automatic segmentation for medical images. ' +
-    'Connect to an Interactive Annotator to enable the "Run Auto Segmentation" button. ' +
-    'SAM2 generates region masks which are converted to polygon annotations.',
+    'Stores the SAM2 segmentation profile used by Interactive Annotator and Batch SAM2 Segmenter. This node is configuration only.',
   inputs: [
-    'Data Source — a loaded medical imaging session (from Data Loader or Format Converter)',
+    'No data input required.',
   ],
   outputs: [
-    'Config → Annotator — provides segmentation config to a connected Interactive Annotator',
+    'Segmentation profile for visible-slice annotation or batch SAM2 automation.',
   ],
   tips: [
-    'Uses SAM2AutomaticMaskGenerator with configurable profiles',
-    'Profiles: fast, balanced, high_detail, tumor_detection, mammography, etc.',
-    'Masks are automatically converted to polygon annotations',
-    'Each polygon is labeled with IoU score and area',
+    'Connect to Interactive Annotator when users should run SAM2 on the slice they are viewing.',
+    'Connect to Batch SAM2 Segmenter when SAM2 should run without manual slice selection.',
+    'If no profile is connected to Annotator, it uses the fast profile by default.',
   ],
 };
 
-// ---------------------------------------------------------------------------
-// Styles
-// ---------------------------------------------------------------------------
+const FALLBACK_CONFIGS = [
+  'fast',
+  'balanced',
+  'high_detail',
+  'small_structures',
+  'tumor_detection',
+  'skull_stripping',
+  'mammography',
+];
 
 const labelStyle: React.CSSProperties = {
   fontSize: 11,
@@ -79,144 +74,116 @@ const detailBoxStyle: React.CSSProperties = {
   lineHeight: 1.5,
 };
 
-const statusDotStyle = (connected: boolean): React.CSSProperties => ({
+const statusDotStyle: React.CSSProperties = {
   width: 8,
   height: 8,
   borderRadius: '50%',
-  background: connected ? 'var(--accent-green)' : 'var(--text-muted)',
+  background: 'var(--accent-green)',
   display: 'inline-block',
   marginRight: 6,
   flexShrink: 0,
-});
+};
 
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
+function titleCase(value: string) {
+  return value.replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
 
 function AutoSegmentationNode({ id, data }: NodeProps) {
   const updateNodeData = useWorkflowStore((s) => s.updateNodeData);
   const d = data as unknown as AutoSegmentationNodeData;
-
   const [loadingConfigs, setLoadingConfigs] = useState(() => d.availableConfigs.length === 0);
   const [configError, setConfigError] = useState<string | null>(null);
 
-  // Fetch available configs from backend on mount
   useEffect(() => {
-    if (d.availableConfigs.length === 0) {
-      api.getSegmentationConfigs()
-        .then((res) => {
-          setConfigError(null);
-          updateNodeData(id, {
-            availableConfigs: res.configs,
-          } as Partial<AutoSegmentationNodeData>);
-        })
-        .catch((err) => {
-          setConfigError(err instanceof Error ? err.message : 'Failed to load segmentation configs');
-        })
-        .finally(() => setLoadingConfigs(false));
-    }
+    if (d.availableConfigs.length > 0) return;
+
+    api.getSegmentationConfigs()
+      .then((res) => {
+        setConfigError(null);
+        updateNodeData(id, {
+          availableConfigs: res.configs,
+        } as Partial<AutoSegmentationNodeData>);
+      })
+      .catch((error) => {
+        setConfigError(error instanceof Error
+          ? error.message
+          : 'Failed to load segmentation configs');
+      })
+      .finally(() => setLoadingConfigs(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleConfigChange = useCallback(
-    (e: React.ChangeEvent<HTMLSelectElement>) => {
-      updateNodeData(id, { configName: e.target.value } as Partial<AutoSegmentationNodeData>);
+    (event: React.ChangeEvent<HTMLSelectElement>) => {
+      updateNodeData(id, { configName: event.target.value } as Partial<AutoSegmentationNodeData>);
     },
     [id, updateNodeData],
   );
 
-  const selectedConfig = d.availableConfigs.find((c) => c.name === d.configName);
-  const hasSession = Boolean(d.sessionId);
+  const selectedConfig = d.availableConfigs.find((config) => config.name === d.configName);
+  const configOptions = d.availableConfigs.length > 0
+    ? d.availableConfigs.map((config) => config.name)
+    : FALLBACK_CONFIGS;
 
   return (
     <BaseNode
       nodeId={id}
       nodeType="autoSegmentation"
-      title="Auto Segmentation"
-      icon="🔬"
+      title="Segmentation Profile"
+      icon="CFG"
       color="var(--accent-purple)"
       status={d.status}
       error={d.error}
-      hasInput={true}
+      hasInput={false}
       hasOutput={true}
-      info={AUTO_SEG_INFO}
+      info={PROFILE_INFO}
     >
-      <div>
-        {/* Connection status */}
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8, fontSize: 11 }}>
-          <span style={statusDotStyle(hasSession)} />
-          <span style={{ color: hasSession ? 'var(--accent-green)' : 'var(--text-muted)' }}>
-            {hasSession ? 'Data connected' : 'Awaiting data connection'}
-          </span>
-        </div>
-
-        {/* Config selector */}
-        <label style={labelStyle}>Segmentation Profile</label>
-        <select
-          value={d.configName}
-          onChange={handleConfigChange}
-          style={selectStyle}
-          disabled={loadingConfigs}
-        >
-          {loadingConfigs ? (
-            <option>Loading configs...</option>
-          ) : d.availableConfigs.length > 0 ? (
-            d.availableConfigs.map((c) => (
-              <option key={c.name} value={c.name}>
-                {c.name.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
-              </option>
-            ))
-          ) : (
-            // Fallback if backend not reached
-            <>
-              <option value="fast">Fast</option>
-              <option value="balanced">Balanced</option>
-              <option value="high_detail">High Detail</option>
-              <option value="small_structures">Small Structures</option>
-              <option value="tumor_detection">Tumor Detection</option>
-              <option value="skull_stripping">Skull Stripping</option>
-              <option value="mammography">Mammography</option>
-            </>
-          )}
-        </select>
-
-        {/* Config details */}
-        {selectedConfig && (
-          <div style={detailBoxStyle}>
-            <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>
-              {selectedConfig.description}
-            </div>
-            <div>Grid: {selectedConfig.points_per_side}×{selectedConfig.points_per_side} pts</div>
-            <div>IoU threshold: {selectedConfig.pred_iou_thresh}</div>
-            <div>Min area: {selectedConfig.min_mask_region_area} px</div>
-          </div>
-        )}
-
-        {configError && (
-          <div
-            style={{
-              marginTop: 8,
-              padding: '6px 8px',
-              background: 'rgba(224, 92, 92, 0.08)',
-              border: '1px solid rgba(224, 92, 92, 0.25)',
-              borderRadius: 6,
-              color: 'var(--accent-red)',
-              fontSize: 10,
-              lineHeight: 1.4,
-            }}
-          >
-            {configError}. Using local fallback profiles.
-          </div>
-        )}
-
-        {/* Hint */}
-        <NodeHint>
-          <span>
-            {hasSession
-              ? '→ Connect to Interactive Annotator to run'
-              : '← Connect Data Loader first'}
-          </span>
-        </NodeHint>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8, fontSize: 11 }}>
+        <span style={statusDotStyle} />
+        <span style={{ color: 'var(--accent-green)' }}>
+          Profile ready
+        </span>
       </div>
+
+      <label style={labelStyle}>Segmentation Profile</label>
+      <select
+        value={d.configName || 'fast'}
+        onChange={handleConfigChange}
+        style={selectStyle}
+        disabled={loadingConfigs}
+      >
+        {configOptions.map((configName) => (
+          <option key={configName} value={configName}>
+            {titleCase(configName)}
+          </option>
+        ))}
+      </select>
+
+      {selectedConfig ? (
+        <div style={detailBoxStyle}>
+          <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>
+            {selectedConfig.description}
+          </div>
+          <div>Grid: {selectedConfig.points_per_side} x {selectedConfig.points_per_side} pts</div>
+          <div>IoU threshold: {selectedConfig.pred_iou_thresh}</div>
+          <div>Min area: {selectedConfig.min_mask_region_area} px</div>
+        </div>
+      ) : null}
+
+      {configError ? (
+        <NodeHint
+          style={{
+            color: 'var(--accent-red)',
+            background: 'rgba(224, 92, 92, 0.08)',
+            borderColor: 'rgba(224, 92, 92, 0.25)',
+          }}
+        >
+          {configError}. Using local fallback profiles.
+        </NodeHint>
+      ) : null}
+
+      <NodeHint>
+        Connect to Interactive Annotator for visible-slice SAM2, or Batch SAM2 Segmenter for automation.
+      </NodeHint>
     </BaseNode>
   );
 }

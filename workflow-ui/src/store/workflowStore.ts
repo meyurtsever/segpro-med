@@ -226,23 +226,213 @@ const useWorkflowStore = create<WorkflowState>((set, get) => ({
         // the executor will load the file and set sessionId at run time
       }
 
-      // InteractiveAnnotator targets: propagate sessionId
+      // InteractiveAnnotator targets: propagate data sessions.
+      // Segmentation Profile connections are read by the annotator at render/run time.
       if (targetNode.type === 'interactiveAnnotator') {
-        if (sourceNode.type === 'dataLoader' && sourceData.sessionId) {
-          patch = { sessionId: sourceData.sessionId as string };
+        if (sourceNode.type === 'annotationLoad') {
+          patch = {
+            sessionId: sourceData.sessionId as string | undefined,
+            sourcePath: (sourceData.sourcePath as string | undefined) ||
+              (sourceData.studyPath as string | undefined),
+            annotations: sourceData.annotations,
+            sliceAnnotationsMap: sourceData.sliceAnnotationsMap,
+            sliceIndex: sourceData.sliceIndex,
+            activeTool: 'pan',
+          };
         }
-        if (sourceNode.type === 'autoSegmentation' && sourceData.sessionId) {
-          patch = { sessionId: sourceData.sessionId as string };
+        if (sourceNode.type === 'dataLoader' && sourceData.sessionId) {
+          patch = {
+            sessionId: sourceData.sessionId as string,
+            sourcePath: (sourceData.filePath as string | undefined) ||
+              (sourceData.path as string | undefined),
+          };
         }
         // FormatConverter → InteractiveAnnotator: handled at execution time
       }
 
-      // AutoSegmentation targets: propagate sessionId
-      if (targetNode.type === 'autoSegmentation') {
+      if (targetNode.type === 'interactiveAnnotator' && sourceNode.type === 'medsam2Segmenter') {
+        const segmentationResult = sourceData.segmentationResult as
+          | {
+            sessionId?: string;
+            sliceIndex?: number;
+            view?: string;
+            shapes?: unknown[];
+            sliceResults?: Array<{ sliceIndex?: number; shapes?: unknown[] }>;
+          }
+          | undefined;
+        const segmentationShapes = segmentationResult?.shapes ||
+          (sourceData.segmentationShapes as unknown[] | undefined) ||
+          [];
+        const sliceResults = Array.isArray(segmentationResult?.sliceResults)
+          ? segmentationResult.sliceResults
+          : [];
+        const firstSliceResult = sliceResults[0] as
+          | { sliceIndex?: number; shapes?: unknown[] }
+          | undefined;
+        const sliceIndex = Number(firstSliceResult?.sliceIndex ?? segmentationResult?.sliceIndex ?? sourceData.sliceIndex ?? 0);
+        const sliceAnnotationsMap = sliceResults.length > 0
+          ? Object.fromEntries(sliceResults.map((sliceResult) => {
+            const result = sliceResult as { sliceIndex?: number; shapes?: unknown[] };
+            return [Number(result.sliceIndex ?? 0), result.shapes || []];
+          }))
+          : segmentationShapes.length > 0
+            ? { [sliceIndex]: segmentationShapes }
+            : undefined;
+        patch = {
+          sessionId: (segmentationResult?.sessionId as string | undefined) ||
+            (sourceData.sessionId as string | undefined),
+          view: segmentationResult?.view || sourceData.view,
+          sliceIndex,
+          annotations: firstSliceResult?.shapes || segmentationShapes,
+          sliceAnnotationsMap,
+          segmentationResult,
+          activeTool: segmentationShapes.length > 0 ? 'pan' : undefined,
+        };
+      }
+
+      // MedSAM2 targets: propagate session/config hints when available
+      if (targetNode.type === 'medsam2Segmenter') {
         if (sourceNode.type === 'dataLoader' && sourceData.sessionId) {
-          patch = { sessionId: sourceData.sessionId as string };
+          patch = {
+            sessionId: sourceData.sessionId as string,
+            metadata: sourceData.metadata as Record<string, unknown> | undefined,
+            volumeShape: sourceData.volumeShape as number[] | undefined,
+          };
         }
-        // FormatConverter → AutoSegmentation: handled at execution time
+        if (sourceNode.type === 'autoSegmentation') {
+          patch = {
+            configName: sourceData.configName as string | undefined,
+          };
+          if (sourceData.sessionId) {
+            patch.sessionId = sourceData.sessionId as string;
+          }
+          if (sourceData.metadata) {
+            patch.metadata = sourceData.metadata as Record<string, unknown>;
+          }
+          if (sourceData.volumeShape) {
+            patch.volumeShape = sourceData.volumeShape as number[];
+          }
+        }
+        if (sourceNode.type === 'interactiveAnnotator') {
+          patch = {
+            sessionId: sourceData.sessionId as string | undefined,
+            segmentationPrompt: sourceData.segmentationPrompt,
+            promptMode: sourceData.segmentationPrompt ? 'prompt' : undefined,
+          };
+        }
+      }
+
+      if (targetNode.type === 'annotationStore') {
+        if (sourceNode.type === 'interactiveAnnotator' || sourceNode.type === 'annotationLoad') {
+          patch = {
+            studyPath: (sourceData.sourcePath as string | undefined) ||
+              (sourceData.studyPath as string | undefined),
+            annotations: sourceData.annotations,
+            sliceAnnotationsMap: sourceData.sliceAnnotationsMap,
+            annotationCount: Array.isArray(sourceData.annotations)
+              ? sourceData.annotations.length
+              : sourceData.annotationCount,
+          };
+        }
+      }
+
+      if (targetNode.type === 'annotationLoad') {
+        if (sourceNode.type === 'dataLoader') {
+          patch = {
+            studyPath: (sourceData.filePath as string | undefined) ||
+              (sourceData.path as string | undefined),
+          };
+        }
+        if (sourceNode.type === 'formatConverter') {
+          patch = {
+            studyPath: sourceData.outputPath as string | undefined,
+          };
+        }
+      }
+
+      if (targetNode.type === 'exportNode') {
+        if (sourceNode.type === 'annotationStore' || sourceNode.type === 'annotationLoad') {
+          patch = {
+            studyPath: (sourceData.studyPath as string | undefined) ||
+              ((sourceData.annotationRecord as { studyPath?: string } | undefined)?.studyPath),
+            annotationRecord: sourceData.annotationRecord,
+            annotationCount: sourceData.annotationCount,
+          };
+        }
+        if (sourceNode.type === 'interactiveAnnotator') {
+          patch = {
+            studyPath: (sourceData.sourcePath as string | undefined) ||
+              (sourceData.studyPath as string | undefined),
+            annotations: sourceData.annotations,
+            sliceAnnotationsMap: sourceData.sliceAnnotationsMap,
+          };
+        }
+      }
+
+      if (['medgemmaNode', 'smolvlmNode', 'medR1Node', 'labelSuggester'].includes(targetNode.type || '')) {
+        if (sourceNode.type === 'voiceInput') {
+          const transcript = typeof sourceData.transcript === 'string'
+            ? sourceData.transcript.trim()
+            : '';
+          const intent = typeof sourceData.intent === 'string'
+            ? sourceData.intent
+            : 'both';
+          patch = {
+            voicePrompt: sourceData.voicePrompt || (transcript
+              ? {
+                text: transcript,
+                intent,
+                promptKey: sourceData.promptKey || 'structured_radiology_review',
+                identifyAnomalies: intent === 'anomaly' || intent === 'both',
+                describeSlice: intent === 'describe' || intent === 'both',
+                source: 'typed',
+              }
+              : undefined),
+          };
+        }
+        if (sourceNode.type === 'dataLoader') {
+          patch = {
+            sessionId: sourceData.sessionId as string | undefined,
+            sourcePath: (sourceData.filePath as string | undefined) ||
+              (sourceData.path as string | undefined),
+            metadata: sourceData.metadata as Record<string, unknown> | undefined,
+            volumeShape: sourceData.volumeShape as number[] | undefined,
+          };
+        }
+        if (sourceNode.type === 'formatConverter') {
+          patch = {
+            sourcePath: sourceData.outputPath as string | undefined,
+          };
+        }
+        if (sourceNode.type === 'interactiveAnnotator' || sourceNode.type === 'annotationLoad') {
+          patch = {
+            sessionId: sourceData.sessionId as string | undefined,
+            sourcePath: (sourceData.sourcePath as string | undefined) ||
+              (sourceData.studyPath as string | undefined),
+            sliceIndex: sourceData.sliceIndex,
+            view: sourceData.view,
+            annotations: sourceData.annotations,
+            sliceAnnotationsMap: sourceData.sliceAnnotationsMap,
+          };
+        }
+        if (sourceNode.type === 'medgemmaNode' ||
+          sourceNode.type === 'smolvlmNode' ||
+          sourceNode.type === 'medR1Node') {
+          patch = {
+            vlmResult: sourceData.vlmResult,
+            sessionId: sourceData.sessionId as string | undefined,
+            sourcePath: sourceData.sourcePath as string | undefined,
+            sliceIndex: sourceData.sliceIndex,
+            view: sourceData.view,
+          };
+        }
+      }
+
+      if (targetNode.type === 'interactiveAnnotator' && sourceNode.type === 'labelSuggester') {
+        patch = {
+          labelSuggestions: sourceData.labelSuggestions,
+          labelSuggestionResult: sourceData.labelSuggestionResult,
+        };
       }
 
       // MetadataViewer targets: propagate already loaded metadata when available
@@ -260,6 +450,39 @@ const useWorkflowStore = create<WorkflowState>((set, get) => ({
         if (sourceNode.type === 'formatConverter') {
           patch = {
             sourcePath: sourceData.outputPath as string | undefined,
+          };
+        }
+      }
+
+      if (targetNode.type === 'patientAssign' && sourceNode.type === 'campaignSetup') {
+        const campaign = sourceData.campaign as
+          | { name?: string; unassignedPatients?: unknown[] }
+          | undefined;
+        patch = {
+          campaignName: (campaign?.name as string | undefined) ||
+            (sourceData.campaignName as string | undefined),
+          campaign: sourceData.campaign,
+          unassignedPatients: campaign?.unassignedPatients,
+        };
+      }
+
+      if (targetNode.type === 'campaignStatus') {
+        if (sourceNode.type === 'campaignSetup') {
+          const campaign = sourceData.campaign as { name?: string } | undefined;
+          patch = {
+            campaignName: (campaign?.name as string | undefined) ||
+              (sourceData.campaignName as string | undefined),
+            campaign: sourceData.campaign,
+          };
+        }
+        if (sourceNode.type === 'patientAssign') {
+          const campaign = sourceData.campaign as { name?: string } | undefined;
+          patch = {
+            campaignName: (campaign?.name as string | undefined) ||
+              (sourceData.campaignName as string | undefined),
+            campaign: sourceData.campaign,
+            assignmentResult: sourceData.assignmentResult,
+            assignmentCount: sourceData.assignmentCount,
           };
         }
       }

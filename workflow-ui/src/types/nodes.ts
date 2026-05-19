@@ -159,9 +159,142 @@ export type AnnotationTool = 'rect' | 'polygon' | 'circle' | 'freehand' | 'point
 /** Per-slice annotation storage map: { [sliceIndex: number]: AnnotationShape[] } */
 export type SliceAnnotationsMap = Record<number, AnnotationShape[]>;
 
+export type SegmentationRunMode = 'single' | 'range' | 'wholeVolume';
+
+export interface SegmentationSliceResult {
+  sliceIndex: number;
+  view: 'axial' | 'sagittal' | 'coronal';
+  shapes: AnnotationShape[];
+  count: number;
+  rawMaskCount: number;
+  filteredCount: number;
+  elapsedSeconds: number;
+}
+
+export interface PromptBox {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}
+
+export interface PromptPoint extends ImagePoint {
+  label: 0 | 1;
+}
+
+export interface SegmentationPrompt {
+  sessionId: string;
+  sliceIndex: number;
+  view: 'axial' | 'sagittal' | 'coronal';
+  points: PromptPoint[];
+  boxes: PromptBox[];
+  source: 'interactiveAnnotator' | 'annotationLoad' | 'manual';
+}
+
+/** Reusable SAM2 segmentation output passed between workflow nodes */
+export interface SegmentationResult {
+  sessionId: string;
+  runMode?: SegmentationRunMode;
+  sliceIndex: number;
+  view: 'axial' | 'sagittal' | 'coronal';
+  shapes: AnnotationShape[];
+  sliceResults?: SegmentationSliceResult[];
+  segmentedSliceCount?: number;
+  count: number;
+  rawMaskCount: number;
+  filteredCount: number;
+  configUsed: string;
+  elapsedSeconds: number;
+  message: string;
+}
+
+export type VlmModelId = 'medgemma' | 'smolvlm' | 'med-r1';
+export type VlmModality = 'MRI' | 'CT' | 'MG';
+export type VoicePromptIntent = 'describe' | 'anomaly' | 'both' | 'custom';
+
+export interface VoicePrompt {
+  text: string;
+  intent: VoicePromptIntent;
+  promptKey: string;
+  identifyAnomalies: boolean;
+  describeSlice: boolean;
+  source: 'typed' | 'dictation' | 'upload' | 'audio_path' | 'manual';
+}
+
+export interface VlmPromptPreset {
+  key: string;
+  title: string;
+  description: string;
+  prompt: string;
+  modality: VlmModality;
+  source: string;
+  parameters: Record<string, unknown>;
+}
+
+export interface VlmAnalysisResult {
+  model: VlmModelId;
+  modelLabel: string;
+  modality: VlmModality;
+  promptKey: string;
+  promptTitle: string;
+  promptUsed: string;
+  sessionId: string;
+  sliceIndex: number;
+  view: 'axial' | 'sagittal' | 'coronal';
+  text: string;
+  labels: string[];
+  elapsedSeconds: number;
+}
+
+export interface LabelSuggestionResult {
+  model: VlmModelId;
+  modality: VlmModality;
+  labels: string[];
+  rawText: string;
+  promptKey: string;
+  promptTitle: string;
+  elapsedSeconds: number;
+}
+
+export interface CampaignProgress {
+  totalPatients: number;
+  assignedPatients: number;
+  completed: number;
+  reviewed: number;
+  unassignedPatients: number;
+}
+
+export interface ExpertAssignment {
+  expertId: string;
+  assignedPatients: string[];
+  completedPatients: string[];
+  pendingPatients: string[];
+}
+
+export interface CampaignInfo {
+  name: string;
+  datasetPath: string;
+  description?: string;
+  createdAt?: string | null;
+  totalPatients: number;
+  patients: string[];
+  progress: CampaignProgress;
+  unassignedPatients: string[];
+  assignments: ExpertAssignment[];
+}
+
+export interface PatientAssignmentResult {
+  campaignName: string;
+  expertId: string;
+  assignedPatients: string[];
+  assignmentCount: number;
+  message: string;
+}
+
 /** InteractiveAnnotatorNode — canvas-based annotation on slices */
 export interface InteractiveAnnotatorNodeData extends BaseNodeData {
   sessionId: string;
+  sourcePath?: string;
   sliceIndex: number;
   view: 'axial' | 'sagittal' | 'coronal';
   totalSlices: number;
@@ -180,10 +313,17 @@ export interface InteractiveAnnotatorNodeData extends BaseNodeData {
   volumeShape?: number[];
   /** Upstream metadata for auto-view-plane detection */
   metadata?: Record<string, unknown>;
+  /** Optional AI segmentation result loaded as draft annotations */
+  segmentationResult?: SegmentationResult;
+  /** Latest point/box prompt selected for prompt-driven SAM2 */
+  segmentationPrompt?: SegmentationPrompt;
+  /** Suggested semantic labels from the VLM Label Suggester */
+  labelSuggestions?: string[];
+  labelSuggestionResult?: LabelSuggestionResult;
 }
 
 // ---------------------------------------------------------------------------
-// Auto Segmentation Node
+// Segmentation Profile Node
 // ---------------------------------------------------------------------------
 
 /** A segmentation config profile from the backend */
@@ -195,10 +335,8 @@ export interface SegmentationConfig {
   min_mask_region_area: number;
 }
 
-/** AutoSegmentationNode — configures and triggers SAM2 auto-segmentation */
+/** AutoSegmentationNode - configuration-only SAM2 profile provider */
 export interface AutoSegmentationNodeData extends BaseNodeData {
-  /** Session inherited from upstream DataLoader/FormatConverter */
-  sessionId: string;
   /** Currently selected config profile name */
   configName: string;
   /** Available configs fetched from backend */
@@ -207,6 +345,150 @@ export interface AutoSegmentationNodeData extends BaseNodeData {
   metadata?: Record<string, unknown>;
   /** Volume shape from upstream [D, H, W] */
   volumeShape?: number[];
+}
+
+/** MedSAM2SegmenterNode - executes SAM2 automatic segmentation */
+export interface MedSAM2SegmenterNodeData extends BaseNodeData {
+  /** Session inherited from upstream DataLoader/FormatConverter */
+  sessionId: string;
+  /** Segmentation execution scope */
+  runMode?: SegmentationRunMode;
+  /** Slice to segment */
+  sliceIndex: number;
+  /** Start slice for range mode */
+  sliceStart?: number;
+  /** End slice for range mode */
+  sliceEnd?: number;
+  /** Slice interval for range and whole-volume modes */
+  sliceStep?: number;
+  /** View plane for segmentation */
+  view: 'axial' | 'sagittal' | 'coronal';
+  /** Selected SAM2 config profile */
+  configName: string;
+  /** Prompt mode for point/box-guided segmentation */
+  promptMode?: 'auto' | 'prompt';
+  /** Prompt source used when promptMode is prompt */
+  segmentationPrompt?: SegmentationPrompt;
+  /** Available configs fetched from backend */
+  availableConfigs: SegmentationConfig[];
+  /** Latest segmentation output */
+  segmentationResult?: SegmentationResult;
+  /** Convenience copy of generated shapes */
+  segmentationShapes?: AnnotationShape[];
+  /** Upstream metadata for view detection */
+  metadata?: Record<string, unknown>;
+  /** Volume shape from upstream [D, H, W] */
+  volumeShape?: number[];
+}
+
+export interface AnnotationRecord {
+  userId: string;
+  studyPath: string;
+  annotationCount: number;
+  data?: Record<string, unknown>;
+  exportPath?: string;
+  message?: string;
+}
+
+export interface AnnotationStoreNodeData extends BaseNodeData {
+  userId: string;
+  studyPath: string;
+  annotationType: string;
+  annotationCount?: number;
+  annotationRecord?: AnnotationRecord;
+}
+
+export interface AnnotationLoadNodeData extends BaseNodeData {
+  userId: string;
+  studyPath: string;
+  annotationCount?: number;
+  annotations: AnnotationShape[];
+  sliceAnnotationsMap: SliceAnnotationsMap;
+  annotationRecord?: AnnotationRecord;
+}
+
+export interface ExportNodeData extends BaseNodeData {
+  userId: string;
+  studyPath: string;
+  exportFormat: 'json';
+  outputPath?: string;
+  annotationCount?: number;
+  annotationRecord?: AnnotationRecord;
+}
+
+export interface VlmNodeData extends BaseNodeData {
+  sessionId: string;
+  sourcePath?: string;
+  sliceIndex: number;
+  view: 'axial' | 'sagittal' | 'coronal';
+  modality: VlmModality;
+  promptKey: string;
+  customPrompt?: string;
+  maxTokens?: number;
+  includeReasoning?: boolean;
+  useOverlay?: boolean;
+  availablePrompts: VlmPromptPreset[];
+  annotations?: AnnotationShape[];
+  sliceAnnotationsMap?: SliceAnnotationsMap;
+  voicePrompt?: VoicePrompt;
+  vlmResult?: VlmAnalysisResult;
+}
+
+export interface LabelSuggesterNodeData extends BaseNodeData {
+  sessionId: string;
+  sourcePath?: string;
+  sliceIndex: number;
+  view: 'axial' | 'sagittal' | 'coronal';
+  model: VlmModelId;
+  modality: VlmModality;
+  promptKey: string;
+  customPrompt?: string;
+  maxLabels: number;
+  useOverlay?: boolean;
+  availablePrompts: VlmPromptPreset[];
+  annotations?: AnnotationShape[];
+  sliceAnnotationsMap?: SliceAnnotationsMap;
+  voicePrompt?: VoicePrompt;
+  currentLabels?: string[];
+  labelSuggestions?: string[];
+  labelSuggestionResult?: LabelSuggestionResult;
+  vlmResult?: VlmAnalysisResult;
+}
+
+export interface VoiceInputNodeData extends BaseNodeData {
+  transcript: string;
+  audioPath?: string;
+  audioFileName?: string;
+  autoDetectIntent?: boolean;
+  intent: VoicePromptIntent;
+  promptKey: string;
+  voicePrompt?: VoicePrompt;
+}
+
+export interface CampaignSetupNodeData extends BaseNodeData {
+  campaignName: string;
+  datasetPath: string;
+  description?: string;
+  totalPatients?: number;
+  patients?: string[];
+  campaign?: CampaignInfo;
+}
+
+export interface PatientAssignNodeData extends BaseNodeData {
+  campaignName: string;
+  expertId: string;
+  assignmentMode: 'selected' | 'allUnassigned';
+  patientIdsText: string;
+  availableExperts?: string[];
+  unassignedPatients?: string[];
+  assignmentCount?: number;
+  assignmentResult?: PatientAssignmentResult;
+  campaign?: CampaignInfo;
+}
+
+export interface CampaignStatusNodeData extends BaseNodeData {
+  campaignName: string;
+  campaign?: CampaignInfo;
 }
 
 // ---------------------------------------------------------------------------

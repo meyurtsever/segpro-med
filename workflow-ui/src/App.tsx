@@ -32,7 +32,9 @@ import WorkflowValidationPanel from './panels/WorkflowValidationPanel';
 import WorkflowTemplatePanel from './panels/WorkflowTemplatePanel';
 import NodeSuggestionMenu from './components/NodeSuggestionMenu';
 import NodeContextMenu from './components/NodeContextMenu';
+import CrowdsourcingLoginModal from './components/CrowdsourcingLoginModal';
 import CanvasEmptyState from './components/CanvasEmptyState';
+import * as api from './api/client';
 import { validateWorkflow, type WorkflowIssue } from './engine/workflowValidation';
 import {
   WORKFLOW_STORAGE_KEY,
@@ -45,7 +47,7 @@ import {
   workflowTemplates,
   type WorkflowTemplate,
 } from './engine/workflowTemplates';
-import type { BaseNodeData } from './types/nodes';
+import type { AnnotationShape, BaseNodeData, SliceAnnotationsMap } from './types/nodes';
 
 interface SuggestionMenuState {
   sourceNodeId: string;
@@ -89,6 +91,14 @@ interface ExecutionHistoryRecord {
   message?: string;
 }
 
+interface CrowdsourcingSession {
+  userId: string;
+  role: string;
+  expertScore: number;
+  remainingTasks: api.CrowdsourcingTask[];
+  assignedTasks: api.CrowdsourcingTask[];
+}
+
 const SUGGESTION_MENU_WIDTH = 226;
 const SUGGESTION_MENU_GAP = 28;
 const NODE_CONTEXT_MENU_WIDTH = 258;
@@ -125,6 +135,120 @@ function loadExecutionHistory(): ExecutionHistoryRecord[] {
   } catch {
     return [];
   }
+}
+
+function getCrowdsourcingTaskLoadPath(task: api.CrowdsourcingTask) {
+  return task.load_path || task.patient_path || (
+    task.dataset_path && task.patient_id
+      ? `${task.dataset_path}\\${task.patient_id}`
+      : ''
+  );
+}
+
+function shapeToSubmissionRecord(
+  shape: AnnotationShape,
+  sliceIndex: number,
+  view: string,
+  index: number,
+) {
+  const label = shape.label || 'Annotation';
+  const base = {
+    annotation_id: `workflow_${sliceIndex}_${view}_${index}`,
+    slice_index: sliceIndex,
+    view_type: view,
+    type: shape.type,
+    label,
+    color: shape.color,
+  };
+
+  if (shape.type === 'rect') {
+    const bbox = [shape.x, shape.y, shape.x + shape.width, shape.y + shape.height];
+    return {
+      ...base,
+      bbox,
+      coordinates: [
+        [shape.x, shape.y],
+        [shape.x + shape.width, shape.y],
+        [shape.x + shape.width, shape.y + shape.height],
+        [shape.x, shape.y + shape.height],
+      ],
+    };
+  }
+
+  if (shape.type === 'circle') {
+    return {
+      ...base,
+      bbox: [
+        shape.centerX - shape.radius,
+        shape.centerY - shape.radius,
+        shape.centerX + shape.radius,
+        shape.centerY + shape.radius,
+      ],
+      coordinates: [[shape.centerX, shape.centerY]],
+    };
+  }
+
+  if (shape.type === 'point') {
+    return {
+      ...base,
+      coordinates: [[shape.x, shape.y]],
+      points: [{ x: shape.x, y: shape.y }],
+    };
+  }
+
+  return {
+    ...base,
+    coordinates: shape.points.map((point) => [point.x, point.y]),
+    points: shape.points,
+  };
+}
+
+function buildCrowdsourcingAnnotationData(
+  nodes: Node<BaseNodeData>[],
+  currentTask: api.CrowdsourcingTask,
+  userId: string,
+) {
+  const annotator = nodes.find((node) => node.type === 'interactiveAnnotator');
+  const data = (annotator?.data || {}) as Record<string, unknown>;
+  const view = typeof data.view === 'string' ? data.view : 'axial';
+  const currentSliceIndex = Number(data.sliceIndex ?? 0);
+  const currentAnnotations = Array.isArray(data.annotations)
+    ? data.annotations as AnnotationShape[]
+    : [];
+  const sliceAnnotationsMap = (data.sliceAnnotationsMap || {}) as SliceAnnotationsMap;
+  const records: Array<Record<string, unknown>> = [];
+  const labels = new Map<string, { label: string; slice_index: number; view_type: string; color?: string }>();
+
+  const addShape = (shape: AnnotationShape, sliceIndex: number, index: number) => {
+    records.push(shapeToSubmissionRecord(shape, sliceIndex, view, index));
+    if (shape.label) {
+      labels.set(`${shape.label}:${sliceIndex}:${view}`, {
+        label: shape.label,
+        slice_index: sliceIndex,
+        view_type: view,
+        color: shape.color,
+      });
+    }
+  };
+
+  Object.entries(sliceAnnotationsMap).forEach(([sliceKey, shapes]) => {
+    const sliceIndex = Number(sliceKey);
+    (shapes || []).forEach((shape, index) => addShape(shape, sliceIndex, index));
+  });
+
+  if (records.length === 0) {
+    currentAnnotations.forEach((shape, index) => addShape(shape, currentSliceIndex, index));
+  }
+
+  return {
+    campaign_name: currentTask.campaign_id,
+    expert_id: userId,
+    patient_id: currentTask.patient_id,
+    source_path: getCrowdsourcingTaskLoadPath(currentTask),
+    annotations: records,
+    labels: [...labels.values()],
+    total_annotations: records.length,
+  };
 }
 
 function getRunModeLabel(mode: WorkflowRunMode) {
@@ -211,6 +335,29 @@ const unsavedBadgeStyle: React.CSSProperties = {
   fontWeight: 800,
   boxShadow: '0 2px 10px rgba(0, 0, 0, 0.18)',
   whiteSpace: 'nowrap',
+};
+
+const crowdsourcingBannerStyle: React.CSSProperties = {
+  position: 'absolute',
+  left: 12,
+  bottom: 12,
+  zIndex: 10,
+  width: 420,
+  maxWidth: 'calc(100% - 24px)',
+  borderRadius: 8,
+  border: '1px solid color-mix(in srgb, var(--accent-green) 35%, var(--border-color))',
+  background: 'color-mix(in srgb, var(--accent-green) 9%, var(--bg-secondary))',
+  boxShadow: 'var(--shadow)',
+  padding: 12,
+};
+
+const crowdsourcingMetaStyle: React.CSSProperties = {
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: 6,
+  color: 'var(--text-muted)',
+  fontSize: 11,
+  marginTop: 6,
 };
 
 const btnStyle = (color: string, disabled = false, active = false): React.CSSProperties => ({
@@ -382,6 +529,12 @@ export default function App() {
   const [executionHistory, setExecutionHistory] = useState<ExecutionHistoryRecord[]>(() =>
     loadExecutionHistory(),
   );
+  const [showCrowdsourcingLogin, setShowCrowdsourcingLogin] = useState(false);
+  const [crowdsourcingSession, setCrowdsourcingSession] = useState<CrowdsourcingSession | null>(null);
+  const [currentCrowdsourcingTask, setCurrentCrowdsourcingTask] = useState<api.CrowdsourcingTask | null>(null);
+  const [crowdsourcingTaskQueue, setCrowdsourcingTaskQueue] = useState<api.CrowdsourcingTask[]>([]);
+  const [crowdsourcingSubmitBusy, setCrowdsourcingSubmitBusy] = useState(false);
+  const [crowdsourcingAutoRunToken, setCrowdsourcingAutoRunToken] = useState(0);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const reactFlowInstance = useRef<any>(null);
@@ -1199,6 +1352,225 @@ export default function App() {
     return item ? JSON.parse(JSON.stringify(item.defaultData)) : { label: nodeType, status: 'idle' };
   }, []);
 
+  const startCrowdsourcingTask = useCallback(
+    (task: api.CrowdsourcingTask, userId: string) => {
+      const loadPath = getCrowdsourcingTaskLoadPath(task);
+      if (!loadPath) {
+        setWorkflowNotice({
+          type: 'error',
+          message: 'The selected assignment does not include a loadable patient path.',
+        });
+        return;
+      }
+
+      const loaderId = generateNodeId();
+      const annotatorId = generateNodeId();
+      const statusId = generateNodeId();
+      const nextNodes: Node<BaseNodeData>[] = [
+        {
+          id: loaderId,
+          type: 'dataLoader',
+          position: { x: 80, y: 120 },
+          data: {
+            ...cloneDefaultData('dataLoader'),
+            path: loadPath,
+          },
+        },
+        {
+          id: annotatorId,
+          type: 'interactiveAnnotator',
+          position: { x: 430, y: 90 },
+          data: {
+            ...cloneDefaultData('interactiveAnnotator'),
+            sourcePath: loadPath,
+          },
+        },
+        {
+          id: statusId,
+          type: 'campaignStatus',
+          position: { x: 790, y: 120 },
+          data: {
+            ...cloneDefaultData('campaignStatus'),
+            campaignName: task.campaign_id,
+          },
+        },
+      ];
+      const nextEdges: Edge[] = [
+        {
+          id: `edge_${loaderId}_${annotatorId}`,
+          source: loaderId,
+          target: annotatorId,
+          sourceHandle: null,
+          targetHandle: null,
+          type: 'typed',
+          animated: true,
+          data: getConnectionEdgeData('dataLoader', 'interactiveAnnotator'),
+        },
+      ];
+
+      replaceWorkflow(nextNodes, nextEdges);
+      setSavedWorkflowFingerprint(getEditableWorkflowFingerprint(nextNodes, nextEdges));
+      setCurrentCrowdsourcingTask(task);
+      setSelectedNodeIds([annotatorId]);
+      setSelectedNodeId(annotatorId);
+      setShowTemplatePanel(false);
+      setShowValidationPanel(false);
+      setShowWorkflowMenu(false);
+      setCrowdsourcingAutoRunToken(Date.now());
+      setWorkflowNotice({
+        type: 'success',
+        message: `Loaded assigned task ${task.patient_id} for ${userId}.`,
+      });
+    },
+    [cloneDefaultData, replaceWorkflow, setSelectedNodeId, setWorkflowNotice],
+  );
+
+  const handleCrowdsourcingLoginSuccess = useCallback(
+    (login: api.LoginResponse) => {
+      const session: CrowdsourcingSession = {
+        userId: login.user_id,
+        role: login.role,
+        expertScore: login.expert_score,
+        remainingTasks: login.remaining_tasks,
+        assignedTasks: login.assigned_tasks,
+      };
+      setCrowdsourcingSession(session);
+      setCrowdsourcingTaskQueue(login.remaining_tasks);
+      setShowCrowdsourcingLogin(false);
+
+      if (login.role === 'expert') {
+        const firstTask = login.remaining_tasks[0];
+        if (firstTask) {
+          startCrowdsourcingTask(firstTask, login.user_id);
+        } else {
+          setCurrentCrowdsourcingTask(null);
+          setWorkflowNotice({
+            type: 'info',
+            message: 'Login successful. No remaining crowdsourcing tasks are assigned to this expert.',
+          });
+        }
+        return;
+      }
+
+      setWorkflowNotice({
+        type: 'success',
+        message: 'Admin login successful. Use Collaboration nodes to manage campaigns and assignments.',
+      });
+    },
+    [setWorkflowNotice, startCrowdsourcingTask],
+  );
+
+  const handleOpenCrowdsourcingLogin = useCallback(() => {
+    setShowCrowdsourcingLogin(true);
+    setShowWorkflowMenu(false);
+    setShowTemplatePanel(false);
+    setNodeContextMenu(null);
+  }, []);
+
+  const handleCrowdsourcingLogout = useCallback(() => {
+    setCrowdsourcingSession(null);
+    setCurrentCrowdsourcingTask(null);
+    setCrowdsourcingTaskQueue([]);
+    setWorkflowNotice({
+      type: 'info',
+      message: 'Crowdsourcing session closed.',
+    });
+  }, [setWorkflowNotice]);
+
+  const handleStartNextCrowdsourcingTask = useCallback(() => {
+    if (!crowdsourcingSession) return;
+    const nextTask = crowdsourcingTaskQueue.find((task) =>
+      task.campaign_id !== currentCrowdsourcingTask?.campaign_id ||
+      task.patient_id !== currentCrowdsourcingTask?.patient_id,
+    ) || crowdsourcingTaskQueue[0];
+
+    if (!nextTask) {
+      setWorkflowNotice({
+        type: 'info',
+        message: 'No remaining crowdsourcing tasks are available.',
+      });
+      return;
+    }
+
+    startCrowdsourcingTask(nextTask, crowdsourcingSession.userId);
+  }, [
+    crowdsourcingSession,
+    crowdsourcingTaskQueue,
+    currentCrowdsourcingTask,
+    setWorkflowNotice,
+    startCrowdsourcingTask,
+  ]);
+
+  const handleSubmitCrowdsourcingTask = useCallback(async () => {
+    if (!crowdsourcingSession || !currentCrowdsourcingTask) return;
+
+    setCrowdsourcingSubmitBusy(true);
+    try {
+      const annotationData = buildCrowdsourcingAnnotationData(
+        nodes,
+        currentCrowdsourcingTask,
+        crowdsourcingSession.userId,
+      );
+      await api.completeCollaborationTask({
+        campaign_name: currentCrowdsourcingTask.campaign_id,
+        expert_id: crowdsourcingSession.userId,
+        patient_id: currentCrowdsourcingTask.patient_id,
+        annotation_data: annotationData,
+      });
+
+      const refreshed = await api.getCollaborationExpertTasks(crowdsourcingSession.userId, true);
+      const remainingTasks = refreshed.tasks.filter((task) =>
+        task.campaign_id !== currentCrowdsourcingTask.campaign_id ||
+        task.patient_id !== currentCrowdsourcingTask.patient_id,
+      );
+
+      setCrowdsourcingTaskQueue(remainingTasks);
+      setCrowdsourcingSession({
+        ...crowdsourcingSession,
+        remainingTasks,
+      });
+
+      const nextTask = remainingTasks[0];
+      if (nextTask) {
+        setWorkflowNotice({
+          type: 'success',
+          message: `Submitted ${currentCrowdsourcingTask.patient_id}. Loading next assignment.`,
+        });
+        startCrowdsourcingTask(nextTask, crowdsourcingSession.userId);
+      } else {
+        setCurrentCrowdsourcingTask(null);
+        setWorkflowNotice({
+          type: 'success',
+          message: `Submitted ${currentCrowdsourcingTask.patient_id}. No remaining assignments.`,
+        });
+      }
+    } catch (error) {
+      setWorkflowNotice({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Could not submit crowdsourcing task.',
+      });
+    } finally {
+      setCrowdsourcingSubmitBusy(false);
+    }
+  }, [
+    crowdsourcingSession,
+    currentCrowdsourcingTask,
+    nodes,
+    setWorkflowNotice,
+    startCrowdsourcingTask,
+  ]);
+
+  useEffect(() => {
+    if (!crowdsourcingAutoRunToken || isWorkflowRunning || nodes.length === 0) return;
+
+    const timeout = window.setTimeout(() => {
+      setCrowdsourcingAutoRunToken(0);
+      void handleRun('all');
+    }, 0);
+
+    return () => window.clearTimeout(timeout);
+  }, [crowdsourcingAutoRunToken, handleRun, isWorkflowRunning, nodes.length]);
+
   const handleCreateDataLoader = useCallback(() => {
     addNode({
       id: generateNodeId(),
@@ -1235,7 +1607,7 @@ export default function App() {
         },
       ],
       [
-        { source: dataLoaderId, target: autoSegmentationId, sourceHandle: null, targetHandle: null },
+        { source: dataLoaderId, target: annotatorId, sourceHandle: null, targetHandle: null },
         { source: autoSegmentationId, target: annotatorId, sourceHandle: null, targetHandle: null },
       ],
     );
@@ -1340,6 +1712,13 @@ export default function App() {
 
   return (
     <div style={appStyle}>
+      {showCrowdsourcingLogin ? (
+        <CrowdsourcingLoginModal
+          onClose={() => setShowCrowdsourcingLogin(false)}
+          onSuccess={handleCrowdsourcingLoginSuccess}
+        />
+      ) : null}
+
       {/* Left sidebar — Node Palette */}
       <NodePalette />
 
@@ -1385,6 +1764,64 @@ export default function App() {
           />
         ) : null}
 
+        {crowdsourcingSession && currentCrowdsourcingTask ? (
+          <div style={crowdsourcingBannerStyle}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'flex-start' }}>
+              <div style={{ minWidth: 0 }}>
+                <div
+                  style={{
+                    color: 'var(--accent-green)',
+                    fontSize: 12,
+                    fontWeight: 900,
+                    textTransform: 'uppercase',
+                    letterSpacing: 0.6,
+                  }}
+                >
+                  Crowdsourcing Task
+                </div>
+                <div style={{ color: 'var(--text-primary)', fontSize: 14, fontWeight: 900, marginTop: 3 }}>
+                  {currentCrowdsourcingTask.patient_id}
+                </div>
+                <div style={crowdsourcingMetaStyle}>
+                  <span>{currentCrowdsourcingTask.campaign_id}</span>
+                  <span>Expert: {crowdsourcingSession.userId}</span>
+                  {currentCrowdsourcingTask.modality ? (
+                    <span>{currentCrowdsourcingTask.modality.toUpperCase()}</span>
+                  ) : null}
+                  <span>{crowdsourcingTaskQueue.length} remaining</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleCrowdsourcingLogout}
+                style={btnStyle('var(--text-secondary)')}
+                title="Close crowdsourcing session"
+              >
+                Logout
+              </button>
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+              <button
+                type="button"
+                onClick={() => { void handleSubmitCrowdsourcingTask(); }}
+                disabled={crowdsourcingSubmitBusy || isWorkflowRunning}
+                style={btnStyle('var(--accent-green)', crowdsourcingSubmitBusy || isWorkflowRunning)}
+                title="Mark this assignment as completed in db/assignments.json"
+              >
+                {crowdsourcingSubmitBusy ? 'Submitting...' : 'Submit Task'}
+              </button>
+              <button
+                type="button"
+                onClick={handleStartNextCrowdsourcingTask}
+                disabled={crowdsourcingTaskQueue.length === 0 || isWorkflowRunning}
+                style={btnStyle('var(--accent-blue)', crowdsourcingTaskQueue.length === 0 || isWorkflowRunning)}
+              >
+                Next Task
+              </button>
+            </div>
+          </div>
+        ) : null}
+
         {/* Toolbar */}
         <div style={toolbarStyle}>
           {hasUnsavedChanges ? (
@@ -1415,6 +1852,44 @@ export default function App() {
             aria-label="Redo"
           >
             {'\u21b7'}
+          </button>
+          <button
+            type="button"
+            onClick={
+              !crowdsourcingSession
+                ? handleOpenCrowdsourcingLogin
+                : crowdsourcingTaskQueue.length > 0
+                  ? handleStartNextCrowdsourcingTask
+                  : handleCrowdsourcingLogout
+            }
+            disabled={isWorkflowRunning}
+            style={btnStyle(
+              crowdsourcingSession ? 'var(--accent-green)' : 'var(--accent-purple)',
+              isWorkflowRunning,
+            )}
+            onMouseEnter={(event) => setButtonHover(
+              event.currentTarget,
+              crowdsourcingSession ? 'var(--accent-green)' : 'var(--accent-purple)',
+              true,
+              isWorkflowRunning,
+            )}
+            onMouseLeave={(event) => setButtonHover(
+              event.currentTarget,
+              crowdsourcingSession ? 'var(--accent-green)' : 'var(--accent-purple)',
+              false,
+              isWorkflowRunning,
+            )}
+            title={
+              !crowdsourcingSession
+                ? 'Login to assigned crowdsourcing tasks'
+                : crowdsourcingTaskQueue.length > 0
+                  ? 'Load the next assigned task'
+                  : 'No remaining tasks. Close crowdsourcing session.'
+            }
+          >
+            {crowdsourcingSession
+              ? `Crowd: ${crowdsourcingSession.userId}`
+              : 'Crowdsourcing'}
           </button>
           <button
             onClick={handleToggleTemplates}
