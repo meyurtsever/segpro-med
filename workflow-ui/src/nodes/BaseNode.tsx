@@ -4,7 +4,7 @@
  */
 
 import { memo, useState, type MouseEvent, type ReactNode } from 'react';
-import { Handle, Position } from '@xyflow/react';
+import { Handle, NodeResizer, Position } from '@xyflow/react';
 import type { NodeStatus } from '../types/nodes';
 import InfoModal, { type NodeInfo } from '../components/InfoModal';
 import useWorkflowStore from '../store/workflowStore';
@@ -21,6 +21,9 @@ interface BaseNodeProps {
   hasOutput?: boolean;
   inspectUrl?: string;
   info?: NodeInfo;
+  resizable?: boolean;
+  minWidth?: number;
+  minHeight?: number;
   children: ReactNode;
 }
 
@@ -45,6 +48,9 @@ function BaseNode({
   hasOutput = true,
   inspectUrl,
   info,
+  resizable = false,
+  minWidth = 280,
+  minHeight = 240,
   children,
 }: BaseNodeProps) {
   const s = statusConfig[status];
@@ -91,15 +97,36 @@ function BaseNode({
   return (
     <div
       style={{
+        position: 'relative',
         background: 'var(--bg-node)',
         border: `1px solid ${borderColor}`,
         borderRadius: 10,
-        minWidth: 280,
-        maxWidth: 340,
-        overflow: 'hidden',
+        minWidth: resizable ? minWidth : 280,
+        minHeight: resizable ? minHeight : undefined,
+        maxWidth: resizable ? 'none' : 340,
+        width: resizable ? '100%' : undefined,
+        height: resizable ? '100%' : undefined,
+        display: resizable ? 'flex' : undefined,
+        flexDirection: resizable ? 'column' : undefined,
+        overflow: 'visible',
         transition: 'border-color 120ms ease',
       }}
     >
+      {resizable && (
+        <NodeResizer
+          isVisible={isSelected}
+          minWidth={minWidth}
+          minHeight={minHeight}
+          lineStyle={{ borderColor: 'transparent' }}
+          handleStyle={{
+            width: 8,
+            height: 8,
+            background: color,
+            border: '1px solid var(--bg-primary)',
+          }}
+        />
+      )}
+
       {/* Input handle */}
       {hasInput && (
         <Handle
@@ -107,7 +134,7 @@ function BaseNode({
           position={Position.Left}
           onClick={(event) => handleHandleClick(event, 'input')}
           title="Click to add a compatible previous node, or drag to connect manually"
-          style={{ top: 24, cursor: 'pointer' }}
+          style={{ top: 24, cursor: 'pointer', zIndex: 20 }}
         />
       )}
 
@@ -116,6 +143,8 @@ function BaseNode({
         style={{
           background: `${color}18`,
           borderBottom: `1px solid ${color}30`,
+          borderTopLeftRadius: 9,
+          borderTopRightRadius: 9,
           padding: '8px 12px',
           display: 'flex',
           alignItems: 'center',
@@ -139,7 +168,15 @@ function BaseNode({
       </div>
 
       {/* Body */}
-      <div style={{ padding: '10px 12px' }} className="nodrag nowheel">
+      <div
+        style={{
+          padding: '10px 12px',
+          flex: resizable ? 1 : undefined,
+          minHeight: resizable ? 0 : undefined,
+          overflow: resizable ? 'auto' : undefined,
+        }}
+        className="nodrag nowheel"
+      >
         {children}
       </div>
 
@@ -250,7 +287,7 @@ function BaseNode({
           position={Position.Right}
           onClick={(event) => handleHandleClick(event, 'output')}
           title="Click to add a compatible next node, or drag to connect manually"
-          style={{ top: 24, cursor: 'pointer' }}
+          style={{ top: 24, cursor: 'pointer', zIndex: 20 }}
         />
       )}
     </div>

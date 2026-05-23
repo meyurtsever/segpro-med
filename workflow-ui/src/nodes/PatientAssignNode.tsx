@@ -61,6 +61,7 @@ function PatientAssignNode({ id, data }: NodeProps) {
   const d = data as unknown as PatientAssignNodeData;
   const [busy, setBusy] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   const updateField = useCallback(
     (key: keyof PatientAssignNodeData, value: string) => {
@@ -116,6 +117,7 @@ function PatientAssignNode({ id, data }: NodeProps) {
   const unassigned = d.unassignedPatients || [];
   const experts = d.availableExperts || [];
   const preview = unassigned.slice(0, 4).join(', ');
+  const assignedCount = d.campaign?.progress.assignedPatients ?? d.assignmentCount ?? 0;
 
   return (
     <BaseNode
@@ -130,6 +132,41 @@ function PatientAssignNode({ id, data }: NodeProps) {
       hasOutput={true}
       info={ASSIGN_INFO}
     >
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+        <div style={{
+          border: '1px solid color-mix(in srgb, var(--accent-green) 28%, var(--border-color))',
+          borderRadius: 7,
+          padding: '8px 9px',
+          background: 'color-mix(in srgb, var(--accent-green) 7%, var(--bg-secondary))',
+        }}>
+          <div style={{ color: 'var(--accent-green)', fontSize: 20, fontWeight: 900 }}>
+            {unassigned.length}
+          </div>
+          <div style={{ color: 'var(--text-muted)', fontSize: 11 }}>Unassigned</div>
+        </div>
+        <div style={{
+          border: '1px solid color-mix(in srgb, var(--accent-blue) 28%, var(--border-color))',
+          borderRadius: 7,
+          padding: '8px 9px',
+          background: 'color-mix(in srgb, var(--accent-blue) 7%, var(--bg-secondary))',
+        }}>
+          <div style={{ color: 'var(--accent-blue)', fontSize: 20, fontWeight: 900 }}>
+            {assignedCount}
+          </div>
+          <div style={{ color: 'var(--text-muted)', fontSize: 11 }}>Assigned</div>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onClick={() => setDetailsOpen((value) => !value)}
+        style={{ ...buttonStyle(false), marginTop: 8, width: '100%' }}
+      >
+        {detailsOpen ? 'Collapse Assignment' : 'Expand Assignment'}
+      </button>
+
+      {detailsOpen ? (
+        <>
       <label style={labelStyle}>Campaign</label>
       <input
         value={d.campaignName || ''}
@@ -213,6 +250,8 @@ function PatientAssignNode({ id, data }: NodeProps) {
         >
           {localError}
         </NodeHint>
+      ) : null}
+        </>
       ) : null}
     </BaseNode>
   );

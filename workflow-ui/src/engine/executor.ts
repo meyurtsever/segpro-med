@@ -1633,6 +1633,14 @@ async function executeNode(
       };
     }
 
+    case 'crowdsourcingTasks': {
+      return {
+        userId: data.userId,
+        currentPatientId: data.currentPatientId,
+        tasks: data.tasks,
+      };
+    }
+
     case 'autoSegmentation': {
       const asd = data as { sessionId?: string; configName?: string };
 

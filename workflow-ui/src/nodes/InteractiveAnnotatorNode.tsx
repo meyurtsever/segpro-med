@@ -26,6 +26,7 @@ import type {
   AnnotationShape,
   AnnotationTool,
   ImagePoint,
+  LabelSuggestionDecision,
   SegmentationPrompt,
 } from '../types/nodes';
 import * as api from '../api/client';
@@ -84,6 +85,8 @@ const viewerContainerStyle: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: 6,
+  height: '100%',
+  minHeight: 0,
 };
 
 const toolbarStyle: React.CSSProperties = {
@@ -245,6 +248,53 @@ const labelStyle: React.CSSProperties = {
   display: 'block',
 };
 
+const assistPanelStyle: React.CSSProperties = {
+  marginTop: 6,
+  background: 'var(--bg-tertiary)',
+  borderRadius: 6,
+  border: '1px solid rgba(255, 255, 255, 0.08)',
+  overflow: 'hidden',
+};
+
+const assistPanelHeaderStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '7px 8px',
+  border: 'none',
+  background: 'transparent',
+  color: 'var(--text-primary)',
+  display: 'flex',
+  alignItems: 'center',
+  gap: 8,
+  cursor: 'pointer',
+  textAlign: 'left',
+};
+
+const assistPanelTitleStyle: React.CSSProperties = {
+  fontSize: 10,
+  fontWeight: 800,
+  textTransform: 'uppercase',
+  letterSpacing: 0,
+};
+
+const assistPanelMetaStyle: React.CSSProperties = {
+  marginLeft: 'auto',
+  fontSize: 10,
+  color: 'var(--text-muted)',
+  whiteSpace: 'nowrap',
+};
+
+const assistPanelChevronStyle: React.CSSProperties = {
+  color: 'var(--text-muted)',
+  fontSize: 12,
+  fontWeight: 800,
+  transition: 'transform 120ms ease',
+};
+
+const assistPanelBodyStyle: React.CSSProperties = {
+  padding: '0 8px 8px',
+  borderTop: '1px solid rgba(255, 255, 255, 0.07)',
+};
+
 // ---------------------------------------------------------------------------
 // Fullscreen overlay styles
 // ---------------------------------------------------------------------------
@@ -283,6 +333,14 @@ function hexToRgba(hex: string, alpha: number): string {
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function cleanLabelText(label: string): string {
+  return label.trim().split(/\s+/).filter(Boolean).join(' ');
+}
+
+function sameLabel(a: string, b: string): boolean {
+  return cleanLabelText(a).toLowerCase() === cleanLabelText(b).toLowerCase();
 }
 
 // ---------------------------------------------------------------------------
@@ -388,12 +446,26 @@ const LABEL_COLOR_MAP: Record<string, string> = {
   'Other': '#4db6ac',
 };
 
-// Popup color palette for custom selection
-const COLOR_PALETTE = [
-  '#e57373', '#81c784', '#4fc3f7', '#ffd54f', '#ba68c8',
-  '#4db6ac', '#ff8a65', '#7986cb', '#fff176', '#f48fb1',
-  '#80cbc4', '#ce93d8', '#a1887f', '#90a4ae', '#ffab91',
-];
+function normalizeHexColor(value: string) {
+  if (/^#[0-9a-fA-F]{6}$/.test(value)) return value.toLowerCase();
+  return '#4caf50';
+}
+
+function hexToRgbChannels(value: string) {
+  const hex = normalizeHexColor(value).slice(1);
+  return {
+    r: parseInt(hex.slice(0, 2), 16),
+    g: parseInt(hex.slice(2, 4), 16),
+    b: parseInt(hex.slice(4, 6), 16),
+  };
+}
+
+function rgbChannelsToHex(r: number, g: number, b: number) {
+  const clamp = (channel: number) => Math.max(0, Math.min(255, Math.round(channel)));
+  return `#${[clamp(r), clamp(g), clamp(b)]
+    .map((channel) => channel.toString(16).padStart(2, '0'))
+    .join('')}`;
+}
 
 // ---------------------------------------------------------------------------
 // LabelEditorPopup – shown after shape draw or on double-click to edit
@@ -401,11 +473,17 @@ const COLOR_PALETTE = [
 function LabelEditorPopup({
   initialLabel,
   initialColor,
+  annotator,
+  owner,
+  mode,
   onConfirm,
   onCancel,
 }: {
   initialLabel: string;
   initialColor: string;
+  annotator: string;
+  owner?: string;
+  mode: 'new' | 'edit';
   onConfirm: (label: string, color: string) => void;
   onCancel: () => void;
 }) {
@@ -433,6 +511,17 @@ function LabelEditorPopup({
     if (val.trim()) setLabel(val.trim());
   };
 
+  const rgb = hexToRgbChannels(color);
+  const updateRgbChannel = (channel: 'r' | 'g' | 'b', value: string) => {
+    const parsed = Number.parseInt(value, 10);
+    const next = Number.isFinite(parsed) ? parsed : 0;
+    setColor(rgbChannelsToHex(
+      channel === 'r' ? next : rgb.r,
+      channel === 'g' ? next : rgb.g,
+      channel === 'b' ? next : rgb.b,
+    ));
+  };
+
   const handleConfirm = () => {
     const finalLabel = customText.trim() || label || 'Unlabeled';
     onConfirm(finalLabel, color);
@@ -446,12 +535,17 @@ function LabelEditorPopup({
 
   return (
     <div
+      className="nodrag nopan nowheel"
       style={{
         position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         background: 'rgba(0,0,0,0.5)', zIndex: 50,
       }}
       onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}
+      onPointerDown={(e) => e.stopPropagation()}
+      onPointerMove={(e) => e.stopPropagation()}
+      onPointerUp={(e) => e.stopPropagation()}
+      onWheel={(e) => e.stopPropagation()}
       onKeyDown={handleKeyDown}
     >
       <div
@@ -505,32 +599,80 @@ function LabelEditorPopup({
         {/* Color picker */}
         <div style={{ marginTop: 10 }}>
           <div style={{ fontSize: 10, color: 'var(--text-muted, #888)', marginBottom: 4 }}>Color</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-            {COLOR_PALETTE.map((c) => (
-              <button
-                key={c}
-                onClick={() => setColor(c)}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '24px repeat(3, 1fr)',
+            gap: 5,
+            alignItems: 'center',
+          }}>
+            <div
+              style={{
+                width: 22,
+                height: 22,
+                border: '1px solid var(--border-color, #444)',
+                borderRadius: 4,
+                background: color,
+              }}
+            />
+            {(['r', 'g', 'b'] as const).map((channel) => (
+              <label
+                key={channel}
                 style={{
-                  width: 20, height: 20, borderRadius: '50%', cursor: 'pointer',
-                  background: c, border: c === color ? '2px solid #fff' : '2px solid transparent',
-                  boxShadow: c === color ? '0 0 4px rgba(255,255,255,0.5)' : 'none',
-                  padding: 0, transition: 'all 0.1s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 3,
+                  color: 'var(--text-muted, #888)',
+                  fontSize: 9,
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
                 }}
-                title={c}
-              />
+              >
+                {channel}
+                <input
+                  type="number"
+                  min={0}
+                  max={255}
+                  value={rgb[channel]}
+                  onChange={(e) => updateRgbChannel(channel, e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  style={{
+                    width: '100%',
+                    minWidth: 0,
+                    padding: '3px 4px',
+                    borderRadius: 4,
+                    border: '1px solid var(--border-color, #444)',
+                    background: 'var(--bg-primary, #0d0e1a)',
+                    color: 'var(--text-primary, #fff)',
+                    fontSize: 10,
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </label>
             ))}
           </div>
         </div>
 
-        {/* Preview & actions */}
-        <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{
-            flex: 1, padding: '4px 8px', borderRadius: 4, fontSize: 11,
-            background: hexToRgba(color, 0.15), border: `1px solid ${color}`, color,
-            fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-          }}>
-            {customText.trim() || label || 'Unlabeled'}
+        <div style={{
+          marginTop: 12,
+          padding: '8px 9px',
+          borderRadius: 6,
+          border: '1px solid color-mix(in srgb, var(--accent-blue) 28%, var(--border-color, #444))',
+          background: 'color-mix(in srgb, var(--accent-blue) 7%, var(--bg-secondary, #1a1b2e))',
+          color: 'var(--text-secondary, #aaa)',
+          fontSize: 11,
+          lineHeight: 1.45,
+        }}>
+          <div style={{ color: 'var(--accent-blue, #4f8df5)', fontWeight: 800, marginBottom: 2 }}>
+            Annotation Info
           </div>
+          <div>{mode === 'new' ? 'New annotation by' : 'Annotated by'}: {owner || annotator || 'workflow_user'}</div>
+          {mode === 'edit' && annotator && annotator !== owner ? (
+            <div>Editing as: {annotator}</div>
+          ) : null}
+        </div>
+
+        {/* Actions */}
+        <div style={{ marginTop: 12, display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
           <button
             onClick={onCancel}
             style={{
@@ -845,6 +987,11 @@ function InteractiveAnnotatorNode({ id, data }: NodeProps) {
   const [loading, setLoading] = useState(false);
   const [segRunning, setSegRunning] = useState(false);
   const [segMessage, setSegMessage] = useState<string | null>(null);
+  const [segPanelOpen, setSegPanelOpen] = useState(false);
+  const [vlmPanelOpen, setVlmPanelOpen] = useState(false);
+  const [labelReview, setLabelReview] = useState<{ label: string } | null>(null);
+  const [labelReviewBusy, setLabelReviewBusy] = useState(false);
+  const [labelReviewMessage, setLabelReviewMessage] = useState<string | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
   const [selectedIdx, setSelectedIdx] = useState<number>(-1);
   const [viewState, setViewState] = useState<ViewState>({ scale: 1, offsetX: 0, offsetY: 0 });
@@ -935,11 +1082,15 @@ function InteractiveAnnotatorNode({ id, data }: NodeProps) {
   const canvasFSRef = useRef<HTMLCanvasElement>(null);
   const fetchRef = useRef(0);
   const animFrameRef = useRef(0);
+  const lastCanvasSizeRef = useRef<{ width: number; height: number } | null>(null);
 
-  const currentTool = d.activeTool || 'rect';
+  const currentTool = d.activeTool || 'pan';
   const currentView = d.view || 'axial';
   const hasSession = Boolean(d.sessionId);
   const annotations = d.annotations || [];
+  const currentAnnotator = typeof d.userId === 'string' && d.userId.trim()
+    ? d.userId.trim()
+    : 'workflow_user';
 
   const buildPromptFromAnnotation = useCallback(
     (annotation: AnnotationShape | undefined): SegmentationPrompt | null => {
@@ -1031,7 +1182,17 @@ function InteractiveAnnotatorNode({ id, data }: NodeProps) {
       const scale = Math.min(cw / iw, ch / ih);
       const offsetX = (cw - iw * scale) / 2;
       const offsetY = (ch - ih * scale) / 2;
-      setViewState({ scale, offsetX, offsetY });
+      setViewState((prev) => {
+        if (
+          Math.abs(prev.scale - scale) < 0.0001 &&
+          Math.abs(prev.offsetX - offsetX) < 0.5 &&
+          Math.abs(prev.offsetY - offsetY) < 0.5
+        ) {
+          return prev;
+        }
+
+        return { scale, offsetX, offsetY };
+      });
     },
     [imgDimensions],
   );
@@ -1385,6 +1546,47 @@ function InteractiveAnnotatorNode({ id, data }: NodeProps) {
     }, 50);
     return () => clearTimeout(timer);
   }, [fullscreen, imgDimensions, fitImageToCanvas, syncCanvasSize]);
+
+  // React Flow node resizing changes the CSS box first. Keep the canvas backing
+  // dimensions and fitted image state in step with that resized box.
+  useEffect(() => {
+    if (fullscreen || typeof ResizeObserver === 'undefined') return;
+
+    const canvas = canvasNodeRef.current;
+    const parent = canvas?.parentElement;
+    if (!canvas || !parent) return;
+
+    let frameId = 0;
+    const observer = new ResizeObserver(() => {
+      cancelAnimationFrame(frameId);
+      frameId = requestAnimationFrame(() => {
+        const rect = parent.getBoundingClientRect();
+        const nextSize = {
+          width: Math.round(rect.width),
+          height: Math.round(rect.height),
+        };
+        const previousSize = lastCanvasSizeRef.current;
+        const sizeChanged = !previousSize ||
+          previousSize.width !== nextSize.width ||
+          previousSize.height !== nextSize.height;
+
+        lastCanvasSizeRef.current = nextSize;
+        syncCanvasSize(canvas);
+        if (imgDimensions && sizeChanged) {
+          fitImageToCanvas(canvas);
+        } else {
+          renderCanvas(canvas);
+        }
+      });
+    });
+
+    observer.observe(parent);
+
+    return () => {
+      cancelAnimationFrame(frameId);
+      observer.disconnect();
+    };
+  }, [fitImageToCanvas, fullscreen, imgDimensions, renderCanvas, syncCanvasSize]);
 
   // --- API: Fetch slice ---
   const fetchSlice = useCallback(
@@ -1752,8 +1954,15 @@ function InteractiveAnnotatorNode({ id, data }: NodeProps) {
   // --- Label editor: confirm (new shape or edit existing) ---
   const handleLabelConfirm = useCallback(
     (label: string, color: string) => {
+      const now = new Date().toISOString();
       if (labelEditor.mode === 'new' && labelEditor.pendingShape) {
-        const shape = { ...labelEditor.pendingShape, label, color };
+        const shape = {
+          ...labelEditor.pendingShape,
+          label,
+          color,
+          annotatedBy: currentAnnotator,
+          annotatedAt: now,
+        };
         pushHistory(annotations);
         const newAnnotations = [...annotations, shape];
         // Persist to sliceAnnotationsMap
@@ -1766,7 +1975,16 @@ function InteractiveAnnotatorNode({ id, data }: NodeProps) {
       } else if (labelEditor.mode === 'edit' && labelEditor.editIdx >= 0) {
         pushHistory(annotations);
         const newAnnotations = [...annotations];
-        newAnnotations[labelEditor.editIdx] = { ...newAnnotations[labelEditor.editIdx], label, color };
+        const existing = newAnnotations[labelEditor.editIdx];
+        newAnnotations[labelEditor.editIdx] = {
+          ...existing,
+          label,
+          color,
+          annotatedBy: existing.annotatedBy || currentAnnotator,
+          annotatedAt: existing.annotatedAt || now,
+          updatedBy: currentAnnotator,
+          updatedAt: now,
+        };
         const map = { ...(d.sliceAnnotationsMap || {}) };
         map[d.sliceIndex] = newAnnotations;
         updateNodeData(id, {
@@ -1776,7 +1994,7 @@ function InteractiveAnnotatorNode({ id, data }: NodeProps) {
       }
       setLabelEditor({ open: false, mode: 'new', pendingShape: null, editIdx: -1 });
     },
-    [labelEditor, annotations, d.sliceAnnotationsMap, d.sliceIndex, id, updateNodeData, pushHistory],
+    [labelEditor, annotations, currentAnnotator, d.sliceAnnotationsMap, d.sliceIndex, id, updateNodeData, pushHistory],
   );
 
   // --- Label editor: cancel ---
@@ -2499,10 +2717,109 @@ function InteractiveAnnotatorNode({ id, data }: NodeProps) {
     }
   }, [d.sliceIndex, d.sliceAnnotationsMap, annotations, id, updateNodeData]);
 
+  const handleLabelDecision = useCallback(
+    async (decision: 'accepted' | 'rejected') => {
+      if (!labelReview) return;
+
+      const label = cleanLabelText(labelReview.label);
+      const studyPath = typeof d.sourcePath === 'string' ? d.sourcePath.trim() : '';
+      if (!studyPath) {
+        setLabelReviewMessage('Load path unavailable. Connect or run a Data Loader before saving labels.');
+        return;
+      }
+
+      setLabelReviewBusy(true);
+      setLabelReviewMessage(null);
+
+      try {
+        const res = await api.reviewVlmLabelSuggestion({
+          user_id: typeof d.userId === 'string' && d.userId.trim() ? d.userId.trim() : 'workflow_user',
+          study_path: studyPath,
+          slice_idx: d.sliceIndex,
+          view_type: d.view || 'axial',
+          label,
+          action: decision,
+          suggested_labels: d.labelSuggestions || [],
+          source: 'workflow',
+        });
+
+        const nextSuggestions = (d.labelSuggestions || []).filter((candidate) => !sameLabel(candidate, label));
+        const priorDecisions = (d.labelSuggestionDecisions || []) as LabelSuggestionDecision[];
+        const nextDecision: LabelSuggestionDecision = {
+          label,
+          decision,
+          sliceIndex: d.sliceIndex,
+          view: d.view || 'axial',
+          decidedAt: new Date().toISOString(),
+          source: 'vlm',
+        };
+        const nextDecisions = [
+          ...priorDecisions.filter((item) =>
+            !(item.sliceIndex === d.sliceIndex && item.view === (d.view || 'axial') && sameLabel(item.label, label)),
+          ),
+          nextDecision,
+        ];
+
+        updateNodeData(id, {
+          labelSuggestions: nextSuggestions,
+          labelSuggestionDecisions: nextDecisions,
+          savedLabels: res.saved_labels,
+        } as Partial<InteractiveAnnotatorNodeData>);
+
+        setLabelReview(null);
+        setLabelReviewMessage(res.message);
+        if (nextSuggestions.length === 0) {
+          setVlmPanelOpen(false);
+        }
+      } catch (err) {
+        setLabelReviewMessage(err instanceof Error ? err.message : 'Could not save label decision');
+      } finally {
+        setLabelReviewBusy(false);
+      }
+    },
+    [
+      d.labelSuggestionDecisions,
+      d.labelSuggestions,
+      d.sliceIndex,
+      d.sourcePath,
+      d.userId,
+      d.view,
+      id,
+      labelReview,
+      updateNodeData,
+    ],
+  );
+
   // --- Auto-detected view badge ---
   const autoDetectedBadge = d.metadata
     ? (d.metadata.ImageOrientationPatient || d.metadata.affine ? '(auto)' : '')
     : '';
+  const labelDecisions = (d.labelSuggestionDecisions || []) as LabelSuggestionDecision[];
+  const currentViewDecisions = labelDecisions.filter((item) =>
+    item.sliceIndex === d.sliceIndex && item.view === (d.view || 'axial'),
+  );
+  const acceptedLabelsForSlice = currentViewDecisions
+    .filter((item) => item.decision === 'accepted')
+    .map((item) => item.label);
+  const rejectedLabelsForSlice = currentViewDecisions
+    .filter((item) => item.decision === 'rejected')
+    .map((item) => item.label);
+  const pendingLabelSuggestions = (d.labelSuggestions || []).filter((label) =>
+    !currentViewDecisions.some((decision) => sameLabel(decision.label, label)),
+  );
+  const labelSuggestionCount = pendingLabelSuggestions.length;
+  const hasLabelPanel = labelSuggestionCount > 0 ||
+    acceptedLabelsForSlice.length > 0 ||
+    rejectedLabelsForSlice.length > 0;
+  const segPanelSummary = segRunning
+    ? 'Running'
+    : segMessage?.startsWith('Done:')
+      ? 'Done'
+      : segMessage?.startsWith('Error:')
+        ? 'Needs attention'
+        : activePrompt
+          ? 'Prompt ready'
+          : `Slice ${d.sliceIndex}`;
 
   // --- Toolbar renderer (shared between inline and fullscreen) ---
   const renderToolbar = (compact = false) => (
@@ -2668,14 +2985,45 @@ function InteractiveAnnotatorNode({ id, data }: NodeProps) {
   const renderCanvasEl = (ref: React.RefObject<HTMLCanvasElement | null>, areaStyle?: React.CSSProperties) => (
     <div
       style={{ ...canvasWrapperStyle, ...areaStyle, cursor: cursorForTool() }}
-      onWheel={handleWheel}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerLeave={handlePointerLeave}
+      onWheelCapture={(event) => {
+        if (labelEditor.open) return;
+        handleWheel(event);
+      }}
+      onPointerDown={(event) => {
+        if (labelEditor.open) {
+          event.stopPropagation();
+          return;
+        }
+        if (event.target !== event.currentTarget && event.target !== ref.current) {
+          return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+        event.currentTarget.setPointerCapture(event.pointerId);
+        handlePointerDown(event);
+      }}
+      onPointerMove={(event) => {
+        if (labelEditor.open) return;
+        event.stopPropagation();
+        handlePointerMove(event);
+      }}
+      onPointerUp={(event) => {
+        if (labelEditor.open) return;
+        event.stopPropagation();
+        if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+          event.currentTarget.releasePointerCapture(event.pointerId);
+        }
+        handlePointerUp();
+      }}
+      onPointerLeave={(event) => {
+        if (labelEditor.open) return;
+        event.stopPropagation();
+        handlePointerLeave();
+      }}
       onKeyDown={handleKeyDown}
       onDoubleClick={handleDoubleClick}
       onContextMenu={handleContextMenu}
+      className="nodrag"
       tabIndex={0}
     >
       <canvas ref={ref} style={canvasStyle} />
@@ -2716,6 +3064,13 @@ function InteractiveAnnotatorNode({ id, data }: NodeProps) {
               ? annotations[labelEditor.editIdx]?.color || ANNOTATION_COLORS[0]
               : labelEditor.pendingShape?.color || ANNOTATION_COLORS[annotations.length % ANNOTATION_COLORS.length]
           }
+          annotator={currentAnnotator}
+          owner={
+            labelEditor.mode === 'edit' && labelEditor.editIdx >= 0
+              ? annotations[labelEditor.editIdx]?.annotatedBy
+              : currentAnnotator
+          }
+          mode={labelEditor.mode}
           onConfirm={handleLabelConfirm}
           onCancel={handleLabelCancel}
         />
@@ -2794,6 +3149,9 @@ function InteractiveAnnotatorNode({ id, data }: NodeProps) {
         hasInput={true}
         hasOutput={true}
         info={ANNOTATOR_INFO}
+        resizable={true}
+        minWidth={380}
+        minHeight={420}
       >
         <div style={viewerContainerStyle}>
           {/* View selector */}
@@ -2834,156 +3192,249 @@ function InteractiveAnnotatorNode({ id, data }: NodeProps) {
           {/* Tool selector (below canvas) */}
           {hasSession && d.imageBase64 && renderToolbar()}
 
-          {/* AI Segmentation panel - runs SAM2 on the currently visible slice */}
-          {hasSession && d.imageBase64 && (
-            <div style={{
-              marginTop: 6,
-              padding: '6px 8px',
-              background: 'var(--bg-tertiary)',
-              borderRadius: 6,
-              border: '1px solid var(--accent-purple)30',
-            }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 8,
-                marginBottom: 6,
-              }}>
-                <div>
-                  <div style={{
-                    color: 'var(--accent-purple)',
-                    fontSize: 10,
-                    fontWeight: 800,
-                    letterSpacing: 0.6,
-                    textTransform: 'uppercase',
-                  }}>
-                    AI Segmentation
-                  </div>
-                  <div style={{
-                    color: 'var(--text-muted)',
-                    fontSize: 10,
-                    lineHeight: 1.35,
-                    marginTop: 2,
-                  }}>
-                    Current {d.view || 'axial'} slice {d.sliceIndex}
-                  </div>
-                </div>
-                <span style={{
-                  color: 'var(--accent-purple)',
-                  fontSize: 10,
-                  fontWeight: 800,
-                  whiteSpace: 'nowrap',
-                }}>
-                  {(connectedAutoSeg?.configName || 'fast').replace(/_/g, ' ')}
-                </span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <button
-                  onClick={handleRunAutoSegmentation}
-                  disabled={segRunning}
+          {hasSession && d.imageBase64 && hasLabelPanel && (
+            <div
+              style={{
+                ...assistPanelStyle,
+                borderColor: 'rgba(76, 175, 139, 0.3)',
+                background: 'rgba(76, 175, 139, 0.07)',
+              }}
+            >
+              <button
+                type="button"
+                aria-expanded={vlmPanelOpen}
+                onClick={() => setVlmPanelOpen((open) => !open)}
+                style={assistPanelHeaderStyle}
+              >
+                <span
                   style={{
-                    flex: 1,
-                    padding: '7px 12px',
-                    borderRadius: 6,
-                    border: 'none',
-                    background: segRunning
-                      ? 'var(--text-muted)'
-                      : 'linear-gradient(135deg, var(--accent-purple), #7c4dff)',
-                    color: '#fff',
-                    fontSize: 12,
-                    fontWeight: 600,
-                    cursor: segRunning ? 'wait' : 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 6,
-                    transition: 'opacity 0.15s',
-                    opacity: segRunning ? 0.7 : 1,
+                    ...assistPanelChevronStyle,
+                    transform: vlmPanelOpen ? 'rotate(90deg)' : 'none',
                   }}
                 >
-                  {segRunning ? (
-                    <>Running SAM2...</>
-                  ) : (
-                    <>Run SAM2 on Current Slice</>
+                  &gt;
+                </span>
+                <span style={{ ...assistPanelTitleStyle, color: 'var(--accent-green)' }}>
+                  Labels
+                </span>
+                <span style={assistPanelMetaStyle}>
+                  {labelSuggestionCount > 0
+                    ? `${labelSuggestionCount} pending`
+                    : acceptedLabelsForSlice.length > 0
+                      ? `${acceptedLabelsForSlice.length} accepted`
+                      : `${rejectedLabelsForSlice.length} refused`}
+                </span>
+              </button>
+
+              {vlmPanelOpen && (
+                <div style={assistPanelBodyStyle}>
+                  {labelSuggestionCount > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 7 }}>
+                      {pendingLabelSuggestions.map((label) => (
+                        <button
+                          key={label}
+                          type="button"
+                          onClick={() => {
+                            setLabelReview({ label });
+                            setLabelReviewMessage(null);
+                          }}
+                          style={{
+                            padding: '3px 7px',
+                            borderRadius: 4,
+                            border: '1px solid rgba(76, 175, 139, 0.34)',
+                            color: 'var(--accent-green)',
+                            background: 'rgba(76, 175, 139, 0.1)',
+                            fontSize: 10,
+                            fontWeight: 800,
+                            lineHeight: 1.2,
+                            cursor: 'pointer',
+                          }}
+                          title="Review suggested label"
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
                   )}
-                </button>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6 }}>
-                <button
-                  onClick={handleRunPromptSegmentation}
-                  disabled={segRunning || !activePrompt}
-                  style={{
-                    flex: 1,
-                    padding: '7px 12px',
-                    borderRadius: 6,
-                    border: '1px solid var(--accent-orange)',
-                    background: activePrompt && !segRunning
-                      ? 'rgba(255, 152, 0, 0.14)'
-                      : 'var(--bg-secondary)',
-                    color: activePrompt ? 'var(--accent-orange)' : 'var(--text-muted)',
-                    fontSize: 12,
-                    fontWeight: 700,
-                    cursor: segRunning ? 'wait' : activePrompt ? 'pointer' : 'not-allowed',
-                  }}
-                >
-                  Run Prompt SAM2
-                </button>
-                <span style={{ fontSize: 10, color: 'var(--text-muted)', minWidth: 78, textAlign: 'right' }}>
-                  {activePrompt
-                    ? `${activePrompt.points.length} point / ${activePrompt.boxes.length} box`
-                    : 'No prompt'}
-                </span>
-              </div>
-              {segMessage && (
-                <div style={{
-                  marginTop: 4,
-                  fontSize: 10,
-                  color: segMessage.startsWith('Done:') ? 'var(--accent-green)' : 'var(--accent-red)',
-                }}>
-                  {segMessage}
+
+                  {acceptedLabelsForSlice.length > 0 && (
+                    <div style={{ marginTop: 8 }}>
+                      <div style={{
+                        color: 'var(--text-muted)',
+                        fontSize: 9,
+                        fontWeight: 800,
+                        textTransform: 'uppercase',
+                        marginBottom: 4,
+                      }}>
+                        Accepted
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                        {acceptedLabelsForSlice.map((label) => (
+                          <span
+                            key={label}
+                            style={{
+                              padding: '3px 7px',
+                              borderRadius: 4,
+                              border: '1px solid rgba(76, 175, 139, 0.34)',
+                              color: 'var(--accent-green)',
+                              background: 'rgba(76, 175, 139, 0.12)',
+                              fontSize: 10,
+                              fontWeight: 800,
+                              lineHeight: 1.2,
+                            }}
+                          >
+                            {label}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {rejectedLabelsForSlice.length > 0 && (
+                    <div style={{ marginTop: 8, color: 'var(--text-muted)', fontSize: 10 }}>
+                      {rejectedLabelsForSlice.length} refused
+                    </div>
+                  )}
+
+                  {labelReviewMessage && (
+                    <div style={{
+                      marginTop: 7,
+                      fontSize: 10,
+                      color: labelReviewMessage.startsWith('Accepted') || labelReviewMessage.startsWith('Rejected')
+                        ? 'var(--accent-green)'
+                        : 'var(--accent-red)',
+                    }}>
+                      {labelReviewMessage}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
           )}
 
-          {hasSession && d.imageBase64 && d.labelSuggestions && d.labelSuggestions.length > 0 && (
-            <div style={{
-              marginTop: 6,
-              padding: '7px 8px',
-              background: 'rgba(76, 175, 139, 0.08)',
-              borderRadius: 6,
-              border: '1px solid rgba(76, 175, 139, 0.25)',
-            }}>
-              <div style={{
-                color: 'var(--accent-green)',
-                fontSize: 10,
-                fontWeight: 800,
-                letterSpacing: 0.6,
-                textTransform: 'uppercase',
-                marginBottom: 6,
-              }}>
-                Suggested Labels
-              </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
-                {d.labelSuggestions.map((label) => (
-                  <span
-                    key={label}
-                    style={{
-                      padding: '3px 7px',
-                      borderRadius: 4,
-                      border: '1px solid rgba(76, 175, 139, 0.34)',
-                      color: 'var(--accent-green)',
-                      background: 'rgba(76, 175, 139, 0.1)',
+          {/* AI Segmentation panel - runs SAM2 on the currently visible slice */}
+          {hasSession && d.imageBase64 && (
+            <div
+              style={{
+                ...assistPanelStyle,
+                borderColor: 'rgba(155, 109, 215, 0.32)',
+                background: 'rgba(155, 109, 215, 0.08)',
+              }}
+            >
+              <button
+                type="button"
+                aria-expanded={segPanelOpen}
+                onClick={() => setSegPanelOpen((open) => !open)}
+                style={assistPanelHeaderStyle}
+              >
+                <span
+                  style={{
+                    ...assistPanelChevronStyle,
+                    transform: segPanelOpen ? 'rotate(90deg)' : 'none',
+                  }}
+                >
+                  &gt;
+                </span>
+                <span style={{ ...assistPanelTitleStyle, color: 'var(--accent-purple)' }}>
+                  AI Segmentation
+                </span>
+                <span style={assistPanelMetaStyle}>{segPanelSummary}</span>
+              </button>
+
+              {segPanelOpen && (
+                <div style={assistPanelBodyStyle}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 8,
+                    margin: '7px 0 6px',
+                  }}>
+                    <span style={{
+                      color: 'var(--text-muted)',
+                      fontSize: 10,
+                      lineHeight: 1.35,
+                    }}>
+                      Current {d.view || 'axial'} slice {d.sliceIndex}
+                    </span>
+                    <span style={{
+                      color: 'var(--accent-purple)',
                       fontSize: 10,
                       fontWeight: 800,
-                      lineHeight: 1.2,
-                    }}
-                  >
-                    {label}
-                  </span>
-                ))}
-              </div>
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {(connectedAutoSeg?.configName || 'fast').replace(/_/g, ' ')}
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <button
+                      onClick={handleRunAutoSegmentation}
+                      disabled={segRunning}
+                      style={{
+                        flex: 1,
+                        padding: '7px 12px',
+                        borderRadius: 6,
+                        border: 'none',
+                        background: segRunning
+                          ? 'var(--text-muted)'
+                          : 'linear-gradient(135deg, var(--accent-purple), #7c4dff)',
+                        color: '#fff',
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: segRunning ? 'wait' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 6,
+                        transition: 'opacity 0.15s',
+                        opacity: segRunning ? 0.7 : 1,
+                      }}
+                    >
+                      {segRunning ? (
+                        <>Running SAM2...</>
+                      ) : (
+                        <>Run SAM2 on Current Slice</>
+                      )}
+                    </button>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6 }}>
+                    <button
+                      onClick={handleRunPromptSegmentation}
+                      disabled={segRunning || !activePrompt}
+                      style={{
+                        flex: 1,
+                        padding: '7px 12px',
+                        borderRadius: 6,
+                        border: '1px solid var(--accent-orange)',
+                        background: activePrompt && !segRunning
+                          ? 'rgba(255, 152, 0, 0.14)'
+                          : 'var(--bg-secondary)',
+                        color: activePrompt ? 'var(--accent-orange)' : 'var(--text-muted)',
+                        fontSize: 12,
+                        fontWeight: 700,
+                        cursor: segRunning ? 'wait' : activePrompt ? 'pointer' : 'not-allowed',
+                      }}
+                    >
+                      Run Prompt SAM2
+                    </button>
+                    <span style={{ fontSize: 10, color: 'var(--text-muted)', minWidth: 78, textAlign: 'right' }}>
+                      {activePrompt
+                        ? `${activePrompt.points.length} point / ${activePrompt.boxes.length} box`
+                        : 'No prompt'}
+                    </span>
+                  </div>
+                  {segMessage && (
+                    <div style={{
+                      marginTop: 4,
+                      fontSize: 10,
+                      color: segMessage.startsWith('Done:') ? 'var(--accent-green)' : 'var(--accent-red)',
+                    }}>
+                      {segMessage}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -3036,6 +3487,153 @@ function InteractiveAnnotatorNode({ id, data }: NodeProps) {
 
       {/* Fullscreen portal */}
       {fullscreenPortal}
+
+      {/* Suggested label review modal */}
+      {labelReview && createPortal(
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 10000,
+            background: 'rgba(0, 0, 0, 0.45)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 16,
+          }}
+          onClick={() => {
+            if (!labelReviewBusy) setLabelReview(null);
+          }}
+        >
+          <div
+            className="nodrag nopan nowheel"
+            style={{
+              width: 'min(360px, 100%)',
+              background: 'var(--bg-secondary)',
+              border: '1px solid rgba(76, 175, 139, 0.34)',
+              borderRadius: 8,
+              boxShadow: '0 14px 36px rgba(0, 0, 0, 0.45)',
+              overflow: 'hidden',
+            }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div style={{
+              padding: '10px 12px',
+              borderBottom: '1px solid var(--border-color)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+            }}>
+              <div style={{
+                flex: 1,
+                color: 'var(--accent-green)',
+                fontSize: 11,
+                fontWeight: 800,
+                textTransform: 'uppercase',
+              }}>
+                Review Label
+              </div>
+              <button
+                type="button"
+                onClick={() => setLabelReview(null)}
+                disabled={labelReviewBusy}
+                style={{
+                  border: 'none',
+                  background: 'transparent',
+                  color: 'var(--text-secondary)',
+                  cursor: labelReviewBusy ? 'not-allowed' : 'pointer',
+                  fontSize: 16,
+                  lineHeight: 1,
+                }}
+                title="Close"
+              >
+                x
+              </button>
+            </div>
+
+            <div style={{ padding: 12 }}>
+              <div style={{
+                display: 'inline-flex',
+                maxWidth: '100%',
+                padding: '5px 9px',
+                borderRadius: 4,
+                border: '1px solid rgba(76, 175, 139, 0.36)',
+                color: 'var(--accent-green)',
+                background: 'rgba(76, 175, 139, 0.1)',
+                fontSize: 13,
+                fontWeight: 800,
+                overflowWrap: 'anywhere',
+              }}>
+                {labelReview.label}
+              </div>
+
+              <div style={{
+                marginTop: 8,
+                color: 'var(--text-secondary)',
+                fontSize: 11,
+                lineHeight: 1.45,
+              }}>
+                Slice {d.sliceIndex} - {d.view || 'axial'}
+              </div>
+
+              {labelReviewMessage && (
+                <div style={{
+                  marginTop: 8,
+                  padding: '6px 8px',
+                  borderRadius: 4,
+                  color: 'var(--accent-red)',
+                  background: 'rgba(224, 92, 92, 0.08)',
+                  border: '1px solid rgba(224, 92, 92, 0.18)',
+                  fontSize: 11,
+                }}>
+                  {labelReviewMessage}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+                <button
+                  type="button"
+                  onClick={() => handleLabelDecision('rejected')}
+                  disabled={labelReviewBusy}
+                  style={{
+                    flex: 1,
+                    padding: '7px 10px',
+                    borderRadius: 5,
+                    border: '1px solid rgba(224, 92, 92, 0.45)',
+                    background: 'rgba(224, 92, 92, 0.08)',
+                    color: 'var(--accent-red)',
+                    fontSize: 12,
+                    fontWeight: 800,
+                    cursor: labelReviewBusy ? 'wait' : 'pointer',
+                  }}
+                >
+                  Refuse
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleLabelDecision('accepted')}
+                  disabled={labelReviewBusy}
+                  style={{
+                    flex: 1.2,
+                    padding: '7px 10px',
+                    borderRadius: 5,
+                    border: 'none',
+                    background: 'var(--accent-green)',
+                    color: '#fff',
+                    fontSize: 12,
+                    fontWeight: 800,
+                    cursor: labelReviewBusy ? 'wait' : 'pointer',
+                    opacity: labelReviewBusy ? 0.75 : 1,
+                  }}
+                >
+                  {labelReviewBusy ? 'Saving...' : 'Accept'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )}
 
       {/* Right-click context menu portal */}
       {contextMenu && createPortal(

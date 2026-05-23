@@ -93,8 +93,15 @@ export interface ImagePoint {
   y: number;
 }
 
+export interface AnnotationOwnership {
+  annotatedBy?: string;
+  annotatedAt?: string;
+  updatedBy?: string;
+  updatedAt?: string;
+}
+
 /** Polygon annotation — ordered array of vertices */
-export interface PolygonAnnotation {
+export interface PolygonAnnotation extends AnnotationOwnership {
   type: 'polygon';
   /** Vertices in image-space pixel coordinates (persisted) */
   points: ImagePoint[];
@@ -103,7 +110,7 @@ export interface PolygonAnnotation {
 }
 
 /** Circle annotation — center + radius in image-space */
-export interface CircleAnnotation {
+export interface CircleAnnotation extends AnnotationOwnership {
   type: 'circle';
   /** Center in image-space pixel coordinates */
   centerX: number;
@@ -115,7 +122,7 @@ export interface CircleAnnotation {
 }
 
 /** Freehand annotation — dense array of points */
-export interface FreehandAnnotation {
+export interface FreehandAnnotation extends AnnotationOwnership {
   type: 'freehand';
   /** Ordered path points in image-space pixel coordinates */
   points: ImagePoint[];
@@ -124,7 +131,7 @@ export interface FreehandAnnotation {
 }
 
 /** Point annotation — a single coordinate marker */
-export interface PointAnnotation {
+export interface PointAnnotation extends AnnotationOwnership {
   type: 'point';
   /** Location in image-space pixel coordinates */
   x: number;
@@ -134,7 +141,7 @@ export interface PointAnnotation {
 }
 
 /** Rectangle annotation — axis-aligned bounding box in image-space */
-export interface RectAnnotation {
+export interface RectAnnotation extends AnnotationOwnership {
   type: 'rect';
   /** Top-left corner in image-space pixel coordinates */
   x: number;
@@ -256,6 +263,15 @@ export interface LabelSuggestionResult {
   elapsedSeconds: number;
 }
 
+export interface LabelSuggestionDecision {
+  label: string;
+  decision: 'accepted' | 'rejected';
+  sliceIndex: number;
+  view: 'axial' | 'sagittal' | 'coronal';
+  decidedAt: string;
+  source: 'vlm';
+}
+
 export interface CampaignProgress {
   totalPatients: number;
   assignedPatients: number;
@@ -320,6 +336,12 @@ export interface InteractiveAnnotatorNodeData extends BaseNodeData {
   /** Suggested semantic labels from the VLM Label Suggester */
   labelSuggestions?: string[];
   labelSuggestionResult?: LabelSuggestionResult;
+  /** Per-slice accept/refuse decisions made from VLM label suggestions */
+  labelSuggestionDecisions?: LabelSuggestionDecision[];
+  /** Saved labels returned from backend persistence for the current slice */
+  savedLabels?: string[];
+  /** Optional user id for annotation/label persistence */
+  userId?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -489,6 +511,20 @@ export interface PatientAssignNodeData extends BaseNodeData {
 export interface CampaignStatusNodeData extends BaseNodeData {
   campaignName: string;
   campaign?: CampaignInfo;
+}
+
+export interface CrowdsourcingTaskItem {
+  campaignId: string;
+  patientId: string;
+  modality?: string | null;
+  loadPath?: string | null;
+  status: 'current' | 'pending' | 'completed';
+}
+
+export interface CrowdsourcingTasksNodeData extends BaseNodeData {
+  userId: string;
+  currentPatientId?: string;
+  tasks: CrowdsourcingTaskItem[];
 }
 
 // ---------------------------------------------------------------------------

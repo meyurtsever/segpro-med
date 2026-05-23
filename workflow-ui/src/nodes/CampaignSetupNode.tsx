@@ -63,11 +63,19 @@ const statStyle: React.CSSProperties = {
   marginTop: 8,
 };
 
+const statCardStyle = (color: string): React.CSSProperties => ({
+  border: `1px solid color-mix(in srgb, ${color} 28%, var(--border-color))`,
+  borderRadius: 7,
+  padding: '8px 9px',
+  background: `color-mix(in srgb, ${color} 7%, var(--bg-secondary))`,
+});
+
 function CampaignSetupNode({ id, data }: NodeProps) {
   const updateNodeData = useWorkflowStore((s) => s.updateNodeData);
   const d = data as unknown as CampaignSetupNodeData;
   const [busy, setBusy] = useState<'scan' | 'pick' | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   const updateField = useCallback(
     (key: keyof CampaignSetupNodeData, value: string) => {
@@ -129,6 +137,31 @@ function CampaignSetupNode({ id, data }: NodeProps) {
       hasOutput={true}
       info={SETUP_INFO}
     >
+      <div style={statStyle}>
+        <div style={statCardStyle('var(--accent-blue)')}>
+          <div style={{ color: 'var(--accent-blue)', fontSize: 20, fontWeight: 900 }}>
+            {patientCount}
+          </div>
+          <div style={{ color: 'var(--text-muted)', fontSize: 11 }}>Patients</div>
+        </div>
+        <div style={statCardStyle('var(--accent-green)')}>
+          <div style={{ color: 'var(--accent-green)', fontSize: 20, fontWeight: 900 }}>
+            {assigned}
+          </div>
+          <div style={{ color: 'var(--text-muted)', fontSize: 11 }}>Assigned</div>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onClick={() => setDetailsOpen((value) => !value)}
+        style={{ ...buttonStyle(false), marginTop: 8, width: '100%' }}
+      >
+        {detailsOpen ? 'Collapse Setup' : 'Expand Setup'}
+      </button>
+
+      {detailsOpen ? (
+        <>
       <label style={labelStyle}>Campaign Name</label>
       <input
         value={d.campaignName || ''}
@@ -190,6 +223,8 @@ function CampaignSetupNode({ id, data }: NodeProps) {
         >
           {localError}
         </NodeHint>
+      ) : null}
+        </>
       ) : null}
     </BaseNode>
   );

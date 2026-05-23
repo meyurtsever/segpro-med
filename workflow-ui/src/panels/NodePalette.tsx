@@ -45,6 +45,34 @@ const itemStyle: React.CSSProperties = {
   alignItems: 'flex-start',
 };
 
+const categoryHeaderStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '7px 8px',
+  marginBottom: 4,
+  borderRadius: 6,
+  border: '1px solid var(--border-color)',
+  background: 'rgba(255, 255, 255, 0.03)',
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+  gap: 7,
+  textAlign: 'left',
+};
+
+const categoryChevronStyle: React.CSSProperties = {
+  color: 'var(--text-muted)',
+  fontSize: 12,
+  fontWeight: 800,
+  transition: 'transform 120ms ease',
+};
+
+const categoryCountStyle: React.CSSProperties = {
+  marginLeft: 'auto',
+  color: 'var(--text-muted)',
+  fontSize: 10,
+  fontWeight: 700,
+};
+
 const collapseButtonStyle: React.CSSProperties = {
   width: 28,
   height: 28,
@@ -62,6 +90,9 @@ const collapseButtonStyle: React.CSSProperties = {
 
 export default function NodePalette() {
   const [collapsed, setCollapsed] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
+    'Data I/O': true,
+  });
 
   const onDragStart = useCallback(
     (event: DragEvent, nodeType: string, defaultData: Record<string, unknown>) => {
@@ -80,6 +111,13 @@ export default function NodePalette() {
     }
     categories.get(item.category)!.push(item);
   }
+
+  const toggleCategory = (category: string) => {
+    setExpandedCategories((current) => ({
+      ...current,
+      [category]: !current[category],
+    }));
+  };
 
   if (collapsed) {
     return (
@@ -155,52 +193,77 @@ export default function NodePalette() {
 
       {/* Node list */}
       <div style={listStyle}>
-        {Array.from(categories.entries()).map(([category, items]) => (
-          <div key={category} style={{ marginBottom: 12 }}>
-            <div
-              style={{
-                fontSize: 10,
-                fontWeight: 700,
-                textTransform: 'uppercase',
-                letterSpacing: '0.8px',
-                color: items[0].categoryColor,
-                padding: '4px 8px',
-                marginBottom: 4,
-              }}
-            >
-              {category}
-            </div>
+        {Array.from(categories.entries()).map(([category, items]) => {
+          const isExpanded = Boolean(expandedCategories[category]);
 
-            {items.map((item) => (
-              <div
-                key={item.type}
-                draggable
-                onDragStart={(e) => onDragStart(e, item.type, item.defaultData)}
-                style={itemStyle}
+          return (
+            <div key={category} style={{ marginBottom: 8 }}>
+              <button
+                type="button"
+                onClick={() => toggleCategory(category)}
+                style={categoryHeaderStyle}
+                aria-expanded={isExpanded}
+                title={isExpanded ? `Collapse ${category}` : `Expand ${category}`}
                 onMouseEnter={(e) => {
-                  const el = e.currentTarget;
-                  el.style.background = 'var(--bg-tertiary)';
-                  el.style.borderColor = 'var(--border-color)';
+                  e.currentTarget.style.background = 'var(--bg-tertiary)';
                 }}
                 onMouseLeave={(e) => {
-                  const el = e.currentTarget;
-                  el.style.background = 'transparent';
-                  el.style.borderColor = 'transparent';
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
                 }}
               >
-                <span style={{ fontSize: 20, lineHeight: 1 }}>{item.icon}</span>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
-                    {item.label}
-                  </div>
-                  <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>
-                    {item.description}
+                <span
+                  style={{
+                    ...categoryChevronStyle,
+                    transform: isExpanded ? 'rotate(90deg)' : 'none',
+                  }}
+                >
+                  &gt;
+                </span>
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 800,
+                    textTransform: 'uppercase',
+                    letterSpacing: 0,
+                    color: items[0].categoryColor,
+                  }}
+                >
+                  {category}
+                </span>
+                <span style={categoryCountStyle}>{items.length}</span>
+              </button>
+
+              {isExpanded && items.map((item) => (
+                <div
+                  key={item.type}
+                  draggable
+                  onDragStart={(e) => onDragStart(e, item.type, item.defaultData)}
+                  style={itemStyle}
+                  onMouseEnter={(e) => {
+                    const el = e.currentTarget;
+                    el.style.background = 'var(--bg-tertiary)';
+                    el.style.borderColor = 'var(--border-color)';
+                  }}
+                  onMouseLeave={(e) => {
+                    const el = e.currentTarget;
+                    el.style.background = 'transparent';
+                    el.style.borderColor = 'transparent';
+                  }}
+                >
+                  <span style={{ fontSize: 20, lineHeight: 1 }}>{item.icon}</span>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+                      {item.label}
+                    </div>
+                    <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>
+                      {item.description}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        ))}
+              ))}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

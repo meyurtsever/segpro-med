@@ -26,6 +26,7 @@ import LabelSuggesterNode from './LabelSuggesterNode';
 import CampaignSetupNode from './CampaignSetupNode';
 import PatientAssignNode from './PatientAssignNode';
 import CampaignStatusNode from './CampaignStatusNode';
+import CrowdsourcingTasksNode from './CrowdsourcingTasksNode';
 
 export { nodePaletteItems } from '../engine/nodeContracts';
 
@@ -48,4 +49,5 @@ export const nodeTypes: NodeTypes = {
   campaignSetup: CampaignSetupNode,
   patientAssign: PatientAssignNode,
   campaignStatus: CampaignStatusNode,
+  crowdsourcingTasks: CrowdsourcingTasksNode,
 };

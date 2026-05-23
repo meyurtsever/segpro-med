@@ -82,6 +82,7 @@ function CampaignStatusNode({ id, data }: NodeProps) {
   const d = data as unknown as CampaignStatusNodeData;
   const [busy, setBusy] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   const refreshStatus = useCallback(async () => {
     if (!d.campaignName?.trim()) return;
@@ -121,6 +122,44 @@ function CampaignStatusNode({ id, data }: NodeProps) {
       hasOutput={false}
       info={STATUS_INFO}
     >
+      {progress ? (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+          <div style={statCardStyle}>
+            <div style={{ color: 'var(--accent-green)', fontSize: 20, fontWeight: 900 }}>
+              {progress.completed}
+            </div>
+            <div style={{ color: 'var(--text-muted)', fontSize: 11 }}>Completed</div>
+          </div>
+          <div style={statCardStyle}>
+            <div style={{ color: 'var(--accent-purple)', fontSize: 20, fontWeight: 900 }}>
+              {progress.reviewed}
+            </div>
+            <div style={{ color: 'var(--text-muted)', fontSize: 11 }}>Reviewed</div>
+          </div>
+        </div>
+      ) : null}
+
+      <button
+        type="button"
+        onClick={() => setDetailsOpen((value) => !value)}
+        style={{
+          padding: '6px 8px',
+          borderRadius: 5,
+          border: '1px solid var(--border-color)',
+          background: 'var(--bg-tertiary)',
+          color: 'var(--text-secondary)',
+          fontSize: 10,
+          fontWeight: 800,
+          cursor: 'pointer',
+          width: '100%',
+          marginTop: 8,
+        }}
+      >
+        {detailsOpen ? 'Collapse Status' : 'Expand Status'}
+      </button>
+
+      {detailsOpen ? (
+        <>
       <label style={labelStyle}>Campaign</label>
       <div style={{ display: 'flex', gap: 6 }}>
         <input
@@ -209,6 +248,8 @@ function CampaignStatusNode({ id, data }: NodeProps) {
         >
           {localError}
         </NodeHint>
+      ) : null}
+        </>
       ) : null}
     </BaseNode>
   );

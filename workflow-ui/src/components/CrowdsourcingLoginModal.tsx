@@ -43,7 +43,7 @@ const labelStyle: React.CSSProperties = {
   fontSize: 11,
   fontWeight: 800,
   textTransform: 'uppercase',
-  letterSpacing: 0.6,
+  letterSpacing: 0,
   marginBottom: 5,
 };
 
@@ -72,6 +72,17 @@ const buttonStyle = (color: string, disabled = false): React.CSSProperties => ({
   cursor: disabled ? 'not-allowed' : 'pointer',
   opacity: disabled ? 0.55 : 1,
 });
+
+const demoCredentialStyle: React.CSSProperties = {
+  border: '1px solid color-mix(in srgb, var(--accent-blue) 28%, var(--border-color))',
+  background: 'color-mix(in srgb, var(--accent-blue) 7%, var(--bg-secondary))',
+  borderRadius: 7,
+  padding: '9px 10px',
+  color: 'var(--text-secondary)',
+  fontSize: 12,
+  lineHeight: 1.5,
+  marginBottom: 12,
+};
 
 export default function CrowdsourcingLoginModal({
   onClose,
@@ -170,6 +181,21 @@ export default function CrowdsourcingLoginModal({
               {error}
             </div>
           ) : null}
+
+          <div style={demoCredentialStyle}>
+            <div style={{ color: 'var(--accent-blue)', fontSize: 11, fontWeight: 900, textTransform: 'uppercase' }}>
+              Demo Credentials
+            </div>
+            <div style={{ marginTop: 4 }}>
+              Admin: <code>admin1</code> / <code>adminpass</code>
+            </div>
+            <div>
+              Expert: <code>john_doe</code> / <code>pass123</code>
+            </div>
+            <div>
+              Expert: <code>jane_smith</code> / <code>expert456</code>
+            </div>
+          </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
             <button type="button" onClick={onClose} style={buttonStyle('var(--text-secondary)')}>

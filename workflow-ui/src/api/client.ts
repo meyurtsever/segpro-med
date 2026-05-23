@@ -766,6 +766,30 @@ export interface AnnotationStoreRequest {
   annotation_type: string;
   slice_annotations: Array<Record<string, unknown>>;
   study_metadata?: Record<string, unknown>;
+  vlm_labels?: Record<string, unknown>;
+}
+
+export interface VlmLabelDecisionRequest {
+  user_id: string;
+  study_path: string;
+  slice_idx: number;
+  view_type: string;
+  label: string;
+  action: 'accepted' | 'rejected';
+  suggested_labels?: string[];
+  source?: string;
+}
+
+export interface VlmLabelDecisionResponse {
+  success: boolean;
+  user_id: string;
+  study_path: string;
+  slice_idx: number;
+  view_type: string;
+  label: string;
+  action: 'accepted' | 'rejected';
+  saved_labels: string[];
+  message: string;
 }
 
 export interface AnnotationStoreResponse {
@@ -799,6 +823,17 @@ export async function storeAnnotations(
   signal?: AbortSignal,
 ): Promise<AnnotationStoreResponse> {
   return request<AnnotationStoreResponse>(`${API_BASE}/annotations/store`, {
+    method: 'POST',
+    signal,
+    body: JSON.stringify(requestBody),
+  });
+}
+
+export async function reviewVlmLabelSuggestion(
+  requestBody: VlmLabelDecisionRequest,
+  signal?: AbortSignal,
+): Promise<VlmLabelDecisionResponse> {
+  return request<VlmLabelDecisionResponse>(`${API_BASE}/annotations/vlm-label-decision`, {
     method: 'POST',
     signal,
     body: JSON.stringify(requestBody),
