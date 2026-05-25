@@ -116,6 +116,100 @@ function syncNodeCounter(nodes: Node<BaseNodeData>[]) {
   nodeCounter = Math.max(nodeCounter, maxFromIds, nodes.length);
 }
 
+function getMedicalModality(sourceData: Record<string, unknown>) {
+  const metadata = sourceData.metadata as Record<string, unknown> | undefined;
+  const raw = String(
+    sourceData.modality ||
+    metadata?.Modality ||
+    metadata?.modality ||
+    '',
+  ).toUpperCase();
+
+  if (raw.includes('CT')) return 'CT';
+  if (raw.includes('MG') || raw.includes('MAMMO')) return 'MG';
+  return 'MRI';
+}
+
+function getLivePropagationPatch(
+  sourceNode: Node<BaseNodeData>,
+  targetNode: Node<BaseNodeData>,
+  sourceData: Record<string, unknown>,
+): Partial<BaseNodeData> | null {
+  const targetType = targetNode.type || '';
+  const isVlmTarget = ['medgemmaNode', 'smolvlmNode', 'medR1Node', 'labelSuggester'].includes(targetType);
+
+  if (isVlmTarget && sourceNode.type === 'interactiveAnnotator') {
+    const targetData = targetNode.data as Record<string, unknown>;
+    const targetSlice = Number(targetData.sliceIndex ?? 0);
+    const nextSlice = Number(sourceData.sliceIndex ?? 0);
+    const targetView = targetData.view;
+    const nextView = sourceData.view;
+    const clearStaleLabels = targetNode.type === 'labelSuggester' &&
+      (targetSlice !== nextSlice || targetView !== nextView);
+    const nextSuggestionKey = `${nextView || 'axial'}:${nextSlice}`;
+    const nextVlmKey = `${nextView || 'axial'}:${nextSlice}`;
+    const suggestionsBySlice = targetData.labelSuggestionsBySlice as Record<string, string[]> | undefined;
+    const resultsBySlice = targetData.labelSuggestionResultsBySlice as Record<string, unknown> | undefined;
+    const vlmResultsBySlice = targetData.vlmResultsBySlice as Record<string, unknown> | undefined;
+    const clearStaleVlmResult = (
+      sourceNode.type === 'interactiveAnnotator' &&
+      (targetNode.type === 'medgemmaNode' || targetNode.type === 'smolvlmNode' || targetNode.type === 'medR1Node') &&
+      (targetSlice !== nextSlice || targetView !== nextView)
+    );
+
+    return {
+      sessionId: sourceData.sessionId as string | undefined,
+      sourcePath: sourceData.sourcePath as string | undefined,
+      sliceIndex: sourceData.sliceIndex as number | undefined,
+      view: sourceData.view as 'axial' | 'coronal' | 'sagittal' | undefined,
+      annotations: sourceData.annotations as BaseNodeData['annotations'],
+      sliceAnnotationsMap: sourceData.sliceAnnotationsMap as BaseNodeData['sliceAnnotationsMap'],
+      metadata: sourceData.metadata as Record<string, unknown> | undefined,
+      volumeShape: sourceData.volumeShape as number[] | undefined,
+      modality: getMedicalModality(sourceData),
+      ...(clearStaleLabels
+        ? {
+          labelSuggestions: suggestionsBySlice?.[nextSuggestionKey] || [],
+          labelSuggestionResult: resultsBySlice?.[nextSuggestionKey],
+          labelSuggestionContext: {
+            sliceIndex: nextSlice,
+            view: nextView || 'axial',
+          },
+        }
+        : {}),
+      ...(clearStaleVlmResult
+        ? {
+          vlmResult: vlmResultsBySlice?.[nextVlmKey],
+        }
+        : {}),
+    } as Partial<BaseNodeData>;
+  }
+
+  if (targetNode.type === 'interactiveAnnotator' && sourceNode.type === 'labelSuggester') {
+    return {
+      labelSuggestions: sourceData.labelSuggestions as BaseNodeData['labelSuggestions'],
+      labelSuggestionResult: sourceData.labelSuggestionResult as BaseNodeData['labelSuggestionResult'],
+      labelSuggestionContext: sourceData.labelSuggestionContext as BaseNodeData['labelSuggestionContext'],
+      labelSuggestionDecisions: sourceData.labelSuggestionDecisions as BaseNodeData['labelSuggestionDecisions'],
+      savedLabels: sourceData.savedLabels as BaseNodeData['savedLabels'],
+    } as Partial<BaseNodeData>;
+  }
+
+  if (targetNode.type === 'labelSuggester' &&
+    (sourceNode.type === 'medgemmaNode' || sourceNode.type === 'smolvlmNode' || sourceNode.type === 'medR1Node')) {
+    return {
+      vlmResult: sourceData.vlmResult as BaseNodeData['vlmResult'],
+      sessionId: sourceData.sessionId as string | undefined,
+      sourcePath: sourceData.sourcePath as string | undefined,
+      sliceIndex: sourceData.sliceIndex as number | undefined,
+      view: sourceData.view as 'axial' | 'coronal' | 'sagittal' | undefined,
+      modality: sourceData.modality as BaseNodeData['modality'],
+    } as Partial<BaseNodeData>;
+  }
+
+  return null;
+}
+
 const useWorkflowStore = create<WorkflowState>((set, get) => ({
   nodes: [],
   edges: [],
@@ -599,10 +693,27 @@ const useWorkflowStore = create<WorkflowState>((set, get) => ({
   },
 
   updateNodeData: (nodeId, data) => {
+    const { nodes, edges } = get();
+    const sourceNode = nodes.find((node) => node.id === nodeId);
+    const sourceData = {
+      ...(sourceNode?.data || {}),
+      ...data,
+    } as Record<string, unknown>;
+    const outgoingEdges = edges.filter((edge) => edge.source === nodeId);
+
     set({
-      nodes: get().nodes.map((n) =>
-        n.id === nodeId ? { ...n, data: { ...n.data, ...data } } : n,
-      ),
+      nodes: nodes.map((node) => {
+        if (node.id === nodeId) {
+          return { ...node, data: { ...node.data, ...data } };
+        }
+
+        if (!sourceNode || !outgoingEdges.some((edge) => edge.target === node.id)) {
+          return node;
+        }
+
+        const patch = getLivePropagationPatch(sourceNode, node, sourceData);
+        return patch ? { ...node, data: { ...node.data, ...patch } } : node;
+      }),
     });
   },
 

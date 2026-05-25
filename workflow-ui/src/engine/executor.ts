@@ -16,6 +16,7 @@ import type {
   BaseNodeData,
   CampaignInfo,
   ExpertAssignment,
+  LabelSuggestionResult,
   PatientAssignmentResult,
   SegmentationPrompt,
   SegmentationResult,
@@ -134,6 +135,36 @@ function getScopedNodeIds(
 
 function getNodeLabel(node: Node<BaseNodeData>) {
   return node.data.label || node.type || node.id;
+}
+
+function isVlmExecutionNode(type: string | undefined) {
+  return type === 'medgemmaNode' || type === 'smolvlmNode' || type === 'medR1Node';
+}
+
+function isWaitingExecutionNode(
+  node: Node<BaseNodeData>,
+  nodes: Node<BaseNodeData>[],
+  edges: Edge[],
+) {
+  if (!isVlmExecutionNode(node.type) && node.type !== 'labelSuggester') {
+    return false;
+  }
+
+  const data = node.data as Record<string, unknown>;
+  if (data.sessionId || data.vlmResult) {
+    return false;
+  }
+
+  const upstreamIds = edges
+    .filter((edge) => edge.target === node.id)
+    .map((edge) => edge.source);
+
+  return !upstreamIds.some((upstreamId) => {
+    const upstreamData = nodes.find((candidate) => candidate.id === upstreamId)?.data as
+      | Record<string, unknown>
+      | undefined;
+    return Boolean(upstreamData?.sessionId || upstreamData?.vlmResult);
+  });
 }
 
 function getString(value: unknown) {
@@ -386,8 +417,19 @@ function getVlmModelForNode(type: string | undefined): VlmModelId {
   return 'medgemma';
 }
 
+function isVlmModelId(value: unknown): value is VlmModelId {
+  return value === 'medgemma' || value === 'smolvlm' || value === 'med-r1';
+}
+
 function isVlmModality(value: unknown): value is VlmModality {
   return value === 'MRI' || value === 'CT' || value === 'MG';
+}
+
+function detectVlmModality(metadata?: Record<string, unknown>): VlmModality {
+  const raw = String(metadata?.Modality || metadata?.modality || '').toUpperCase();
+  if (raw.includes('CT')) return 'CT';
+  if (raw.includes('MG') || raw.includes('MAMMO')) return 'MG';
+  return 'MRI';
 }
 
 function normalizeVlmView(value: unknown): 'axial' | 'coronal' | 'sagittal' {
@@ -450,6 +492,14 @@ function parseLabelCandidates(text: string, currentLabels: string[] = [], maxLab
   }
 
   return labels;
+}
+
+function labelSuggestionSliceKey(sliceIndex: number, view: 'axial' | 'coronal' | 'sagittal') {
+  return `${view}:${sliceIndex}`;
+}
+
+function vlmSliceKey(sliceIndex: number, view: 'axial' | 'coronal' | 'sagittal') {
+  return `${view}:${sliceIndex}`;
 }
 
 function normalizeVoiceSource(source: unknown): VoicePrompt['source'] {
@@ -656,6 +706,12 @@ export async function executeWorkflow(
   const failedNodeIds: string[] = [];
   const skippedNodeIds: string[] = [];
   const failedOrSkipped = new Set<string>();
+  const waitingNodeIds = new Set(
+    scopedNodes
+      .filter((node) => isWaitingExecutionNode(node, nodes, edges))
+      .map((node) => node.id),
+  );
+  const waitingOrSkipped = new Set<string>();
 
   while (pending.size > 0) {
     assertNotAborted(options.signal);
@@ -665,15 +721,24 @@ export async function executeWorkflow(
       const blockedByFailedUpstream = scopedEdges.some((edge) =>
         edge.target === nodeId && failedOrSkipped.has(edge.source),
       );
+      const blockedByWaitingUpstream = scopedEdges.some((edge) =>
+        edge.target === nodeId && waitingOrSkipped.has(edge.source),
+      );
 
-      if (!blockedByFailedUpstream) continue;
+      if (!blockedByFailedUpstream && !blockedByWaitingUpstream) continue;
 
       updateNodeData(nodeId, {
         status: 'skipped',
-        error: 'Skipped because an upstream node failed.',
+        error: blockedByWaitingUpstream
+          ? 'Skipped because an upstream node is waiting for image review.'
+          : 'Skipped because an upstream node failed.',
       });
       skippedNodeIds.push(nodeId);
-      failedOrSkipped.add(nodeId);
+      if (blockedByWaitingUpstream) {
+        waitingOrSkipped.add(nodeId);
+      } else {
+        failedOrSkipped.add(nodeId);
+      }
       pending.delete(nodeId);
       skippedThisPass = true;
     }
@@ -694,6 +759,14 @@ export async function executeWorkflow(
       if (!node) return { nodeId, error: new Error('Node not found.') };
 
       const upstreamResults = getUpstreamResults(nodeId, nodes, edges, results);
+      if (waitingNodeIds.has(nodeId)) {
+        updateNodeData(nodeId, {
+          status: 'waiting',
+          error: undefined,
+        });
+        return { nodeId, waiting: true };
+      }
+
       updateNodeData(nodeId, { status: 'running', error: undefined });
 
       try {
@@ -737,6 +810,12 @@ export async function executeWorkflow(
       if ('result' in outcome && outcome.result) {
         results.set(outcome.nodeId, outcome.result);
         executedNodeIds.push(outcome.nodeId);
+        continue;
+      }
+
+      if ('waiting' in outcome && outcome.waiting) {
+        skippedNodeIds.push(outcome.nodeId);
+        waitingOrSkipped.add(outcome.nodeId);
         continue;
       }
 
@@ -1000,11 +1079,12 @@ async function executeNode(
         imageBase64: annSliceRes.image_base64,
         annotations: initialAnnotations,
         sliceAnnotationsMap: initialAnnotationsMap,
-        activeTool: initialAnnotations.length > 0 ? 'pan' : 'rect',
+        activeTool: 'pan',
         showLabels: true,
         sourcePath,
         volumeShape,
         metadata: upstreamMeta,
+        modality: detectVlmModality(upstreamMeta),
         segmentationResult: upstreamSegmentation,
         segmentationPrompt: upstreamPrompt,
         labelSuggestions,
@@ -1238,7 +1318,7 @@ async function executeNode(
         throw new Error('VLM analysis needs a loaded image session from Data Loader, Format Converter, or Interactive Annotator.');
       }
 
-      const model = getVlmModelForNode(node.type);
+      const model = isVlmModelId(vd.model) ? vd.model : getVlmModelForNode(node.type);
       const modality = isVlmModality(vd.modality) ? vd.modality : 'MRI';
       const voicePrompt = getVoicePrompt(vd, upstreamResults);
       const res = await api.runVlmAnalysis({
@@ -1269,6 +1349,7 @@ async function executeNode(
         labels: res.labels || [],
         elapsedSeconds: res.elapsed_seconds,
       };
+      const sliceKey = vlmSliceKey(vlmResult.sliceIndex, vlmResult.view);
 
       return {
         sessionId: context.sessionId,
@@ -1282,6 +1363,10 @@ async function executeNode(
         volumeShape: context.volumeShape,
         voicePrompt,
         vlmResult,
+        vlmResultsBySlice: {
+          ...(vd.vlmResultsBySlice as Record<string, VlmAnalysisResult> | undefined),
+          [sliceKey]: vlmResult,
+        },
       };
     }
 
@@ -1309,17 +1394,32 @@ async function executeNode(
           currentLabels,
           maxLabels,
         );
+        const suggestionContext = {
+          sliceIndex: Number(upstreamVlmResult.sliceIndex ?? 0),
+          view: normalizeVlmView(upstreamVlmResult.view),
+        };
+        const sliceKey = labelSuggestionSliceKey(suggestionContext.sliceIndex, suggestionContext.view);
+        const labelSuggestionResult = {
+          model: upstreamVlmResult.model,
+          modality: upstreamVlmResult.modality,
+          labels: labelSuggestions,
+          rawText: upstreamVlmResult.text,
+          promptKey: upstreamVlmResult.promptKey,
+          promptTitle: upstreamVlmResult.promptTitle,
+          elapsedSeconds: upstreamVlmResult.elapsedSeconds,
+        };
         return {
           labelSuggestions,
           currentLabels,
-          labelSuggestionResult: {
-            model: upstreamVlmResult.model,
-            modality: upstreamVlmResult.modality,
-            labels: labelSuggestions,
-            rawText: upstreamVlmResult.text,
-            promptKey: upstreamVlmResult.promptKey,
-            promptTitle: upstreamVlmResult.promptTitle,
-            elapsedSeconds: upstreamVlmResult.elapsedSeconds,
+          labelSuggestionContext: suggestionContext,
+          labelSuggestionResult,
+          labelSuggestionsBySlice: {
+            ...(ld.labelSuggestionsBySlice as Record<string, string[]> | undefined),
+            [sliceKey]: labelSuggestions,
+          },
+          labelSuggestionResultsBySlice: {
+            ...(ld.labelSuggestionResultsBySlice as Record<string, LabelSuggestionResult> | undefined),
+            [sliceKey]: labelSuggestionResult,
           },
           vlmResult: upstreamVlmResult,
         };
@@ -1358,6 +1458,21 @@ async function executeNode(
         elapsedSeconds: res.elapsed_seconds,
       };
 
+      const suggestionContext = {
+        sliceIndex: context.sliceIndex,
+        view: context.view,
+      };
+      const sliceKey = labelSuggestionSliceKey(suggestionContext.sliceIndex, suggestionContext.view);
+      const labelSuggestionResult = {
+        model,
+        modality,
+        labels: res.labels || [],
+        rawText: res.text,
+        promptKey: res.prompt_key,
+        promptTitle: res.prompt_title,
+        elapsedSeconds: res.elapsed_seconds,
+      };
+
       return {
         sessionId: context.sessionId,
         sourcePath: context.sourcePath,
@@ -1370,14 +1485,15 @@ async function executeNode(
         currentLabels,
         labelSuggestions: res.labels || [],
         voicePrompt,
-        labelSuggestionResult: {
-          model,
-          modality,
-          labels: res.labels || [],
-          rawText: res.text,
-          promptKey: res.prompt_key,
-          promptTitle: res.prompt_title,
-          elapsedSeconds: res.elapsed_seconds,
+        labelSuggestionContext: suggestionContext,
+        labelSuggestionResult,
+        labelSuggestionsBySlice: {
+          ...(ld.labelSuggestionsBySlice as Record<string, string[]> | undefined),
+          [sliceKey]: res.labels || [],
+        },
+        labelSuggestionResultsBySlice: {
+          ...(ld.labelSuggestionResultsBySlice as Record<string, LabelSuggestionResult> | undefined),
+          [sliceKey]: labelSuggestionResult,
         },
         vlmResult,
       };

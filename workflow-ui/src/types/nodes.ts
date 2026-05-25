@@ -3,7 +3,7 @@
  */
 
 /** Status of a node's execution */
-export type NodeStatus = 'idle' | 'running' | 'success' | 'error' | 'cancelled' | 'skipped';
+export type NodeStatus = 'idle' | 'running' | 'success' | 'error' | 'cancelled' | 'skipped' | 'waiting';
 
 /** Base data shared by all node types */
 export interface BaseNodeData {
@@ -263,6 +263,11 @@ export interface LabelSuggestionResult {
   elapsedSeconds: number;
 }
 
+export interface LabelSuggestionContext {
+  sliceIndex: number;
+  view: 'axial' | 'sagittal' | 'coronal';
+}
+
 export interface LabelSuggestionDecision {
   label: string;
   decision: 'accepted' | 'rejected';
@@ -336,6 +341,7 @@ export interface InteractiveAnnotatorNodeData extends BaseNodeData {
   /** Suggested semantic labels from the VLM Label Suggester */
   labelSuggestions?: string[];
   labelSuggestionResult?: LabelSuggestionResult;
+  labelSuggestionContext?: LabelSuggestionContext;
   /** Per-slice accept/refuse decisions made from VLM label suggestions */
   labelSuggestionDecisions?: LabelSuggestionDecision[];
   /** Saved labels returned from backend persistence for the current slice */
@@ -443,6 +449,7 @@ export interface VlmNodeData extends BaseNodeData {
   sourcePath?: string;
   sliceIndex: number;
   view: 'axial' | 'sagittal' | 'coronal';
+  model?: VlmModelId;
   modality: VlmModality;
   promptKey: string;
   customPrompt?: string;
@@ -454,6 +461,7 @@ export interface VlmNodeData extends BaseNodeData {
   sliceAnnotationsMap?: SliceAnnotationsMap;
   voicePrompt?: VoicePrompt;
   vlmResult?: VlmAnalysisResult;
+  vlmResultsBySlice?: Record<string, VlmAnalysisResult>;
 }
 
 export interface LabelSuggesterNodeData extends BaseNodeData {
@@ -474,6 +482,9 @@ export interface LabelSuggesterNodeData extends BaseNodeData {
   currentLabels?: string[];
   labelSuggestions?: string[];
   labelSuggestionResult?: LabelSuggestionResult;
+  labelSuggestionContext?: LabelSuggestionContext;
+  labelSuggestionsBySlice?: Record<string, string[]>;
+  labelSuggestionResultsBySlice?: Record<string, LabelSuggestionResult>;
   vlmResult?: VlmAnalysisResult;
 }
 

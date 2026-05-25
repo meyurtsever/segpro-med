@@ -11,12 +11,14 @@ import type { Connection, Node } from '@xyflow/react';
 
 import type { BaseNodeData } from '../types/nodes';
 import { getNodeContract } from './nodeContracts';
+import type { CSSProperties } from 'react';
 
 interface TemplateNodeSpec {
   key: string;
   type: string;
   position: { x: number; y: number };
   data?: Record<string, unknown>;
+  style?: CSSProperties;
 }
 
 interface TemplateConnectionSpec {
@@ -37,6 +39,8 @@ export interface TemplateInstance {
   connections: Connection[];
 }
 
+const ANNOTATOR_INITIAL_STYLE = { width: 430, height: 560 };
+
 export const workflowTemplates: WorkflowTemplate[] = [
   {
     id: 'segmentation-annotation',
@@ -47,7 +51,7 @@ export const workflowTemplates: WorkflowTemplate[] = [
       { key: 'viewer', type: 'sliceViewer', position: { x: 430, y: 330 } },
       { key: 'profile', type: 'autoSegmentation', position: { x: 430, y: 80 } },
       { key: 'medsam2', type: 'medsam2Segmenter', position: { x: 790, y: 80 } },
-      { key: 'annotator', type: 'interactiveAnnotator', position: { x: 1150, y: 80 } },
+      { key: 'annotator', type: 'interactiveAnnotator', position: { x: 1150, y: 80 }, style: ANNOTATOR_INITIAL_STYLE },
     ],
     connections: [
       { source: 'loader', target: 'viewer' },
@@ -80,7 +84,7 @@ export const workflowTemplates: WorkflowTemplate[] = [
     description: 'Load a study, annotate manually, store annotations, export JSON, and send the annotated session to a read-only viewer branch.',
     nodes: [
       { key: 'loader', type: 'dataLoader', position: { x: 80, y: 130 } },
-      { key: 'annotator', type: 'interactiveAnnotator', position: { x: 430, y: 100 } },
+      { key: 'annotator', type: 'interactiveAnnotator', position: { x: 430, y: 100 }, style: ANNOTATOR_INITIAL_STYLE },
       { key: 'viewer', type: 'sliceViewer', position: { x: 790, y: 180 } },
       { key: 'store', type: 'annotationStore', position: { x: 790, y: -40 } },
       { key: 'export', type: 'exportNode', position: { x: 1150, y: -40 } },
@@ -93,39 +97,49 @@ export const workflowTemplates: WorkflowTemplate[] = [
     ],
   },
   {
-    id: 'vlm-label-review',
-    title: 'VLM Label Review',
-    description: 'Load a study, inspect the slice with MedGemma, then generate label suggestions for annotation review.',
+    id: 'medgemma-slice-report',
+    title: 'Medical Report Generation',
+    description: 'Load a study, inspect the target slice in the annotator, then generate a report with MedGemma or another configured medical VLM.',
     nodes: [
-      { key: 'loader', type: 'dataLoader', position: { x: 80, y: 150 } },
-      { key: 'annotator', type: 'interactiveAnnotator', position: { x: 430, y: 90 } },
-      { key: 'medgemma', type: 'medgemmaNode', position: { x: 790, y: 70 } },
-      { key: 'labels', type: 'labelSuggester', position: { x: 1150, y: 90 } },
+      { key: 'loader', type: 'dataLoader', position: { x: 80, y: 210 } },
+      { key: 'annotator', type: 'interactiveAnnotator', position: { x: 490, y: 150 }, style: ANNOTATOR_INITIAL_STYLE },
+      { key: 'medgemma', type: 'medgemmaNode', position: { x: 930, y: 120 }, style: { width: 460, height: 500 } },
     ],
     connections: [
       { source: 'loader', target: 'annotator' },
-      { source: 'loader', target: 'medgemma' },
-      { source: 'medgemma', target: 'labels' },
-      { source: 'labels', target: 'annotator' },
+      { source: 'annotator', target: 'medgemma' },
+    ],
+  },
+  {
+    id: 'vlm-label-suggestions',
+    title: 'VLM Label Suggestions',
+    description: 'Load a study, inspect the active slice in the annotator, then generate reviewable label suggestions for that slice.',
+    nodes: [
+      { key: 'loader', type: 'dataLoader', position: { x: 80, y: 210 } },
+      { key: 'annotator', type: 'interactiveAnnotator', position: { x: 490, y: 150 }, style: ANNOTATOR_INITIAL_STYLE },
+      { key: 'labels', type: 'labelSuggester', position: { x: 930, y: 120 }, style: { width: 460, height: 500 } },
+    ],
+    connections: [
+      { source: 'loader', target: 'annotator' },
+      { source: 'annotator', target: 'labels' },
     ],
   },
   {
     id: 'voice-guided-vlm-review',
     title: 'Voice-Guided VLM Review',
-    description: 'Use a spoken instruction to drive MedGemma analysis and label suggestions for the current annotation slice.',
+    description: 'Dictate a voice prompt, load and annotate a study, then drive medical report generation and label suggestions using the spoken instruction.',
     nodes: [
-      { key: 'loader', type: 'dataLoader', position: { x: 80, y: 160 } },
-      { key: 'voice', type: 'voiceInput', position: { x: 430, y: -60 } },
-      { key: 'annotator', type: 'interactiveAnnotator', position: { x: 430, y: 180 } },
-      { key: 'medgemma', type: 'medgemmaNode', position: { x: 790, y: 60 } },
-      { key: 'labels', type: 'labelSuggester', position: { x: 1150, y: 80 } },
+      { key: 'loader', type: 'dataLoader', position: { x: 80, y: 280 } },
+      { key: 'voice', type: 'voiceInput', position: { x: 490, y: 60 } },
+      { key: 'annotator', type: 'interactiveAnnotator', position: { x: 490, y: 270 }, style: ANNOTATOR_INITIAL_STYLE },
+      { key: 'medgemma', type: 'medgemmaNode', position: { x: 930, y: 160 } },
+      { key: 'labels', type: 'labelSuggester', position: { x: 1340, y: 160 } },
     ],
     connections: [
       { source: 'loader', target: 'annotator' },
-      { source: 'loader', target: 'medgemma' },
+      { source: 'annotator', target: 'medgemma' },
       { source: 'voice', target: 'medgemma' },
       { source: 'medgemma', target: 'labels' },
-      { source: 'labels', target: 'annotator' },
     ],
   },
   {
@@ -173,6 +187,7 @@ export function instantiateWorkflowTemplate(
         ...cloneDefaultData(spec.type),
         ...(spec.data || {}),
       },
+      style: spec.style,
     };
   });
 

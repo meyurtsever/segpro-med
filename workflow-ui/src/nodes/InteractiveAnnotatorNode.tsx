@@ -254,10 +254,13 @@ const assistPanelStyle: React.CSSProperties = {
   borderRadius: 6,
   border: '1px solid rgba(255, 255, 255, 0.08)',
   overflow: 'hidden',
+  maxWidth: '100%',
+  boxSizing: 'border-box',
 };
 
 const assistPanelHeaderStyle: React.CSSProperties = {
   width: '100%',
+  minWidth: 0,
   padding: '7px 8px',
   border: 'none',
   background: 'transparent',
@@ -281,6 +284,9 @@ const assistPanelMetaStyle: React.CSSProperties = {
   fontSize: 10,
   color: 'var(--text-muted)',
   whiteSpace: 'nowrap',
+  minWidth: 0,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
 };
 
 const assistPanelChevronStyle: React.CSSProperties = {
@@ -293,6 +299,9 @@ const assistPanelChevronStyle: React.CSSProperties = {
 const assistPanelBodyStyle: React.CSSProperties = {
   padding: '0 8px 8px',
   borderTop: '1px solid rgba(255, 255, 255, 0.07)',
+  maxWidth: '100%',
+  boxSizing: 'border-box',
+  overflow: 'hidden',
 };
 
 // ---------------------------------------------------------------------------
@@ -451,21 +460,20 @@ function normalizeHexColor(value: string) {
   return '#4caf50';
 }
 
-function hexToRgbChannels(value: string) {
-  const hex = normalizeHexColor(value).slice(1);
-  return {
-    r: parseInt(hex.slice(0, 2), 16),
-    g: parseInt(hex.slice(2, 4), 16),
-    b: parseInt(hex.slice(4, 6), 16),
-  };
-}
-
-function rgbChannelsToHex(r: number, g: number, b: number) {
-  const clamp = (channel: number) => Math.max(0, Math.min(255, Math.round(channel)));
-  return `#${[clamp(r), clamp(g), clamp(b)]
-    .map((channel) => channel.toString(16).padStart(2, '0'))
-    .join('')}`;
-}
+const LABEL_COLOR_PALETTE = [
+  '#e57373',
+  '#ff8a65',
+  '#ffd54f',
+  '#81c784',
+  '#4db6ac',
+  '#4fc3f7',
+  '#64b5f6',
+  '#9575cd',
+  '#ba68c8',
+  '#f06292',
+  '#a1887f',
+  '#90a4ae',
+];
 
 // ---------------------------------------------------------------------------
 // LabelEditorPopup – shown after shape draw or on double-click to edit
@@ -488,7 +496,9 @@ function LabelEditorPopup({
   onCancel: () => void;
 }) {
   const [label, setLabel] = useState(initialLabel);
-  const [color, setColor] = useState(initialColor);
+  const [color, setColor] = useState(normalizeHexColor(initialColor));
+  const [pendingColor, setPendingColor] = useState(normalizeHexColor(initialColor));
+  const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const [customText, setCustomText] = useState(
     PREDEFINED_LABELS.includes(initialLabel) ? '' : initialLabel,
   );
@@ -503,23 +513,17 @@ function LabelEditorPopup({
   const handleSelectPredefined = (l: string) => {
     setLabel(l);
     setCustomText('');
-    if (LABEL_COLOR_MAP[l]) setColor(LABEL_COLOR_MAP[l]);
+    if (LABEL_COLOR_MAP[l]) {
+      const nextColor = normalizeHexColor(LABEL_COLOR_MAP[l]);
+      setColor(nextColor);
+      setPendingColor(nextColor);
+      setColorPickerOpen(false);
+    }
   };
 
   const handleCustomTextChange = (val: string) => {
     setCustomText(val);
     if (val.trim()) setLabel(val.trim());
-  };
-
-  const rgb = hexToRgbChannels(color);
-  const updateRgbChannel = (channel: 'r' | 'g' | 'b', value: string) => {
-    const parsed = Number.parseInt(value, 10);
-    const next = Number.isFinite(parsed) ? parsed : 0;
-    setColor(rgbChannelsToHex(
-      channel === 'r' ? next : rgb.r,
-      channel === 'g' ? next : rgb.g,
-      channel === 'b' ? next : rgb.b,
-    ));
   };
 
   const handleConfirm = () => {
@@ -599,57 +603,108 @@ function LabelEditorPopup({
         {/* Color picker */}
         <div style={{ marginTop: 10 }}>
           <div style={{ fontSize: 10, color: 'var(--text-muted, #888)', marginBottom: 4 }}>Color</div>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '24px repeat(3, 1fr)',
-            gap: 5,
-            alignItems: 'center',
-          }}>
-            <div
-              style={{
-                width: 22,
-                height: 22,
-                border: '1px solid var(--border-color, #444)',
-                borderRadius: 4,
-                background: color,
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button
+              type="button"
+              onClick={() => {
+                setPendingColor(color);
+                setColorPickerOpen((open) => !open);
               }}
-            />
-            {(['r', 'g', 'b'] as const).map((channel) => (
-              <label
-                key={channel}
+              style={{
+                flex: 1,
+                minWidth: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '6px 8px',
+                borderRadius: 5,
+                border: '1px solid var(--border-color, #444)',
+                background: 'var(--bg-primary, #0d0e1a)',
+                color: 'var(--text-secondary, #aaa)',
+                cursor: 'pointer',
+                fontSize: 11,
+                fontWeight: 700,
+              }}
+            >
+              <span
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 3,
-                  color: 'var(--text-muted, #888)',
-                  fontSize: 9,
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
+                  width: 18,
+                  height: 18,
+                  borderRadius: 4,
+                  border: '1px solid rgba(255,255,255,0.42)',
+                  background: color,
+                  flexShrink: 0,
                 }}
-              >
-                {channel}
-                <input
-                  type="number"
-                  min={0}
-                  max={255}
-                  value={rgb[channel]}
-                  onChange={(e) => updateRgbChannel(channel, e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  style={{
-                    width: '100%',
-                    minWidth: 0,
-                    padding: '3px 4px',
-                    borderRadius: 4,
-                    border: '1px solid var(--border-color, #444)',
-                    background: 'var(--bg-primary, #0d0e1a)',
-                    color: 'var(--text-primary, #fff)',
-                    fontSize: 10,
-                    boxSizing: 'border-box',
-                  }}
-                />
-              </label>
-            ))}
+              />
+              {colorPickerOpen ? 'Close palette' : 'Choose color'}
+            </button>
           </div>
+          {colorPickerOpen ? (
+            <div style={{
+              marginTop: 7,
+              padding: 8,
+              borderRadius: 6,
+              border: '1px solid var(--border-color, #444)',
+              background: 'var(--bg-primary, #0d0e1a)',
+            }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 6 }}>
+                {LABEL_COLOR_PALETTE.map((swatch) => {
+                  const selected = pendingColor === swatch;
+                  return (
+                    <button
+                      key={swatch}
+                      type="button"
+                      onClick={() => setPendingColor(swatch)}
+                      title={swatch}
+                      aria-label={`Select ${swatch}`}
+                      style={{
+                        height: 24,
+                        borderRadius: 5,
+                        border: selected
+                          ? '2px solid #fff'
+                          : '1px solid rgba(255,255,255,0.22)',
+                        outline: selected ? `2px solid ${swatch}` : 'none',
+                        background: swatch,
+                        cursor: 'pointer',
+                        boxShadow: selected ? '0 0 0 1px rgba(0,0,0,0.42)' : 'none',
+                      }}
+                    />
+                  );
+                })}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginTop: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted, #888)', fontSize: 10 }}>
+                  <span style={{
+                    width: 16,
+                    height: 16,
+                    borderRadius: 4,
+                    border: '1px solid rgba(255,255,255,0.32)',
+                    background: pendingColor,
+                  }} />
+                  {pendingColor}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setColor(pendingColor);
+                    setColorPickerOpen(false);
+                  }}
+                  style={{
+                    padding: '5px 9px',
+                    borderRadius: 5,
+                    border: '1px solid color-mix(in srgb, var(--accent-blue, #4f8df5) 48%, var(--border-color, #444))',
+                    background: 'color-mix(in srgb, var(--accent-blue, #4f8df5) 14%, var(--bg-secondary, #1a1b2e))',
+                    color: 'var(--accent-blue, #4f8df5)',
+                    fontSize: 11,
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Use Color
+                </button>
+              </div>
+            </div>
+          ) : null}
         </div>
 
         <div style={{
@@ -1006,7 +1061,7 @@ function InteractiveAnnotatorNode({ id, data }: NodeProps) {
     currentMouse: ImagePoint | null; // live mouse position (image-space)
   }>({
     active: false,
-    tool: 'rect',
+    tool: 'pan',
     points: [],
     startPoint: null,
     currentRadius: 0,
@@ -2016,6 +2071,31 @@ function InteractiveAnnotatorNode({ id, data }: NodeProps) {
     setSelectedIdx(-1);
   }, [selectedIdx, annotations, d.sliceAnnotationsMap, d.sliceIndex, id, updateNodeData, pushHistory]);
 
+  useEffect(() => {
+    const handleNativeDelete = (event: KeyboardEvent) => {
+      if (selectedIdx < 0 || selectedIdx >= annotations.length) return;
+      if (event.key !== 'Delete' && event.key !== 'Backspace') return;
+
+      const target = event.target;
+      if (target instanceof HTMLElement) {
+        const tagName = target.tagName.toLowerCase();
+        if (target.isContentEditable || ['input', 'textarea', 'select'].includes(tagName)) {
+          return;
+        }
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      deleteSelected();
+    };
+
+    window.addEventListener('keydown', handleNativeDelete, true);
+    return () => {
+      window.removeEventListener('keydown', handleNativeDelete, true);
+    };
+  }, [annotations.length, deleteSelected, selectedIdx]);
+
   const clearAll = useCallback(() => {
     pushHistory(annotations);
     const map = { ...(d.sliceAnnotationsMap || {}) };
@@ -2804,7 +2884,10 @@ function InteractiveAnnotatorNode({ id, data }: NodeProps) {
   const rejectedLabelsForSlice = currentViewDecisions
     .filter((item) => item.decision === 'rejected')
     .map((item) => item.label);
-  const pendingLabelSuggestions = (d.labelSuggestions || []).filter((label) =>
+  const suggestionContextMatches = !d.labelSuggestionContext ||
+    (d.labelSuggestionContext.sliceIndex === d.sliceIndex && d.labelSuggestionContext.view === (d.view || 'axial'));
+  const currentSliceSuggestions = suggestionContextMatches ? d.labelSuggestions || [] : [];
+  const pendingLabelSuggestions = currentSliceSuggestions.filter((label) =>
     !currentViewDecisions.some((decision) => sameLabel(decision.label, label)),
   );
   const labelSuggestionCount = pendingLabelSuggestions.length;
@@ -3229,7 +3312,7 @@ function InteractiveAnnotatorNode({ id, data }: NodeProps) {
               {vlmPanelOpen && (
                 <div style={assistPanelBodyStyle}>
                   {labelSuggestionCount > 0 && (
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 7 }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 7, maxWidth: '100%', minWidth: 0 }}>
                       {pendingLabelSuggestions.map((label) => (
                         <button
                           key={label}
@@ -3248,6 +3331,11 @@ function InteractiveAnnotatorNode({ id, data }: NodeProps) {
                             fontWeight: 800,
                             lineHeight: 1.2,
                             cursor: 'pointer',
+                            maxWidth: '100%',
+                            minWidth: 0,
+                            whiteSpace: 'normal',
+                            overflowWrap: 'anywhere',
+                            wordBreak: 'break-word',
                           }}
                           title="Review suggested label"
                         >
@@ -3268,7 +3356,7 @@ function InteractiveAnnotatorNode({ id, data }: NodeProps) {
                       }}>
                         Accepted
                       </div>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, maxWidth: '100%', minWidth: 0 }}>
                         {acceptedLabelsForSlice.map((label) => (
                           <span
                             key={label}
@@ -3281,6 +3369,11 @@ function InteractiveAnnotatorNode({ id, data }: NodeProps) {
                               fontSize: 10,
                               fontWeight: 800,
                               lineHeight: 1.2,
+                              maxWidth: '100%',
+                              minWidth: 0,
+                              whiteSpace: 'normal',
+                              overflowWrap: 'anywhere',
+                              wordBreak: 'break-word',
                             }}
                           >
                             {label}

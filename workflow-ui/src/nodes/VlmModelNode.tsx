@@ -1,13 +1,14 @@
 /**
  * VLM model nodes
  * ===============
- * Shared React Flow node surface for MedGemma, SmolVLM, and Med-R1.
+ * Shared React Flow node surface for medical report generation.
  *
  * These nodes do not embed prompt text. They fetch the same modality-specific
  * prompt presets used by the Gradio app through the FastAPI VLM router.
  */
 
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { type NodeProps } from '@xyflow/react';
 
 import BaseNode from './BaseNode';
@@ -26,8 +27,8 @@ const MODEL_META: Record<VlmModelId, {
 }> = {
   medgemma: {
     nodeType: 'medgemmaNode',
-    title: 'MedGemma',
-    icon: 'MG',
+    title: 'Medical Report Generation',
+    icon: 'MR',
     description: 'Runs MedGemma-4B with medical prompt presets from the Gradio app.',
     tips: [
       'Best for radiology-style descriptions and medical terminology.',
@@ -65,6 +66,11 @@ const FALLBACK_PROMPTS = [
 ];
 
 const MODALITIES: VlmModality[] = ['MRI', 'CT', 'MG'];
+const MODELS: Array<{ value: VlmModelId; label: string; tokens: number; reasoning: boolean }> = [
+  { value: 'medgemma', label: 'MedGemma', tokens: 256, reasoning: false },
+  { value: 'smolvlm', label: 'SmolVLM', tokens: 128, reasoning: false },
+  { value: 'med-r1', label: 'Med-R1', tokens: 384, reasoning: true },
+];
 
 const labelStyle: React.CSSProperties = {
   fontSize: 11,
@@ -80,7 +86,7 @@ const inputStyle: React.CSSProperties = {
   border: '1px solid var(--border-color)',
   borderRadius: 5,
   color: 'var(--text-primary)',
-  fontSize: 12,
+  fontSize: 13,
   outline: 'none',
   boxSizing: 'border-box',
 };
@@ -97,21 +103,27 @@ const rowStyle: React.CSSProperties = {
   marginTop: 8,
 };
 
-const resultStyle: React.CSSProperties = {
-  marginTop: 9,
-  padding: '8px 9px',
+const resultButtonStyle: React.CSSProperties = {
+  width: '100%',
+  marginTop: 10,
+  padding: '11px 12px',
   borderRadius: 6,
   border: '1px solid rgba(150, 115, 255, 0.28)',
   background: 'rgba(150, 115, 255, 0.08)',
+  textAlign: 'left',
+  cursor: 'pointer',
+  boxSizing: 'border-box',
+  transition: 'border-color 120ms ease, background 120ms ease',
 };
 
 const resultTextStyle: React.CSSProperties = {
-  marginTop: 6,
-  maxHeight: 130,
+  marginTop: 8,
+  minHeight: 145,
+  maxHeight: 210,
   overflowY: 'auto',
   whiteSpace: 'pre-wrap',
-  fontSize: 10,
-  lineHeight: 1.45,
+  fontSize: 13,
+  lineHeight: 1.5,
   color: 'var(--text-secondary)',
 };
 
@@ -127,8 +139,171 @@ const badgeStyle: React.CSSProperties = {
   textTransform: 'uppercase',
 };
 
+const contextGridStyle: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+  gap: 7,
+  marginTop: 9,
+};
+
+const contextCardStyle: React.CSSProperties = {
+  padding: '7px 8px',
+  borderRadius: 5,
+  border: '1px solid rgba(150, 115, 255, 0.24)',
+  background: 'rgba(255, 255, 255, 0.035)',
+};
+
+const contextLabelStyle: React.CSSProperties = {
+  display: 'block',
+  color: 'var(--text-muted)',
+  fontSize: 9,
+  fontWeight: 800,
+  textTransform: 'uppercase',
+  marginBottom: 3,
+};
+
+const contextValueStyle: React.CSSProperties = {
+  color: 'var(--text-primary)',
+  fontSize: 12,
+  fontWeight: 800,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+};
+
+const runButtonStyle: React.CSSProperties = {
+  padding: '5px 11px',
+  borderRadius: 5,
+  border: '1px solid rgba(150, 115, 255, 0.42)',
+  background: 'rgba(150, 115, 255, 0.12)',
+  color: 'var(--accent-purple)',
+  fontSize: 12,
+  fontWeight: 900,
+  cursor: 'pointer',
+};
+
+const modalBackdropStyle: React.CSSProperties = {
+  position: 'fixed',
+  inset: 0,
+  zIndex: 10000,
+  background: 'rgba(8, 10, 24, 0.72)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: 24,
+};
+
+const modalPanelStyle: React.CSSProperties = {
+  width: 'min(860px, 92vw)',
+  maxHeight: '84vh',
+  borderRadius: 10,
+  border: '1px solid rgba(150, 115, 255, 0.45)',
+  background: 'var(--bg-secondary)',
+  boxShadow: '0 24px 60px rgba(0, 0, 0, 0.38)',
+  display: 'flex',
+  flexDirection: 'column',
+  overflow: 'hidden',
+};
+
+const markdownContainerStyle: React.CSSProperties = {
+  whiteSpace: 'normal',
+  color: 'inherit',
+};
+
+const markdownParagraphStyle: React.CSSProperties = {
+  margin: '0 0 8px',
+};
+
+const markdownListStyle: React.CSSProperties = {
+  margin: '6px 0 10px',
+  paddingLeft: 20,
+};
+
+const markdownListItemStyle: React.CSSProperties = {
+  marginBottom: 5,
+};
+
 function truncate(value: string, maxLength: number) {
   return value.length > maxLength ? `${value.slice(0, maxLength - 1)}...` : value;
+}
+
+function renderInlineMarkdown(text: string): ReactNode[] {
+  const parts: ReactNode[] = [];
+  const pattern = /(\*\*[^*]+\*\*|\*[^*]+\*)/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = pattern.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(text.slice(lastIndex, match.index));
+    }
+
+    const token = match[0];
+    if (token.startsWith('**')) {
+      parts.push(
+        <strong key={`${match.index}-b`}>
+          {token.slice(2, -2)}
+        </strong>,
+      );
+    } else {
+      parts.push(
+        <em key={`${match.index}-i`}>
+          {token.slice(1, -1)}
+        </em>,
+      );
+    }
+
+    lastIndex = match.index + token.length;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex));
+  }
+
+  return parts;
+}
+
+function renderReportMarkdown(text: string) {
+  const lines = text.split(/\r?\n/);
+  const blocks: ReactNode[] = [];
+  let listItems: ReactNode[] = [];
+
+  const flushList = () => {
+    if (listItems.length === 0) return;
+    blocks.push(
+      <ul key={`list-${blocks.length}`} style={markdownListStyle}>
+        {listItems}
+      </ul>,
+    );
+    listItems = [];
+  };
+
+  lines.forEach((rawLine, index) => {
+    const line = rawLine.trim();
+    if (!line) {
+      flushList();
+      return;
+    }
+
+    const bulletMatch = /^[-*]\s+(.+)$/.exec(line);
+    if (bulletMatch) {
+      listItems.push(
+        <li key={`li-${index}`} style={markdownListItemStyle}>
+          {renderInlineMarkdown(bulletMatch[1])}
+        </li>,
+      );
+      return;
+    }
+
+    flushList();
+    blocks.push(
+      <p key={`p-${index}`} style={markdownParagraphStyle}>
+        {renderInlineMarkdown(line)}
+      </p>,
+    );
+  });
+
+  flushList();
+  return <div style={markdownContainerStyle}>{blocks}</div>;
 }
 
 function getPromptTitle(data: VlmNodeData) {
@@ -140,9 +315,16 @@ function getPromptTitle(data: VlmNodeData) {
 
 function VlmModelNode({ id, data, model }: NodeProps & { model: VlmModelId }) {
   const updateNodeData = useWorkflowStore((s) => s.updateNodeData);
+  const storeNodes = useWorkflowStore((s) => s.nodes);
+  const storeEdges = useWorkflowStore((s) => s.edges);
   const d = data as unknown as VlmNodeData;
-  const meta = MODEL_META[model];
+  const selectedModel = d.model || model;
+  const meta = model === 'medgemma' ? MODEL_META.medgemma : MODEL_META[selectedModel];
   const [promptError, setPromptError] = useState<string | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [resultOpen, setResultOpen] = useState(false);
+  const [resultHover, setResultHover] = useState(false);
+  const [runHover, setRunHover] = useState(false);
 
   useEffect(() => {
     api.getVlmPrompts(d.modality || 'MRI')
@@ -177,6 +359,16 @@ function VlmModelNode({ id, data, model }: NodeProps & { model: VlmModelId }) {
 
   const handleSelect = useCallback(
     (key: keyof VlmNodeData) => (event: React.ChangeEvent<HTMLSelectElement>) => {
+      if (key === 'model') {
+        const nextModel = event.target.value as VlmModelId;
+        const modelDefaults = MODELS.find((item) => item.value === nextModel);
+        updateNodeData(id, {
+          model: nextModel,
+          maxTokens: modelDefaults?.tokens,
+          includeReasoning: modelDefaults?.reasoning,
+        } as Partial<VlmNodeData>);
+        return;
+      }
       updateNodeData(id, { [key]: event.target.value } as Partial<VlmNodeData>);
     },
     [id, updateNodeData],
@@ -206,14 +398,40 @@ function VlmModelNode({ id, data, model }: NodeProps & { model: VlmModelId }) {
     [id, updateNodeData],
   );
 
-  const result = d.vlmResult;
-  const hasSession = Boolean(d.sessionId);
+  const sliceIndex = Number(d.sliceIndex ?? 0);
+  const view = d.view || 'axial';
+  const result = d.vlmResult &&
+    d.vlmResult.sliceIndex === sliceIndex &&
+    d.vlmResult.view === view
+    ? d.vlmResult
+    : undefined;
   const voicePrompt = d.voicePrompt;
+  const isGenerating = d.status === 'running';
+
+  const upstreamHasSession = useMemo(() => {
+    const upstreamIds = storeEdges.filter((e) => e.target === id).map((e) => e.source);
+    return upstreamIds.some((upId) => {
+      const upData = storeNodes.find((n) => n.id === upId)?.data as Record<string, unknown> | undefined;
+      return Boolean(upData?.sessionId);
+    });
+  }, [id, storeNodes, storeEdges]);
+  const hasSession = Boolean(d.sessionId) || upstreamHasSession;
+
   const selectedPromptTitle = voicePrompt?.text
     ? 'Voice Prompt'
     : d.customPrompt?.trim()
       ? 'Custom Prompt'
       : getPromptTitle(d);
+
+  const displayStatus = isGenerating
+    ? 'waiting'
+    : hasSession && d.status === 'waiting'
+    ? 'idle'
+    : (!hasSession && d.status === 'idle') ? 'waiting' : d.status;
+  const scaleFontStyle = {
+    '--vlm-scale-font': 'clamp(13px, 1.9cqh, 18px)',
+    '--vlm-small-font': 'clamp(11px, 1.45cqh, 14px)',
+  } as React.CSSProperties;
 
   return (
     <BaseNode
@@ -222,129 +440,267 @@ function VlmModelNode({ id, data, model }: NodeProps & { model: VlmModelId }) {
       title={meta.title}
       icon={meta.icon}
       color="var(--accent-purple)"
-      status={d.status}
+      status={displayStatus}
       error={d.error}
       hasInput={true}
       hasOutput={true}
       info={info}
-    >
-      <div style={{ fontSize: 11, color: hasSession ? 'var(--accent-green)' : 'var(--text-muted)' }}>
-        {hasSession ? `Slice ${d.sliceIndex || 0} ready` : 'Awaiting Data Loader or Annotator'}
-      </div>
-
-      {voicePrompt?.text ? (
-        <div
+      footerAction={hasSession ? (
+        <button
+          type="button"
           style={{
-            marginTop: 7,
-            padding: '6px 8px',
-            borderRadius: 5,
-            border: '1px solid rgba(245, 181, 79, 0.3)',
-            background: 'rgba(245, 181, 79, 0.08)',
-            color: 'var(--accent-orange)',
-            fontSize: 10,
-            lineHeight: 1.35,
+            ...runButtonStyle,
+            background: runHover ? 'rgba(150, 115, 255, 0.2)' : runButtonStyle.background,
+          }}
+          onMouseEnter={() => setRunHover(true)}
+          onMouseLeave={() => setRunHover(false)}
+          onClick={() => {
+            window.dispatchEvent(new CustomEvent('segpro:run-node', { detail: { nodeId: id } }));
           }}
         >
-          Voice prompt: {truncate(voicePrompt.text, 110)}
-        </div>
+          Create Report
+        </button>
       ) : null}
+      resizable={true}
+      minWidth={460}
+      maxWidth={460}
+      minHeight={470}
+    >
+      {(!hasSession || isGenerating) && (
+        <div
+          style={{
+            minHeight: 250,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            textAlign: 'center',
+            padding: '18px 20px',
+            borderRadius: 8,
+            border: '1px solid rgba(245, 181, 79, 0.38)',
+            background: 'rgba(245, 181, 79, 0.08)',
+            marginBottom: 10,
+          }}
+        >
+          <div style={{ color: 'var(--accent-orange)', fontSize: 28, fontWeight: 900, marginBottom: 8 }}>
+            ◌
+          </div>
+          <div style={{ color: 'var(--accent-orange)', fontSize: 16, fontWeight: 900, marginBottom: 6 }}>
+            {isGenerating ? 'Generating a response...' : 'Load image first'}
+          </div>
+          <div style={{ color: 'var(--text-secondary)', fontSize: 13, lineHeight: 1.5 }}>
+            {isGenerating
+              ? 'The selected medical VLM is analyzing the active slice. The report will appear here when complete.'
+              : 'Run the Data Loader and inspect the slice in Interactive Annotator. This node will wait until that context exists.'}
+          </div>
+        </div>
+      )}
 
-      <div style={rowStyle}>
-        <div>
-          <label style={labelStyle}>Prompt</label>
-          <select value={d.promptKey || 'describe_slice'} onChange={handleSelect('promptKey')} style={selectStyle}>
+      <div style={{ ...scaleFontStyle, opacity: hasSession && !isGenerating ? 1 : 0.22 }}>
+        <div style={{ fontSize: 'var(--vlm-scale-font)', color: hasSession ? 'var(--accent-green)' : 'var(--text-muted)', fontWeight: 800 }}>
+          {hasSession ? 'Active annotator context' : 'No image context yet'}
+        </div>
+
+        <div style={contextGridStyle}>
+          <div style={contextCardStyle}>
+            <span style={contextLabelStyle}>View</span>
+            <span style={contextValueStyle}>{view}</span>
+          </div>
+          <div style={contextCardStyle}>
+            <span style={contextLabelStyle}>Slice</span>
+            <span style={contextValueStyle}>{sliceIndex + 1}</span>
+          </div>
+          <div style={contextCardStyle}>
+            <span style={contextLabelStyle}>Modality</span>
+            <span style={contextValueStyle}>{d.modality || 'MRI'}</span>
+          </div>
+        </div>
+
+        {voicePrompt?.text ? (
+          <div
+            style={{
+              marginTop: 8,
+              padding: '6px 8px',
+              borderRadius: 5,
+              border: '1px solid rgba(245, 181, 79, 0.3)',
+              background: 'rgba(245, 181, 79, 0.08)',
+              color: 'var(--accent-orange)',
+              fontSize: 10,
+              lineHeight: 1.35,
+            }}
+          >
+            Voice prompt: {truncate(voicePrompt.text, 110)}
+          </div>
+        ) : null}
+
+        <div style={{ marginTop: 11 }}>
+          <label style={{ ...labelStyle, fontSize: 'var(--vlm-scale-font)', color: 'var(--text-primary)', fontWeight: 800 }}>Prompt</label>
+          <select
+            value={d.promptKey || 'describe_slice'}
+            onChange={handleSelect('promptKey')}
+            style={{ ...selectStyle, padding: '10px 11px', fontSize: 'var(--vlm-scale-font)' }}
+          >
             {promptOptions.map((prompt) => (
               <option key={prompt.key} value={prompt.key}>{prompt.title}</option>
             ))}
           </select>
         </div>
-        <div>
-          <label style={labelStyle}>Modality</label>
-          <select value={d.modality || 'MRI'} onChange={handleSelect('modality')} style={selectStyle}>
-            {MODALITIES.map((modality) => (
-              <option key={modality} value={modality}>{modality}</option>
-            ))}
-          </select>
-        </div>
-      </div>
 
-      <div style={rowStyle}>
-        <div>
-          <label style={labelStyle}>View</label>
-          <select value={d.view || 'axial'} onChange={handleSelect('view')} style={selectStyle}>
-            <option value="axial">Axial</option>
-            <option value="coronal">Coronal</option>
-            <option value="sagittal">Sagittal</option>
-          </select>
-        </div>
-        <div>
-          <label style={labelStyle}>Slice</label>
-          <input
-            type="number"
-            min={0}
-            value={Number(d.sliceIndex ?? 0)}
-            onChange={handleNumber('sliceIndex')}
-            style={inputStyle}
+        <details
+          open={settingsOpen}
+          onToggle={(event) => setSettingsOpen(event.currentTarget.open)}
+          style={{ marginTop: 9 }}
+        >
+          <summary style={{ cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 11, fontWeight: 800 }}>
+            Settings
+          </summary>
+          <div style={rowStyle}>
+            <div>
+              <label style={labelStyle}>Model</label>
+              <select value={selectedModel} onChange={handleSelect('model')} style={selectStyle}>
+                {MODELS.map((item) => (
+                  <option key={item.value} value={item.value}>{item.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label style={labelStyle}>Modality</label>
+              <select value={d.modality || 'MRI'} onChange={handleSelect('modality')} style={selectStyle}>
+                {MODALITIES.map((modality) => (
+                  <option key={modality} value={modality}>{modality}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div style={rowStyle}>
+            <div>
+              <label style={labelStyle}>Tokens</label>
+              <input
+                type="number"
+                min={32}
+                max={2048}
+                value={Number(d.maxTokens ?? 256)}
+                onChange={handleNumber('maxTokens')}
+                style={inputStyle}
+              />
+            </div>
+            <div />
+          </div>
+          <textarea
+            value={d.customPrompt || ''}
+            onChange={handleText}
+            placeholder="Optional custom prompt. Leave empty to use the selected preset."
+            rows={4}
+            style={{ ...inputStyle, resize: 'vertical', marginTop: 8, lineHeight: 1.35 }}
           />
-        </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 8 }}>
+            <label style={{ ...labelStyle, display: 'flex', gap: 6, alignItems: 'center' }}>
+              <input
+                type="checkbox"
+                checked={Boolean(d.useOverlay)}
+                onChange={handleToggle('useOverlay')}
+              />
+              Use overlays
+            </label>
+            <label style={{ ...labelStyle, display: 'flex', gap: 6, alignItems: 'center' }}>
+              <input
+                type="checkbox"
+                checked={Boolean(d.includeReasoning)}
+                onChange={handleToggle('includeReasoning')}
+                disabled={selectedModel !== 'med-r1'}
+              />
+              Reasoning
+            </label>
+          </div>
+        </details>
+
+        {promptError ? (
+          <NodeHint>{promptError}. Fallback prompts are available.</NodeHint>
+        ) : null}
+
+        {result ? (
+          <button
+            type="button"
+            style={{
+              ...resultButtonStyle,
+              borderColor: resultHover ? 'rgba(150, 115, 255, 0.58)' : 'rgba(150, 115, 255, 0.28)',
+              background: resultHover ? 'rgba(150, 115, 255, 0.14)' : 'rgba(150, 115, 255, 0.08)',
+            }}
+            onClick={() => setResultOpen(true)}
+            onMouseEnter={() => setResultHover(true)}
+            onMouseLeave={() => setResultHover(false)}
+            title="Open full VLM output"
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center' }}>
+              <span style={badgeStyle}>{result.modelLabel}</span>
+              <span style={{ color: 'var(--text-muted)', fontSize: 10 }}>
+                {result.elapsedSeconds.toFixed(1)}s
+              </span>
+            </div>
+            <div style={{ color: 'var(--text-primary)', fontSize: 'var(--vlm-scale-font)', fontWeight: 800, marginTop: 7 }}>
+              {selectedPromptTitle}
+            </div>
+            <div style={resultTextStyle}>
+              {renderReportMarkdown(truncate(result.text || 'No response text.', 900))}
+            </div>
+          </button>
+        ) : (
+          <NodeHint>
+            Run this node after inspecting the selected slice. The output opens in a larger modal.
+          </NodeHint>
+        )}
       </div>
 
-      <details style={{ marginTop: 8 }}>
-        <summary style={{ cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 11, fontWeight: 700 }}>
-          Advanced prompt
-        </summary>
-        <textarea
-          value={d.customPrompt || ''}
-          onChange={handleText}
-          placeholder="Optional custom prompt. Leave empty to use the selected preset."
-          rows={4}
-          style={{ ...inputStyle, resize: 'vertical', marginTop: 6, lineHeight: 1.35 }}
-        />
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 8 }}>
-          <label style={{ ...labelStyle, display: 'flex', gap: 6, alignItems: 'center' }}>
-            <input
-              type="checkbox"
-              checked={Boolean(d.useOverlay)}
-              onChange={handleToggle('useOverlay')}
-            />
-            Use overlays
-          </label>
-          <label style={{ ...labelStyle, display: 'flex', gap: 6, alignItems: 'center' }}>
-            <input
-              type="checkbox"
-              checked={Boolean(d.includeReasoning)}
-              onChange={handleToggle('includeReasoning')}
-              disabled={model !== 'med-r1'}
-            />
-            Reasoning
-          </label>
-        </div>
-      </details>
-
-      {promptError ? (
-        <NodeHint>{promptError}. Fallback prompts are available.</NodeHint>
+      {resultOpen && result ? createPortal(
+        <div style={modalBackdropStyle} onClick={() => setResultOpen(false)}>
+          <div style={modalPanelStyle} onClick={(event) => event.stopPropagation()}>
+            <div style={{
+              padding: '14px 16px',
+              borderBottom: '1px solid rgba(150, 115, 255, 0.28)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              gap: 12,
+              alignItems: 'center',
+            }}>
+              <div>
+                <div style={{ color: 'var(--accent-purple)', fontSize: 13, fontWeight: 900 }}>
+                  {meta.title} Output
+                </div>
+                <div style={{ color: 'var(--text-secondary)', fontSize: 11, marginTop: 3 }}>
+                  {selectedPromptTitle} - {result.view} slice {Number(result.sliceIndex ?? 0) + 1}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setResultOpen(false)}
+                style={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: 6,
+                  border: '1px solid var(--border-color)',
+                  background: 'transparent',
+                  color: 'var(--text-secondary)',
+                  cursor: 'pointer',
+                  fontWeight: 900,
+                }}
+                title="Close"
+              >
+                x
+              </button>
+            </div>
+            <div style={{
+              padding: 16,
+              overflowY: 'auto',
+              color: 'var(--text-primary)',
+              fontSize: 14,
+              lineHeight: 1.55,
+            }}>
+              {renderReportMarkdown(result.text || 'No response text.')}
+            </div>
+          </div>
+        </div>,
+        document.body,
       ) : null}
-
-      {result ? (
-        <div style={resultStyle}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center' }}>
-            <span style={badgeStyle}>{result.modelLabel}</span>
-            <span style={{ color: 'var(--text-muted)', fontSize: 10 }}>
-              {result.elapsedSeconds.toFixed(1)}s
-            </span>
-          </div>
-          <div style={{ color: 'var(--text-primary)', fontSize: 11, fontWeight: 800, marginTop: 6 }}>
-            {selectedPromptTitle}
-          </div>
-          <div style={resultTextStyle}>
-            {truncate(result.text || 'No response text.', 900)}
-          </div>
-        </div>
-      ) : (
-        <NodeHint>
-          Run this node to analyze the selected slice. Results can feed Label Suggester.
-        </NodeHint>
-      )}
     </BaseNode>
   );
 }

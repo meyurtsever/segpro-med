@@ -21,8 +21,10 @@ interface BaseNodeProps {
   hasOutput?: boolean;
   inspectUrl?: string;
   info?: NodeInfo;
+  footerAction?: ReactNode;
   resizable?: boolean;
   minWidth?: number;
+  maxWidth?: number;
   minHeight?: number;
   children: ReactNode;
 }
@@ -34,6 +36,7 @@ const statusConfig: Record<NodeStatus, { icon: string; color: string; label: str
   error:   { icon: '❌', color: 'var(--accent-red)',    label: 'Error' },
   cancelled: { icon: '\u25cb', color: 'var(--accent-orange)', label: 'Cancelled' },
   skipped: { icon: '\u21b7', color: 'var(--text-muted)', label: 'Skipped' },
+  waiting: { icon: '\u25cc', color: 'var(--accent-blue)', label: 'Waiting for upstream' },
 };
 
 function BaseNode({
@@ -48,8 +51,10 @@ function BaseNode({
   hasOutput = true,
   inspectUrl,
   info,
+  footerAction,
   resizable = false,
   minWidth = 280,
+  maxWidth,
   minHeight = 240,
   children,
 }: BaseNodeProps) {
@@ -102,20 +107,22 @@ function BaseNode({
         border: `1px solid ${borderColor}`,
         borderRadius: 10,
         minWidth: resizable ? minWidth : 280,
+        maxWidth: resizable ? maxWidth : 340,
         minHeight: resizable ? minHeight : undefined,
-        maxWidth: resizable ? 'none' : 340,
         width: resizable ? '100%' : undefined,
         height: resizable ? '100%' : undefined,
         display: resizable ? 'flex' : undefined,
         flexDirection: resizable ? 'column' : undefined,
         overflow: 'visible',
         transition: 'border-color 120ms ease',
+        containerType: resizable ? 'size' : undefined,
       }}
     >
       {resizable && (
         <NodeResizer
           isVisible={isSelected}
           minWidth={minWidth}
+          maxWidth={maxWidth}
           minHeight={minHeight}
           lineStyle={{ borderColor: 'transparent' }}
           handleStyle={{
@@ -197,7 +204,7 @@ function BaseNode({
       )}
 
       {/* Footer — Info & Inspect buttons */}
-      {(info || inspectUrl) && (
+      {(info || inspectUrl || footerAction) && (
         <div
           style={{
             borderTop: '1px solid var(--border-color)',
@@ -236,6 +243,8 @@ function BaseNode({
           ) : (
             <div />
           )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {footerAction}
           {inspectUrl ? (
             <button
               onClick={() => window.open(inspectUrl, '_blank')}
@@ -262,9 +271,8 @@ function BaseNode({
             >
               🔍 Inspect on Tool
             </button>
-          ) : (
-            <div />
-          )}
+          ) : null}
+          </div>
         </div>
       )}
 

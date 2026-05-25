@@ -766,11 +766,12 @@ export default function NodeInspector() {
             'promptKey',
             apiPrompts.length > 0 ? apiPrompts : FALLBACK_VLM_PROMPTS,
           )}
+          {renderSelectField('Model', 'model', ['medgemma', 'smolvlm', 'med-r1'])}
           {renderSelectField('Modality', 'modality', VLM_MODALITIES)}
           {renderSelectField('View Plane', 'view', ['axial', 'coronal', 'sagittal'])}
           {renderNumberField('Slice Index', 'sliceIndex')}
           {renderNumberField('Max Tokens', 'maxTokens')}
-          {selectedNode.type === 'medR1Node'
+          {selectedNode.type === 'medR1Node' || selectedData.model === 'med-r1'
             ? renderCheckboxField('Ask Med-R1 for reasoning format', 'includeReasoning')
             : null}
           {renderCheckboxField('Use annotation overlays when available', 'useOverlay')}
