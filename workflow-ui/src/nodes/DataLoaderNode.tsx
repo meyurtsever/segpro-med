@@ -18,6 +18,10 @@ import NodeHint from '../components/NodeHint';
 import * as api from '../api/client';
 import type { PatientSearchResult } from '../api/client';
 import { buildMetadataRows, truncateMetadataValue } from '../utils/metadataRows';
+import {
+  TASK_DATA_AUTO_LOAD_EVENT,
+  supportsTaskDataAutoLoad,
+} from '../engine/taskEvents';
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
@@ -127,6 +131,25 @@ const DATA_LOADER_INFO: NodeInfo = {
   ],
 };
 
+function requestTaskDataAutoLoad(
+  nodeId: string,
+  nodeData: Record<string, unknown>,
+  path: string,
+) {
+  if (typeof window === 'undefined') return;
+  if (!supportsTaskDataAutoLoad(nodeData.taskTemplateId)) return;
+  if (nodeData.taskNodeKey !== 'loader') return;
+  if (!path.trim()) return;
+
+  window.dispatchEvent(new CustomEvent(TASK_DATA_AUTO_LOAD_EVENT, {
+    detail: {
+      nodeId,
+      templateId: nodeData.taskTemplateId,
+      path,
+    },
+  }));
+}
+
 function DataLoaderNode({ id, data }: NodeProps) {
   const updateNodeData = useWorkflowStore((s) => s.updateNodeData);
   const d = data as unknown as DataLoaderNodeData;
@@ -181,6 +204,7 @@ function DataLoaderNode({ id, data }: NodeProps) {
           updateNodeData(id, { searchRoot: result.path });
         } else {
           updateNodeData(id, { path: result.path });
+          requestTaskDataAutoLoad(id, data as Record<string, unknown>, result.path);
         }
       } catch (err) {
         setPickerError(
@@ -192,7 +216,7 @@ function DataLoaderNode({ id, data }: NodeProps) {
         setPickerBusy(null);
       }
     },
-    [d.path, d.searchRoot, id, serverRoot, updateNodeData],
+    [d.path, d.searchRoot, data, id, serverRoot, updateNodeData],
   );
 
   // Debounced patient search
@@ -237,10 +261,11 @@ function DataLoaderNode({ id, data }: NodeProps) {
   const handleResultSelect = useCallback(
     (result: PatientSearchResult) => {
       updateNodeData(id, { path: result.path });
+      requestTaskDataAutoLoad(id, data as Record<string, unknown>, result.path);
       setSearchQuery('');
       setShowDropdown(false);
     },
-    [id, updateNodeData],
+    [data, id, updateNodeData],
   );
 
   const inspectUrl = d.sessionId

@@ -6,7 +6,7 @@
  * SAM2 on one slice, a range of slices, or the whole selected view.
  */
 
-import { memo, useCallback, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { type NodeProps } from '@xyflow/react';
 
 import BaseNode from './BaseNode';
@@ -82,7 +82,7 @@ const selectStyle: React.CSSProperties = {
 
 const fieldGridStyle: React.CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: '1fr 76px',
+  gridTemplateColumns: '1fr 1fr',
   gap: 6,
   marginTop: 8,
 };
@@ -111,6 +111,40 @@ const metricRowStyle: React.CSSProperties = {
   color: 'var(--text-secondary)',
 };
 
+const statusGridStyle: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+  gap: 8,
+  marginTop: 9,
+};
+
+const statusCardStyle = (color: string): React.CSSProperties => ({
+  minHeight: 58,
+  padding: '9px 10px',
+  borderRadius: 7,
+  border: `1px solid color-mix(in srgb, ${color} 38%, var(--border-color))`,
+  background: `color-mix(in srgb, ${color} 12%, var(--bg-secondary))`,
+  boxSizing: 'border-box',
+});
+
+const statusLabelStyle: React.CSSProperties = {
+  color: 'var(--text-muted)',
+  fontSize: 9,
+  fontWeight: 900,
+  textTransform: 'uppercase',
+  marginBottom: 5,
+};
+
+const statusValueStyle = (color: string): React.CSSProperties => ({
+  color,
+  fontSize: 20,
+  fontWeight: 950,
+  lineHeight: 1.05,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+});
+
 function titleCase(value: string) {
   return value.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
 }
@@ -122,9 +156,50 @@ function toNumber(value: string, fallback = 0) {
 
 function MedSAM2SegmenterNode({ id, data }: NodeProps) {
   const updateNodeData = useWorkflowStore((s) => s.updateNodeData);
+  const storeNodes = useWorkflowStore((s) => s.nodes);
+  const storeEdges = useWorkflowStore((s) => s.edges);
   const d = data as unknown as MedSAM2SegmenterNodeData;
   const [loadingConfigs, setLoadingConfigs] = useState(() => d.availableConfigs.length === 0);
   const [configError, setConfigError] = useState<string | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  const linkedAnnotator = useMemo(() => {
+    const taskTemplateId = d.taskTemplateId;
+    if (taskTemplateId) {
+      const taskAnnotator = storeNodes.find((node) =>
+        node.type === 'interactiveAnnotator' &&
+        node.data?.taskTemplateId === taskTemplateId &&
+        node.data?.taskNodeKey === 'annotator',
+      );
+      if (taskAnnotator) return taskAnnotator;
+    }
+
+    const connectedAnnotatorId = storeEdges.find((edge) => edge.source === id &&
+      storeNodes.find((node) => node.id === edge.target)?.type === 'interactiveAnnotator')?.target;
+    return connectedAnnotatorId
+      ? storeNodes.find((node) => node.id === connectedAnnotatorId)
+      : undefined;
+  }, [d.taskTemplateId, id, storeEdges, storeNodes]);
+
+  useEffect(() => {
+    if (!linkedAnnotator) return;
+    const annotatorData = linkedAnnotator.data as Record<string, unknown>;
+    const nextView = typeof annotatorData.view === 'string' ? annotatorData.view : undefined;
+    const nextSlice = Number(annotatorData.sliceIndex ?? 0);
+    const currentSlice = Number(d.sliceIndex ?? 0);
+    const patch: Partial<MedSAM2SegmenterNodeData> = {};
+
+    if (nextView && nextView !== d.view) {
+      patch.view = nextView as MedSAM2SegmenterNodeData['view'];
+    }
+    if (Number.isFinite(nextSlice) && nextSlice !== currentSlice) {
+      patch.sliceIndex = nextSlice;
+    }
+
+    if (Object.keys(patch).length > 0) {
+      updateNodeData(id, patch);
+    }
+  }, [d.sliceIndex, d.view, id, linkedAnnotator, updateNodeData]);
 
   useEffect(() => {
     if (d.availableConfigs.length > 0) return;
@@ -203,35 +278,49 @@ function MedSAM2SegmenterNode({ id, data }: NodeProps) {
       hasOutput={true}
       info={MEDSAM2_INFO}
     >
-      <div style={{ fontSize: 11, color: hasSession ? 'var(--accent-green)' : 'var(--text-muted)' }}>
+      <div style={{
+        padding: '8px 10px',
+        borderRadius: 7,
+        border: hasSession
+          ? '1px solid color-mix(in srgb, var(--accent-green) 38%, var(--border-color))'
+          : '1px solid var(--border-color)',
+        background: hasSession
+          ? 'color-mix(in srgb, var(--accent-green) 10%, var(--bg-secondary))'
+          : 'rgba(255,255,255,0.035)',
+        color: hasSession ? 'var(--accent-green)' : 'var(--text-muted)',
+        fontSize: 11,
+        fontWeight: 900,
+      }}>
         {hasSession ? 'Data session connected' : 'Awaiting Data Loader or Format Converter'}
       </div>
 
-      <div style={{ marginTop: 8 }}>
-        <label style={labelStyle}>Mode</label>
-        <select value={promptMode} onChange={handlePromptModeChange} style={selectStyle}>
-          {PROMPT_MODES.map((mode) => (
-            <option key={mode.value} value={mode.value}>{mode.label}</option>
-          ))}
-        </select>
+      <div style={statusGridStyle}>
+        <div style={statusCardStyle('var(--accent-purple)')}>
+          <div style={statusLabelStyle}>Current View</div>
+          <div style={statusValueStyle('var(--accent-purple)')}>{titleCase(d.view || 'axial')}</div>
+        </div>
+        <div style={statusCardStyle('var(--accent-blue)')}>
+          <div style={statusLabelStyle}>Current Slice</div>
+          <div style={statusValueStyle('var(--accent-blue)')}>{Number(d.sliceIndex ?? 0) + 1}</div>
+        </div>
       </div>
 
-      <div style={{ marginTop: 8 }}>
-        <label style={labelStyle}>Run Mode</label>
-        <select value={runMode} onChange={handleRunModeChange} style={selectStyle}>
-          {RUN_MODES.map((mode) => (
-            <option key={mode.value} value={mode.value}>{mode.label}</option>
-          ))}
-        </select>
+      <div style={statusGridStyle}>
+        <div style={statusCardStyle('var(--accent-green)')}>
+          <div style={statusLabelStyle}>Run Mode</div>
+          <div style={{ ...statusValueStyle('var(--accent-green)'), fontSize: 15 }}>
+            {RUN_MODES.find((mode) => mode.value === runMode)?.label || titleCase(runMode)}
+          </div>
+        </div>
+        <div style={statusCardStyle('var(--accent-orange)')}>
+          <div style={statusLabelStyle}>SAM2 Profile</div>
+          <div style={{ ...statusValueStyle('var(--accent-orange)'), fontSize: 15 }}>
+            {titleCase(d.configName || 'fast')}
+          </div>
+        </div>
       </div>
 
-      {promptMode === 'prompt' ? (
-        <NodeHint>
-          {promptSummary}. Create or select a point/rectangle in Interactive Annotator, run Prompt SAM2 there, or connect the annotator prompt output here.
-        </NodeHint>
-      ) : null}
-
-      <div style={{ marginTop: 8 }}>
+      <div style={{ marginTop: 10 }}>
         <label style={labelStyle}>Segmentation Profile</label>
         <select
           value={d.configName || 'fast'}
@@ -247,16 +336,45 @@ function MedSAM2SegmenterNode({ id, data }: NodeProps) {
         </select>
       </div>
 
-      <div style={fieldGridStyle}>
-        <div>
-          <label style={labelStyle}>View</label>
-          <select value={d.view || 'axial'} onChange={handleViewChange} style={selectStyle}>
-            {VIEWS.map((view) => (
-              <option key={view} value={view}>{titleCase(view)}</option>
+      {promptMode === 'prompt' ? (
+        <NodeHint>
+          {promptSummary}. Create or select a point/rectangle in Interactive Annotator, run Prompt SAM2 there, or connect the annotator prompt output here.
+        </NodeHint>
+      ) : null}
+
+      <details
+        open={settingsOpen}
+        onToggle={(event) => setSettingsOpen(event.currentTarget.open)}
+        style={{ marginTop: 10 }}
+      >
+        <summary style={{
+          cursor: 'pointer',
+          color: 'var(--text-secondary)',
+          fontSize: 11,
+          fontWeight: 900,
+          textTransform: 'uppercase',
+        }}>
+          Advanced segmentation settings
+        </summary>
+
+        <div style={{ marginTop: 8 }}>
+          <label style={labelStyle}>Mode</label>
+          <select value={promptMode} onChange={handlePromptModeChange} style={selectStyle}>
+            {PROMPT_MODES.map((mode) => (
+              <option key={mode.value} value={mode.value}>{mode.label}</option>
             ))}
           </select>
         </div>
-        {runMode === 'single' ? (
+
+        <div style={fieldGridStyle}>
+          <div>
+            <label style={labelStyle}>View</label>
+            <select value={d.view || 'axial'} onChange={handleViewChange} style={selectStyle}>
+              {VIEWS.map((view) => (
+                <option key={view} value={view}>{titleCase(view)}</option>
+              ))}
+            </select>
+          </div>
           <div>
             <label style={labelStyle}>Slice</label>
             <input
@@ -267,54 +385,65 @@ function MedSAM2SegmenterNode({ id, data }: NodeProps) {
               style={inputStyle}
             />
           </div>
-        ) : (
-          <div>
-            <label style={labelStyle}>Step</label>
-            <input
-              type="number"
-              min={1}
-              value={Number(d.sliceStep ?? 1)}
-              onChange={(event) => updateNumberField('sliceStep', event.target.value, 1)}
-              style={inputStyle}
-            />
-          </div>
-        )}
-      </div>
-
-      {runMode === 'range' ? (
-        <div style={rangeGridStyle}>
-          <div>
-            <label style={labelStyle}>Start</label>
-            <input
-              type="number"
-              min={0}
-              value={Number(d.sliceStart ?? 0)}
-              onChange={(event) => updateNumberField('sliceStart', event.target.value)}
-              style={inputStyle}
-            />
-          </div>
-          <div>
-            <label style={labelStyle}>End</label>
-            <input
-              type="number"
-              min={0}
-              value={Number(d.sliceEnd ?? 0)}
-              onChange={(event) => updateNumberField('sliceEnd', event.target.value)}
-              style={inputStyle}
-            />
-          </div>
-          <div>
-            <label style={labelStyle}>Step</label>
-            <input
-              type="number"
-              min={1}
-              value={Number(d.sliceStep ?? 1)}
-              onChange={(event) => updateNumberField('sliceStep', event.target.value, 1)}
-              style={inputStyle}
-            />
-          </div>
         </div>
-      ) : null}
+
+        <div style={{ marginTop: 8 }}>
+          <label style={labelStyle}>Run Mode</label>
+          <select value={runMode} onChange={handleRunModeChange} style={selectStyle}>
+            {RUN_MODES.map((mode) => (
+              <option key={mode.value} value={mode.value}>{mode.label}</option>
+            ))}
+          </select>
+        </div>
+
+        {runMode !== 'single' ? (
+          <div>
+            <label style={labelStyle}>Step</label>
+            <input
+              type="number"
+              min={1}
+              value={Number(d.sliceStep ?? 1)}
+              onChange={(event) => updateNumberField('sliceStep', event.target.value, 1)}
+              style={inputStyle}
+            />
+          </div>
+        ) : null}
+
+        {runMode === 'range' ? (
+          <div style={rangeGridStyle}>
+            <div>
+              <label style={labelStyle}>Start</label>
+              <input
+                type="number"
+                min={0}
+                value={Number(d.sliceStart ?? 0)}
+                onChange={(event) => updateNumberField('sliceStart', event.target.value)}
+                style={inputStyle}
+              />
+            </div>
+            <div>
+              <label style={labelStyle}>End</label>
+              <input
+                type="number"
+                min={0}
+                value={Number(d.sliceEnd ?? 0)}
+                onChange={(event) => updateNumberField('sliceEnd', event.target.value)}
+                style={inputStyle}
+              />
+            </div>
+            <div>
+              <label style={labelStyle}>Step</label>
+              <input
+                type="number"
+                min={1}
+                value={Number(d.sliceStep ?? 1)}
+                onChange={(event) => updateNumberField('sliceStep', event.target.value, 1)}
+                style={inputStyle}
+              />
+            </div>
+          </div>
+        ) : null}
+      </details>
 
       {runMode === 'wholeVolume' ? (
         <NodeHint>

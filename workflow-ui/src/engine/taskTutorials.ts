@@ -50,6 +50,115 @@ export const PHI_DEIDENTIFICATION_TUTORIAL: TaskTutorialConfig = {
   ],
 };
 
+export const AI_SEGMENTATION_REVIEW_TUTORIAL: TaskTutorialConfig = {
+  templateId: 'segmentation-annotation',
+  title: 'AI Segmentation Review Walkthrough',
+  storageKey: 'segpro-med.workflow.aiSegmentationReviewTutorialDismissed',
+  steps: [
+    {
+      nodeKey: 'loader',
+      title: 'Load the image data',
+      body: 'Start with Data Loader. When a file or folder is selected, this task automatically loads the study and opens it in Interactive Annotator so the image is visible before segmentation.',
+      placement: 'right',
+    },
+    {
+      nodeKey: 'annotator',
+      title: 'Inspect the slice first',
+      body: 'Use Interactive Annotator to pan, zoom, change view, and move through slices. The Batch SAM2 node follows the current view and slice from here.',
+      placement: 'left',
+    },
+    {
+      nodeKey: 'medsam2',
+      title: 'Run Batch SAM2 deliberately',
+      body: 'Batch SAM2 Segmenter uses the loaded session and current annotator view/slice. Review the visible image first, then run this node when the segmentation settings are correct.',
+      placement: 'left',
+    },
+  ],
+};
+
+export const MEDICAL_REPORT_GENERATION_TUTORIAL: TaskTutorialConfig = {
+  templateId: 'medgemma-slice-report',
+  title: 'Medical Report Generation Walkthrough',
+  storageKey: 'segpro-med.workflow.medicalReportGenerationTutorialDismissed',
+  steps: [
+    {
+      nodeKey: 'loader',
+      title: 'Load the study',
+      body: 'Start with Data Loader. When a file or folder is selected, this task automatically loads the imaging data and sends it to Interactive Annotator.',
+      placement: 'right',
+    },
+    {
+      nodeKey: 'annotator',
+      title: 'Choose the visible slice',
+      body: 'Use Interactive Annotator to inspect the image, change view plane, and move to the slice you want reported. The report node follows this view and slice.',
+      placement: 'right',
+    },
+    {
+      nodeKey: 'medgemma',
+      title: 'Generate the report',
+      body: 'Medical Report Generation uses the current annotator context. Select the prompt, review model settings if needed, then create the report for the visible slice.',
+      placement: 'left',
+    },
+  ],
+};
+
+export const MEDICAL_REPORT_OUTPUT_TUTORIAL: TaskTutorialConfig = {
+  templateId: 'medgemma-slice-report',
+  title: 'Medical Report Output Walkthrough',
+  storageKey: 'segpro-med.workflow.medicalReportOutputTutorialDismissed',
+  steps: [
+    {
+      nodeKey: 'medgemma',
+      title: 'Review the generated report',
+      body: 'The VLM output is now displayed inside this node. Click the report preview to open it in a larger modal for easier reading and interpretation.',
+      placement: 'left',
+    },
+  ],
+};
+
+export const VLM_LABEL_SUGGESTIONS_TUTORIAL: TaskTutorialConfig = {
+  templateId: 'vlm-label-suggestions',
+  title: 'VLM Label Suggestions Walkthrough',
+  storageKey: 'segpro-med.workflow.vlmLabelSuggestionsTutorialDismissed',
+  steps: [
+    {
+      nodeKey: 'loader',
+      title: 'Load the study',
+      body: 'Start with Data Loader. Select the image file or folder that should be reviewed for label suggestions.',
+      placement: 'right',
+    },
+    {
+      nodeKey: 'annotator',
+      title: 'Inspect the target slice',
+      body: 'Use Interactive Annotator to view the image, change view plane, and move to the slice where labels should be suggested.',
+      placement: 'right',
+    },
+    {
+      nodeKey: 'labels',
+      title: 'Generate label suggestions',
+      body: 'Label Suggester uses the current image and slice context. Run this node only after the visible slice is the one you want reviewed.',
+      placement: 'left',
+    },
+  ],
+};
+
+export const VLM_LABEL_SUGGESTIONS_OUTPUT_TUTORIAL: TaskTutorialConfig = {
+  templateId: 'vlm-label-suggestions',
+  title: 'Label Suggestions Approval',
+  storageKey: 'segpro-med.workflow.vlmLabelSuggestionsOutputTutorialDismissed',
+  steps: [
+    {
+      nodeKey: 'labels',
+      title: 'Review generated labels',
+      body: 'Labels have been generated and are waiting for your approval. Please review the suggested labels carefully. Approved labels will be saved for the currently selected image and slice.',
+      placement: 'left',
+    },
+  ],
+};
+
 export const taskTutorials: Record<string, TaskTutorialConfig> = {
   [PHI_DEIDENTIFICATION_TUTORIAL.templateId]: PHI_DEIDENTIFICATION_TUTORIAL,
+  [AI_SEGMENTATION_REVIEW_TUTORIAL.templateId]: AI_SEGMENTATION_REVIEW_TUTORIAL,
+  [MEDICAL_REPORT_GENERATION_TUTORIAL.templateId]: MEDICAL_REPORT_GENERATION_TUTORIAL,
+  [VLM_LABEL_SUGGESTIONS_TUTORIAL.templateId]: VLM_LABEL_SUGGESTIONS_TUTORIAL,
 };

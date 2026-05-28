@@ -31,7 +31,6 @@ import type {
 } from '../types/nodes';
 import * as api from '../api/client';
 import type { NodeInfo } from '../components/InfoModal';
-import NodeHint from '../components/NodeHint';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -140,6 +139,41 @@ const canvasStyle: React.CSSProperties = {
   left: 0,
   width: '100%',
   height: '100%',
+};
+
+const canvasMessageOverlayStyle: React.CSSProperties = {
+  position: 'absolute',
+  inset: 0,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: 20,
+  background: 'rgba(0, 0, 0, 0.36)',
+  textAlign: 'center',
+  pointerEvents: 'none',
+};
+
+const canvasMessagePanelStyle = (color: string): React.CSSProperties => ({
+  maxWidth: 300,
+  padding: '14px 16px',
+  borderRadius: 8,
+  border: `1px solid color-mix(in srgb, ${color} 48%, rgba(255,255,255,0.18))`,
+  background: `color-mix(in srgb, ${color} 12%, rgba(8, 10, 24, 0.82))`,
+  color,
+  boxShadow: '0 12px 32px rgba(0, 0, 0, 0.34)',
+});
+
+const canvasMessageTitleStyle: React.CSSProperties = {
+  fontSize: 18,
+  fontWeight: 950,
+  lineHeight: 1.18,
+  marginBottom: 6,
+};
+
+const canvasMessageBodyStyle: React.CSSProperties = {
+  color: 'var(--text-secondary)',
+  fontSize: 12,
+  lineHeight: 1.42,
 };
 
 const controlsRowStyle: React.CSSProperties = {
@@ -1037,6 +1071,17 @@ function InteractiveAnnotatorNode({ id, data }: NodeProps) {
     }
     return null;
   }, [id, storeNodes, storeEdges]);
+
+  const connectedBatchSegRunning = useMemo(() => {
+    const sourceIds = storeEdges
+      .filter((edge) => edge.target === id)
+      .map((edge) => edge.source);
+    return sourceIds.some((sourceId) => {
+      const sourceNode = storeNodes.find((node) => node.id === sourceId);
+      return sourceNode?.type === 'medsam2Segmenter' &&
+        (sourceNode.data as Record<string, unknown> | undefined)?.status === 'running';
+    });
+  }, [id, storeEdges, storeNodes]);
 
   // --- State ---
   const [loading, setLoading] = useState(false);
@@ -3110,6 +3155,30 @@ function InteractiveAnnotatorNode({ id, data }: NodeProps) {
       tabIndex={0}
     >
       <canvas ref={ref} style={canvasStyle} />
+      {!hasSession && !loading && (
+        <div style={canvasMessageOverlayStyle}>
+          <div style={canvasMessagePanelStyle('var(--accent-orange)')}>
+            <div style={canvasMessageTitleStyle}>
+              Connect Data Loader
+            </div>
+            <div style={canvasMessageBodyStyle}>
+              Select a file or folder in Data Loader to start annotating.
+            </div>
+          </div>
+        </div>
+      )}
+      {hasSession && (segRunning || connectedBatchSegRunning) && (
+        <div style={canvasMessageOverlayStyle}>
+          <div style={canvasMessagePanelStyle('var(--accent-purple)')}>
+            <div style={canvasMessageTitleStyle}>
+              Generating overlays...
+            </div>
+            <div style={canvasMessageBodyStyle}>
+              SAM2 is creating segmentation overlays for the active workflow. The view will update when processing finishes.
+            </div>
+          </div>
+        </div>
+      )}
       {showNavigator && imgDimensions && (
         <PositionNavigator
           imageObj={imageObjRef.current}
@@ -3202,6 +3271,10 @@ function InteractiveAnnotatorNode({ id, data }: NodeProps) {
                 max={Math.max(0, d.totalSlices - 1)}
                 value={d.sliceIndex}
                 onChange={handleSlider}
+                className="nodrag nopan"
+                onPointerDownCapture={(event) => event.stopPropagation()}
+                onMouseDownCapture={(event) => event.stopPropagation()}
+                onTouchStartCapture={(event) => event.stopPropagation()}
                 style={sliderStyle}
               />
               <button onClick={goNext} style={navBtnStyle} disabled={d.sliceIndex >= d.totalSlices - 1}>▶</button>
@@ -3534,13 +3607,6 @@ function InteractiveAnnotatorNode({ id, data }: NodeProps) {
           {/* Zoom controls */}
           {hasSession && d.imageBase64 && renderZoomControls()}
 
-          {/* Placeholder */}
-          {!hasSession && (
-            <NodeHint style={{ textAlign: 'left' }}>
-              Connect a Data Loader to start annotating.
-            </NodeHint>
-          )}
-
           {/* Slice navigation */}
           {hasSession && d.totalSlices > 0 && (
             <div style={controlsRowStyle}>
@@ -3553,6 +3619,10 @@ function InteractiveAnnotatorNode({ id, data }: NodeProps) {
                 max={Math.max(0, d.totalSlices - 1)}
                 value={d.sliceIndex}
                 onChange={handleSlider}
+                className="nodrag nopan"
+                onPointerDownCapture={(event) => event.stopPropagation()}
+                onMouseDownCapture={(event) => event.stopPropagation()}
+                onTouchStartCapture={(event) => event.stopPropagation()}
                 style={sliderStyle}
               />
               <button onClick={goNext} style={navBtnStyle} disabled={d.sliceIndex >= d.totalSlices - 1}>

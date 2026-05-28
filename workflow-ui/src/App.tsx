@@ -51,7 +51,18 @@ import {
   workflowTemplates,
   type WorkflowTemplate,
 } from './engine/workflowTemplates';
-import { taskTutorials, type TaskTutorialConfig } from './engine/taskTutorials';
+import {
+  MEDICAL_REPORT_OUTPUT_TUTORIAL,
+  VLM_LABEL_SUGGESTIONS_OUTPUT_TUTORIAL,
+  taskTutorials,
+  type TaskTutorialConfig,
+} from './engine/taskTutorials';
+import {
+  MEDICAL_REPORT_TEMPLATE_ID,
+  TASK_DATA_AUTO_LOAD_EVENT,
+  VLM_LABEL_SUGGESTIONS_TEMPLATE_ID,
+  supportsTaskDataAutoLoad,
+} from './engine/taskEvents';
 import type {
   AnnotationShape,
   BaseNodeData,
@@ -121,7 +132,6 @@ const CROWDSOURCING_HELPER_HIDDEN_KEY = 'segpro-med.workflow.crowdsourcingHelper
 const DEIDENTIFICATION_HELPER_HIDDEN_KEY = 'segpro-med.workflow.deidentificationHelperHidden';
 const DEIDENTIFICATION_GUIDE_DISMISSED_KEY = 'segpro-med.workflow.deidentificationGuideDismissed';
 const DEIDENTIFICATION_RESULT_DISMISSED_KEY = 'segpro-med.workflow.deidentificationResultDismissed';
-
 function cloneJson<T>(value: T): T {
   if (value === undefined) return value;
   return JSON.parse(JSON.stringify(value)) as T;
@@ -730,12 +740,15 @@ export default function App() {
   const [activeTaskTutorial, setActiveTaskTutorial] = useState<TaskTutorialConfig | null>(null);
   const [doNotShowTaskTutorial, setDoNotShowTaskTutorial] = useState(false);
   const [tutorialViewportSignal, setTutorialViewportSignal] = useState(0);
+  const [pendingTemplate, setPendingTemplate] = useState<WorkflowTemplate | null>(null);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const reactFlowInstance = useRef<any>(null);
   const workflowFileInputRef = useRef<HTMLInputElement | null>(null);
   const clipboardRef = useRef<ClipboardFragment | null>(null);
   const activeRunControllerRef = useRef<AbortController | null>(null);
+  const taskDataAutoLoadRef = useRef<string | null>(null);
+  const labelSuggestionGuideRef = useRef<string | null>(null);
   const canUndo = historyPast.length > 0;
   const canRedo = historyFuture.length > 0;
   const currentWorkflowFingerprint = useMemo(
@@ -988,6 +1001,71 @@ export default function App() {
           setShowDeidentificationResult(true);
         }
       }
+      const medicalReportNode = nodes.find((node) =>
+        node.type === 'medgemmaNode' &&
+        node.data?.taskTemplateId === MEDICAL_REPORT_TEMPLATE_ID &&
+        node.data?.taskNodeKey === 'medgemma' &&
+        result.executedNodeIds.includes(node.id) &&
+        Boolean(result.results.get(node.id)?.vlmResult),
+      );
+      if (medicalReportNode) {
+        const dismissed = typeof window !== 'undefined' &&
+          window.localStorage.getItem(MEDICAL_REPORT_OUTPUT_TUTORIAL.storageKey) === 'true';
+        if (!dismissed) {
+          setDoNotShowTaskTutorial(false);
+          window.setTimeout(() => {
+            reactFlowInstance.current?.fitView?.({
+              nodes: [{ id: medicalReportNode.id }],
+              padding: 0.35,
+              duration: 320,
+            });
+          }, 80);
+          window.setTimeout(() => {
+            setTutorialViewportSignal((value) => value + 1);
+            setActiveTaskTutorial(MEDICAL_REPORT_OUTPUT_TUTORIAL);
+          }, 460);
+        }
+      }
+      const labelSuggestionNode = nodes.find((node) => {
+        if (
+          node.type !== 'labelSuggester' ||
+          node.data?.taskTemplateId !== 'vlm-label-suggestions' ||
+          node.data?.taskNodeKey !== 'labels' ||
+          !result.executedNodeIds.includes(node.id)
+        ) {
+          return false;
+        }
+
+        const labels = result.results.get(node.id)?.labelSuggestions;
+        return Array.isArray(labels) && labels.length > 0;
+      });
+      if (labelSuggestionNode) {
+        const labelResult = result.results.get(labelSuggestionNode.id);
+        const labels = Array.isArray(labelResult?.labelSuggestions)
+          ? labelResult.labelSuggestions.map((label) => String(label)).filter(Boolean)
+          : [];
+        const sliceIndex = Number(labelResult?.sliceIndex ?? labelSuggestionNode.data?.sliceIndex ?? 0);
+        const view = String(labelResult?.view || labelSuggestionNode.data?.view || 'axial');
+        const guideKey = `${labelSuggestionNode.id}:${view}:${sliceIndex}:${labels.join('|')}`;
+        const dismissed = typeof window !== 'undefined' &&
+          window.localStorage.getItem(VLM_LABEL_SUGGESTIONS_OUTPUT_TUTORIAL.storageKey) === 'true';
+
+        if (!dismissed && labelSuggestionGuideRef.current !== guideKey) {
+          labelSuggestionGuideRef.current = guideKey;
+          setDoNotShowTaskTutorial(false);
+          window.setTimeout(() => {
+            reactFlowInstance.current?.fitView?.({
+              nodes: [{ id: labelSuggestionNode.id }],
+              padding: 0.35,
+              duration: 320,
+            });
+          }, 80);
+          window.setTimeout(() => {
+            setTutorialViewportSignal((value) => value + 1);
+            setActiveTaskTutorial(VLM_LABEL_SUGGESTIONS_OUTPUT_TUTORIAL);
+          }, 460);
+        }
+      }
     } catch (err) {
       const finishedAt = new Date().toISOString();
       const isCancelled = isWorkflowExecutionCancelledError(err) || controller.signal.aborted;
@@ -1036,6 +1114,206 @@ export default function App() {
     updateNodeData,
     validationIssues,
   ]);
+
+  const runTaskDataAutoLoad = useCallback(async (
+    loaderNodeId: string,
+    templateId: string | undefined,
+    requestedPath?: string,
+  ) => {
+    const workflowState = useWorkflowStore.getState();
+    const loaderNode = workflowState.nodes.find((node) => node.id === loaderNodeId);
+    const loaderData = loaderNode?.data as Record<string, unknown> | undefined;
+    const taskTemplateId = typeof loaderData?.taskTemplateId === 'string'
+      ? loaderData.taskTemplateId
+      : templateId;
+
+    if (!loaderNode || loaderNode.type !== 'dataLoader') return;
+    if (!supportsTaskDataAutoLoad(taskTemplateId)) return;
+    if (loaderData?.taskNodeKey !== 'loader') return;
+
+    const taskTitle = taskTemplateId === MEDICAL_REPORT_TEMPLATE_ID
+      ? 'Medical Report Generation'
+      : taskTemplateId === VLM_LABEL_SUGGESTIONS_TEMPLATE_ID
+        ? 'VLM Label Suggestions'
+        : 'AI Segmentation Review';
+    const successMessage = taskTemplateId === MEDICAL_REPORT_TEMPLATE_ID
+      ? 'Image loaded in Interactive Annotator. Review the slice, then create the medical report when ready.'
+      : taskTemplateId === VLM_LABEL_SUGGESTIONS_TEMPLATE_ID
+        ? 'Image loaded in Interactive Annotator. Review the slice, then suggest labels when ready.'
+        : 'Image loaded in Interactive Annotator. Review the slice, then run Batch SAM2 when ready.';
+
+    const currentPath = typeof loaderData.path === 'string' ? loaderData.path.trim() : '';
+    if (!currentPath) {
+      setWorkflowNotice({
+        type: 'warning',
+        message: `Choose a valid file or folder before loading the ${taskTitle} task.`,
+      });
+      return;
+    }
+    if (requestedPath && requestedPath.trim() !== currentPath) return;
+
+    const annotatorNode = workflowState.nodes.find((node) =>
+      node.data?.taskTemplateId === taskTemplateId &&
+      node.data?.taskNodeKey === 'annotator' &&
+      node.type === 'interactiveAnnotator',
+    );
+    if (!annotatorNode) return;
+
+    const runKey = `${taskTemplateId}:${loaderNodeId}:${currentPath}`;
+    if (taskDataAutoLoadRef.current === runKey) return;
+    if (activeRunControllerRef.current) {
+      setWorkflowNotice({
+        type: 'warning',
+        message: 'A workflow run is already in progress. The selected data will not auto-load until the current run finishes.',
+      });
+      return;
+    }
+
+    taskDataAutoLoadRef.current = runKey;
+    const controller = new AbortController();
+    const startedAt = new Date().toISOString();
+    const scopedNodeIds = [loaderNode.id, annotatorNode.id];
+
+    activeRunControllerRef.current = controller;
+    setActiveRun({
+      mode: 'selected',
+      nodeIds: scopedNodeIds,
+      selectedNodeId: loaderNode.id,
+      startedAt,
+    });
+    setWorkflowNotice({
+      type: 'info',
+      message: `Loading selected image data for ${taskTitle}...`,
+    });
+
+    try {
+      for (const nodeId of scopedNodeIds) {
+        updateNodeData(nodeId, { status: 'idle', error: undefined });
+      }
+
+      const loaderResult = await executeWorkflow(
+        workflowState.nodes,
+        workflowState.edges,
+        updateNodeData,
+        {
+          mode: 'selected',
+          startNodeId: loaderNode.id,
+          signal: controller.signal,
+        },
+      );
+      const afterLoaderState = useWorkflowStore.getState();
+      const refreshedAnnotator = afterLoaderState.nodes.find((node) =>
+        node.data?.taskTemplateId === taskTemplateId &&
+        node.data?.taskNodeKey === 'annotator' &&
+        node.type === 'interactiveAnnotator',
+      );
+
+      if (!refreshedAnnotator) {
+        throw new Error(`Interactive Annotator is not available in this ${taskTitle} task.`);
+      }
+
+      const annotatorResult = await executeWorkflow(
+        afterLoaderState.nodes,
+        afterLoaderState.edges,
+        updateNodeData,
+        {
+          mode: 'selected',
+          startNodeId: refreshedAnnotator.id,
+          signal: controller.signal,
+        },
+      );
+      const executedNodeIds = [
+        ...loaderResult.executedNodeIds,
+        ...annotatorResult.executedNodeIds.filter((nodeId) =>
+          !loaderResult.executedNodeIds.includes(nodeId),
+        ),
+      ];
+
+      appendExecutionHistory({
+        id: `run_${Date.now()}`,
+        mode: 'selected',
+        status: 'success',
+        startedAt,
+        finishedAt: new Date().toISOString(),
+        nodeIds: scopedNodeIds,
+        selectedNodeId: loaderNode.id,
+        executedNodeIds,
+        failedNodeIds: [],
+        skippedNodeIds: [],
+        message: `${taskTitle} data loaded.`,
+      });
+      setWorkflowNotice({
+        type: 'success',
+        message: successMessage,
+      });
+    } catch (err) {
+      const isCancelled = isWorkflowExecutionCancelledError(err) || controller.signal.aborted;
+      const failedNodeIds = err instanceof Error && 'failedNodeIds' in err
+        ? (err.failedNodeIds as string[])
+        : [];
+      const skippedNodeIds = err instanceof Error && 'skippedNodeIds' in err
+        ? (err.skippedNodeIds as string[])
+        : [];
+      const executedNodeIds = err instanceof Error && 'executedNodeIds' in err
+        ? (err.executedNodeIds as string[])
+        : [];
+      const message = isCancelled
+        ? `${taskTitle} auto-load cancelled.`
+        : err instanceof Error
+          ? err.message
+          : 'Could not load the selected image data.';
+
+      appendExecutionHistory({
+        id: `run_${Date.now()}`,
+        mode: 'selected',
+        status: isCancelled ? 'cancelled' : 'error',
+        startedAt,
+        finishedAt: new Date().toISOString(),
+        nodeIds: scopedNodeIds,
+        selectedNodeId: loaderNode.id,
+        executedNodeIds,
+        failedNodeIds,
+        skippedNodeIds,
+        message,
+      });
+      setWorkflowNotice({
+        type: isCancelled ? 'warning' : 'error',
+        message,
+      });
+    } finally {
+      if (activeRunControllerRef.current === controller) {
+        activeRunControllerRef.current = null;
+        setActiveRun(null);
+      }
+      if (taskDataAutoLoadRef.current === runKey) {
+        taskDataAutoLoadRef.current = null;
+      }
+    }
+  }, [
+    appendExecutionHistory,
+    setWorkflowNotice,
+    updateNodeData,
+  ]);
+
+  useEffect(() => {
+    const handleTaskDataAutoLoad = (event: Event) => {
+      const detail = (event as CustomEvent<{
+        nodeId?: string;
+        templateId?: string;
+        path?: string;
+      }>).detail;
+      if (!detail?.nodeId) return;
+
+      window.setTimeout(() => {
+        void runTaskDataAutoLoad(detail.nodeId as string, detail.templateId, detail.path);
+      }, 0);
+    };
+
+    window.addEventListener(TASK_DATA_AUTO_LOAD_EVENT, handleTaskDataAutoLoad);
+    return () => {
+      window.removeEventListener(TASK_DATA_AUTO_LOAD_EVENT, handleTaskDataAutoLoad);
+    };
+  }, [runTaskDataAutoLoad]);
 
   useEffect(() => {
     const handleNodeRunRequest = (event: Event) => {
@@ -2080,39 +2358,70 @@ export default function App() {
     );
   }, [addNodesAndConnect, cloneDefaultData]);
 
-  const handleApplyTemplate = useCallback(
+  const insertTemplate = useCallback(
     (template: WorkflowTemplate) => {
-      const rightMostX = nodes.reduce(
-        (max, node) => Math.max(max, node.position.x + (node.width ?? 320)),
-        0,
-      );
-      const offset = nodes.length > 0
-        ? { x: rightMostX + 120, y: 0 }
-        : { x: 0, y: 0 };
-      const instance = instantiateWorkflowTemplate(template, generateNodeId, offset);
+      clearWorkflow();
+      const instance = instantiateWorkflowTemplate(template, generateNodeId);
+      const insertedNodeIds = instance.nodes.map((node) => node.id);
 
       addNodesAndConnect(instance.nodes, instance.connections);
       setShowTemplatePanel(false);
       setShowValidationPanel(false);
-      if (template.id === 'phi-deidentification') {
-        const tutorial = taskTutorials[template.id];
-        const dismissed = tutorial && typeof window !== 'undefined' &&
-          window.localStorage.getItem(tutorial.storageKey) === 'true';
-        if (tutorial && !dismissed) {
-          setDoNotShowTaskTutorial(false);
-          window.setTimeout(() => {
-            setTutorialViewportSignal((value) => value + 1);
-            setActiveTaskTutorial(tutorial);
-          }, 180);
-        }
+      const tutorial = taskTutorials[template.id];
+      const dismissed = tutorial && typeof window !== 'undefined' &&
+        window.localStorage.getItem(tutorial.storageKey) === 'true';
+      const shouldShowTutorial = Boolean(tutorial && !dismissed);
+      const shouldFitInsertedTask = shouldShowTutorial ||
+        template.id === MEDICAL_REPORT_TEMPLATE_ID;
+
+      if (shouldFitInsertedTask) {
+        window.setTimeout(() => {
+          reactFlowInstance.current?.fitView?.({
+            nodes: insertedNodeIds.map((id) => ({ id })),
+            padding: 0.22,
+            duration: 350,
+          });
+        }, 80);
+      }
+
+      if (tutorial && !dismissed) {
+        setDoNotShowTaskTutorial(false);
+        window.setTimeout(() => {
+          setTutorialViewportSignal((value) => value + 1);
+          setActiveTaskTutorial(tutorial);
+        }, 520);
       }
       setWorkflowNotice({
         type: 'success',
         message: `${template.title} template added.`,
       });
     },
-    [addNodesAndConnect, nodes, setWorkflowNotice],
+    [addNodesAndConnect, clearWorkflow, setWorkflowNotice],
   );
+
+  const handleApplyTemplate = useCallback(
+    (template: WorkflowTemplate) => {
+      if (nodes.length > 0) {
+        setPendingTemplate(template);
+        setShowTemplatePanel(false);
+        setShowValidationPanel(false);
+        return;
+      }
+
+      insertTemplate(template);
+    },
+    [insertTemplate, nodes.length],
+  );
+
+  const handleProceedWithPendingTemplate = useCallback((saveFirst: boolean) => {
+    if (!pendingTemplate) return;
+    if (saveFirst) {
+      handleSaveWorkflow();
+    }
+    const template = pendingTemplate;
+    setPendingTemplate(null);
+    insertTemplate(template);
+  }, [handleSaveWorkflow, insertTemplate, pendingTemplate]);
 
   const getSuggestionEdgeData = useCallback(
     (candidateType: string | undefined) => {
@@ -2384,6 +2693,81 @@ export default function App() {
           </div>
         </div>
       ) : null}
+
+      {pendingTemplate && typeof document !== 'undefined'
+        ? createPortal(
+          <div style={guideOverlayStyle} onClick={() => setPendingTemplate(null)} role="presentation">
+            <div
+              style={confirmModalStyle}
+              onClick={(event) => event.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="replace-workflow-title"
+            >
+              <div style={{
+                padding: '15px 16px',
+                borderBottom: '1px solid var(--border-color)',
+              }}>
+                <div
+                  id="replace-workflow-title"
+                  style={{
+                    color: 'var(--accent-orange)',
+                    fontSize: 14,
+                    fontWeight: 900,
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Grid Is Not Empty
+                </div>
+                <div style={{
+                  color: 'var(--text-secondary)',
+                  fontSize: 12,
+                  lineHeight: 1.5,
+                  marginTop: 7,
+                }}>
+                  Adding <strong style={{ color: 'var(--text-primary)' }}>{pendingTemplate.title}</strong> will clear the current grid before loading the task. Save the current workflow as JSON first, or proceed right away.
+                </div>
+              </div>
+              <div style={{
+                padding: 16,
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: 8,
+                flexWrap: 'wrap',
+              }}>
+                <button
+                  type="button"
+                  onClick={() => setPendingTemplate(null)}
+                  style={btnStyle('var(--text-secondary)')}
+                  onMouseEnter={(event) => setButtonHover(event.currentTarget, 'var(--text-secondary)', true)}
+                  onMouseLeave={(event) => setButtonHover(event.currentTarget, 'var(--text-secondary)', false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleProceedWithPendingTemplate(false)}
+                  style={btnStyle('var(--accent-orange)')}
+                  onMouseEnter={(event) => setButtonHover(event.currentTarget, 'var(--accent-orange)', true)}
+                  onMouseLeave={(event) => setButtonHover(event.currentTarget, 'var(--accent-orange)', false)}
+                >
+                  Proceed
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleProceedWithPendingTemplate(true)}
+                  style={btnStyle('var(--accent-blue)')}
+                  onMouseEnter={(event) => setButtonHover(event.currentTarget, 'var(--accent-blue)', true)}
+                  onMouseLeave={(event) => setButtonHover(event.currentTarget, 'var(--accent-blue)', false)}
+                >
+                  Save JSON & Proceed
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )
+        : null}
 
       <NodePalette onApplyTemplate={handleApplyTemplate} />
 
@@ -2941,7 +3325,7 @@ export default function App() {
 
       {activeTaskTutorial ? (
         <TaskTutorialOverlay
-          key={activeTaskTutorial.templateId}
+          key={activeTaskTutorial.storageKey}
           config={activeTaskTutorial}
           nodes={nodes}
           viewportSignal={tutorialViewportSignal}

@@ -86,34 +86,38 @@ const twoColStyle: React.CSSProperties = {
 
 const contextGridStyle: React.CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-  gap: 7,
-  marginTop: 9,
+  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+  gap: 8,
+  marginTop: 10,
 };
 
-const contextCardStyle: React.CSSProperties = {
-  padding: '7px 8px',
-  borderRadius: 5,
-  border: '1px solid rgba(76, 175, 139, 0.24)',
-  background: 'rgba(255, 255, 255, 0.035)',
-};
+const contextCardStyle = (color: string): React.CSSProperties => ({
+  minHeight: 62,
+  padding: '9px 10px',
+  borderRadius: 7,
+  border: `1px solid color-mix(in srgb, ${color} 38%, var(--border-color))`,
+  background: `color-mix(in srgb, ${color} 12%, var(--bg-secondary))`,
+  boxSizing: 'border-box',
+});
 
 const contextLabelStyle: React.CSSProperties = {
   display: 'block',
   color: 'var(--text-muted)',
   fontSize: 9,
-  fontWeight: 800,
+  fontWeight: 900,
   textTransform: 'uppercase',
-  marginBottom: 3,
+  marginBottom: 5,
 };
 
-const contextValueStyle: React.CSSProperties = {
-  color: 'var(--text-primary)',
-  fontSize: 12,
-  fontWeight: 800,
+const contextValueStyle = (color: string, fontSize = 20): React.CSSProperties => ({
+  color,
+  fontSize,
+  fontWeight: 950,
+  lineHeight: 1.08,
   overflow: 'hidden',
   textOverflow: 'ellipsis',
-};
+  whiteSpace: 'nowrap',
+});
 
 const chipWrapStyle: React.CSSProperties = {
   display: 'flex',
@@ -273,6 +277,12 @@ function LabelSuggesterNode({ id, data }: NodeProps) {
     : hasSource && d.status === 'waiting'
     ? 'idle'
     : (!hasSource && d.status === 'idle') ? 'waiting' : d.status;
+  const selectedModel = d.model || 'medgemma-1.5-gguf';
+  const selectedModelLabel = MODELS.find((model) => model.value === selectedModel)?.label ||
+    selectedModel;
+  const selectedPromptTitle = safePromptOptions.find((prompt) =>
+    prompt.key === (d.promptKey || 'suggest_labels'),
+  )?.title || 'Suggest Labels';
 
   const upstreamAnnotator = useMemo(() => {
     const annotatorEdge = storeEdges.find((edge) => edge.target === id &&
@@ -449,17 +459,25 @@ function LabelSuggesterNode({ id, data }: NodeProps) {
         </div>
 
         <div style={contextGridStyle}>
-          <div style={contextCardStyle}>
+          <div style={contextCardStyle('var(--accent-purple)')}>
             <span style={contextLabelStyle}>View</span>
-            <span style={contextValueStyle}>{d.view || 'axial'}</span>
+            <span style={contextValueStyle('var(--accent-purple)')}>{d.view || 'axial'}</span>
           </div>
-          <div style={contextCardStyle}>
+          <div style={contextCardStyle('var(--accent-blue)')}>
             <span style={contextLabelStyle}>Slice</span>
-            <span style={contextValueStyle}>{sliceIndex + 1}</span>
+            <span style={contextValueStyle('var(--accent-blue)')}>{sliceIndex + 1}</span>
           </div>
-          <div style={contextCardStyle}>
-            <span style={contextLabelStyle}>Modality</span>
-            <span style={contextValueStyle}>{d.modality || 'MRI'}</span>
+          <div style={contextCardStyle('var(--accent-green)')}>
+            <span style={contextLabelStyle}>Model</span>
+            <span style={contextValueStyle('var(--accent-green)', 14)} title={selectedModelLabel}>
+              {selectedModelLabel}
+            </span>
+          </div>
+          <div style={contextCardStyle('var(--accent-orange)')}>
+            <span style={contextLabelStyle}>Prompt</span>
+            <span style={contextValueStyle('var(--accent-orange)', 14)} title={selectedPromptTitle}>
+              {selectedPromptTitle}
+            </span>
           </div>
         </div>
 
@@ -504,7 +522,7 @@ function LabelSuggesterNode({ id, data }: NodeProps) {
           <div style={twoColStyle}>
             <div>
               <label style={labelStyle}>Model</label>
-              <select value={d.model || 'medgemma-1.5-gguf'} onChange={handleSelect('model')} style={selectStyle}>
+              <select value={selectedModel} onChange={handleSelect('model')} style={selectStyle}>
                 {MODELS.map((model) => (
                   <option key={model.value} value={model.value}>{model.label}</option>
                 ))}

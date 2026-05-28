@@ -67,20 +67,15 @@ export const workflowTemplates: WorkflowTemplate[] = [
   {
     id: 'segmentation-annotation',
     title: 'AI Segmentation Review',
-    description: 'Load a study, choose a SAM2 profile, batch segment selected slices, then refine polygons in the annotator.',
+    description: 'Load a study, run SAM2 on the current annotator slice, then refine generated polygons in Interactive Annotator.',
     nodes: [
-      { key: 'loader', type: 'dataLoader', position: { x: 80, y: 130 } },
-      { key: 'viewer', type: 'sliceViewer', position: { x: 430, y: 330 } },
-      { key: 'profile', type: 'autoSegmentation', position: { x: 430, y: 80 } },
-      { key: 'medsam2', type: 'medsam2Segmenter', position: { x: 790, y: 80 } },
-      { key: 'annotator', type: 'interactiveAnnotator', position: { x: 1150, y: 80 }, style: ANNOTATOR_INITIAL_STYLE },
+      { key: 'loader', type: 'dataLoader', position: { x: 263.3215683419277, y: -55.00641736329478 } },
+      { key: 'medsam2', type: 'medsam2Segmenter', position: { x: 627.3574821404964, y: 8.85046624689069 } },
+      { key: 'annotator', type: 'interactiveAnnotator', position: { x: 984.0081916333772, y: -121.3788775233343 }, style: { width: 430, height: 741 } },
     ],
     connections: [
-      { source: 'loader', target: 'viewer' },
       { source: 'loader', target: 'medsam2' },
       { source: 'loader', target: 'annotator' },
-      { source: 'profile', target: 'medsam2' },
-      { source: 'profile', target: 'annotator' },
       { source: 'medsam2', target: 'annotator' },
     ],
   },
@@ -123,9 +118,9 @@ export const workflowTemplates: WorkflowTemplate[] = [
     title: 'Medical Report Generation',
     description: 'Load a study, inspect the target slice in the annotator, then generate a report with MedGemma or another configured medical VLM.',
     nodes: [
-      { key: 'loader', type: 'dataLoader', position: { x: 80, y: 210 } },
-      { key: 'annotator', type: 'interactiveAnnotator', position: { x: 490, y: 150 }, style: ANNOTATOR_INITIAL_STYLE },
-      { key: 'medgemma', type: 'medgemmaNode', position: { x: 930, y: 120 }, style: { width: 460, height: 500 } },
+      { key: 'loader', type: 'dataLoader', position: { x: 84.980178286181, y: 170.15857371055193 } },
+      { key: 'annotator', type: 'interactiveAnnotator', position: { x: 423.03772589754215, y: -11.280990331391735 }, style: { width: 430, height: 686 } },
+      { key: 'medgemma', type: 'medgemmaNode', position: { x: 918.5400356563351, y: 2.4091793071260383 }, style: { width: 460, height: 625 } },
     ],
     connections: [
       { source: 'loader', target: 'annotator' },
@@ -137,9 +132,9 @@ export const workflowTemplates: WorkflowTemplate[] = [
     title: 'VLM Label Suggestions',
     description: 'Load a study, inspect the active slice in the annotator, then generate reviewable label suggestions for that slice.',
     nodes: [
-      { key: 'loader', type: 'dataLoader', position: { x: 80, y: 210 } },
-      { key: 'annotator', type: 'interactiveAnnotator', position: { x: 490, y: 150 }, style: ANNOTATOR_INITIAL_STYLE },
-      { key: 'labels', type: 'labelSuggester', position: { x: 930, y: 120 }, style: { width: 460, height: 500 } },
+      { key: 'loader', type: 'dataLoader', position: { x: 84.980178286181, y: 170.15857371055193 } },
+      { key: 'annotator', type: 'interactiveAnnotator', position: { x: 423.03772589754215, y: -11.280990331391735 }, style: { width: 430, height: 686 } },
+      { key: 'labels', type: 'labelSuggester', position: { x: 918.5400356563351, y: 2.4091793071260383 }, style: { width: 460, height: 625 } },
     ],
     connections: [
       { source: 'loader', target: 'annotator' },

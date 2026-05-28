@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "app": "segpro-med-workflow",
+  "exportedAt": "2026-05-28T13:26:18.509Z",
+  "nodes": [
+    {
+      "id": "node_1",
+      "type": "dataLoader",
+      "position": {
+        "x": 84.980178286181,
+        "y": 170.15857371055193
+      },
+      "data": {
+        "label": "Data Loader",
+        "status": "idle",
+        "path": "C:\\Gazi\\TR_TBP_Anonymised_enc\\Anonymised\\500 MR\\CAVERNOMA\\cvm\\flair",
+        "taskTemplateId": "medgemma-slice-report",
+        "taskNodeKey": "loader"
+      }
+    },
+    {
+      "id": "node_2",
+      "type": "interactiveAnnotator",
+      "position": {
+        "x": 423.03772589754215,
+        "y": -11.280990331391735
+      },
+      "data": {
+        "label": "Interactive Annotator",
+        "status": "idle",
+        "sessionId": "",
+        "sliceIndex": 0,
+        "view": "axial",
+        "totalSlices": 0,
+        "annotations": [],
+        "sliceAnnotationsMap": {},
+        "activeTool": "pan",
+        "zoom": 1,
+        "showLabels": true,
+        "taskTemplateId": "medgemma-slice-report",
+        "taskNodeKey": "annotator",
+        "sourcePath": "C:\\Gazi\\TR_TBP_Anonymised_enc\\Anonymised\\500 MR\\CAVERNOMA\\cvm\\flair",
+        "modality": "MRI"
+      },
+      "width": 430,
+      "height": 686
+    },
+    {
+      "id": "node_3",
+      "type": "medgemmaNode",
+      "position": {
+        "x": 918.5400356563351,
+        "y": 2.4091793071260383
+      },
+      "data": {
+        "label": "Medical Report Generation",
+        "status": "idle",
+        "sessionId": "",
+        "sliceIndex": 0,
+        "view": "axial",
+        "model": "medgemma-1.5-gguf",
+        "modality": "MRI",
+        "promptKey": "describe_slice",
+        "customPrompt": "",
+        "maxTokens": 512,
+        "includeReasoning": false,
+        "useOverlay": false,
+        "availablePrompts": [],
+        "taskTemplateId": "medgemma-slice-report",
+        "taskNodeKey": "medgemma",
+        "sourcePath": "C:\\Gazi\\TR_TBP_Anonymised_enc\\Anonymised\\500 MR\\CAVERNOMA\\cvm\\flair",
+        "annotations": [],
+        "sliceAnnotationsMap": {}
+      },
+      "width": 460,
+      "height": 625
+    }
+  ],
+  "edges": [
+    {
+      "id": "xy-edge__node_1-node_2",
+      "source": "node_1",
+      "target": "node_2",
+      "sourceHandle": null,
+      "targetHandle": null,
+      "type": "typed",
+      "animated": true,
+      "data": {
+        "kind": "session",
+        "label": "session",
+        "color": "var(--accent-blue)"
+      }
+    },
+    {
+      "id": "xy-edge__node_2-node_3",
+      "source": "node_2",
+      "target": "node_3",
+      "sourceHandle": null,
+      "targetHandle": null,
+      "type": "typed",
+      "animated": true,
+      "data": {
+        "kind": "annotatedSession",
+        "label": "annotations",
+        "color": "var(--accent-green)"
+      }
+    }
+  ]
+}
