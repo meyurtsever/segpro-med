@@ -7,6 +7,8 @@ models/med-r1/checkpoints/*
 models/medgemma/*.safetensors
 models/medgemma/*.pt
 models/medgemma/model.safetensors.index.json
+models/medgemma-1.5-4b-it/
+models/medgemma-1.5-4b-it-GGUF/
 
 # Documentation-only markdown files (keep README tracked)
 *.md

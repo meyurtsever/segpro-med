@@ -247,7 +247,7 @@ const ANNOTATION_TOOLS = [
 
 const VLM_MODALITIES = ['MRI', 'CT', 'MG'];
 
-const VLM_MODELS = ['medgemma', 'smolvlm', 'med-r1'];
+const VLM_MODELS = ['medgemma', 'medgemma-1.5', 'medgemma-1.5-gguf', 'smolvlm', 'med-r1'];
 
 const FALLBACK_VLM_PROMPTS = [
   'describe_slice',
@@ -654,6 +654,27 @@ export default function NodeInspector() {
       );
     }
 
+    if (selectedNode.type === 'deidentifyNode') {
+      return (
+        <>
+          {renderPathField(
+            'Source Path',
+            'sourcePath',
+            'Auto-filled from Data Loader when connected',
+            ['file', 'directory'],
+          )}
+          {renderPathField(
+            'Output Path',
+            'outputPath',
+            'Optional. Auto-generated if empty',
+            ['file', 'directory'],
+          )}
+          {renderCheckboxField('Apply pydeface to 3D volume when supported', 'applyDeface')}
+          {selectedData.auditPath ? renderTextField('Audit Path', 'auditPath', '', true) : null}
+        </>
+      );
+    }
+
     if (selectedNode.type === 'interactiveAnnotator') {
       return (
         <>
@@ -818,6 +839,7 @@ export default function NodeInspector() {
           {renderSelectField('Modality', 'modality', VLM_MODALITIES)}
           {renderSelectField('View Plane', 'view', ['axial', 'coronal', 'sagittal'])}
           {renderNumberField('Slice Index', 'sliceIndex')}
+          {renderNumberField('Max Tokens', 'maxTokens')}
           {renderNumberField('Max Labels', 'maxLabels')}
           {renderCheckboxField('Use annotation overlays when available', 'useOverlay')}
           {renderTextareaField(

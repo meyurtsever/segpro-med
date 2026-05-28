@@ -418,7 +418,11 @@ function getVlmModelForNode(type: string | undefined): VlmModelId {
 }
 
 function isVlmModelId(value: unknown): value is VlmModelId {
-  return value === 'medgemma' || value === 'smolvlm' || value === 'med-r1';
+  return value === 'medgemma' ||
+    value === 'medgemma-1.5' ||
+    value === 'medgemma-1.5-gguf' ||
+    value === 'smolvlm' ||
+    value === 'med-r1';
 }
 
 function isVlmModality(value: unknown): value is VlmModality {
@@ -951,6 +955,58 @@ async function executeNode(
       throw new Error('No metadata source available - connect a Data Loader or Format Converter');
     }
 
+    case 'deidentifyNode': {
+      const dd = data as {
+        sessionId?: string;
+        sourcePath?: string;
+        outputPath?: string;
+        applyDeface?: boolean;
+      };
+
+      let sessionId = dd.sessionId;
+      let sourcePath = dd.sourcePath;
+
+      for (const upstream of upstreamResults) {
+        if (!sessionId && upstream.sessionId) {
+          sessionId = upstream.sessionId;
+        }
+        if (!sourcePath) {
+          sourcePath = upstream.filePath || upstream.outputPath;
+        }
+      }
+
+      if (!sessionId && !sourcePath) {
+        throw new Error('Deidentify needs a loaded Data Loader session or source path.');
+      }
+
+      const res = await api.deidentifyData({
+        session_id: sessionId,
+        source_path: sourcePath,
+        output_path: dd.outputPath,
+        apply_deface: dd.applyDeface !== false,
+      }, signal);
+
+      return {
+        sessionId: res.output_session_id,
+        outputSessionId: res.output_session_id,
+        sourceSessionId: res.session_id,
+        sourcePath: res.source_path,
+        outputPath: res.output_path,
+        filePath: res.output_path,
+        fileType: res.file_type,
+        outputFileType: res.file_type,
+        volumeShape: res.volume_shape,
+        outputVolumeShape: res.volume_shape,
+        metadata: res.sanitized_metadata,
+        sanitizedMetadata: res.sanitized_metadata,
+        sanitizedFields: res.sanitized_fields,
+        sanitizedFieldCount: res.sanitized_field_count,
+        filesProcessed: res.files_processed,
+        auditPath: res.audit_path,
+        message: res.message,
+      };
+    }
+
     case 'sliceViewer': {
       const sd = data as { sessionId?: string };
 
@@ -1329,7 +1385,7 @@ async function executeNode(
         modality,
         prompt_key: voicePrompt?.promptKey || String(vd.promptKey || 'describe_slice'),
         custom_prompt: voicePrompt?.text || getString(vd.customPrompt),
-        max_tokens: Number(vd.maxTokens || (model === 'smolvlm' ? 128 : 256)),
+        max_tokens: Number(vd.maxTokens || (model === 'medgemma-1.5-gguf' ? 512 : model === 'smolvlm' ? 128 : 256)),
         include_reasoning: Boolean(vd.includeReasoning),
         annotations: context.annotations,
         use_overlay: Boolean(vd.useOverlay),
@@ -1376,10 +1432,11 @@ async function executeNode(
         .map((upstream) => upstream.vlmResult)
         .find((result): result is VlmAnalysisResult => Boolean(result));
       const voicePrompt = getVoicePrompt(ld, upstreamResults);
-      const model = (ld.model === 'smolvlm' || ld.model === 'med-r1')
+      const model = isVlmModelId(ld.model)
         ? ld.model as VlmModelId
-        : 'medgemma';
+        : 'medgemma-1.5-gguf';
       const modality = isVlmModality(ld.modality) ? ld.modality : 'MRI';
+      const maxTokens = Number(ld.maxTokens || (model === 'medgemma-1.5-gguf' ? 512 : model === 'smolvlm' ? 128 : 256));
       const maxLabels = Number(ld.maxLabels || 12);
       const context = await getImageContext(ld, upstreamResults, signal);
       const currentLabels = annotationLabels(
@@ -1437,6 +1494,7 @@ async function executeNode(
         modality,
         prompt_key: voicePrompt?.promptKey || String(ld.promptKey || 'suggest_labels'),
         custom_prompt: voicePrompt?.text || getString(ld.customPrompt),
+        max_tokens: maxTokens,
         current_labels: currentLabels,
         max_labels: maxLabels,
         annotations: context.annotations,
@@ -1600,12 +1658,30 @@ async function executeNode(
         userId?: string;
         studyPath?: string;
         exportFormat?: string;
+        outputPath?: string;
         annotations?: AnnotationShape[];
         sliceAnnotationsMap?: SliceAnnotationsMap;
         sliceIndex?: number;
         view?: string;
       };
       const userId = ed.userId || 'workflow_user';
+      const upstreamData = upstreamResults.find((upstream) =>
+        Boolean(upstream.filePath || upstream.outputPath) && !upstream.annotationRecord,
+      );
+      if (upstreamData && !upstreamData.annotationRecord && !upstreamData.annotations && !upstreamData.sliceAnnotationsMap) {
+        const outputPath = String(upstreamData.outputPath || upstreamData.filePath || '');
+        return {
+          outputPath,
+          filePath: outputPath,
+          sourcePath: upstreamData.sourcePath || outputPath,
+          sessionId: upstreamData.sessionId,
+          fileType: upstreamData.fileType,
+          volumeShape: upstreamData.volumeShape,
+          exportFormat: ed.exportFormat || 'data',
+          message: 'Deidentified data is ready for export.',
+        };
+      }
+
       const studyPath = getStudyPath(ed as Record<string, unknown>, upstreamResults);
       if (!studyPath) throw new Error('Export needs a study path.');
 

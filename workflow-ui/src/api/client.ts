@@ -60,6 +60,29 @@ export interface MetadataResponse {
   metadata: Record<string, unknown>;
 }
 
+export interface DeidentifyRequest {
+  session_id?: string;
+  source_path?: string;
+  output_path?: string;
+  apply_deface?: boolean;
+}
+
+export interface DeidentifyResponse {
+  success: boolean;
+  session_id: string;
+  output_session_id: string;
+  source_path: string;
+  output_path: string;
+  file_type: string;
+  volume_shape: number[];
+  sanitized_metadata: Record<string, unknown>;
+  sanitized_fields: string[];
+  sanitized_field_count: number;
+  files_processed: number;
+  audit_path: string;
+  message: string;
+}
+
 /** Load data from a local filesystem path */
 export async function loadDataFromPath(
   path: string,
@@ -112,6 +135,17 @@ export async function getMetadata(
 ): Promise<MetadataResponse> {
   return request<MetadataResponse>(`${API_BASE}/data/metadata/${sessionId}`, {
     signal,
+  });
+}
+
+export async function deidentifyData(
+  requestBody: DeidentifyRequest,
+  signal?: AbortSignal,
+): Promise<DeidentifyResponse> {
+  return request<DeidentifyResponse>(`${API_BASE}/deidentify/run`, {
+    method: 'POST',
+    signal,
+    body: JSON.stringify(requestBody),
   });
 }
 
@@ -361,7 +395,7 @@ export async function getSegmentationConfigs(): Promise<SegmentationConfigsRespo
 // VLM  (/api/v1/vlm/*)
 // ---------------------------------------------------------------------------
 
-export type VlmModelId = 'medgemma' | 'smolvlm' | 'med-r1';
+export type VlmModelId = 'medgemma' | 'medgemma-1.5' | 'medgemma-1.5-gguf' | 'smolvlm' | 'med-r1';
 export type VlmModality = 'MRI' | 'CT' | 'MG';
 
 export interface VlmModelInfo {

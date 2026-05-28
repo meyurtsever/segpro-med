@@ -6,8 +6,13 @@ to enable fast medical image analysis with the Google MedGemma model.
 """
 
 import logging
+import os
+
+os.environ.setdefault("TORCHDYNAMO_DISABLE", "1")
+
 import torch
 import gc
+import importlib.util
 from typing import Optional, Union
 from PIL import Image
 import numpy as np
@@ -23,12 +28,21 @@ logger = logging.getLogger(__name__)
 
 # Global service instance for persistence
 _medgemma_service = None
+_medgemma_report_service = None
+_medgemma15_service = None
 
 
 class MedGemmaService:
     """Persistent service for MedGemma-4B inference"""
     
-    def __init__(self, device: str = "auto"):
+    def __init__(
+        self,
+        device: str = "auto",
+        model_name: str = "google/medgemma-4b-it",
+        local_model_dir: Optional[Union[str, Path]] = None,
+        initialize_xai: bool = True,
+        service_label: str = "MedGemma-4B",
+    ):
         """
         Initialize MedGemma-4B service
         
@@ -38,7 +52,10 @@ class MedGemmaService:
         self.device = self._get_device(device)
         self.model = None
         self.processor = None
-        self.model_name = "google/medgemma-4b-it"
+        self.model_name = model_name
+        self.local_model_dir = Path(local_model_dir) if local_model_dir else None
+        self.initialize_xai = initialize_xai
+        self.service_label = service_label
         self.using_device_map = False  # Track if using device_map for multi-GPU
         self.visual_grounding = None  # XAI visual grounding system
         self._initialize_model()
@@ -55,8 +72,18 @@ class MedGemmaService:
     def _ensure_model_available(self):
         """Ensure MedGemma model is available locally, download if not"""
         try:
+            if self.local_model_dir is not None:
+                config_path = self.local_model_dir / "config.json"
+                if config_path.exists():
+                    logger.info("%s model found locally at %s", self.service_label, self.local_model_dir)
+                    return
+                raise RuntimeError(f"{self.service_label} local model missing config.json at {self.local_model_dir}")
+
             # First, ensure we're authenticated with HuggingFace
-            from hf_auth import login_to_huggingface, check_model_access, print_authentication_instructions
+            try:
+                from .hf_auth import login_to_huggingface, check_model_access, print_authentication_instructions
+            except ImportError:
+                from hf_auth import login_to_huggingface, check_model_access, print_authentication_instructions
             
             # Try to authenticate
             auth_success = login_to_huggingface()
@@ -89,7 +116,10 @@ class MedGemmaService:
                 
                 # Try to import and run the download function
                 try:
-                    from download_medgemma import download_medgemma_model
+                    try:
+                        from .download_medgemma import download_medgemma_model
+                    except ImportError:
+                        from download_medgemma import download_medgemma_model
                     success = download_medgemma_model(force_redownload=False)
                     if success:
                         logger.info("MedGemma model downloaded successfully")
@@ -107,7 +137,11 @@ class MedGemmaService:
     def _initialize_model(self):
         """Initialize the MedGemma model and processor"""
         try:
-            logger.info(f"Initializing MedGemma-4B on {self.device}")
+            logger.info(f"Initializing {self.service_label} on {self.device}")
+            try:
+                torch.set_float32_matmul_precision("high")
+            except Exception:
+                pass
             
             # Check if model exists locally, download if not
             self._ensure_model_available()
@@ -121,7 +155,7 @@ class MedGemmaService:
             
             # Configure quantization for memory efficiency
             quantization_config = None
-            if self.device == "cuda":
+            if self.device == "cuda" and importlib.util.find_spec("bitsandbytes") is not None:
                 try:
                     quantization_config = BitsAndBytesConfig(
                         load_in_4bit=True,
@@ -133,13 +167,18 @@ class MedGemmaService:
                 except Exception as e:
                     logger.warning(f"Quantization not available: {e}")
                     quantization_config = None
+            elif self.device == "cuda":
+                logger.info("bitsandbytes is not installed; using BF16 CUDA inference")
             
             # Load processor
+            model_source = str(self.local_model_dir) if self.local_model_dir is not None else self.model_name
+
             self.processor = AutoProcessor.from_pretrained(
-                self.model_name,
-                trust_remote_code=True
+                model_source,
+                trust_remote_code=True,
+                use_fast=True,
             )
-            logger.info("Loaded MedGemma processor")
+            logger.info("Loaded %s processor", self.service_label)
             
             # Track whether we're using device_map for multi-GPU distribution
             self.using_device_map = False
@@ -149,6 +188,8 @@ class MedGemmaService:
                 "trust_remote_code": True,
                 "torch_dtype": torch.bfloat16 if self.device == "cuda" else torch.float32,
             }
+            if self.device == "cuda":
+                model_kwargs["attn_implementation"] = "sdpa"
             
             # Use device_map for multi-GPU setups only if we have quantization
             if self.device == "cuda" and quantization_config is not None:
@@ -159,10 +200,10 @@ class MedGemmaService:
             
             try:
                 self.model = AutoModelForImageTextToText.from_pretrained(
-                    self.model_name,
+                    model_source,
                     **model_kwargs
                 )
-                logger.info(f"MedGemma-4B loaded successfully on {self.device}")
+                logger.info(f"{self.service_label} loaded successfully on {self.device}")
                 
                 # Move to device only if not using device_map
                 if not self.using_device_map:
@@ -180,16 +221,23 @@ class MedGemmaService:
                     "torch_dtype": torch.float32,
                 }
                 self.model = AutoModelForImageTextToText.from_pretrained(
-                    self.model_name,
+                    model_source,
                     **model_kwargs
                 ).to("cpu")
-                logger.info("MedGemma-4B loaded on CPU (fallback)")
+                logger.info("%s loaded on CPU (fallback)", self.service_label)
             
             # Set model to evaluation mode
             self.model.eval()
             
             # Initialize visual grounding XAI systems (gradient-based and attention-based)
             try:
+                if not self.initialize_xai:
+                    self.visual_grounding = None
+                    self.attention_grounding = None
+                    self.vlm_grounding = None
+                    logger.info("Visual grounding XAI disabled for %s", self.service_label)
+                    return
+
                 # Import visual grounding modules dynamically to avoid circular imports
                 import sys
                 import os
@@ -233,8 +281,8 @@ class MedGemmaService:
                 self.vlm_grounding = None
             
         except Exception as e:
-            logger.error(f"Failed to initialize MedGemma service: {e}")
-            raise RuntimeError(f"MedGemma initialization failed: {e}")
+            logger.error(f"Failed to initialize {self.service_label} service: {e}")
+            raise RuntimeError(f"{self.service_label} initialization failed: {e}")
     
     def preprocess_image(self, image: Union[Image.Image, np.ndarray]) -> Image.Image:
         """
@@ -343,13 +391,11 @@ class MedGemmaService:
                 inputs = inputs.to(self.device)
             
             # Generate response
-            with torch.no_grad():
+            with torch.inference_mode():
                 outputs = self.model.generate(
                     **inputs,
                     max_new_tokens=max_new_tokens,
-                    do_sample=True,
-                    temperature=0.7,
-                    top_p=0.9,
+                    do_sample=False,
                     pad_token_id=self.processor.tokenizer.eos_token_id,
                     eos_token_id=self.processor.tokenizer.eos_token_id,
                     return_dict_in_generate=True,  # Enable dict output for caching
@@ -523,7 +569,14 @@ def get_service(device: str = "auto") -> MedGemmaService:
     
     try:
         if _medgemma_service is None:
-            _medgemma_service = MedGemmaService(device=device)
+            models_dir = Path(__file__).resolve().parents[1]
+            _medgemma_service = MedGemmaService(
+                device=device,
+                model_name="google/medgemma-4b-it",
+                local_model_dir=models_dir / "medgemma",
+                initialize_xai=True,
+                service_label="MedGemma-4B",
+            )
             logger.info("Created new MedGemma service instance")
         return _medgemma_service
     except Exception as e:
@@ -531,14 +584,64 @@ def get_service(device: str = "auto") -> MedGemmaService:
         raise
 
 
-def cleanup_service():
-    """Clean up the global MedGemma service"""
-    global _medgemma_service
+def get_report_service(device: str = "auto") -> MedGemmaService:
+    """Get or create a MedGemma-4B service optimized for report generation only."""
+    global _medgemma_report_service
+
+    try:
+        if _medgemma_report_service is None:
+            models_dir = Path(__file__).resolve().parents[1]
+            _medgemma_report_service = MedGemmaService(
+                device=device,
+                model_name="google/medgemma-4b-it",
+                local_model_dir=models_dir / "medgemma",
+                initialize_xai=False,
+                service_label="MedGemma-4B Report",
+            )
+            logger.info("Created new MedGemma report service instance")
+        return _medgemma_report_service
+    except Exception as e:
+        logger.error(f"Failed to get MedGemma report service: {e}")
+        raise
+
+
+def get_medgemma15_service(device: str = "auto") -> MedGemmaService:
+    """Get or create the local MedGemma 1.5 4B service instance."""
+    global _medgemma15_service
+
+    try:
+        if _medgemma15_service is None:
+            models_dir = Path(__file__).resolve().parents[1]
+            _medgemma15_service = MedGemmaService(
+                device=device,
+                model_name="google/medgemma-1.5-4b-it",
+                local_model_dir=models_dir / "medgemma-1.5-4b-it",
+                initialize_xai=False,
+                service_label="MedGemma-1.5-4B",
+            )
+            logger.info("Created new MedGemma 1.5 service instance")
+        return _medgemma15_service
+    except Exception as e:
+        logger.error(f"Failed to get MedGemma 1.5 service: {e}")
+        raise
+
+
+def cleanup_service(keep: Optional[str] = None):
+    """Clean up MedGemma services, optionally preserving one selected model family."""
+    global _medgemma_service, _medgemma_report_service, _medgemma15_service
     
-    if _medgemma_service is not None:
+    if keep != "medgemma" and _medgemma_service is not None:
         _medgemma_service.cleanup()
         _medgemma_service = None
         logger.info("Global MedGemma service cleaned up")
+    if keep != "medgemma" and _medgemma_report_service is not None:
+        _medgemma_report_service.cleanup()
+        _medgemma_report_service = None
+        logger.info("Global MedGemma report service cleaned up")
+    if keep != "medgemma-1.5" and _medgemma15_service is not None:
+        _medgemma15_service.cleanup()
+        _medgemma15_service = None
+        logger.info("Global MedGemma 1.5 service cleaned up")
 
 
 # Medical imaging specific prompts for MedGemma

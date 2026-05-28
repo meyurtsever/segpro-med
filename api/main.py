@@ -26,6 +26,7 @@ from api.routers import (
     collaboration,
     convert,
     data,
+    deidentify,
     filesystem,
     patients,
     segmentation,
@@ -77,6 +78,7 @@ app.add_middleware(
 # --- Routers ---
 app.include_router(data.router, prefix="/api/v1/data", tags=["Data I/O"])
 app.include_router(convert.router, prefix="/api/v1/convert", tags=["Format Conversion"])
+app.include_router(deidentify.router, prefix="/api/v1/deidentify", tags=["Deidentification"])
 app.include_router(filesystem.router, prefix="/api/v1/fs", tags=["Filesystem"])
 app.include_router(segmentation.router, prefix="/api/v1/segmentation", tags=["Segmentation"])
 app.include_router(patients.router, prefix="/api/v1/patients", tags=["Patients"])

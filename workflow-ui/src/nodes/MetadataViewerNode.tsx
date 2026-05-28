@@ -118,7 +118,7 @@ function MetadataViewerNode({ id, data }: NodeProps) {
     <BaseNode
       nodeId={id}
       nodeType="metadataViewer"
-      title="Metadata Viewer"
+      title={d.label || 'Metadata Viewer'}
       icon="i"
       color="var(--accent-blue)"
       status={d.status}

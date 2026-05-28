@@ -198,6 +198,20 @@ export function validateWorkflow(
       }
     }
 
+    if (node.type === 'deidentifyNode') {
+      const hasSource = hasValue(data.sessionId) ||
+        hasValue(data.sourcePath) ||
+        hasIncomingKind(node, nodes, edges, ['session', 'filePath']);
+      if (!hasSource) {
+        issues.push({
+          id: `${node.id}:source`,
+          severity: 'error',
+          nodeId: node.id,
+          message: 'Deidentify needs a Data Loader connection or source path.',
+        });
+      }
+    }
+
     if (node.type === 'annotationStore') {
       const hasAnnotations = hasIncomingKind(node, nodes, edges, ['annotatedSession']);
       const hasStudyPath = hasValue(data.studyPath);
@@ -233,13 +247,13 @@ export function validateWorkflow(
     }
 
     if (node.type === 'exportNode') {
-      const hasExportSource = hasIncomingKind(node, nodes, edges, ['annotatedSession', 'annotationRecord']);
+      const hasExportSource = hasIncomingKind(node, nodes, edges, ['annotatedSession', 'annotationRecord', 'filePath', 'session', 'deidentifiedData']);
       if (!hasExportSource) {
         issues.push({
           id: `${node.id}:source`,
           severity: 'error',
           nodeId: node.id,
-          message: 'Export needs annotations or an annotation record.',
+          message: 'Export needs annotations, an annotation record, or a data output.',
         });
       }
     }

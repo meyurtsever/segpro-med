@@ -33,16 +33,25 @@ if str(SEGPRO_ROOT) not in sys.path:
     sys.path.insert(0, str(SEGPRO_ROOT))
 if str(MODELS_DIR) not in sys.path:
     sys.path.append(str(MODELS_DIR))
-for _model_dir in [MODELS_DIR / "medgemma", MODELS_DIR / "smolvlm", MODELS_DIR / "med-r1"]:
+for _model_dir in [
+    MODELS_DIR / "medgemma",
+    MODELS_DIR / "medgemma-1.5-4b-it",
+    MODELS_DIR / "medgemma-1.5-4b-it-GGUF",
+    MODELS_DIR / "smolvlm",
+    MODELS_DIR / "med-r1",
+]:
     if str(_model_dir) not in sys.path:
         sys.path.append(str(_model_dir))
 
 router = APIRouter()
+_active_vlm_model: str | None = None
 
-VlmModel = Literal["medgemma", "smolvlm", "med-r1"]
+VlmModel = Literal["medgemma", "medgemma-1.5", "medgemma-1.5-gguf", "smolvlm", "med-r1"]
 
 MODEL_LABELS: dict[str, str] = {
     "medgemma": "MedGemma-4B",
+    "medgemma-1.5": "MedGemma-1.5-4B",
+    "medgemma-1.5-gguf": "MedGemma-1.5-4B GGUF Q8",
     "smolvlm": "SmolVLM",
     "med-r1": "Med-R1",
 }
@@ -170,7 +179,7 @@ class VlmAnalysisRequest(BaseModel):
     session_id: str
     slice_index: int = 0
     view: str = "axial"
-    model: VlmModel = "medgemma"
+    model: VlmModel = "medgemma-1.5-gguf"
     modality: str = "MRI"
     prompt_key: str = "describe_slice"
     custom_prompt: str | None = None
@@ -417,14 +426,72 @@ def _save_temp_image(image: Image.Image) -> str:
     return path
 
 
+def _release_services_on_model_change(model: str) -> None:
+    global _active_vlm_model
+
+    if _active_vlm_model == model:
+        return
+
+    try:
+        from medgemma.medgemma_service import cleanup_service as cleanup_transformers_medgemma
+    except Exception:
+        cleanup_transformers_medgemma = None
+
+    try:
+        from medgemma.medgemma_gguf_service import cleanup_service as cleanup_gguf
+    except Exception:
+        cleanup_gguf = None
+
+    try:
+        from smolvlm.smolvlm_service import cleanup_service as cleanup_smolvlm
+    except Exception:
+        cleanup_smolvlm = None
+
+    try:
+        from med_r1_service import cleanup_service as cleanup_med_r1
+    except Exception:
+        cleanup_med_r1 = None
+
+    if cleanup_transformers_medgemma is not None:
+        cleanup_transformers_medgemma()
+    if cleanup_gguf is not None:
+        cleanup_gguf()
+    if cleanup_smolvlm is not None:
+        cleanup_smolvlm()
+    if cleanup_med_r1 is not None:
+        cleanup_med_r1()
+
+    _active_vlm_model = model
+
+
 def _run_model(model: str, image: Image.Image, prompt: str, max_tokens: int) -> str:
+    _release_services_on_model_change(model)
+
     if model == "medgemma":
         try:
-            from medgemma.medgemma_service import get_service
+            from medgemma.medgemma_service import get_report_service
         except Exception as exc:
             raise HTTPException(status_code=503, detail=f"MedGemma service is not available: {exc}") from exc
-        service = get_service(device="auto")
+        service = get_report_service(device="auto")
         return service.generate_response(image=image, prompt=prompt, max_new_tokens=max_tokens)
+
+    if model == "medgemma-1.5":
+        try:
+            from medgemma.medgemma_service import get_medgemma15_service
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail=f"MedGemma 1.5 service is not available: {exc}") from exc
+        service = get_medgemma15_service(device="auto")
+        return service.generate_response(image=image, prompt=prompt, max_new_tokens=max_tokens)
+
+    if model == "medgemma-1.5-gguf":
+        try:
+            from medgemma.medgemma_gguf_service import get_service
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail=f"MedGemma GGUF service is not available: {exc}") from exc
+        try:
+            return get_service().generate_response(image=image, prompt=prompt, max_new_tokens=max_tokens)
+        except RuntimeError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
 
     if model == "smolvlm":
         try:
@@ -526,6 +593,18 @@ async def list_models():
             label="MedGemma-4B",
             description="Medical VLM for radiology-style image analysis and label suggestions.",
             strengths=["medical terminology", "structured findings", "label suggestions"],
+        ),
+        VlmModelInfo(
+            id="medgemma-1.5",
+            label="MedGemma-1.5-4B",
+            description="Local Transformers MedGemma 1.5 model for faster deterministic report generation.",
+            strengths=["newer MedGemma checkpoint", "CUDA BF16 inference", "structured findings"],
+        ),
+        VlmModelInfo(
+            id="medgemma-1.5-gguf",
+            label="MedGemma-1.5 GGUF Q8",
+            description="High-quality quantized GGUF model. Requires llama-cpp-python with GPU support.",
+            strengths=["smaller model artifact", "llama.cpp backend ready", "quality-preserving Q8 quantization"],
         ),
         VlmModelInfo(
             id="smolvlm",

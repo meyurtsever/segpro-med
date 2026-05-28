@@ -268,7 +268,7 @@ function DataLoaderNode({ id, data }: NodeProps) {
     >
       {/* ── Patient search (primary) ─────────────────────────────────────── */}
       <label style={labelStyle}>
-        🔍 Patient Search
+        Patient Search
       </label>
       <div ref={searchWrapperRef} style={{ position: 'relative' }}>
         <input

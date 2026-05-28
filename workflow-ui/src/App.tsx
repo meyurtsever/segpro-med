@@ -36,6 +36,8 @@ import NodeSuggestionMenu from './components/NodeSuggestionMenu';
 import NodeContextMenu from './components/NodeContextMenu';
 import CrowdsourcingLoginModal from './components/CrowdsourcingLoginModal';
 import CanvasEmptyState from './components/CanvasEmptyState';
+import ResultModal from './components/ResultModal';
+import TaskTutorialOverlay from './components/TaskTutorialOverlay';
 import * as api from './api/client';
 import { validateWorkflow, type WorkflowIssue } from './engine/workflowValidation';
 import {
@@ -49,6 +51,7 @@ import {
   workflowTemplates,
   type WorkflowTemplate,
 } from './engine/workflowTemplates';
+import { taskTutorials, type TaskTutorialConfig } from './engine/taskTutorials';
 import type {
   AnnotationShape,
   BaseNodeData,
@@ -115,6 +118,9 @@ const EXECUTION_HISTORY_STORAGE_KEY = 'segpro-med.workflow.executionHistory';
 const EXECUTION_HISTORY_LIMIT = 50;
 const CROWDSOURCING_GUIDE_DISMISSED_KEY = 'segpro-med.workflow.crowdsourcingGuideDismissed';
 const CROWDSOURCING_HELPER_HIDDEN_KEY = 'segpro-med.workflow.crowdsourcingHelperHidden';
+const DEIDENTIFICATION_HELPER_HIDDEN_KEY = 'segpro-med.workflow.deidentificationHelperHidden';
+const DEIDENTIFICATION_GUIDE_DISMISSED_KEY = 'segpro-med.workflow.deidentificationGuideDismissed';
+const DEIDENTIFICATION_RESULT_DISMISSED_KEY = 'segpro-med.workflow.deidentificationResultDismissed';
 
 function cloneJson<T>(value: T): T {
   if (value === undefined) return value;
@@ -712,6 +718,18 @@ export default function App() {
     typeof window !== 'undefined' &&
     window.localStorage.getItem(CROWDSOURCING_HELPER_HIDDEN_KEY) === 'true'
   ));
+  const [deidentificationHelperHidden, setDeidentificationHelperHidden] = useState(() => (
+    typeof window !== 'undefined' &&
+    window.localStorage.getItem(DEIDENTIFICATION_HELPER_HIDDEN_KEY) === 'true'
+  ));
+  const [showDeidentificationGuide, setShowDeidentificationGuide] = useState(false);
+  const [doNotShowDeidentificationGuide, setDoNotShowDeidentificationGuide] = useState(false);
+  const [showDeidentificationResult, setShowDeidentificationResult] = useState(false);
+  const [doNotShowDeidentificationResult, setDoNotShowDeidentificationResult] = useState(false);
+  const [deidentificationResultPath, setDeidentificationResultPath] = useState<string | undefined>();
+  const [activeTaskTutorial, setActiveTaskTutorial] = useState<TaskTutorialConfig | null>(null);
+  const [doNotShowTaskTutorial, setDoNotShowTaskTutorial] = useState(false);
+  const [tutorialViewportSignal, setTutorialViewportSignal] = useState(0);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const reactFlowInstance = useRef<any>(null);
@@ -727,6 +745,7 @@ export default function App() {
   const hasUnsavedChanges = nodes.length > 0 && currentWorkflowFingerprint !== savedWorkflowFingerprint;
   const crowdsourcingPanelScale = Math.max(0.72, Math.min(1.28, viewportZoom));
   const isWorkflowRunning = Boolean(activeRun);
+  const hasDeidentificationWorkflow = nodes.some((node) => node.type === 'deidentifyNode');
   const selectedExecutionNodeId = selectedNodeIds[0] || selectedNodeId || undefined;
   const isAdminCrowdsourcingWorkspaceVisible = crowdsourcingSession?.role === 'admin' &&
     nodes.some((node) => ['campaignSetup', 'patientAssign', 'campaignStatus'].includes(node.type || ''));
@@ -950,6 +969,25 @@ export default function App() {
         type: 'success',
         message: `${modeLabel[0].toUpperCase()}${modeLabel.slice(1)} completed (${result.executedNodeIds.length} node${result.executedNodeIds.length === 1 ? '' : 's'}).`,
       });
+      const deidentifyNodeId = nodes.find((node) =>
+        node.type === 'deidentifyNode' && result.executedNodeIds.includes(node.id),
+      )?.id;
+      if (deidentifyNodeId) {
+        const deidentifyResult = result.results.get(deidentifyNodeId);
+        setDeidentificationResultPath(
+          typeof deidentifyResult?.outputPath === 'string'
+            ? deidentifyResult.outputPath
+            : typeof deidentifyResult?.filePath === 'string'
+              ? deidentifyResult.filePath
+              : undefined,
+        );
+        const dismissed = typeof window !== 'undefined' &&
+          window.localStorage.getItem(DEIDENTIFICATION_RESULT_DISMISSED_KEY) === 'true';
+        if (!dismissed) {
+          setDoNotShowDeidentificationResult(false);
+          setShowDeidentificationResult(true);
+        }
+      }
     } catch (err) {
       const finishedAt = new Date().toISOString();
       const isCancelled = isWorkflowExecutionCancelledError(err) || controller.signal.aborted;
@@ -1154,11 +1192,13 @@ export default function App() {
 
   const handleCanvasMove = useCallback((_event: MouseEvent | TouchEvent | null, viewport: Viewport) => {
     setViewportZoom(viewport.zoom);
+    setTutorialViewportSignal((value) => value + 1);
   }, []);
 
   const handleNodeDragStart = useCallback(() => {
     setNodeContextMenu(null);
     checkpointHistory();
+    setTutorialViewportSignal((value) => value + 1);
   }, [checkpointHistory]);
 
   const handleUndoClick = useCallback(() => {
@@ -1353,6 +1393,7 @@ export default function App() {
       if (isEditableShortcutTarget(event.target)) return;
 
       if (event.key === 'Escape') {
+        setActiveTaskTutorial(null);
         setNodeContextMenu(null);
         setSuggestionMenu(null);
         setShowWorkflowMenu(false);
@@ -1883,6 +1924,34 @@ export default function App() {
     }
   }, []);
 
+  const handleSetDeidentificationHelperHidden = useCallback((hidden: boolean) => {
+    setDeidentificationHelperHidden(hidden);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(DEIDENTIFICATION_HELPER_HIDDEN_KEY, hidden ? 'true' : 'false');
+    }
+  }, []);
+
+  const handleCloseDeidentificationGuide = useCallback(() => {
+    if (doNotShowDeidentificationGuide && typeof window !== 'undefined') {
+      window.localStorage.setItem(DEIDENTIFICATION_GUIDE_DISMISSED_KEY, 'true');
+    }
+    setShowDeidentificationGuide(false);
+  }, [doNotShowDeidentificationGuide]);
+
+  const handleCloseDeidentificationResult = useCallback(() => {
+    if (doNotShowDeidentificationResult && typeof window !== 'undefined') {
+      window.localStorage.setItem(DEIDENTIFICATION_RESULT_DISMISSED_KEY, 'true');
+    }
+    setShowDeidentificationResult(false);
+  }, [doNotShowDeidentificationResult]);
+
+  const handleCloseTaskTutorial = useCallback(() => {
+    if (activeTaskTutorial && doNotShowTaskTutorial && typeof window !== 'undefined') {
+      window.localStorage.setItem(activeTaskTutorial.storageKey, 'true');
+    }
+    setActiveTaskTutorial(null);
+  }, [activeTaskTutorial, doNotShowTaskTutorial]);
+
   const handleSubmitCrowdsourcingTask = useCallback(async () => {
     if (!crowdsourcingSession || !currentCrowdsourcingTask) return;
     if (crowdsourcingSubmitBusy) return;
@@ -2025,6 +2094,18 @@ export default function App() {
       addNodesAndConnect(instance.nodes, instance.connections);
       setShowTemplatePanel(false);
       setShowValidationPanel(false);
+      if (template.id === 'phi-deidentification') {
+        const tutorial = taskTutorials[template.id];
+        const dismissed = tutorial && typeof window !== 'undefined' &&
+          window.localStorage.getItem(tutorial.storageKey) === 'true';
+        if (tutorial && !dismissed) {
+          setDoNotShowTaskTutorial(false);
+          window.setTimeout(() => {
+            setTutorialViewportSignal((value) => value + 1);
+            setActiveTaskTutorial(tutorial);
+          }, 180);
+        }
+      }
       setWorkflowNotice({
         type: 'success',
         message: `${template.title} template added.`,
@@ -2304,7 +2385,7 @@ export default function App() {
         </div>
       ) : null}
 
-      <NodePalette />
+      <NodePalette onApplyTemplate={handleApplyTemplate} />
 
       {/* Main canvas */}
       <div style={canvasContainerStyle}>
@@ -2346,6 +2427,57 @@ export default function App() {
             onCreateDataLoader={handleCreateDataLoader}
             onCreateStarterWorkflow={handleCreateStarterWorkflow}
           />
+        ) : null}
+
+        {hasDeidentificationWorkflow && !crowdsourcingSession ? (
+          deidentificationHelperHidden ? (
+            <button
+              type="button"
+              onClick={() => handleSetDeidentificationHelperHidden(false)}
+              style={{
+                ...btnStyle('var(--accent-green)'),
+                position: 'absolute',
+                top: 62,
+                right: 12,
+                zIndex: 9,
+              }}
+              title="Show deidentification guidance"
+            >
+              Show Tips
+            </button>
+          ) : (
+            <div style={{
+              ...crowdsourcingHelperStyle,
+              border: '1px solid color-mix(in srgb, var(--accent-green) 35%, var(--border-color))',
+              background: 'color-mix(in srgb, var(--accent-green) 8%, var(--bg-secondary))',
+            }}>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ color: 'var(--accent-green)', fontSize: 11, fontWeight: 900, textTransform: 'uppercase' }}>
+                  Deidentification Guidance
+                </div>
+                <div style={{ color: 'var(--text-secondary)', fontSize: 12, lineHeight: 1.45, marginTop: 2 }}>
+                  Load a study, run the workflow, then compare Metadata Before and Metadata After. The Deidentify node writes a new sanitized output and an audit entry without changing the source data.
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setDoNotShowDeidentificationGuide(false);
+                  setShowDeidentificationGuide(true);
+                }}
+                style={{ ...btnStyle('var(--accent-green)'), pointerEvents: 'auto' }}
+              >
+                Guide
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSetDeidentificationHelperHidden(true)}
+                style={{ ...btnStyle('var(--text-secondary)'), pointerEvents: 'auto' }}
+              >
+                Hide
+              </button>
+            </div>
+          )
         ) : null}
 
         {crowdsourcingSession && currentCrowdsourcingTask ? (
@@ -2807,7 +2939,180 @@ export default function App() {
         </button>
       </div>
 
+      {activeTaskTutorial ? (
+        <TaskTutorialOverlay
+          key={activeTaskTutorial.templateId}
+          config={activeTaskTutorial}
+          nodes={nodes}
+          viewportSignal={tutorialViewportSignal}
+          doNotShowAgain={doNotShowTaskTutorial}
+          onDoNotShowAgainChange={setDoNotShowTaskTutorial}
+          onClose={handleCloseTaskTutorial}
+        />
+      ) : null}
+
       <NodeInspector />
+
+      {showDeidentificationGuide && typeof document !== 'undefined'
+        ? createPortal(
+          <div
+            style={guideOverlayStyle}
+            onClick={handleCloseDeidentificationGuide}
+            role="presentation"
+          >
+            <div
+              style={guideModalStyle}
+              onClick={(event) => event.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="deidentification-guide-title"
+            >
+              <div style={{
+                padding: '16px 18px',
+                borderBottom: '1px solid var(--border-color)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                gap: 12,
+                alignItems: 'flex-start',
+              }}>
+                <div>
+                  <div
+                    id="deidentification-guide-title"
+                    style={{
+                      color: 'var(--accent-green)',
+                      fontSize: 14,
+                      fontWeight: 900,
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    PHI Deidentification Guide
+                  </div>
+                  <div style={{ color: 'var(--text-secondary)', fontSize: 12, marginTop: 5, lineHeight: 1.5 }}>
+                    This automated workflow prepares a copy of imaging data for research sharing or transfer.
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCloseDeidentificationGuide}
+                  style={{
+                    ...iconButtonStyle('var(--text-secondary)'),
+                    minHeight: 30,
+                    width: 30,
+                    minWidth: 30,
+                  }}
+                  aria-label="Close deidentification guide"
+                  title="Close"
+                >
+                  x
+                </button>
+              </div>
+
+              <div style={{ padding: 18, overflowY: 'auto' }}>
+                <div style={{
+                  border: '1px solid color-mix(in srgb, var(--accent-green) 34%, var(--border-color))',
+                  background: 'color-mix(in srgb, var(--accent-green) 8%, var(--bg-secondary))',
+                  borderRadius: 8,
+                  padding: '10px 12px',
+                  color: 'var(--text-secondary)',
+                  fontSize: 12,
+                  lineHeight: 1.5,
+                  marginBottom: 14,
+                }}>
+                  The source study is left untouched. The Deidentify node creates a new output path, blanks DICOM PHI fields, defaces supported 3D volumes when enabled, and writes to db/anonymization_audit.jsonl.
+                </div>
+
+                <div style={{ display: 'grid', gap: 10 }}>
+                  {[
+                    ['1', 'Load the study', 'Use Data Loader with a DICOM directory, uploaded ZIP, single DICOM file, or NIfTI volume.'],
+                    ['2', 'Inspect before running', 'Metadata Before shows the fields currently present so the expert understands what will be removed.'],
+                    ['3', 'Run the workflow', 'Deidentify creates a sanitized copy and logs the operation. Metadata After verifies the fields that remain visible.'],
+                    ['4', 'Use the exported path', 'Export shows the sanitized artifact path for transfer, archiving, or downstream workflow use.'],
+                  ].map(([number, title, text]) => (
+                    <div
+                      key={number}
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: '28px 1fr',
+                        gap: 10,
+                        alignItems: 'start',
+                      }}
+                    >
+                      <div style={{
+                        width: 26,
+                        height: 26,
+                        borderRadius: 6,
+                        border: '1px solid color-mix(in srgb, var(--accent-green) 48%, var(--border-color))',
+                        color: 'var(--accent-green)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 12,
+                        fontWeight: 900,
+                      }}>
+                        {number}
+                      </div>
+                      <div>
+                        <div style={{ color: 'var(--text-primary)', fontSize: 13, fontWeight: 900 }}>
+                          {title}
+                        </div>
+                        <div style={{ color: 'var(--text-secondary)', fontSize: 12, lineHeight: 1.45, marginTop: 2 }}>
+                          {text}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{
+                padding: '12px 18px 16px',
+                borderTop: '1px solid var(--border-color)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 12,
+              }}>
+                <label style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  color: 'var(--text-secondary)',
+                  fontSize: 12,
+                  cursor: 'pointer',
+                }}>
+                  <input
+                    type="checkbox"
+                    checked={doNotShowDeidentificationGuide}
+                    onChange={(event) => setDoNotShowDeidentificationGuide(event.target.checked)}
+                  />
+                  Do not show again
+                </label>
+                <button
+                  type="button"
+                  onClick={handleCloseDeidentificationGuide}
+                  style={btnStyle('var(--accent-green)')}
+                >
+                  Got It
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )
+        : null}
+
+      <ResultModal
+        isOpen={showDeidentificationResult}
+        title="PHI Deidentification Complete"
+        status="success"
+        summary="The workflow finished and produced a sanitized study output."
+        outputPath={deidentificationResultPath}
+        expectation="The output should contain a deidentified copy of the source study. DICOM PHI fields are blanked, private tags are removed, supported NIfTI header text fields are cleared, and the audit trail records the operation."
+        nextStep="Review Metadata Viewer (After Sanitization), then use the Export Sanitized Data node path for transfer, public-release preparation, or downstream workflow steps."
+        doNotShowAgain={doNotShowDeidentificationResult}
+        onDoNotShowAgainChange={setDoNotShowDeidentificationResult}
+        onClose={handleCloseDeidentificationResult}
+      />
 
       {showCrowdsourcingGuide && typeof document !== 'undefined'
         ? createPortal(

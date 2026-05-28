@@ -13,6 +13,7 @@ import type { BaseNodeData } from '../types/nodes';
 export type WorkflowPortKind =
   | 'filePath'
   | 'session'
+  | 'deidentifiedData'
   | 'segmentationConfig'
   | 'segmentationPrompt'
   | 'segmentationResult'
@@ -55,6 +56,12 @@ export const portDefinitions: Record<WorkflowPortKind, WorkflowPortDefinition> =
     label: 'Loaded session',
     edgeLabel: 'session',
     color: 'var(--accent-blue)',
+  },
+  deidentifiedData: {
+    kind: 'deidentifiedData',
+    label: 'Deidentified data',
+    edgeLabel: 'deidentified',
+    color: 'var(--accent-green)',
   },
   segmentationConfig: {
     kind: 'segmentationConfig',
@@ -167,6 +174,26 @@ export const nodeContracts: WorkflowNodeContract[] = [
       status: 'idle',
       sourcePath: '',
       filterText: '',
+    },
+  },
+  {
+    type: 'deidentifyNode',
+    label: 'Deidentify',
+    icon: 'ID',
+    category: 'Data I/O',
+    categoryColor: 'var(--accent-green)',
+    description: 'Blank DICOM PHI fields and deface 3D volumes with an audit trail',
+    inputKinds: ['session', 'filePath'],
+    outputKinds: ['session', 'filePath', 'deidentifiedData'],
+    defaultData: {
+      label: 'Deidentify',
+      status: 'idle',
+      sessionId: '',
+      sourcePath: '',
+      outputPath: '',
+      applyDeface: true,
+      sanitizedFieldCount: 0,
+      filesProcessed: 0,
     },
   },
   {
@@ -293,7 +320,7 @@ export const nodeContracts: WorkflowNodeContract[] = [
     category: 'Data I/O',
     categoryColor: 'var(--accent-orange)',
     description: 'Export stored annotation records to a workflow output file',
-    inputKinds: ['annotatedSession', 'annotationRecord'],
+    inputKinds: ['annotatedSession', 'annotationRecord', 'filePath', 'session', 'deidentifiedData'],
     outputKinds: ['filePath'],
     defaultData: {
       label: 'Export',
@@ -330,7 +357,7 @@ export const nodeContracts: WorkflowNodeContract[] = [
     icon: 'MR',
     category: 'VLM',
     categoryColor: 'var(--accent-purple)',
-    description: 'Generate a medical image report with MedGemma by default, or switch VLM model in settings',
+    description: 'Generate a medical image report with MedGemma GGUF by default, or switch VLM model in settings',
     inputKinds: ['session', 'filePath', 'annotatedSession', 'voicePrompt'],
     outputKinds: ['vlmAnalysis'],
     defaultData: {
@@ -339,11 +366,11 @@ export const nodeContracts: WorkflowNodeContract[] = [
       sessionId: '',
       sliceIndex: 0,
       view: 'axial',
-      model: 'medgemma',
+      model: 'medgemma-1.5-gguf',
       modality: 'MRI',
       promptKey: 'describe_slice',
       customPrompt: '',
-      maxTokens: 256,
+      maxTokens: 512,
       includeReasoning: false,
       useOverlay: false,
       availablePrompts: [],
@@ -364,10 +391,11 @@ export const nodeContracts: WorkflowNodeContract[] = [
       sessionId: '',
       sliceIndex: 0,
       view: 'axial',
-      model: 'medgemma',
+      model: 'medgemma-1.5-gguf',
       modality: 'MRI',
       promptKey: 'suggest_labels',
       customPrompt: '',
+      maxTokens: 512,
       maxLabels: 12,
       useOverlay: true,
       availablePrompts: [],

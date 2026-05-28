@@ -35,6 +35,26 @@ const MODEL_META: Record<VlmModelId, {
       'Use Label Suggester downstream when you want concise annotation labels.',
     ],
   },
+  'medgemma-1.5': {
+    nodeType: 'medgemmaNode',
+    title: 'Medical Report Generation',
+    icon: 'M1',
+    description: 'Runs the locally installed MedGemma 1.5 4B model through Transformers.',
+    tips: [
+      'Best default when you want the newer MedGemma checkpoint on the RTX 5080.',
+      'Uses deterministic decoding for repeatable reports and better latency.',
+    ],
+  },
+  'medgemma-1.5-gguf': {
+    nodeType: 'medgemmaNode',
+    title: 'Medical Report Generation',
+    icon: 'GQ',
+    description: 'Runs the local MedGemma 1.5 Q8 GGUF model through llama.cpp when a GPU backend is installed.',
+    tips: [
+      'Requires llama-cpp-python with GPU support; CPU-only llama.cpp is not recommended.',
+      'Q8 preserves quality better than smaller quantizations while reducing model size.',
+    ],
+  },
   smolvlm: {
     nodeType: 'smolvlmNode',
     title: 'SmolVLM',
@@ -68,6 +88,8 @@ const FALLBACK_PROMPTS = [
 const MODALITIES: VlmModality[] = ['MRI', 'CT', 'MG'];
 const MODELS: Array<{ value: VlmModelId; label: string; tokens: number; reasoning: boolean }> = [
   { value: 'medgemma', label: 'MedGemma', tokens: 256, reasoning: false },
+  { value: 'medgemma-1.5', label: 'MedGemma 1.5', tokens: 256, reasoning: false },
+  { value: 'medgemma-1.5-gguf', label: 'MedGemma 1.5 GGUF Q8', tokens: 512, reasoning: false },
   { value: 'smolvlm', label: 'SmolVLM', tokens: 128, reasoning: false },
   { value: 'med-r1', label: 'Med-R1', tokens: 384, reasoning: true },
 ];
@@ -222,13 +244,26 @@ const markdownListItemStyle: React.CSSProperties = {
   marginBottom: 5,
 };
 
+const boxedAnswerStyle: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  minHeight: 22,
+  padding: '1px 8px',
+  margin: '0 2px',
+  border: '1px solid rgba(88, 166, 255, 0.72)',
+  borderRadius: 4,
+  background: 'rgba(88, 166, 255, 0.12)',
+  color: '#8fbcff',
+  fontWeight: 900,
+};
+
 function truncate(value: string, maxLength: number) {
   return value.length > maxLength ? `${value.slice(0, maxLength - 1)}...` : value;
 }
 
 function renderInlineMarkdown(text: string): ReactNode[] {
   const parts: ReactNode[] = [];
-  const pattern = /(\*\*[^*]+\*\*|\*[^*]+\*)/g;
+  const pattern = /(\$\\boxed\{[^}]+\}\$|\\boxed\{[^}]+\}|\*\*[^*]+\*\*|\*[^*]+\*)/g;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
 
@@ -238,7 +273,14 @@ function renderInlineMarkdown(text: string): ReactNode[] {
     }
 
     const token = match[0];
-    if (token.startsWith('**')) {
+    const boxedMatch = /^\$?\\boxed\{([^}]+)\}\$?$/.exec(token);
+    if (boxedMatch) {
+      parts.push(
+        <span key={`${match.index}-box`} style={boxedAnswerStyle}>
+          {boxedMatch[1]}
+        </span>,
+      );
+    } else if (token.startsWith('**')) {
       parts.push(
         <strong key={`${match.index}-b`}>
           {token.slice(2, -2)}
@@ -318,8 +360,9 @@ function VlmModelNode({ id, data, model }: NodeProps & { model: VlmModelId }) {
   const storeNodes = useWorkflowStore((s) => s.nodes);
   const storeEdges = useWorkflowStore((s) => s.edges);
   const d = data as unknown as VlmNodeData;
-  const selectedModel = d.model || model;
+  const selectedModel = d.model || 'medgemma-1.5-gguf';
   const meta = model === 'medgemma' ? MODEL_META.medgemma : MODEL_META[selectedModel];
+  const selectedModelDefaults = MODELS.find((item) => item.value === selectedModel);
   const [promptError, setPromptError] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [resultOpen, setResultOpen] = useState(false);
@@ -579,7 +622,7 @@ function VlmModelNode({ id, data, model }: NodeProps & { model: VlmModelId }) {
                 type="number"
                 min={32}
                 max={2048}
-                value={Number(d.maxTokens ?? 256)}
+                value={Number(d.maxTokens ?? selectedModelDefaults?.tokens ?? 512)}
                 onChange={handleNumber('maxTokens')}
                 style={inputStyle}
               />

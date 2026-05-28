@@ -50,6 +50,24 @@ export interface MetadataViewerNodeData extends BaseNodeData {
   filterText?: string;
 }
 
+/** DeidentifyNode - blanks PHI metadata and optionally defaces 3D volumes */
+export interface DeidentifyNodeData extends BaseNodeData {
+  sessionId?: string;
+  sourcePath?: string;
+  outputPath?: string;
+  outputSessionId?: string;
+  outputFileType?: string;
+  outputVolumeShape?: number[];
+  metadata?: Record<string, unknown>;
+  sanitizedMetadata?: Record<string, unknown>;
+  applyDeface?: boolean;
+  sanitizedFieldCount?: number;
+  sanitizedFields?: string[];
+  filesProcessed?: number;
+  auditPath?: string;
+  message?: string;
+}
+
 /** Coordinate selected on a slice image */
 export interface SliceCoordinate {
   /** X position in image pixels (0-based) */
@@ -215,7 +233,7 @@ export interface SegmentationResult {
   message: string;
 }
 
-export type VlmModelId = 'medgemma' | 'smolvlm' | 'med-r1';
+export type VlmModelId = 'medgemma' | 'medgemma-1.5' | 'medgemma-1.5-gguf' | 'smolvlm' | 'med-r1';
 export type VlmModality = 'MRI' | 'CT' | 'MG';
 export type VoicePromptIntent = 'describe' | 'anomaly' | 'both' | 'custom';
 
@@ -440,6 +458,10 @@ export interface ExportNodeData extends BaseNodeData {
   studyPath: string;
   exportFormat: 'json';
   outputPath?: string;
+  sourcePath?: string;
+  sessionId?: string;
+  fileType?: string;
+  volumeShape?: number[];
   annotationCount?: number;
   annotationRecord?: AnnotationRecord;
 }
@@ -473,6 +495,7 @@ export interface LabelSuggesterNodeData extends BaseNodeData {
   modality: VlmModality;
   promptKey: string;
   customPrompt?: string;
+  maxTokens?: number;
   maxLabels: number;
   useOverlay?: boolean;
   availablePrompts: VlmPromptPreset[];

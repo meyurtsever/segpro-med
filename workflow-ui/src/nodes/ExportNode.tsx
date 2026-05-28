@@ -8,11 +8,12 @@ import type { ExportNodeData } from '../types/nodes';
 
 const EXPORT_INFO: NodeInfo = {
   description:
-    'Exports a stored annotation record to a file path that can continue through Data I/O workflow branches.',
-  inputs: ['Annotation record from Annotation Store or Annotation Load', 'Annotated session when a record can be stored first'],
+    'Marks a workflow output as ready for download, transfer, or downstream use. It supports annotation records and deidentified data outputs.',
+  inputs: ['Annotation record from Annotation Store or Annotation Load', 'Annotated session when a record can be stored first', 'Deidentified file path from Deidentify'],
   outputs: ['Exported file path'],
   tips: [
     'JSON export uses the existing AnnotationManager export path.',
+    'For deidentified data, connect Deidentify directly and the sanitized output path becomes the exported artifact.',
     'Run Annotation Store before Export when annotations have not been persisted yet.',
   ],
 };
@@ -28,14 +29,16 @@ const rowStyle: React.CSSProperties = {
 
 function ExportNode({ id, data }: NodeProps) {
   const d = data as unknown as ExportNodeData;
+  const isDataExport = Boolean(d.outputPath) && !d.annotationRecord;
+  const nodeColor = isDataExport ? 'var(--accent-green)' : 'var(--accent-orange)';
 
   return (
     <BaseNode
       nodeId={id}
       nodeType="exportNode"
-      title="Export"
+      title={d.label || 'Export'}
       icon="EX"
-      color="var(--accent-orange)"
+      color={nodeColor}
       status={d.status}
       error={d.error}
       hasInput={true}
@@ -44,14 +47,22 @@ function ExportNode({ id, data }: NodeProps) {
     >
       <div style={rowStyle}>
         <span>Format</span>
-        <strong>{d.exportFormat || 'json'}</strong>
+        <strong>{isDataExport ? (d.fileType || 'data') : (d.exportFormat || 'json')}</strong>
       </div>
       <div style={rowStyle}>
-        <span>Annotations</span>
-        <strong>{d.annotationCount ?? d.annotationRecord?.annotationCount ?? 0}</strong>
+        <span>{isDataExport ? 'Output' : 'Annotations'}</span>
+        <strong>{isDataExport ? 'ready' : (d.annotationCount ?? d.annotationRecord?.annotationCount ?? 0)}</strong>
       </div>
       {d.outputPath ? (
         <div style={{ ...rowStyle, display: 'block', wordBreak: 'break-word' }}>
+          <div style={{
+            color: nodeColor,
+            fontSize: 11,
+            fontWeight: 900,
+            marginBottom: 5,
+          }}>
+            Export completed successfully.
+          </div>
           <span>{d.outputPath}</span>
         </div>
       ) : (

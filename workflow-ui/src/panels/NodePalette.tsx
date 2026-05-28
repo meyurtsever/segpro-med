@@ -1,10 +1,10 @@
 /**
- * NodePalette — Left sidebar with draggable node types.
- * Drag a node from here onto the canvas to add it to the workflow.
+ * WorkflowLibrary - left sidebar for atomic nodes and end-to-end task templates.
  */
 
 import { type DragEvent, useCallback, useState } from 'react';
 import { nodePaletteItems } from '../nodes';
+import { workflowTemplates, type WorkflowTemplate } from '../engine/workflowTemplates';
 
 const EXPANDED_WIDTH = 260;
 const COLLAPSED_WIDTH = 44;
@@ -39,7 +39,7 @@ const itemStyle: React.CSSProperties = {
   borderRadius: 8,
   border: '1px solid transparent',
   cursor: 'grab',
-  transition: 'all 0.15s ease',
+  transition: 'background 0.15s ease, border-color 0.15s ease',
   display: 'flex',
   gap: 10,
   alignItems: 'flex-start',
@@ -88,8 +88,13 @@ const collapseButtonStyle: React.CSSProperties = {
   flexShrink: 0,
 };
 
-export default function NodePalette() {
+interface NodePaletteProps {
+  onApplyTemplate?: (template: WorkflowTemplate) => void;
+}
+
+export default function NodePalette({ onApplyTemplate }: NodePaletteProps) {
   const [collapsed, setCollapsed] = useState(false);
+  const [activeTab, setActiveTab] = useState<'nodes' | 'tasks'>('nodes');
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
     'Data I/O': true,
   });
@@ -103,7 +108,6 @@ export default function NodePalette() {
     [],
   );
 
-  // Group items by category
   const categories = new Map<string, typeof nodePaletteItems>();
   for (const item of nodePaletteItems) {
     if (!categories.has(item.category)) {
@@ -133,8 +137,8 @@ export default function NodePalette() {
           <button
             onClick={() => setCollapsed(false)}
             style={collapseButtonStyle}
-            title="Expand node palette"
-            aria-label="Expand node palette"
+            title="Expand workflow library"
+            aria-label="Expand workflow library"
           >
             {'>'}
           </button>
@@ -159,7 +163,7 @@ export default function NodePalette() {
               textTransform: 'uppercase',
             }}
           >
-            Node Palette
+            Workflow Library
           </div>
         </div>
       </div>
@@ -168,13 +172,12 @@ export default function NodePalette() {
 
   return (
     <div style={sidebarStyle}>
-      {/* Header */}
       <div style={headerStyle}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>
-          🧩 Node Palette
+        <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-primary)' }}>
+          Workflow Library
         </div>
         <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
-          Drag nodes onto the canvas
+          Add nodes or complete task templates
         </div>
         <button
           onClick={() => setCollapsed(true)}
@@ -184,16 +187,111 @@ export default function NodePalette() {
             top: 14,
             right: 12,
           }}
-          title="Collapse node palette"
-          aria-label="Collapse node palette"
+          title="Collapse workflow library"
+          aria-label="Collapse workflow library"
         >
           {'<'}
         </button>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: 5,
+            marginTop: 12,
+          }}
+        >
+          {[
+            ['nodes', 'Nodes'],
+            ['tasks', 'End-to-end tasks'],
+          ].map(([key, label]) => {
+            const selected = activeTab === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setActiveTab(key as 'nodes' | 'tasks')}
+                style={{
+                  padding: '7px 8px',
+                  borderRadius: 6,
+                  border: selected
+                    ? '1px solid color-mix(in srgb, var(--accent-blue) 60%, var(--border-color))'
+                    : '1px solid var(--border-color)',
+                  background: selected
+                    ? 'color-mix(in srgb, var(--accent-blue) 14%, var(--bg-tertiary))'
+                    : 'var(--bg-tertiary)',
+                  color: selected ? 'var(--accent-blue)' : 'var(--text-secondary)',
+                  cursor: 'pointer',
+                  fontSize: 11,
+                  fontWeight: 900,
+                }}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Node list */}
       <div style={listStyle}>
-        {Array.from(categories.entries()).map(([category, items]) => {
+        {activeTab === 'tasks' ? (
+          <div style={{ display: 'grid', gap: 8 }}>
+            {workflowTemplates.map((template) => (
+              <div
+                key={template.id}
+                style={{
+                  padding: '10px 11px',
+                  borderRadius: 8,
+                  border: '1px solid var(--border-color)',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                  <div style={{ color: 'var(--text-primary)', fontSize: 13, fontWeight: 900 }}>
+                    {template.title}
+                  </div>
+                  {template.automationLevel ? (
+                    <span style={{
+                      color: 'var(--accent-green)',
+                      fontSize: 9,
+                      fontWeight: 900,
+                      textTransform: 'uppercase',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      Auto
+                    </span>
+                  ) : null}
+                </div>
+                <div style={{ color: 'var(--text-muted)', fontSize: 10, lineHeight: 1.35, marginTop: 4 }}>
+                  {template.description}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onApplyTemplate?.(template)}
+                  style={{
+                    width: '100%',
+                    marginTop: 9,
+                    padding: '7px 9px',
+                    borderRadius: 6,
+                    border: '1px solid color-mix(in srgb, var(--accent-blue) 45%, var(--border-color))',
+                    background: 'color-mix(in srgb, var(--accent-blue) 10%, var(--bg-tertiary))',
+                    color: 'var(--accent-blue)',
+                    cursor: 'pointer',
+                    fontSize: 11,
+                    fontWeight: 900,
+                  }}
+                  onMouseEnter={(event) => {
+                    event.currentTarget.style.background = 'color-mix(in srgb, var(--accent-blue) 18%, var(--bg-tertiary))';
+                  }}
+                  onMouseLeave={(event) => {
+                    event.currentTarget.style.background = 'color-mix(in srgb, var(--accent-blue) 10%, var(--bg-tertiary))';
+                  }}
+                >
+                  Add task
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : Array.from(categories.entries()).map(([category, items]) => {
           const isExpanded = Boolean(expandedCategories[category]);
 
           return (
@@ -204,11 +302,11 @@ export default function NodePalette() {
                 style={categoryHeaderStyle}
                 aria-expanded={isExpanded}
                 title={isExpanded ? `Collapse ${category}` : `Expand ${category}`}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'var(--bg-tertiary)';
+                onMouseEnter={(event) => {
+                  event.currentTarget.style.background = 'var(--bg-tertiary)';
                 }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
+                onMouseLeave={(event) => {
+                  event.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
                 }}
               >
                 <span
@@ -237,17 +335,15 @@ export default function NodePalette() {
                 <div
                   key={item.type}
                   draggable
-                  onDragStart={(e) => onDragStart(e, item.type, item.defaultData)}
+                  onDragStart={(event) => onDragStart(event, item.type, item.defaultData)}
                   style={itemStyle}
-                  onMouseEnter={(e) => {
-                    const el = e.currentTarget;
-                    el.style.background = 'var(--bg-tertiary)';
-                    el.style.borderColor = 'var(--border-color)';
+                  onMouseEnter={(event) => {
+                    event.currentTarget.style.background = 'var(--bg-tertiary)';
+                    event.currentTarget.style.borderColor = 'var(--border-color)';
                   }}
-                  onMouseLeave={(e) => {
-                    const el = e.currentTarget;
-                    el.style.background = 'transparent';
-                    el.style.borderColor = 'transparent';
+                  onMouseLeave={(event) => {
+                    event.currentTarget.style.background = 'transparent';
+                    event.currentTarget.style.borderColor = 'transparent';
                   }}
                 >
                   <span style={{ fontSize: 20, lineHeight: 1 }}>{item.icon}</span>

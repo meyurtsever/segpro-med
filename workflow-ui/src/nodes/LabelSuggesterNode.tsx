@@ -35,10 +35,12 @@ const LABEL_INFO: NodeInfo = {
   ],
 };
 
-const MODELS: Array<{ value: VlmModelId; label: string }> = [
-  { value: 'medgemma', label: 'MedGemma' },
-  { value: 'smolvlm', label: 'SmolVLM' },
-  { value: 'med-r1', label: 'Med-R1' },
+const MODELS: Array<{ value: VlmModelId; label: string; tokens: number }> = [
+  { value: 'medgemma', label: 'MedGemma', tokens: 256 },
+  { value: 'medgemma-1.5', label: 'MedGemma 1.5', tokens: 256 },
+  { value: 'medgemma-1.5-gguf', label: 'MedGemma 1.5 GGUF Q8', tokens: 512 },
+  { value: 'smolvlm', label: 'SmolVLM', tokens: 128 },
+  { value: 'med-r1', label: 'Med-R1', tokens: 384 },
 ];
 
 const MODALITIES: VlmModality[] = ['MRI', 'CT', 'MG'];
@@ -202,7 +204,14 @@ function LabelSuggesterNode({ id, data }: NodeProps) {
 
   const handleSelect = useCallback(
     (key: keyof LabelSuggesterNodeData) => (event: React.ChangeEvent<HTMLSelectElement>) => {
-      updateNodeData(id, { [key]: event.target.value } as Partial<LabelSuggesterNodeData>);
+      const value = event.target.value;
+      const modelDefaults = key === 'model'
+        ? MODELS.find((item) => item.value === value)
+        : undefined;
+      updateNodeData(id, {
+        [key]: value,
+        ...(modelDefaults ? { maxTokens: modelDefaults.tokens } : {}),
+      } as Partial<LabelSuggesterNodeData>);
     },
     [id, updateNodeData],
   );
@@ -495,7 +504,7 @@ function LabelSuggesterNode({ id, data }: NodeProps) {
           <div style={twoColStyle}>
             <div>
               <label style={labelStyle}>Model</label>
-              <select value={d.model || 'medgemma'} onChange={handleSelect('model')} style={selectStyle}>
+              <select value={d.model || 'medgemma-1.5-gguf'} onChange={handleSelect('model')} style={selectStyle}>
                 {MODELS.map((model) => (
                   <option key={model.value} value={model.value}>{model.label}</option>
                 ))}
@@ -510,16 +519,29 @@ function LabelSuggesterNode({ id, data }: NodeProps) {
               </select>
             </div>
           </div>
-          <div style={{ marginTop: 8 }}>
-            <label style={labelStyle}>Max labels</label>
-            <input
-              type="number"
-              min={1}
-              max={32}
-              value={Number(d.maxLabels ?? 12)}
-              onChange={handleNumber('maxLabels')}
-              style={inputStyle}
-            />
+          <div style={twoColStyle}>
+            <div>
+              <label style={labelStyle}>Tokens</label>
+              <input
+                type="number"
+                min={32}
+                max={1024}
+                value={Number(d.maxTokens ?? 512)}
+                onChange={handleNumber('maxTokens')}
+                style={inputStyle}
+              />
+            </div>
+            <div>
+              <label style={labelStyle}>Max labels</label>
+              <input
+                type="number"
+                min={1}
+                max={32}
+                value={Number(d.maxLabels ?? 12)}
+                onChange={handleNumber('maxLabels')}
+                style={inputStyle}
+              />
+            </div>
           </div>
           <label style={{ ...labelStyle, display: 'flex', gap: 6, alignItems: 'center', marginTop: 8 }}>
             <input type="checkbox" checked={d.useOverlay !== false} onChange={handleToggle} />
