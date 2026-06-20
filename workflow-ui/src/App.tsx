@@ -700,6 +700,7 @@ export default function App() {
   const [suggestionMenu, setSuggestionMenu] = useState<SuggestionMenuState | null>(null);
   const [showValidationPanel, setShowValidationPanel] = useState(false);
   const [showTemplatePanel, setShowTemplatePanel] = useState(false);
+  const [showTaskStartModal, setShowTaskStartModal] = useState(false);
   const [showWorkflowMenu, setShowWorkflowMenu] = useState(false);
   const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
   const [nodeContextMenu, setNodeContextMenu] = useState<NodeContextMenuState | null>(null);
@@ -2324,40 +2325,6 @@ export default function App() {
     });
   }, [addNode, cloneDefaultData]);
 
-  const handleCreateStarterWorkflow = useCallback(() => {
-    const dataLoaderId = generateNodeId();
-    const autoSegmentationId = generateNodeId();
-    const annotatorId = generateNodeId();
-
-    addNodesAndConnect(
-      [
-        {
-          id: dataLoaderId,
-          type: 'dataLoader',
-          position: { x: 70, y: 90 },
-          data: cloneDefaultData('dataLoader'),
-        },
-        {
-          id: autoSegmentationId,
-          type: 'autoSegmentation',
-          position: { x: 430, y: 80 },
-          data: cloneDefaultData('autoSegmentation'),
-        },
-        {
-          id: annotatorId,
-          type: 'interactiveAnnotator',
-          position: { x: 790, y: 70 },
-          style: { width: 430, height: 560 },
-          data: cloneDefaultData('interactiveAnnotator'),
-        },
-      ],
-      [
-        { source: dataLoaderId, target: annotatorId, sourceHandle: null, targetHandle: null },
-        { source: autoSegmentationId, target: annotatorId, sourceHandle: null, targetHandle: null },
-      ],
-    );
-  }, [addNodesAndConnect, cloneDefaultData]);
-
   const insertTemplate = useCallback(
     (template: WorkflowTemplate) => {
       clearWorkflow();
@@ -2401,6 +2368,7 @@ export default function App() {
 
   const handleApplyTemplate = useCallback(
     (template: WorkflowTemplate) => {
+      setShowTaskStartModal(false);
       if (nodes.length > 0) {
         setPendingTemplate(template);
         setShowTemplatePanel(false);
@@ -2769,6 +2737,137 @@ export default function App() {
         )
         : null}
 
+      {showTaskStartModal && typeof document !== 'undefined'
+        ? createPortal(
+          <div style={guideOverlayStyle} onClick={() => setShowTaskStartModal(false)} role="presentation">
+            <div
+              style={{
+                width: 760,
+                maxWidth: 'calc(100vw - 32px)',
+                maxHeight: '82vh',
+                borderRadius: 12,
+                border: '1px solid color-mix(in srgb, var(--accent-green) 34%, var(--border-color))',
+                background: 'var(--bg-secondary)',
+                boxShadow: '0 22px 64px rgba(0, 0, 0, 0.52)',
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+              onClick={(event) => event.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="end-to-end-task-title"
+            >
+              <div style={{
+                padding: '16px 18px',
+                borderBottom: '1px solid var(--border-color)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                gap: 16,
+              }}>
+                <div>
+                  <div
+                    id="end-to-end-task-title"
+                    style={{
+                      color: 'var(--accent-green)',
+                      fontSize: 15,
+                      fontWeight: 950,
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    End-to-end tasks
+                  </div>
+                  <div style={{
+                    color: 'var(--text-secondary)',
+                    fontSize: 12,
+                    lineHeight: 1.5,
+                    marginTop: 5,
+                    maxWidth: 560,
+                  }}>
+                    Choose a ready workflow to start from. Each task loads a curated node graph and guided flow for a common medical imaging operation.
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowTaskStartModal(false)}
+                  style={{
+                    ...iconButtonStyle('var(--text-secondary)'),
+                    minHeight: 30,
+                    width: 30,
+                    minWidth: 30,
+                  }}
+                  title="Close"
+                  aria-label="Close end-to-end tasks"
+                >
+                  x
+                </button>
+              </div>
+              <div style={{
+                padding: 16,
+                overflowY: 'auto',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+                gap: 10,
+              }}>
+                {workflowTemplates.map((template) => (
+                  <div
+                    key={template.id}
+                    style={{
+                      borderRadius: 8,
+                      border: '1px solid color-mix(in srgb, var(--accent-green) 22%, var(--border-color))',
+                      background: 'color-mix(in srgb, var(--accent-green) 6%, var(--bg-tertiary))',
+                      padding: 12,
+                      display: 'grid',
+                      gap: 8,
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'flex-start' }}>
+                      <div style={{ color: 'var(--text-primary)', fontSize: 13, fontWeight: 950 }}>
+                        {template.title}
+                      </div>
+                      <div style={{
+                        color: 'var(--accent-green)',
+                        border: '1px solid rgba(76, 175, 139, 0.28)',
+                        background: 'rgba(76, 175, 139, 0.09)',
+                        borderRadius: 5,
+                        padding: '2px 6px',
+                        fontSize: 9,
+                        fontWeight: 900,
+                        whiteSpace: 'nowrap',
+                      }}>
+                        {template.nodes.length} nodes
+                      </div>
+                    </div>
+                    {template.automationLevel ? (
+                      <div style={{ color: 'var(--accent-green)', fontSize: 10, fontWeight: 850 }}>
+                        {template.automationLevel}
+                      </div>
+                    ) : null}
+                    <div style={{ color: 'var(--text-secondary)', fontSize: 11, lineHeight: 1.45 }}>
+                      {template.description}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleApplyTemplate(template)}
+                      style={{
+                        ...compactButtonStyle('var(--accent-green)'),
+                        justifySelf: 'start',
+                      }}
+                      onMouseEnter={(event) => setButtonHover(event.currentTarget, 'var(--accent-green)', true)}
+                      onMouseLeave={(event) => setButtonHover(event.currentTarget, 'var(--accent-green)', false)}
+                    >
+                      Load task
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )
+        : null}
+
       <NodePalette onApplyTemplate={handleApplyTemplate} />
 
       {/* Main canvas */}
@@ -2809,7 +2908,7 @@ export default function App() {
         {nodes.length === 0 ? (
           <CanvasEmptyState
             onCreateDataLoader={handleCreateDataLoader}
-            onCreateStarterWorkflow={handleCreateStarterWorkflow}
+            onOpenEndToEndTasks={() => setShowTaskStartModal(true)}
           />
         ) : null}
 

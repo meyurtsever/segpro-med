@@ -393,7 +393,7 @@ export const nodeContracts: WorkflowNodeContract[] = [
       view: 'axial',
       model: 'medgemma-1.5-gguf',
       modality: 'MRI',
-      promptKey: 'suggest_labels',
+      promptKey: 'annotation_label_candidates',
       customPrompt: '',
       maxTokens: 512,
       maxLabels: 12,

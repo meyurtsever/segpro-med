@@ -2929,8 +2929,15 @@ function InteractiveAnnotatorNode({ id, data }: NodeProps) {
   const rejectedLabelsForSlice = currentViewDecisions
     .filter((item) => item.decision === 'rejected')
     .map((item) => item.label);
+  const activeSessionId = typeof d.sessionId === 'string' ? d.sessionId : '';
+  const activeSourcePath = typeof d.sourcePath === 'string' ? d.sourcePath : '';
   const suggestionContextMatches = !d.labelSuggestionContext ||
-    (d.labelSuggestionContext.sliceIndex === d.sliceIndex && d.labelSuggestionContext.view === (d.view || 'axial'));
+    (
+      d.labelSuggestionContext.sliceIndex === d.sliceIndex &&
+      d.labelSuggestionContext.view === (d.view || 'axial') &&
+      (!activeSessionId || d.labelSuggestionContext.sessionId === activeSessionId) &&
+      (!activeSourcePath || d.labelSuggestionContext.sourcePath === activeSourcePath)
+    );
   const currentSliceSuggestions = suggestionContextMatches ? d.labelSuggestions || [] : [];
   const pendingLabelSuggestions = currentSliceSuggestions.filter((label) =>
     !currentViewDecisions.some((decision) => sameLabel(decision.label, label)),

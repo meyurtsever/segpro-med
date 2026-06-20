@@ -7,7 +7,7 @@
  * prompt presets used by the Gradio app through the FastAPI VLM router.
  */
 
-import { memo, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { type NodeProps } from '@xyflow/react';
 
@@ -17,6 +17,10 @@ import type { NodeInfo } from '../components/InfoModal';
 import useWorkflowStore from '../store/workflowStore';
 import type { VlmModelId, VlmModality, VlmNodeData } from '../types/nodes';
 import * as api from '../api/client';
+import {
+  getSpeechRecognitionConstructor,
+  type SpeechRecognitionLike,
+} from '../utils/browserDictation';
 
 const MODEL_META: Record<VlmModelId, {
   nodeType: string;
@@ -230,6 +234,47 @@ const modalPanelStyle: React.CSSProperties = {
   overflow: 'hidden',
 };
 
+const modalHeaderButtonStyle = (active = false, disabled = false): React.CSSProperties => ({
+  height: 30,
+  borderRadius: 6,
+  border: `1px solid ${active ? 'rgba(76, 175, 139, 0.58)' : 'rgba(76, 175, 139, 0.34)'}`,
+  background: active ? 'rgba(76, 175, 139, 0.18)' : 'rgba(76, 175, 139, 0.08)',
+  color: active ? 'var(--accent-green)' : 'var(--accent-green)',
+  cursor: disabled ? 'not-allowed' : active ? 'progress' : 'pointer',
+  fontSize: 11,
+  fontWeight: 900,
+  padding: '0 10px',
+  opacity: disabled ? 0.45 : 1,
+  transition: 'background 0.15s ease, border-color 0.15s ease',
+});
+
+const modalHeaderInfoStyle: React.CSSProperties = {
+  color: 'var(--accent-green)',
+  fontSize: 11,
+  lineHeight: 1.35,
+  maxWidth: 280,
+  padding: '6px 9px',
+  borderRadius: 6,
+  border: '1px solid rgba(76, 175, 139, 0.32)',
+  background: 'rgba(76, 175, 139, 0.12)',
+  fontWeight: 800,
+};
+
+const reportEditorStyle: React.CSSProperties = {
+  width: '100%',
+  minHeight: 380,
+  resize: 'vertical',
+  border: '1px solid rgba(150, 115, 255, 0.24)',
+  borderRadius: 8,
+  background: 'rgba(255, 255, 255, 0.035)',
+  color: 'var(--text-primary)',
+  fontSize: 14,
+  lineHeight: 1.55,
+  padding: 12,
+  boxSizing: 'border-box',
+  outline: 'none',
+};
+
 const markdownContainerStyle: React.CSSProperties = {
   whiteSpace: 'normal',
   color: 'inherit',
@@ -372,6 +417,14 @@ function VlmModelNode({ id, data, model }: NodeProps & { model: VlmModelId }) {
   const [resultOpen, setResultOpen] = useState(false);
   const [resultHover, setResultHover] = useState(false);
   const [runHover, setRunHover] = useState(false);
+  const [editedReportText, setEditedReportText] = useState('');
+  const [editingReport, setEditingReport] = useState(false);
+  const [dictating, setDictating] = useState(false);
+  const [dictationError, setDictationError] = useState<string | null>(null);
+  const [editButtonHover, setEditButtonHover] = useState(false);
+  const [dictateButtonHover, setDictateButtonHover] = useState(false);
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const lastDictationAppendRef = useRef('');
 
   useEffect(() => {
     api.getVlmPrompts(d.modality || 'MRI')
@@ -454,6 +507,69 @@ function VlmModelNode({ id, data, model }: NodeProps & { model: VlmModelId }) {
     : undefined;
   const voicePrompt = d.voicePrompt;
   const isGenerating = d.status === 'running';
+
+  useEffect(() => () => {
+    recognitionRef.current?.stop();
+    recognitionRef.current = null;
+  }, []);
+
+  const appendReportText = useCallback((text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed || lastDictationAppendRef.current === trimmed) return;
+    lastDictationAppendRef.current = trimmed;
+    setEditedReportText((current) => {
+      const separator = current.trim() ? '\n\n' : '';
+      return `${current}${separator}${trimmed}`;
+    });
+  }, []);
+
+  const toggleModalDictation = useCallback(() => {
+    const Recognition = getSpeechRecognitionConstructor();
+    if (!Recognition) {
+      setDictationError('Browser dictation is not available in this browser.');
+      return;
+    }
+
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+      setDictating(false);
+      return;
+    }
+
+    const recognition = new Recognition();
+    recognition.lang = 'en-US';
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.onresult = (event) => {
+      const chunks: string[] = [];
+      for (let index = 0; index < event.results.length; index += 1) {
+        if (event.results[index].isFinal) {
+          chunks.push(event.results[index][0].transcript);
+        }
+      }
+      appendReportText(chunks.join(' '));
+    };
+    recognition.onerror = (event) => {
+      setDictationError(event.error ? `Dictation failed: ${event.error}` : 'Dictation failed');
+    };
+    recognition.onend = () => {
+      recognitionRef.current = null;
+      setDictating(false);
+    };
+
+    setDictationError(null);
+    lastDictationAppendRef.current = '';
+    recognitionRef.current = recognition;
+    setDictating(true);
+    try {
+      recognition.start();
+    } catch (error) {
+      recognitionRef.current = null;
+      setDictating(false);
+      setDictationError(error instanceof Error ? error.message : 'Dictation could not start');
+    }
+  }, [appendReportText]);
 
   const upstreamHasSession = useMemo(() => {
     const upstreamIds = storeEdges.filter((e) => e.target === id).map((e) => e.source);
@@ -683,7 +799,13 @@ function VlmModelNode({ id, data, model }: NodeProps & { model: VlmModelId }) {
               borderColor: resultHover ? 'rgba(150, 115, 255, 0.58)' : 'rgba(150, 115, 255, 0.28)',
               background: resultHover ? 'rgba(150, 115, 255, 0.14)' : 'rgba(150, 115, 255, 0.08)',
             }}
-            onClick={() => setResultOpen(true)}
+            onClick={() => {
+              setEditedReportText(result.text || '');
+              setDictationError(null);
+              setEditingReport(false);
+              lastDictationAppendRef.current = '';
+              setResultOpen(true);
+            }}
             onMouseEnter={() => setResultHover(true)}
             onMouseLeave={() => setResultHover(false)}
             title="Open full VLM output"
@@ -709,7 +831,15 @@ function VlmModelNode({ id, data, model }: NodeProps & { model: VlmModelId }) {
       </div>
 
       {resultOpen && result ? createPortal(
-        <div style={modalBackdropStyle} onClick={() => setResultOpen(false)}>
+        <div
+          style={modalBackdropStyle}
+          onClick={() => {
+            recognitionRef.current?.stop();
+            recognitionRef.current = null;
+            setDictating(false);
+            setResultOpen(false);
+          }}
+        >
           <div style={modalPanelStyle} onClick={(event) => event.stopPropagation()}>
             <div style={{
               padding: '14px 16px',
@@ -727,23 +857,60 @@ function VlmModelNode({ id, data, model }: NodeProps & { model: VlmModelId }) {
                   {selectedPromptTitle} - {result.view} slice {Number(result.sliceIndex ?? 0) + 1}
                 </div>
               </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={modalHeaderInfoStyle}>
+                  Add notes by dictating or switch Edit on to revise the report.
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEditingReport((value) => !value)}
+                  style={{
+                    ...modalHeaderButtonStyle(editingReport),
+                    background: editButtonHover
+                      ? 'rgba(76, 175, 139, 0.22)'
+                      : modalHeaderButtonStyle(editingReport).background,
+                    border: editButtonHover
+                      ? '1px solid rgba(76, 175, 139, 0.72)'
+                      : modalHeaderButtonStyle(editingReport).border,
+                  }}
+                  onMouseEnter={() => setEditButtonHover(true)}
+                  onMouseLeave={() => setEditButtonHover(false)}
+                  title={editingReport ? 'Show rendered report' : 'Edit report text'}
+                >
+                  {editingReport ? 'Save changes' : 'Edit'}
+                </button>
+                <button
+                  type="button"
+                  onClick={toggleModalDictation}
+                  style={{
+                    ...modalHeaderButtonStyle(dictating),
+                    background: dictateButtonHover
+                      ? 'rgba(76, 175, 139, 0.22)'
+                      : modalHeaderButtonStyle(dictating).background,
+                    border: dictateButtonHover
+                      ? '1px solid rgba(76, 175, 139, 0.72)'
+                      : modalHeaderButtonStyle(dictating).border,
+                  }}
+                  onMouseEnter={() => setDictateButtonHover(true)}
+                  onMouseLeave={() => setDictateButtonHover(false)}
+                  title="Append dictated text to the report"
+                >
+                  {dictating ? 'Listening...' : 'Dictate'}
+                </button>
               <button
                 type="button"
-                onClick={() => setResultOpen(false)}
-                style={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: 6,
-                  border: '1px solid var(--border-color)',
-                  background: 'transparent',
-                  color: 'var(--text-secondary)',
-                  cursor: 'pointer',
-                  fontWeight: 900,
+                onClick={() => {
+                  recognitionRef.current?.stop();
+                  recognitionRef.current = null;
+                  setDictating(false);
+                  setResultOpen(false);
                 }}
+                style={modalHeaderButtonStyle()}
                 title="Close"
               >
                 x
               </button>
+              </div>
             </div>
             <div style={{
               padding: 16,
@@ -752,7 +919,35 @@ function VlmModelNode({ id, data, model }: NodeProps & { model: VlmModelId }) {
               fontSize: 14,
               lineHeight: 1.55,
             }}>
-              {renderReportMarkdown(result.text || 'No response text.')}
+              {editingReport ? (
+                <textarea
+                  value={editedReportText}
+                  onChange={(event) => setEditedReportText(event.target.value)}
+                  style={reportEditorStyle}
+                  aria-label="Editable medical report"
+                />
+              ) : (
+                <div style={{
+                  ...reportEditorStyle,
+                  overflowY: 'auto',
+                  resize: 'none',
+                }}>
+                  {renderReportMarkdown(editedReportText || 'No response text.')}
+                </div>
+              )}
+              <div style={{
+                marginTop: 8,
+                color: dictationError ? 'var(--accent-red)' : 'var(--text-muted)',
+                fontSize: 11,
+                lineHeight: 1.4,
+              }}>
+                {dictationError ||
+                  (dictating
+                    ? 'Listening. Dictated text will be appended to the end of the report.'
+                    : editingReport
+                      ? 'Editing is on. Changes are kept inside this modal for review.'
+                      : 'Rendered preview is shown. Use Edit to revise text, or Dictate to append notes.')}
+              </div>
             </div>
           </div>
         </div>,

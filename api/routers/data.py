@@ -238,7 +238,9 @@ def _render_slice(
 
     Returns (slice_2d, total_slices_for_this_view).
     """
-    if volume.ndim == 2:
+    ndim = getattr(volume, "ndim", len(getattr(volume, "shape", ())))
+
+    if ndim == 2:
         return volume, 1
 
     if axis_map is None:
@@ -246,23 +248,62 @@ def _render_slice(
     axis = axis_map.get(view, next(iter(axis_map.values()), 2))
 
     # For 4D volumes, take first timepoint
-    vol = volume[..., 0] if volume.ndim == 4 else volume
+    vol = volume[..., 0] if ndim == 4 else volume
+    vol_ndim = getattr(vol, "ndim", len(getattr(vol, "shape", ())))
 
     total = vol.shape[axis]
     idx = max(0, min(slice_idx, total - 1))
 
-    slc = np.take(vol, idx, axis=axis)
+    if vol_ndim >= 3 and axis == 0:
+        slc = vol[idx, :, :]
+    elif vol_ndim >= 3 and axis == 1:
+        slc = vol[:, idx, :]
+    elif vol_ndim >= 3 and axis == 2:
+        slc = vol[:, :, idx]
+    else:
+        slc = np.take(vol, idx, axis=axis)
     return slc.astype(np.float32), total
 
 
-def _array_to_base64_png(arr: np.ndarray) -> str:
-    """Convert a 2D numpy array to a base64-encoded PNG string."""
-    # Normalize to 0-255
-    mn, mx = float(arr.min()), float(arr.max())
+def _coerce_display_float(value) -> float | None:
+    """Convert a DICOM display metadata value to float when possible."""
+    if value is None:
+        return None
+    if isinstance(value, (list, tuple)):
+        value = value[0] if value else None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _normalize_slice_for_display(
+    arr: np.ndarray,
+    window_center: float | None = None,
+    window_width: float | None = None,
+) -> np.ndarray:
+    """Normalize a slice to uint8, preferring DICOM window center/width."""
+    data = arr.astype(np.float32)
+
+    if window_center is not None and window_width is not None and window_width > 0:
+        low = window_center - (window_width / 2.0)
+        high = window_center + (window_width / 2.0)
+        clipped = np.clip(data, low, high)
+        return ((clipped - low) / (high - low) * 255).astype(np.uint8)
+
+    mn, mx = float(np.nanmin(data)), float(np.nanmax(data))
     if mx - mn > 0:
-        normalized = ((arr - mn) / (mx - mn) * 255).astype(np.uint8)
-    else:
-        normalized = np.zeros_like(arr, dtype=np.uint8)
+        return ((data - mn) / (mx - mn) * 255).astype(np.uint8)
+    return np.zeros_like(data, dtype=np.uint8)
+
+
+def _array_to_base64_png(
+    arr: np.ndarray,
+    window_center: float | None = None,
+    window_width: float | None = None,
+) -> str:
+    """Convert a 2D numpy array to a base64-encoded PNG string."""
+    normalized = _normalize_slice_for_display(arr, window_center, window_width)
 
     img = Image.fromarray(normalized, mode="L")
     buf = io.BytesIO()
@@ -355,15 +396,11 @@ def _overlay_to_base64_png(
     base_slice: np.ndarray,
     seg_slice: np.ndarray,
     alpha: float = 0.45,
+    window_center: float | None = None,
+    window_width: float | None = None,
 ) -> str:
     """Composite a segmentation mask onto a grayscale slice; return base64 PNG."""
-    # Normalise base to [0, 255] uint8
-    mn, mx = float(base_slice.min()), float(base_slice.max())
-    norm = (
-        ((base_slice - mn) / (mx - mn) * 255).astype(np.uint8)
-        if mx - mn > 0
-        else np.zeros_like(base_slice, dtype=np.uint8)
-    )
+    norm = _normalize_slice_for_display(base_slice, window_center, window_width)
 
     # Grayscale → float32 RGB
     rgb = np.stack([norm, norm, norm], axis=2).astype(np.float32)
@@ -529,6 +566,8 @@ async def get_slice(
     try:
         session_axis_map = session.metadata.get("axis_map") or None
         slice_2d, total = _render_slice(session.volume, slice, view, session_axis_map)
+        window_center = _coerce_display_float(session.metadata.get("WindowCenter"))
+        window_width = _coerce_display_float(session.metadata.get("WindowWidth"))
 
         if seg_path and os.path.exists(seg_path):
             seg_vol, seg_affine = _load_seg(seg_path)
@@ -555,9 +594,18 @@ async def get_slice(
                 _, seg_axis_map = _detect_axis_map_from_affine(seg_affine)
                 seg_2d, _ = _render_slice(seg_vol, slice, view, seg_axis_map)
 
-            img_b64 = _overlay_to_base64_png(slice_2d, seg_2d)
+            img_b64 = _overlay_to_base64_png(
+                slice_2d,
+                seg_2d,
+                window_center=window_center,
+                window_width=window_width,
+            )
         else:
-            img_b64 = _array_to_base64_png(slice_2d)
+            img_b64 = _array_to_base64_png(
+                slice_2d,
+                window_center=window_center,
+                window_width=window_width,
+            )
 
         return SliceResponse(
             session_id=session_id,

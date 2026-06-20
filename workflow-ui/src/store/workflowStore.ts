@@ -144,8 +144,12 @@ function getLivePropagationPatch(
     const nextSlice = Number(sourceData.sliceIndex ?? 0);
     const targetView = targetData.view;
     const nextView = sourceData.view;
+    const sourceChanged = targetNode.type === 'labelSuggester' && (
+      (targetData.sessionId && targetData.sessionId !== sourceData.sessionId) ||
+      (targetData.sourcePath && targetData.sourcePath !== sourceData.sourcePath)
+    );
     const clearStaleLabels = targetNode.type === 'labelSuggester' &&
-      (targetSlice !== nextSlice || targetView !== nextView);
+      (targetSlice !== nextSlice || targetView !== nextView || sourceChanged);
     const nextSuggestionKey = `${nextView || 'axial'}:${nextSlice}`;
     const nextVlmKey = `${nextView || 'axial'}:${nextSlice}`;
     const suggestionsBySlice = targetData.labelSuggestionsBySlice as Record<string, string[]> | undefined;
@@ -169,11 +173,13 @@ function getLivePropagationPatch(
       modality: getMedicalModality(sourceData),
       ...(clearStaleLabels
         ? {
-          labelSuggestions: suggestionsBySlice?.[nextSuggestionKey] || [],
-          labelSuggestionResult: resultsBySlice?.[nextSuggestionKey],
+          labelSuggestions: sourceChanged ? [] : suggestionsBySlice?.[nextSuggestionKey] || [],
+          labelSuggestionResult: sourceChanged ? undefined : resultsBySlice?.[nextSuggestionKey],
           labelSuggestionContext: {
             sliceIndex: nextSlice,
             view: nextView || 'axial',
+            sessionId: sourceData.sessionId as string | undefined,
+            sourcePath: sourceData.sourcePath as string | undefined,
           },
         }
         : {}),

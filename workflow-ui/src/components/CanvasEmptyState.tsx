@@ -2,7 +2,7 @@ import type { CSSProperties } from 'react';
 
 interface CanvasEmptyStateProps {
   onCreateDataLoader: () => void;
-  onCreateStarterWorkflow: () => void;
+  onOpenEndToEndTasks: () => void;
 }
 
 const shellStyle: CSSProperties = {
@@ -44,21 +44,29 @@ const actionsStyle: CSSProperties = {
   gap: 8,
 };
 
-const buttonStyle = (primary = false): CSSProperties => ({
+const buttonStyle = (tone: 'blue' | 'green' | 'neutral' = 'neutral'): CSSProperties => {
+  const color = tone === 'blue'
+    ? 'var(--accent-blue)'
+    : tone === 'green'
+      ? 'var(--accent-green)'
+      : 'var(--text-secondary)';
+
+  return {
   flex: 1,
   borderRadius: 6,
-  border: `1px solid ${primary ? 'var(--accent-blue)' : 'var(--border-color)'}`,
-  background: primary ? 'rgba(79, 141, 245, 0.16)' : 'var(--bg-tertiary)',
-  color: primary ? 'var(--accent-blue)' : 'var(--text-secondary)',
+  border: `1px solid ${tone === 'neutral' ? 'var(--border-color)' : color}`,
+  background: tone === 'neutral' ? 'var(--bg-tertiary)' : `color-mix(in srgb, ${color} 14%, var(--bg-tertiary))`,
+  color,
   fontSize: 11,
   fontWeight: 800,
   cursor: 'pointer',
   padding: '8px 9px',
-});
+  };
+};
 
 export default function CanvasEmptyState({
   onCreateDataLoader,
-  onCreateStarterWorkflow,
+  onOpenEndToEndTasks,
 }: CanvasEmptyStateProps) {
   return (
     <div style={shellStyle}>
@@ -68,11 +76,11 @@ export default function CanvasEmptyState({
           Create a data entry point, or place the basic segmentation path.
         </div>
         <div style={actionsStyle}>
-          <button type="button" style={buttonStyle(true)} onClick={onCreateDataLoader}>
+          <button type="button" style={buttonStyle('blue')} onClick={onCreateDataLoader}>
             Data Loader
           </button>
-          <button type="button" style={buttonStyle()} onClick={onCreateStarterWorkflow}>
-            Starter Graph
+          <button type="button" style={buttonStyle('green')} onClick={onOpenEndToEndTasks}>
+            End-to-end tasks
           </button>
         </div>
       </div>

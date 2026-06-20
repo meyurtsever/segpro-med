@@ -46,12 +46,14 @@ const MODELS: Array<{ value: VlmModelId; label: string; tokens: number }> = [
 const MODALITIES: VlmModality[] = ['MRI', 'CT', 'MG'];
 
 const FALLBACK_PROMPTS = [
-  { key: 'suggest_labels', title: 'Suggest Labels' },
-  { key: 'annotation_label_candidates', title: 'Annotation Label Candidates' },
+  { key: 'annotation_label_candidates', title: 'Suggest Labels' },
   { key: 'mri_label_suggestions', title: 'MRI Label Suggestions' },
   { key: 'ct_label_suggestions', title: 'CT Label Suggestions' },
   { key: 'mg_label_suggestions', title: 'Mammography Label Suggestions' },
+  { key: 'suggest_labels', title: 'Legacy Suggest Labels' },
 ];
+
+const DEFAULT_LABEL_PROMPT_KEY = 'annotation_label_candidates';
 
 const labelStyle: React.CSSProperties = {
   fontSize: 11,
@@ -252,8 +254,15 @@ function LabelSuggesterNode({ id, data }: NodeProps) {
   const sliceIndex = Number(d.sliceIndex ?? 0);
   const view = d.view || 'axial';
   const sliceKey = `${view}:${sliceIndex}`;
+  const activeSessionId = typeof d.sessionId === 'string' ? d.sessionId : '';
+  const activeSourcePath = typeof d.sourcePath === 'string' ? d.sourcePath : '';
   const suggestionContextMatches = !d.labelSuggestionContext ||
-    (d.labelSuggestionContext.sliceIndex === sliceIndex && d.labelSuggestionContext.view === view);
+    (
+      d.labelSuggestionContext.sliceIndex === sliceIndex &&
+      d.labelSuggestionContext.view === view &&
+      (!activeSessionId || d.labelSuggestionContext.sessionId === activeSessionId) &&
+      (!activeSourcePath || d.labelSuggestionContext.sourcePath === activeSourcePath)
+    );
   const suggestions = useMemo(
     () => suggestionContextMatches ? d.labelSuggestions || [] : [],
     [d.labelSuggestions, suggestionContextMatches],
@@ -281,7 +290,7 @@ function LabelSuggesterNode({ id, data }: NodeProps) {
   const selectedModelLabel = MODELS.find((model) => model.value === selectedModel)?.label ||
     selectedModel;
   const selectedPromptTitle = safePromptOptions.find((prompt) =>
-    prompt.key === (d.promptKey || 'suggest_labels'),
+    prompt.key === (d.promptKey || DEFAULT_LABEL_PROMPT_KEY),
   )?.title || 'Suggest Labels';
 
   const upstreamAnnotator = useMemo(() => {
@@ -359,7 +368,12 @@ function LabelSuggesterNode({ id, data }: NodeProps) {
           updateNodeData(upstreamAnnotator.id, {
             labelSuggestions: nextSuggestions,
             labelSuggestionResult: d.labelSuggestionResult,
-            labelSuggestionContext: d.labelSuggestionContext || { sliceIndex, view },
+            labelSuggestionContext: d.labelSuggestionContext || {
+              sliceIndex,
+              view,
+              sessionId: activeSessionId || undefined,
+              sourcePath: activeSourcePath || undefined,
+            },
             labelSuggestionDecisions: mergedAnnotatorDecisions,
             savedLabels: res.saved_labels,
           } as Partial<InteractiveAnnotatorNodeData>);
@@ -374,6 +388,8 @@ function LabelSuggesterNode({ id, data }: NodeProps) {
       }
     },
     [
+      activeSessionId,
+      activeSourcePath,
       d.labelSuggestionDecisions,
       d.labelSuggestionContext,
       d.labelSuggestionResult,
@@ -501,7 +517,7 @@ function LabelSuggesterNode({ id, data }: NodeProps) {
         <div style={{ marginTop: 11 }}>
           <label style={{ ...labelStyle, fontSize: 'var(--vlm-scale-font)', color: 'var(--text-primary)', fontWeight: 800 }}>Prompt</label>
           <select
-            value={d.promptKey || 'suggest_labels'}
+            value={d.promptKey || DEFAULT_LABEL_PROMPT_KEY}
             onChange={handleSelect('promptKey')}
             style={{ ...selectStyle, padding: '10px 11px', fontSize: 'var(--vlm-scale-font)' }}
           >

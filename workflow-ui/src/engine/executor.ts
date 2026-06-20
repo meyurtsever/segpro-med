@@ -1046,7 +1046,11 @@ async function executeNode(
     }
 
     case 'interactiveAnnotator': {
-      const ad = data as { sessionId?: string };
+      const ad = data as {
+        sessionId?: string;
+        sliceIndex?: number;
+        view?: string;
+      };
 
       let sessionId = ad.sessionId;
       let upstreamMeta: Record<string, unknown> | undefined;
@@ -1059,8 +1063,10 @@ async function executeNode(
       let labelSuggestions: string[] | undefined;
       let labelSuggestionResult: unknown;
       let sourcePath: string | undefined;
-      let initialSliceIndex = 0;
-      let initialView: 'axial' | 'coronal' | 'sagittal' | undefined;
+      let initialSliceIndex = Number(ad.sliceIndex ?? 0);
+      let initialView: 'axial' | 'coronal' | 'sagittal' | undefined = isView(ad.view)
+        ? ad.view
+        : undefined;
 
       if (upstreamResults.length > 0) {
         for (const upstream of upstreamResults) {
@@ -1435,10 +1441,12 @@ async function executeNode(
       const model = isVlmModelId(ld.model)
         ? ld.model as VlmModelId
         : 'medgemma-1.5-gguf';
-      const modality = isVlmModality(ld.modality) ? ld.modality : 'MRI';
       const maxTokens = Number(ld.maxTokens || (model === 'medgemma-1.5-gguf' ? 512 : model === 'smolvlm' ? 128 : 256));
       const maxLabels = Number(ld.maxLabels || 12);
       const context = await getImageContext(ld, upstreamResults, signal);
+      const modality = upstreamVlmResult?.modality ||
+        (context.metadata ? detectVlmModality(context.metadata) : undefined) ||
+        (isVlmModality(ld.modality) ? ld.modality : 'MRI');
       const currentLabels = annotationLabels(
         context.annotations,
         context.sliceAnnotationsMap,
@@ -1454,6 +1462,8 @@ async function executeNode(
         const suggestionContext = {
           sliceIndex: Number(upstreamVlmResult.sliceIndex ?? 0),
           view: normalizeVlmView(upstreamVlmResult.view),
+          sessionId: context.sessionId,
+          sourcePath: context.sourcePath,
         };
         const sliceKey = labelSuggestionSliceKey(suggestionContext.sliceIndex, suggestionContext.view);
         const labelSuggestionResult = {
@@ -1492,7 +1502,7 @@ async function executeNode(
         view: context.view,
         model,
         modality,
-        prompt_key: voicePrompt?.promptKey || String(ld.promptKey || 'suggest_labels'),
+        prompt_key: voicePrompt?.promptKey || String(ld.promptKey || 'annotation_label_candidates'),
         custom_prompt: voicePrompt?.text || getString(ld.customPrompt),
         max_tokens: maxTokens,
         current_labels: currentLabels,
@@ -1519,6 +1529,8 @@ async function executeNode(
       const suggestionContext = {
         sliceIndex: context.sliceIndex,
         view: context.view,
+        sessionId: context.sessionId,
+        sourcePath: context.sourcePath,
       };
       const sliceKey = labelSuggestionSliceKey(suggestionContext.sliceIndex, suggestionContext.view);
       const labelSuggestionResult = {

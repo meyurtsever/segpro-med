@@ -14,28 +14,10 @@ import type { NodeInfo } from '../components/InfoModal';
 import useWorkflowStore from '../store/workflowStore';
 import type { VoiceInputNodeData, VoicePromptIntent } from '../types/nodes';
 import * as api from '../api/client';
-
-type SpeechRecognitionResultLike = {
-  isFinal: boolean;
-  0: { transcript: string };
-};
-
-type SpeechRecognitionEventLike = {
-  results: ArrayLike<SpeechRecognitionResultLike>;
-};
-
-type SpeechRecognitionLike = {
-  lang: string;
-  continuous: boolean;
-  interimResults: boolean;
-  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
-  onerror: ((event: { error?: string }) => void) | null;
-  onend: (() => void) | null;
-  start: () => void;
-  stop: () => void;
-};
-
-type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
+import {
+  getSpeechRecognitionConstructor,
+  type SpeechRecognitionLike,
+} from '../utils/browserDictation';
 
 const VOICE_INFO: NodeInfo = {
   description:
@@ -101,14 +83,6 @@ const pillStyle = (intent: VoicePromptIntent): React.CSSProperties => {
     textTransform: 'uppercase',
   };
 };
-
-function getSpeechRecognitionConstructor(): SpeechRecognitionConstructor | undefined {
-  const scopedWindow = window as Window & {
-    SpeechRecognition?: SpeechRecognitionConstructor;
-    webkitSpeechRecognition?: SpeechRecognitionConstructor;
-  };
-  return scopedWindow.SpeechRecognition || scopedWindow.webkitSpeechRecognition;
-}
 
 function mapVoiceResponse(res: api.VoicePromptResponse) {
   return {

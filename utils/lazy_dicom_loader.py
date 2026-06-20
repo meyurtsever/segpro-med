@@ -288,6 +288,11 @@ class LazyVolumeWrapper:
         return self.loader.shape
     
     @property
+    def ndim(self):
+        """Expose NumPy-style dimensionality without loading the full volume."""
+        return len(self.shape)
+    
+    @property
     def dtype(self):
         return self.loader.dtype
     

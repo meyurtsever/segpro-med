@@ -110,7 +110,7 @@ export const MEDICAL_REPORT_OUTPUT_TUTORIAL: TaskTutorialConfig = {
     {
       nodeKey: 'medgemma',
       title: 'Review the generated report',
-      body: 'The VLM output is now displayed inside this node. Click the report preview to open it in a larger modal for easier reading and interpretation.',
+      body: 'The VLM output is now displayed inside this node. Click the report preview to open the editable modal, where you can review, revise, and append notes with dictation before finalizing the report.',
       placement: 'left',
     },
   ],

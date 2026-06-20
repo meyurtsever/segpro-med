@@ -284,6 +284,8 @@ export interface LabelSuggestionResult {
 export interface LabelSuggestionContext {
   sliceIndex: number;
   view: 'axial' | 'sagittal' | 'coronal';
+  sessionId?: string;
+  sourcePath?: string;
 }
 
 export interface LabelSuggestionDecision {

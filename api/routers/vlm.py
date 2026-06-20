@@ -206,7 +206,7 @@ class VlmAnalysisResponse(BaseModel):
 
 
 class VlmLabelSuggestRequest(VlmAnalysisRequest):
-    prompt_key: str = "suggest_labels"
+    prompt_key: str = "annotation_label_candidates"
     current_labels: list[str] = []
     max_labels: int = Field(default=12, ge=1, le=32)
     use_overlay: bool = True
