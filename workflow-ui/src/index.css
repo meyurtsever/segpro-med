@@ -109,6 +109,8 @@ body {
 .react-flow__edge-path {
   stroke: var(--border-color) !important;
   stroke-width: 2 !important;
+  stroke-dasharray: none !important;
+  animation: none !important;
 }
 
 .react-flow__edge.selected .react-flow__edge-path,

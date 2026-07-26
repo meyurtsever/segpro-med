@@ -269,7 +269,7 @@ function MedSAM2SegmenterNode({ id, data }: NodeProps) {
     <BaseNode
       nodeId={id}
       nodeType="medsam2Segmenter"
-      title="Batch SAM2 Segmenter"
+      title="SAM2 segmentation"
       icon="S2"
       color="var(--accent-purple)"
       status={d.status}

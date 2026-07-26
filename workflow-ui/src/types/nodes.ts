@@ -99,6 +99,8 @@ export interface SliceViewerNodeData extends BaseNodeData {
   segPath?: string;
   /** Whether the segmentation overlay is currently visible */
   showOverlay?: boolean;
+  /** Whether text labels are visible for segmentation overlays */
+  showLabels?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -538,6 +540,7 @@ export interface PatientAssignNodeData extends BaseNodeData {
   assignmentMode: 'selected' | 'allUnassigned';
   patientIdsText: string;
   availableExperts?: string[];
+  previewPatients?: string[];
   unassignedPatients?: string[];
   assignmentCount?: number;
   assignmentResult?: PatientAssignmentResult;
@@ -561,6 +564,7 @@ export interface CrowdsourcingTasksNodeData extends BaseNodeData {
   userId: string;
   currentPatientId?: string;
   tasks: CrowdsourcingTaskItem[];
+  onSelectTask?: (campaignId: string, patientId: string) => void;
 }
 
 // ---------------------------------------------------------------------------

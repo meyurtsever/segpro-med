@@ -23,6 +23,17 @@ router = APIRouter()
 
 AssignmentMode = Literal["selected", "allUnassigned"]
 VALID_MODALITIES = ["flair", "t1", "t1c", "t2"]
+MEDICAL_IMAGE_EXTENSIONS = {
+    ".dcm",
+    ".dicom",
+    ".ima",
+    ".nii",
+    ".gz",
+    ".mat",
+    ".mha",
+    ".mhd",
+    ".nrrd",
+}
 
 
 class CampaignScanRequest(BaseModel):
@@ -180,6 +191,37 @@ def _campaign_info(manager: CrowdsourcingManager, campaign_name: str) -> Campaig
     )
 
 
+def _looks_like_dicom(path: str) -> bool:
+    try:
+        import pydicom
+
+        pydicom.dcmread(path, stop_before_pixels=True)
+        return True
+    except Exception:
+        return False
+
+
+def _contains_medical_image_data(folder_path: str) -> bool:
+    if not os.path.isdir(folder_path):
+        return False
+
+    for root, _, files in os.walk(folder_path):
+        for filename in files:
+            full_path = os.path.join(root, filename)
+            lower_name = filename.lower()
+            if lower_name.endswith(".nii.gz"):
+                return True
+
+            _, ext = os.path.splitext(lower_name)
+            if ext in MEDICAL_IMAGE_EXTENSIONS:
+                return True
+
+            if _looks_like_dicom(full_path):
+                return True
+
+    return False
+
+
 def _task_with_paths(task: dict[str, Any]) -> dict[str, Any]:
     campaign_id = str(task.get("campaign_id") or task.get("campaign") or "")
     patient_id = str(task.get("patient_id") or "")
@@ -203,6 +245,9 @@ def _task_with_paths(task: dict[str, Any]) -> dict[str, Any]:
                     load_path = entry_path
                     modality = entry
                     break
+
+        if modality is None and _contains_medical_image_data(patient_path):
+            load_path = patient_path
 
     return {
         "campaign_id": campaign_id,

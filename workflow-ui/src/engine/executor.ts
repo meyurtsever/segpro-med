@@ -429,11 +429,44 @@ function isVlmModality(value: unknown): value is VlmModality {
   return value === 'MRI' || value === 'CT' || value === 'MG';
 }
 
-function detectVlmModality(metadata?: Record<string, unknown>): VlmModality {
-  const raw = String(metadata?.Modality || metadata?.modality || '').toUpperCase();
-  if (raw.includes('CT')) return 'CT';
-  if (raw.includes('MG') || raw.includes('MAMMO')) return 'MG';
+function detectVlmModality(
+  metadata?: Record<string, unknown>,
+  sourcePath?: string,
+): VlmModality {
+  const raw = [
+    metadata?.Modality,
+    metadata?.modality,
+    metadata?.BodyPartExamined,
+    metadata?.bodyPartExamined,
+    metadata?.StudyDescription,
+    metadata?.studyDescription,
+    metadata?.SeriesDescription,
+    metadata?.seriesDescription,
+    metadata?.ProtocolName,
+    metadata?.protocolName,
+    sourcePath,
+  ]
+    .filter((value) => value !== undefined && value !== null)
+    .map((value) => String(value))
+    .join(' ')
+    .toUpperCase();
+
+  if (/\bCT\b/.test(raw) || raw.includes('COMPUTED TOMOGRAPHY') ||
+    raw.includes('ABDOMEN') || raw.includes('ABDOMINAL')) return 'CT';
+  if (/\bMG\b/.test(raw) || raw.includes('MAMMO') || raw.includes('MAMMOGRAPHY')) return 'MG';
   return 'MRI';
+}
+
+function resolveVlmModality(
+  metadata?: Record<string, unknown>,
+  sourcePath?: string,
+  selected?: unknown,
+): VlmModality {
+  const detected = detectVlmModality(metadata, sourcePath);
+
+  if (detected !== 'MRI') return detected;
+  if (isVlmModality(selected)) return selected;
+  return detected;
 }
 
 function normalizeVlmView(value: unknown): 'axial' | 'coronal' | 'sagittal' {
@@ -1146,7 +1179,7 @@ async function executeNode(
         sourcePath,
         volumeShape,
         metadata: upstreamMeta,
-        modality: detectVlmModality(upstreamMeta),
+        modality: resolveVlmModality(upstreamMeta, sourcePath, data.modality),
         segmentationResult: upstreamSegmentation,
         segmentationPrompt: upstreamPrompt,
         labelSuggestions,
@@ -1381,7 +1414,7 @@ async function executeNode(
       }
 
       const model = isVlmModelId(vd.model) ? vd.model : getVlmModelForNode(node.type);
-      const modality = isVlmModality(vd.modality) ? vd.modality : 'MRI';
+      const modality = resolveVlmModality(context.metadata, context.sourcePath, vd.modality);
       const voicePrompt = getVoicePrompt(vd, upstreamResults);
       const res = await api.runVlmAnalysis({
         session_id: context.sessionId,
@@ -1445,8 +1478,7 @@ async function executeNode(
       const maxLabels = Number(ld.maxLabels || 12);
       const context = await getImageContext(ld, upstreamResults, signal);
       const modality = upstreamVlmResult?.modality ||
-        (context.metadata ? detectVlmModality(context.metadata) : undefined) ||
-        (isVlmModality(ld.modality) ? ld.modality : 'MRI');
+        resolveVlmModality(context.metadata, context.sourcePath, ld.modality);
       const currentLabels = annotationLabels(
         context.annotations,
         context.sliceAnnotationsMap,

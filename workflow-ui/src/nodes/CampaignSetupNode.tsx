@@ -188,28 +188,35 @@ function CampaignSetupNode({ id, data }: NodeProps) {
           Scan
         </button>
         <span style={{ color: 'var(--text-muted)', fontSize: 10, alignSelf: 'center' }}>
-          Valid modalities: flair, t1, t1c, t2
+          Scan previews patients. Run this node to create the campaign.
         </span>
       </div>
 
       {patientCount > 0 ? (
-        <div style={statStyle}>
-          <div style={{ color: 'var(--accent-blue)', fontSize: 11, fontWeight: 800 }}>
-            {patientCount} patients
+        <>
+          <NodeHint>
+            {d.campaign
+              ? 'Campaign is created. Run this node again only if you need to reuse or refresh the campaign definition.'
+              : 'Patient folders were found. Run this node to create or reuse the campaign before assignment.'}
+          </NodeHint>
+          <div style={statStyle}>
+            <div style={{ color: 'var(--accent-blue)', fontSize: 11, fontWeight: 800 }}>
+              {patientCount} patients
+            </div>
+            <div style={{ color: 'var(--accent-green)', fontSize: 11, fontWeight: 800 }}>
+              {assigned} assigned
+            </div>
+            <div style={{ color: 'var(--text-secondary)', fontSize: 10 }}>
+              {completed} completed
+            </div>
+            <div style={{ color: 'var(--text-secondary)', fontSize: 10 }}>
+              {d.campaign?.progress.reviewed ?? 0} reviewed
+            </div>
           </div>
-          <div style={{ color: 'var(--accent-green)', fontSize: 11, fontWeight: 800 }}>
-            {assigned} assigned
-          </div>
-          <div style={{ color: 'var(--text-secondary)', fontSize: 10 }}>
-            {completed} completed
-          </div>
-          <div style={{ color: 'var(--text-secondary)', fontSize: 10 }}>
-            {d.campaign?.progress.reviewed ?? 0} reviewed
-          </div>
-        </div>
+        </>
       ) : (
         <NodeHint>
-          Scan the dataset first, then run the workflow to create or reuse the campaign.
+          Scan previews patient folders. Run Campaign Setup to create or reuse the campaign before assignment.
         </NodeHint>
       )}
 

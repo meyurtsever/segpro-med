@@ -28,7 +28,7 @@ import {
   type WorkflowRunMode,
 } from './engine/executor';
 import { createIsValidConnection, getAllowedSources, getAllowedTargets } from './engine/compatibility';
-import { getConnectionEdgeData, getNodeContract } from './engine/nodeContracts';
+import { getConnectionEdgeData, getDefaultNodeStyle, getNodeContract } from './engine/nodeContracts';
 import NodeInspector from './panels/NodeInspector';
 import WorkflowValidationPanel from './panels/WorkflowValidationPanel';
 import WorkflowTemplatePanel from './panels/WorkflowTemplatePanel';
@@ -850,7 +850,7 @@ export default function App() {
         id: generateNodeId(),
         type: nodeType,
         position,
-        style: nodeType === 'interactiveAnnotator' ? { width: 430, height: 560 } : undefined,
+        style: getDefaultNodeStyle(nodeType),
         data: defaultData,
       });
     },
@@ -1806,7 +1806,7 @@ export default function App() {
           x: sourceNode.position.x + (suggestionMenu.direction === 'output' ? 390 : -390),
           y: sourceNode.position.y,
         },
-        style: nodeType === 'interactiveAnnotator' ? { width: 430, height: 560 } : undefined,
+        style: getDefaultNodeStyle(nodeType),
         data: defaultDataCopy,
       };
 
@@ -1886,6 +1886,19 @@ export default function App() {
             userId,
             currentPatientId: task.patient_id,
             tasks: buildCrowdsourcingTaskItems(assignedTasks, remainingTasks, task),
+            onSelectTask: (campaignId: string, patientId: string) => {
+              const selectedTask = [...assignedTasks, ...remainingTasks, task].find((candidate) =>
+                candidate.campaign_id === campaignId && candidate.patient_id === patientId,
+              );
+              if (!selectedTask) {
+                setWorkflowNotice({
+                  type: 'warning',
+                  message: 'Selected assignment could not be found in the current queue.',
+                });
+                return;
+              }
+              startCrowdsourcingTask(selectedTask, userId, remainingTasks, assignedTasks);
+            },
           },
         },
       ];

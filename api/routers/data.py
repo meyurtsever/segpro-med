@@ -16,10 +16,11 @@ import io
 import base64
 import tempfile
 import zipfile
+import re
 from pathlib import Path
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Query
 from typing import Optional
 
@@ -391,6 +392,60 @@ _LABEL_COLORS = [
     (255, 150,  50),   # 7 – orange
 ]
 
+_label_set_cache: dict[str, tuple[dict[int, tuple[int, int, int]], dict[int, str]]] = {}
+
+
+def _parse_label_set(label_file: str) -> tuple[dict[int, tuple[int, int, int]], dict[int, str]]:
+    """Parse an ITK-SNAP label file into color and display-name mappings."""
+    abs_path = os.path.abspath(label_file)
+    if abs_path in _label_set_cache:
+        return _label_set_cache[abs_path]
+
+    colors: dict[int, tuple[int, int, int]] = {}
+    names: dict[int, str] = {}
+    try:
+        with open(abs_path, "r", encoding="utf-8", errors="ignore") as handle:
+            for raw_line in handle:
+                line = raw_line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                parts = line.split()
+                if len(parts) < 7:
+                    continue
+                try:
+                    idx = int(parts[0])
+                    colors[idx] = (int(parts[1]), int(parts[2]), int(parts[3]))
+                except (TypeError, ValueError):
+                    continue
+                quoted = re.findall(r'"([^"]*)"', line)
+                if quoted:
+                    names[idx] = quoted[-1]
+    except OSError:
+        pass
+
+    _label_set_cache[abs_path] = (colors, names)
+    return colors, names
+
+
+def _find_label_set_for_seg(seg_path: str | None) -> str | None:
+    """Find the repository's expected `label set.label` near a segmentation file."""
+    if not seg_path:
+        return None
+
+    start = Path(seg_path).resolve()
+    search_dirs = [start.parent, *start.parents]
+    for directory in search_dirs[:6]:
+        candidate = directory / "label set.label"
+        if candidate.exists():
+            return str(candidate)
+        try:
+            for child in directory.iterdir():
+                if child.is_file() and child.name.lower() == "label set.label":
+                    return str(child)
+        except OSError:
+            continue
+    return None
+
 
 def _overlay_to_base64_png(
     base_slice: np.ndarray,
@@ -398,6 +453,9 @@ def _overlay_to_base64_png(
     alpha: float = 0.45,
     window_center: float | None = None,
     window_width: float | None = None,
+    show_labels: bool = False,
+    label_colors: dict[int, tuple[int, int, int]] | None = None,
+    label_names: dict[int, str] | None = None,
 ) -> str:
     """Composite a segmentation mask onto a grayscale slice; return base64 PNG."""
     norm = _normalize_slice_for_display(base_slice, window_center, window_width)
@@ -416,7 +474,8 @@ def _overlay_to_base64_png(
     for label_val in np.unique(seg_slice):
         if label_val == 0:
             continue
-        color = _LABEL_COLORS[(int(label_val) - 1) % len(_LABEL_COLORS)]
+        label_idx = int(label_val)
+        color = (label_colors or {}).get(label_idx) or _LABEL_COLORS[(label_idx - 1) % len(_LABEL_COLORS)]
         mask = seg_slice == label_val
         for c in range(3):
             rgb[mask, c] = np.clip(
@@ -424,6 +483,36 @@ def _overlay_to_base64_png(
             )
 
     img = Image.fromarray(rgb.astype(np.uint8), mode="RGB")
+    if show_labels:
+        draw = ImageDraw.Draw(img)
+        font = ImageFont.load_default()
+        for label_val in np.unique(seg_slice):
+            if label_val == 0:
+                continue
+            mask = seg_slice == label_val
+            if not np.any(mask):
+                continue
+            ys, xs = np.where(mask)
+            cx = int(np.median(xs))
+            cy = int(np.median(ys))
+            label_idx = int(label_val)
+            text = (label_names or {}).get(label_idx) or f"Label {label_idx}"
+            bbox = draw.textbbox((cx, cy), text, font=font)
+            img_w, img_h = img.size
+            text_w = bbox[2] - bbox[0]
+            text_h = bbox[3] - bbox[1]
+            cx = max(4, min(cx, img_w - text_w - 8))
+            cy = max(text_h + 4, min(cy, img_h - 6))
+            bbox = draw.textbbox((cx, cy), text, font=font)
+            pad_x, pad_y = 4, 2
+            box = (
+                bbox[0] - pad_x,
+                bbox[1] - pad_y,
+                bbox[2] + pad_x,
+                bbox[3] + pad_y,
+            )
+            draw.rounded_rectangle(box, radius=3, fill=(0, 0, 0), outline=(255, 255, 255))
+            draw.text((cx, cy), text, fill=(255, 255, 255), font=font)
     buf = io.BytesIO()
     img.save(buf, format="PNG")
     return base64.b64encode(buf.getvalue()).decode("utf-8")
@@ -553,6 +642,10 @@ async def get_slice(
             "When provided the segmentation mask is blended onto the slice image."
         ),
     ),
+    show_labels: bool = Query(
+        False,
+        description="When true, draw compact label tags for non-zero segmentation labels.",
+    ),
 ):
     sm = get_session_manager()
     session = sm.get_session(session_id)
@@ -571,6 +664,11 @@ async def get_slice(
 
         if seg_path and os.path.exists(seg_path):
             seg_vol, seg_affine = _load_seg(seg_path)
+            label_colors: dict[int, tuple[int, int, int]] = {}
+            label_names: dict[int, str] = {}
+            label_file = _find_label_set_for_seg(seg_path)
+            if label_file:
+                label_colors, label_names = _parse_label_set(label_file)
 
             # --- World-space alignment ---
             # If the session was loaded from DICOM we have a precise 4×4 affine that
@@ -599,6 +697,9 @@ async def get_slice(
                 seg_2d,
                 window_center=window_center,
                 window_width=window_width,
+                show_labels=show_labels,
+                label_colors=label_colors,
+                label_names=label_names,
             )
         else:
             img_b64 = _array_to_base64_png(

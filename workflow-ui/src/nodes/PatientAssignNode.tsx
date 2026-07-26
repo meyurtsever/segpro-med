@@ -5,7 +5,7 @@
  * assignment JSON managed by the Gradio app.
  */
 
-import { memo, useCallback, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { type NodeProps } from '@xyflow/react';
 
 import BaseNode from './BaseNode';
@@ -45,6 +45,11 @@ const inputStyle: React.CSSProperties = {
   boxSizing: 'border-box',
 };
 
+const selectStyle: React.CSSProperties = {
+  ...inputStyle,
+  cursor: 'pointer',
+};
+
 const buttonStyle = (active = false): React.CSSProperties => ({
   padding: '6px 8px',
   borderRadius: 5,
@@ -56,12 +61,25 @@ const buttonStyle = (active = false): React.CSSProperties => ({
   cursor: active ? 'progress' : 'pointer',
 });
 
+function parsePatientIds(value: string | undefined) {
+  return (value || '')
+    .split(/[\n,;]+/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function formatPatientIds(values: string[]) {
+  return values.join('\n');
+}
+
 function PatientAssignNode({ id, data }: NodeProps) {
   const updateNodeData = useWorkflowStore((s) => s.updateNodeData);
   const d = data as unknown as PatientAssignNodeData;
   const [busy, setBusy] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const lastAutoRefreshKey = useRef<string | null>(null);
+  const hasCreatedCampaign = Boolean(d.campaign);
 
   const updateField = useCallback(
     (key: keyof PatientAssignNodeData, value: string) => {
@@ -70,8 +88,12 @@ function PatientAssignNode({ id, data }: NodeProps) {
     [id, updateNodeData],
   );
 
-  const refreshOptions = useCallback(async () => {
+  const refreshOptions = useCallback(async (force = false) => {
     if (!d.campaignName?.trim()) return;
+    if (force && !hasCreatedCampaign) {
+      setLocalError('Run Campaign Setup first to create or reuse this campaign.');
+      return;
+    }
 
     setBusy(true);
     setLocalError(null);
@@ -104,20 +126,68 @@ function PatientAssignNode({ id, data }: NodeProps) {
         },
       } as Partial<PatientAssignNodeData>);
     } catch (error) {
-      setLocalError(error instanceof Error ? error.message : 'Assignment options failed to load');
+      const message = error instanceof Error ? error.message : 'Assignment options failed to load';
+      setLocalError(
+        message.includes('Campaign not found')
+          ? 'Campaign has not been created yet. Run Campaign Setup first.'
+          : message,
+      );
     } finally {
       setBusy(false);
     }
-  }, [d.campaignName, id, updateNodeData]);
+  }, [d.campaignName, hasCreatedCampaign, id, updateNodeData]);
 
   useEffect(() => {
-    refreshOptions();
-  }, [refreshOptions]);
+    if (!d.campaignName || !hasCreatedCampaign) return;
+    const key = `${d.campaignName}:${d.campaign?.createdAt || ''}:${d.campaign?.progress?.assignedPatients ?? 0}:${d.campaign?.progress?.unassignedPatients ?? 0}`;
+    if (lastAutoRefreshKey.current === key) return;
+    lastAutoRefreshKey.current = key;
+    refreshOptions(false);
+  }, [
+    d.campaign?.createdAt,
+    d.campaign?.progress?.assignedPatients,
+    d.campaign?.progress?.unassignedPatients,
+    d.campaignName,
+    hasCreatedCampaign,
+    refreshOptions,
+  ]);
 
-  const unassigned = d.unassignedPatients || [];
-  const experts = d.availableExperts || [];
-  const preview = unassigned.slice(0, 4).join(', ');
+  const previewPatients = useMemo(() => d.previewPatients || [], [d.previewPatients]);
+  const unassigned = useMemo(() => d.unassignedPatients || [], [d.unassignedPatients]);
+  const patientOptions = useMemo(
+    () => (hasCreatedCampaign ? unassigned : previewPatients),
+    [hasCreatedCampaign, previewPatients, unassigned],
+  );
+  const experts = useMemo(() => d.availableExperts || [], [d.availableExperts]);
+  const preview = patientOptions.slice(0, 4).join(', ');
   const assignedCount = d.campaign?.progress.assignedPatients ?? d.assignmentCount ?? 0;
+  const selectedPatientIds = parsePatientIds(d.patientIdsText);
+
+  const setSelectedPatient = useCallback(
+    (patientId: string, checked: boolean) => {
+      const current = new Set(parsePatientIds(d.patientIdsText));
+      if (checked) {
+        current.add(patientId);
+      } else {
+        current.delete(patientId);
+      }
+      updateNodeData(id, {
+        patientIdsText: formatPatientIds(
+          patientOptions.filter((candidate) => current.has(candidate)),
+        ),
+      } as Partial<PatientAssignNodeData>);
+    },
+    [d.patientIdsText, id, patientOptions, updateNodeData],
+  );
+
+  const setAllSelectedPatients = useCallback(
+    (checked: boolean) => {
+      updateNodeData(id, {
+        patientIdsText: checked ? formatPatientIds(patientOptions) : '',
+      } as Partial<PatientAssignNodeData>);
+    },
+    [id, patientOptions, updateNodeData],
+  );
 
   return (
     <BaseNode
@@ -140,9 +210,11 @@ function PatientAssignNode({ id, data }: NodeProps) {
           background: 'color-mix(in srgb, var(--accent-green) 7%, var(--bg-secondary))',
         }}>
           <div style={{ color: 'var(--accent-green)', fontSize: 20, fontWeight: 900 }}>
-            {unassigned.length}
+            {patientOptions.length}
           </div>
-          <div style={{ color: 'var(--text-muted)', fontSize: 11 }}>Unassigned</div>
+          <div style={{ color: 'var(--text-muted)', fontSize: 11 }}>
+            {hasCreatedCampaign ? 'Unassigned' : 'Patients'}
+          </div>
         </div>
         <div style={{
           border: '1px solid color-mix(in srgb, var(--accent-blue) 28%, var(--border-color))',
@@ -168,28 +240,39 @@ function PatientAssignNode({ id, data }: NodeProps) {
       {detailsOpen ? (
         <>
       <label style={labelStyle}>Campaign</label>
-      <input
-        value={d.campaignName || ''}
-        onChange={(event) => updateField('campaignName', event.target.value)}
-        placeholder="Connect Campaign Setup or type campaign name"
-        style={inputStyle}
-      />
+      <div style={{
+        padding: '7px 8px',
+        borderRadius: 5,
+        border: '1px solid var(--border-color)',
+        background: 'rgba(79, 141, 245, 0.08)',
+        color: d.campaignName ? 'var(--text-primary)' : 'var(--text-muted)',
+        fontSize: 12,
+        fontWeight: 800,
+      }}>
+        {d.campaignName || 'Connect Campaign Setup and run it first'}
+      </div>
+      {!hasCreatedCampaign && d.campaignName ? (
+        <NodeHint>
+          "{d.campaignName}" is only a planned campaign name. Run Campaign Setup to create or reuse it before assigning patients.
+        </NodeHint>
+      ) : null}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 96px', gap: 6, marginTop: 8 }}>
         <div>
-          <label style={labelStyle}>Expert ID</label>
-          <input
+          <label style={labelStyle}>Expert</label>
+          <select
             value={d.expertId || ''}
             onChange={(event) => updateField('expertId', event.target.value)}
-            placeholder={experts[0] || 'expert_user'}
-            list={`${id}-experts`}
-            style={inputStyle}
-          />
-          <datalist id={`${id}-experts`}>
+            style={selectStyle}
+            disabled={!hasCreatedCampaign || experts.length === 0}
+          >
+            <option value="">
+              {!hasCreatedCampaign ? 'Run setup first' : experts.length ? 'Select expert' : 'No experts found'}
+            </option>
             {experts.map((expert) => (
-              <option key={expert} value={expert} />
+              <option key={expert} value={expert}>{expert}</option>
             ))}
-          </datalist>
+          </select>
         </div>
         <div>
           <label style={labelStyle}>Mode</label>
@@ -197,6 +280,7 @@ function PatientAssignNode({ id, data }: NodeProps) {
             value={d.assignmentMode || 'allUnassigned'}
             onChange={(event) => updateField('assignmentMode', event.target.value)}
             style={inputStyle}
+            disabled={!hasCreatedCampaign}
           >
             <option value="allUnassigned">All</option>
             <option value="selected">Selected</option>
@@ -206,33 +290,118 @@ function PatientAssignNode({ id, data }: NodeProps) {
 
       {d.assignmentMode === 'selected' ? (
         <div style={{ marginTop: 8 }}>
-          <label style={labelStyle}>Patient IDs</label>
-          <textarea
-            value={d.patientIdsText || ''}
-            onChange={(event) => updateField('patientIdsText', event.target.value)}
-            placeholder="patient_001, patient_002"
-            rows={3}
-            style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.35 }}
-          />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+            <label style={{ ...labelStyle, marginBottom: 0 }}>Patients</label>
+            <button
+              type="button"
+              onClick={() => setAllSelectedPatients(selectedPatientIds.length !== unassigned.length)}
+              style={{ ...buttonStyle(false), padding: '4px 6px' }}
+              disabled={!hasCreatedCampaign || patientOptions.length === 0}
+            >
+              {selectedPatientIds.length === patientOptions.length && patientOptions.length > 0 ? 'Clear' : 'Select All'}
+            </button>
+          </div>
+          <div style={{
+            maxHeight: 132,
+            overflowY: 'auto',
+            border: '1px solid var(--border-color)',
+            borderRadius: 6,
+            background: 'var(--bg-tertiary)',
+            padding: 6,
+          }}>
+            {patientOptions.length > 0 ? patientOptions.map((patientId) => {
+              const checked = selectedPatientIds.includes(patientId);
+              return (
+                <label
+                  key={patientId}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 7,
+                    padding: '5px 6px',
+                    borderRadius: 5,
+                    color: checked ? 'var(--accent-green)' : 'var(--text-secondary)',
+                    fontSize: 12,
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    disabled={!hasCreatedCampaign}
+                    onChange={(event) => setSelectedPatient(patientId, event.target.checked)}
+                  />
+                  <span>{patientId}</span>
+                </label>
+              );
+            }) : (
+              <div style={{ color: 'var(--text-muted)', fontSize: 11, padding: 6 }}>
+                {hasCreatedCampaign ? 'No unassigned patients available.' : 'No scanned patients available.'}
+              </div>
+            )}
+          </div>
+          <div style={{ marginTop: 4, color: 'var(--text-muted)', fontSize: 10 }}>
+          {selectedPatientIds.length} selected
+          </div>
+        </div>
+      ) : null}
+
+      {d.assignmentMode !== 'selected' && patientOptions.length > 0 ? (
+        <div style={{ marginTop: 8 }}>
+          <label style={labelStyle}>{hasCreatedCampaign ? 'Unassigned Patients' : 'Scanned Patients'}</label>
+          <div style={{
+            maxHeight: 92,
+            overflowY: 'auto',
+            border: '1px solid var(--border-color)',
+            borderRadius: 6,
+            background: 'var(--bg-tertiary)',
+            padding: 6,
+          }}>
+            {patientOptions.map((patientId) => (
+              <div
+                key={patientId}
+                style={{
+                  padding: '5px 6px',
+                  borderBottom: '1px solid rgba(255,255,255,0.05)',
+                  color: 'var(--text-secondary)',
+                  fontSize: 12,
+                  fontWeight: 800,
+                }}
+              >
+                {patientId}
+              </div>
+            ))}
+          </div>
         </div>
       ) : null}
 
       <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginTop: 8 }}>
-        <button type="button" onClick={refreshOptions} style={buttonStyle(busy)} disabled={busy || !d.campaignName}>
+        <button type="button" onClick={() => refreshOptions(true)} style={buttonStyle(busy)} disabled={busy || !d.campaignName}>
           Refresh
         </button>
         <span style={{ color: 'var(--text-muted)', fontSize: 10 }}>
-          {unassigned.length} unassigned, {experts.length} experts
+          {hasCreatedCampaign
+            ? `${unassigned.length} unassigned, ${experts.length} experts`
+            : `${previewPatients.length} scanned, run setup first`}
         </span>
       </div>
 
-      {d.assignmentCount !== undefined ? (
+      {!hasCreatedCampaign ? (
+        <NodeHint>
+          Run Campaign Setup first. Then this node will load experts and make patients selectable for assignment.
+        </NodeHint>
+      ) : !d.expertId ? (
+        <NodeHint>
+          Select an expert, then run this node to assign the current unassigned patient set.
+        </NodeHint>
+      ) : d.assignmentCount !== undefined ? (
         <div style={{ marginTop: 8, color: 'var(--accent-green)', fontSize: 11, fontWeight: 800 }}>
           Assigned {d.assignmentCount} patient{d.assignmentCount === 1 ? '' : 's'} to {d.expertId || 'expert'}
         </div>
       ) : unassigned.length > 0 ? (
         <NodeHint>
-          Next unassigned patients: {preview}{unassigned.length > 4 ? ` and ${unassigned.length - 4} more` : ''}.
+          Next unassigned patients: {preview}{unassigned.length > 4 ? ` and ${unassigned.length - 4} more` : ''}. Run this node to assign them to {d.expertId || 'the selected expert'}.
         </NodeHint>
       ) : (
         <NodeHint>

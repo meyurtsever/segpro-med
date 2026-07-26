@@ -10,7 +10,7 @@
 import type { Connection, Node } from '@xyflow/react';
 
 import type { BaseNodeData } from '../types/nodes';
-import { getNodeContract } from './nodeContracts';
+import { getDefaultNodeStyle, getNodeContract } from './nodeContracts';
 import type { CSSProperties } from 'react';
 
 interface TemplateNodeSpec {
@@ -52,10 +52,10 @@ export const workflowTemplates: WorkflowTemplate[] = [
     description: 'Load a DICOM or NIfTI study, inspect PHI, create a deidentified copy, verify metadata, and expose the sanitized output path.',
     nodes: [
       { key: 'loader', type: 'dataLoader', position: { x: 80, y: 150 } },
-      { key: 'metadataBefore', type: 'metadataViewer', position: { x: 420, y: 20 }, data: { label: 'Metadata Viewer (Before Sanitization)' } },
-      { key: 'deidentify', type: 'deidentifyNode', position: { x: 420, y: 270 }, data: { label: 'Deidentify Study' } },
-      { key: 'metadataAfter', type: 'metadataViewer', position: { x: 790, y: 20 }, data: { label: 'Metadata Viewer (After Sanitization)', filterText: '' } },
-      { key: 'export', type: 'exportNode', position: { x: 790, y: 270 }, data: { label: 'Export Sanitized Data' } },
+      { key: 'metadataBefore', type: 'metadataViewer', position: { x: 420, y: 20 }, data: { label: 'Metadata Viewer (Before)' } },
+      { key: 'deidentify', type: 'deidentifyNode', position: { x: 420, y: 270 }, data: { label: 'Anonymization' } },
+      { key: 'metadataAfter', type: 'metadataViewer', position: { x: 790, y: 20 }, data: { label: 'Metadata Viewer (After)', filterText: '' } },
+      { key: 'export', type: 'exportNode', position: { x: 790, y: 270 }, data: { label: 'Exporting' } },
     ],
     connections: [
       { source: 'loader', target: 'metadataBefore' },
@@ -206,7 +206,7 @@ export function instantiateWorkflowTemplate(
         taskNodeKey: spec.key,
         ...(spec.data || {}),
       },
-      style: spec.style,
+      style: spec.style || getDefaultNodeStyle(spec.type),
     };
   });
 

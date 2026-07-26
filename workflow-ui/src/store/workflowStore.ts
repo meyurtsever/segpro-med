@@ -4,6 +4,7 @@
  */
 
 import { create } from 'zustand';
+import type { CSSProperties } from 'react';
 import {
   type Node,
   type Edge,
@@ -54,6 +55,7 @@ interface WorkflowState {
     edges: Edge[],
   ) => void;
   updateNodeData: (nodeId: string, data: Partial<BaseNodeData>) => void;
+  updateNodeStyle: (nodeId: string, style: CSSProperties) => void;
   removeNode: (nodeId: string) => void;
   removeEdge: (edgeId: string) => void;
   setSelectedNodeId: (nodeId: string | null) => void;
@@ -118,15 +120,31 @@ function syncNodeCounter(nodes: Node<BaseNodeData>[]) {
 
 function getMedicalModality(sourceData: Record<string, unknown>) {
   const metadata = sourceData.metadata as Record<string, unknown> | undefined;
-  const raw = String(
+  const raw = [
     sourceData.modality ||
     metadata?.Modality ||
     metadata?.modality ||
     '',
-  ).toUpperCase();
+    metadata?.BodyPartExamined,
+    metadata?.bodyPartExamined,
+    metadata?.StudyDescription,
+    metadata?.studyDescription,
+    metadata?.SeriesDescription,
+    metadata?.seriesDescription,
+    metadata?.ProtocolName,
+    metadata?.protocolName,
+    sourceData.sourcePath,
+    sourceData.filePath,
+    sourceData.path,
+  ]
+    .filter((value) => value !== undefined && value !== null)
+    .map((value) => String(value))
+    .join(' ')
+    .toUpperCase();
 
-  if (raw.includes('CT')) return 'CT';
-  if (raw.includes('MG') || raw.includes('MAMMO')) return 'MG';
+  if (/\bCT\b/.test(raw) || raw.includes('COMPUTED TOMOGRAPHY') ||
+    raw.includes('ABDOMEN') || raw.includes('ABDOMINAL')) return 'CT';
+  if (/\bMG\b/.test(raw) || raw.includes('MAMMO') || raw.includes('MAMMOGRAPHY')) return 'MG';
   return 'MRI';
 }
 
@@ -160,6 +178,13 @@ function getLivePropagationPatch(
       (targetNode.type === 'medgemmaNode' || targetNode.type === 'smolvlmNode' || targetNode.type === 'medR1Node') &&
       (targetSlice !== nextSlice || targetView !== nextView)
     );
+    const detectedModality = getMedicalModality(sourceData);
+    const targetModality = targetData.modality;
+    const nextModality = detectedModality !== 'MRI' ||
+      targetModality === 'MRI' ||
+      targetModality === undefined
+      ? detectedModality
+      : targetModality;
 
     return {
       sessionId: sourceData.sessionId as string | undefined,
@@ -170,7 +195,7 @@ function getLivePropagationPatch(
       sliceAnnotationsMap: sourceData.sliceAnnotationsMap as BaseNodeData['sliceAnnotationsMap'],
       metadata: sourceData.metadata as Record<string, unknown> | undefined,
       volumeShape: sourceData.volumeShape as number[] | undefined,
-      modality: getMedicalModality(sourceData),
+      modality: nextModality as BaseNodeData['modality'],
       ...(clearStaleLabels
         ? {
           labelSuggestions: sourceChanged ? [] : suggestionsBySlice?.[nextSuggestionKey] || [],
@@ -535,6 +560,32 @@ const useWorkflowStore = create<WorkflowState>((set, get) => ({
         };
       }
 
+      if (targetNode.type === 'patientAssign' && sourceNode.type === 'campaignSetup') {
+        const campaign = sourceData.campaign as { name?: string; unassignedPatients?: string[]; progress?: { assignedPatients?: number } } | undefined;
+        const campaignName = typeof sourceData.campaignName === 'string'
+          ? sourceData.campaignName
+          : campaign?.name;
+        patch = {
+          campaign,
+          campaignName,
+          previewPatients: sourceData.patients as string[] | undefined,
+          unassignedPatients: campaign?.unassignedPatients,
+          assignmentCount: campaign?.progress?.assignedPatients,
+        };
+      }
+
+      if (targetNode.type === 'campaignStatus' &&
+        (sourceNode.type === 'campaignSetup' || sourceNode.type === 'patientAssign')) {
+        const campaign = sourceData.campaign as { name?: string } | undefined;
+        const assignmentResult = sourceData.assignmentResult as { campaignName?: string } | undefined;
+        patch = {
+          campaign,
+          campaignName: (typeof sourceData.campaignName === 'string' && sourceData.campaignName) ||
+            campaign?.name ||
+            assignmentResult?.campaignName,
+        };
+      }
+
       // MetadataViewer targets: propagate already loaded metadata when available
       if (targetNode.type === 'metadataViewer') {
         if (sourceNode.type === 'dataLoader') {
@@ -562,6 +613,7 @@ const useWorkflowStore = create<WorkflowState>((set, get) => ({
           campaignName: (campaign?.name as string | undefined) ||
             (sourceData.campaignName as string | undefined),
           campaign: sourceData.campaign,
+          previewPatients: sourceData.patients,
           unassignedPatients: campaign?.unassignedPatients,
         };
       }
@@ -720,6 +772,16 @@ const useWorkflowStore = create<WorkflowState>((set, get) => ({
         const patch = getLivePropagationPatch(sourceNode, node, sourceData);
         return patch ? { ...node, data: { ...node.data, ...patch } } : node;
       }),
+    });
+  },
+
+  updateNodeStyle: (nodeId, style) => {
+    set({
+      nodes: get().nodes.map((node) =>
+        node.id === nodeId
+          ? { ...node, style: { ...node.style, ...style } }
+          : node,
+      ),
     });
   },
 

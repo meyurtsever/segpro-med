@@ -10,6 +10,56 @@ from typing import Dict, List, Tuple
 
 logger = logging.getLogger(__name__)
 
+VALID_MODALITY_DIRS = {'flair', 't1', 't1c', 't2'}
+MEDICAL_IMAGE_EXTENSIONS = {
+    '.dcm',
+    '.dicom',
+    '.ima',
+    '.nii',
+    '.gz',
+    '.mat',
+    '.mha',
+    '.mhd',
+    '.nrrd',
+}
+
+
+def _looks_like_dicom(path):
+    """Return True when a file can be read as DICOM metadata."""
+    try:
+        import pydicom
+
+        pydicom.dcmread(path, stop_before_pixels=True)
+        return True
+    except Exception:
+        return False
+
+
+def _contains_medical_image_data(folder_path):
+    """Detect whether a patient folder contains loadable medical image data."""
+    if not os.path.isdir(folder_path):
+        return False
+
+    try:
+        for root, _, files in os.walk(folder_path):
+            for filename in files:
+                full_path = os.path.join(root, filename)
+                lower_name = filename.lower()
+                if lower_name.endswith('.nii.gz'):
+                    return True
+
+                _, ext = os.path.splitext(lower_name)
+                if ext in MEDICAL_IMAGE_EXTENSIONS:
+                    return True
+
+                # Some DICOM datasets use numeric filenames without extension.
+                if _looks_like_dicom(full_path):
+                    return True
+    except Exception as e:
+        logger.warning(f"Could not inspect folder {folder_path}: {e}")
+
+    return False
+
 class CrowdsourcingManager:
     """Manages crowdsourcing campaigns and assignments"""
     
@@ -43,22 +93,33 @@ class CrowdsourcingManager:
             logger.error(f"Error saving assignments: {e}")
     
     def scan_dataset(self, dataset_path):
-        """Scan dataset directory for patients with valid modalities"""
+        """Scan dataset directory for patient folders.
+
+        Legacy SegProMed campaigns used brain MRI subfolders such as FLAIR,
+        T1, T1c, and T2. Workflow campaigns also support generic medical
+        imaging datasets where each immediate child folder is one patient, for
+        example abdominal CT folders containing DICOM slices directly.
+        """
         if not os.path.exists(dataset_path):
             return 0, []
         
-        valid_modalities = ['flair', 't1', 't1c', 't2']
         patients = []
         
         try:
             for item in os.listdir(dataset_path):
                 item_path = os.path.join(dataset_path, item)
                 if os.path.isdir(item_path):
-                    # Check if this directory contains valid modalities
+                    # Legacy brain MRI campaign layout.
                     subdirs = [d.lower() for d in os.listdir(item_path) 
                               if os.path.isdir(os.path.join(item_path, d))]
                     
-                    if any(modality in subdirs for modality in valid_modalities):
+                    if any(modality in subdirs for modality in VALID_MODALITY_DIRS):
+                        patients.append(item)
+                        continue
+
+                    # Generic workflow layout: one patient folder containing
+                    # DICOM/NIfTI/MAT/etc. files directly or recursively.
+                    if _contains_medical_image_data(item_path):
                         patients.append(item)
             
             logger.info(f"Found {len(patients)} patients in dataset: {dataset_path}")

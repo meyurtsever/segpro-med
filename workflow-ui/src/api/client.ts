@@ -117,12 +117,14 @@ export async function getSlice(
   view: string = 'axial',
   segPath?: string,
   signal?: AbortSignal,
+  showLabels?: boolean,
 ): Promise<SliceResponse> {
   const params = new URLSearchParams({
     slice: String(sliceIndex),
     view,
   });
   if (segPath) params.set('seg_path', segPath);
+  if (showLabels) params.set('show_labels', 'true');
   return request<SliceResponse>(`${API_BASE}/data/slice/${sessionId}?${params}`, {
     signal,
   });

@@ -281,7 +281,7 @@ function DataLoaderNode({ id, data }: NodeProps) {
     <BaseNode
       nodeId={id}
       nodeType="dataLoader"
-      title="Data Loader"
+      title="Data Loading"
       icon="📂"
       color="var(--accent-blue)"
       status={d.status}

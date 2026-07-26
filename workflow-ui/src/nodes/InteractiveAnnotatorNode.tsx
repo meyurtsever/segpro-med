@@ -335,7 +335,7 @@ const assistPanelBodyStyle: React.CSSProperties = {
   borderTop: '1px solid rgba(255, 255, 255, 0.07)',
   maxWidth: '100%',
   boxSizing: 'border-box',
-  overflow: 'hidden',
+  overflow: 'visible',
 };
 
 // ---------------------------------------------------------------------------
@@ -1056,6 +1056,7 @@ function InteractiveAnnotatorNode({ id, data }: NodeProps) {
   const updateNodeData = useWorkflowStore((s) => s.updateNodeData);
   const storeNodes = useWorkflowStore((s) => s.nodes);
   const storeEdges = useWorkflowStore((s) => s.edges);
+  const updateNodeStyle = useWorkflowStore((s) => s.updateNodeStyle);
   const d = data as unknown as InteractiveAnnotatorNodeData;
 
   // --- Detect connected Segmentation Profile node ---
@@ -2956,6 +2957,54 @@ function InteractiveAnnotatorNode({ id, data }: NodeProps) {
           ? 'Prompt ready'
           : `Slice ${d.sliceIndex}`;
 
+  const currentNode = useMemo(
+    () => storeNodes.find((node) => node.id === id),
+    [id, storeNodes],
+  );
+  const currentNodeHeight = Number(
+    currentNode?.height ||
+    (typeof currentNode?.style?.height === 'number' ? currentNode.style.height : 0),
+  );
+
+  useEffect(() => {
+    if (fullscreen || !hasSession) return;
+
+    let requiredHeight = 620;
+    if (vlmPanelOpen && hasLabelPanel) {
+      const visibleLabelCount = labelSuggestionCount +
+        acceptedLabelsForSlice.length +
+        rejectedLabelsForSlice.length;
+      const estimatedRows = Math.max(1, Math.ceil(visibleLabelCount / 4));
+      requiredHeight += 48 + estimatedRows * 38;
+      if (acceptedLabelsForSlice.length > 0) requiredHeight += 34;
+      if (rejectedLabelsForSlice.length > 0) requiredHeight += 22;
+      if (labelReviewMessage) requiredHeight += 24;
+    }
+    if (segPanelOpen) {
+      requiredHeight += 145;
+    }
+    if (vlmPanelOpen && segPanelOpen) {
+      requiredHeight += 12;
+    }
+
+    if (!currentNodeHeight || currentNodeHeight + 2 < requiredHeight) {
+      updateNodeStyle(id, { height: requiredHeight });
+    }
+  }, [
+    acceptedLabelsForSlice.length,
+    currentNodeHeight,
+    fullscreen,
+    hasLabelPanel,
+    hasSession,
+    id,
+    labelReviewMessage,
+    labelSuggestionCount,
+    rejectedLabelsForSlice.length,
+    segPanelOpen,
+    updateNodeStyle,
+    vlmPanelOpen,
+  ]);
+
   // --- Toolbar renderer (shared between inline and fullscreen) ---
   const renderToolbar = (compact = false) => (
     <div style={{ ...toolbarStyle, gap: compact ? 4 : 3 }}>
@@ -3304,7 +3353,7 @@ function InteractiveAnnotatorNode({ id, data }: NodeProps) {
       <BaseNode
         nodeId={id}
         nodeType="interactiveAnnotator"
-        title="Interactive Annotator"
+        title="Interactive Labeler"
         icon="✏️"
         color="var(--accent-green)"
         status={d.status}

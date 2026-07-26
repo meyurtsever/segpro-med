@@ -8,6 +8,7 @@
  * these contracts so new nodes behave consistently across the workflow UI.
  */
 
+import type { CSSProperties } from 'react';
 import type { BaseNodeData } from '../types/nodes';
 
 export type WorkflowPortKind =
@@ -43,6 +44,11 @@ export interface WorkflowNodeContract {
   outputKinds: WorkflowPortKind[];
   defaultData: BaseNodeData;
 }
+
+const defaultNodeStyles: Record<string, CSSProperties> = {
+  interactiveAnnotator: { width: 430, height: 560 },
+  sliceViewer: { width: 380, height: 520 },
+};
 
 export const portDefinitions: Record<WorkflowPortKind, WorkflowPortDefinition> = {
   filePath: {
@@ -213,6 +219,7 @@ export const nodeContracts: WorkflowNodeContract[] = [
       view: 'axial',
       totalSlices: 0,
       zoom: 1,
+      showLabels: true,
     },
   },
   {
@@ -256,7 +263,7 @@ export const nodeContracts: WorkflowNodeContract[] = [
   },
   {
     type: 'medsam2Segmenter',
-    label: 'Batch SAM2 Segmenter',
+    label: 'SAM2 segmentation',
     icon: 'S2',
     category: 'Segmentation',
     categoryColor: 'var(--accent-purple)',
@@ -378,7 +385,7 @@ export const nodeContracts: WorkflowNodeContract[] = [
   },
   {
     type: 'labelSuggester',
-    label: 'Label Suggester',
+    label: 'Label Recommender',
     icon: 'LS',
     category: 'VLM',
     categoryColor: 'var(--accent-green)',
@@ -386,7 +393,7 @@ export const nodeContracts: WorkflowNodeContract[] = [
     inputKinds: ['session', 'filePath', 'annotatedSession', 'vlmAnalysis', 'voicePrompt'],
     outputKinds: ['labelSuggestions'],
     defaultData: {
-      label: 'Label Suggester',
+      label: 'Label Recommender',
       status: 'idle',
       sessionId: '',
       sliceIndex: 0,
@@ -437,6 +444,7 @@ export const nodeContracts: WorkflowNodeContract[] = [
       assignmentMode: 'allUnassigned',
       patientIdsText: '',
       availableExperts: [],
+      previewPatients: [],
       unassignedPatients: [],
     },
   },
@@ -486,6 +494,11 @@ export const nodePaletteItems = nodeContracts.map((contract) => ({
 
 export function getNodeContract(type: string | undefined): WorkflowNodeContract | undefined {
   return nodeContracts.find((contract) => contract.type === type);
+}
+
+export function getDefaultNodeStyle(type: string | undefined): CSSProperties | undefined {
+  const style = type ? defaultNodeStyles[type] : undefined;
+  return style ? { ...style } : undefined;
 }
 
 export function formatNodeType(type: string | undefined): string {

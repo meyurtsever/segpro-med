@@ -58,6 +58,8 @@ export default function TypedEdge({
           ...style,
           stroke: color,
           strokeWidth: selected ? 2.4 : 1.6,
+          strokeDasharray: 'none',
+          animation: 'none',
         }}
       />
       <EdgeLabelRenderer>

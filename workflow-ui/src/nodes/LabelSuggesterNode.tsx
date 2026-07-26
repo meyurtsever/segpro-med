@@ -411,7 +411,7 @@ function LabelSuggesterNode({ id, data }: NodeProps) {
     <BaseNode
       nodeId={id}
       nodeType="labelSuggester"
-      title="Label Suggester"
+      title="Label Recommmender"
       icon="LS"
       color="var(--accent-green)"
       status={displayStatus}

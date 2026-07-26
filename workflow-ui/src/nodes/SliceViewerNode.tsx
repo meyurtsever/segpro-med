@@ -224,17 +224,24 @@ function SliceViewerNode({ id, data }: NodeProps) {
   const zoom = d.zoom ?? 1;
   const currentView = d.view || 'axial';
   const hasSession = Boolean(d.sessionId);
+  const showLabels = d.showLabels !== false;
 
   // Derived: seg path to pass to the backend (only when overlay is on)
   const activeSegPath = (d.showOverlay && d.segPath) ? d.segPath : undefined;
 
   // --- Fetch a slice from the API ---
   const fetchSlice = useCallback(
-    async (sessionId: string, sliceIdx: number, view: string, segPath?: string) => {
+    async (
+      sessionId: string,
+      sliceIdx: number,
+      view: string,
+      segPath?: string,
+      overlayLabels: boolean = true,
+    ) => {
       const fetchId = ++fetchRef.current;
       setLoading(true);
       try {
-        const res = await api.getSlice(sessionId, sliceIdx, view, segPath);
+        const res = await api.getSlice(sessionId, sliceIdx, view, segPath, undefined, Boolean(segPath && overlayLabels));
         if (fetchRef.current !== fetchId) return;
         updateNodeData(id, {
           status: 'success',
@@ -267,7 +274,7 @@ function SliceViewerNode({ id, data }: NodeProps) {
       if (canonicalView !== (d.view || 'axial')) {
         updateNodeData(id, { view: canonicalView });
       }
-      fetchSlice(d.sessionId, d.sliceIndex || 0, canonicalView, activeSegPath);
+      fetchSlice(d.sessionId, d.sliceIndex || 0, canonicalView, activeSegPath, showLabels);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [d.sessionId]);
@@ -277,33 +284,33 @@ function SliceViewerNode({ id, data }: NodeProps) {
     if (!d.sessionId || d.sliceIndex <= 0) return;
     const next = d.sliceIndex - 1;
     updateNodeData(id, { sliceIndex: next });
-    fetchSlice(d.sessionId, next, d.view || 'axial', activeSegPath);
-  }, [d.sessionId, d.sliceIndex, d.view, id, updateNodeData, fetchSlice, activeSegPath]);
+    fetchSlice(d.sessionId, next, d.view || 'axial', activeSegPath, showLabels);
+  }, [d.sessionId, d.sliceIndex, d.view, id, updateNodeData, fetchSlice, activeSegPath, showLabels]);
 
   const goNext = useCallback(() => {
     if (!d.sessionId || d.sliceIndex >= d.totalSlices - 1) return;
     const next = d.sliceIndex + 1;
     updateNodeData(id, { sliceIndex: next });
-    fetchSlice(d.sessionId, next, d.view || 'axial', activeSegPath);
-  }, [d.sessionId, d.sliceIndex, d.totalSlices, d.view, id, updateNodeData, fetchSlice, activeSegPath]);
+    fetchSlice(d.sessionId, next, d.view || 'axial', activeSegPath, showLabels);
+  }, [d.sessionId, d.sliceIndex, d.totalSlices, d.view, id, updateNodeData, fetchSlice, activeSegPath, showLabels]);
 
   const handleSlider = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       if (!d.sessionId) return;
       const idx = parseInt(e.target.value, 10);
       updateNodeData(id, { sliceIndex: idx });
-      fetchSlice(d.sessionId, idx, d.view || 'axial', activeSegPath);
+      fetchSlice(d.sessionId, idx, d.view || 'axial', activeSegPath, showLabels);
     },
-    [d.sessionId, d.view, id, updateNodeData, fetchSlice, activeSegPath],
+    [d.sessionId, d.view, id, updateNodeData, fetchSlice, activeSegPath, showLabels],
   );
 
   const handleViewChange = useCallback(
     (view: 'axial' | 'coronal' | 'sagittal') => {
       if (!d.sessionId) return;
       updateNodeData(id, { view, sliceIndex: 0, selectedCoord: undefined });
-      fetchSlice(d.sessionId, 0, view, activeSegPath);
+      fetchSlice(d.sessionId, 0, view, activeSegPath, showLabels);
     },
-    [d.sessionId, id, updateNodeData, fetchSlice, activeSegPath],
+    [d.sessionId, id, updateNodeData, fetchSlice, activeSegPath, showLabels],
   );
 
   // --- Zoom ---
@@ -402,6 +409,7 @@ function SliceViewerNode({ id, data }: NodeProps) {
           sliceIndex: 0,
           view: canonicalView,
           imageBase64: undefined,
+          showLabels: d.showLabels ?? true,
         });
         fetchSlice(loaded.session_id, 0, canonicalView);
       } catch (err) {
@@ -413,7 +421,7 @@ function SliceViewerNode({ id, data }: NodeProps) {
         setLoadingPatient(false);
       }
     },
-    [id, updateNodeData, fetchSlice, d.view],
+    [id, updateNodeData, fetchSlice, d.view, d.showLabels],
   );
 
   const toggleOverlay = useCallback(() => {
@@ -425,9 +433,24 @@ function SliceViewerNode({ id, data }: NodeProps) {
         d.sliceIndex || 0,
         d.view || 'axial',
         newShow ? d.segPath : undefined,
+        showLabels,
       );
     }
-  }, [d.sessionId, d.showOverlay, d.segPath, d.sliceIndex, d.view, id, updateNodeData, fetchSlice]);
+  }, [d.sessionId, d.showOverlay, d.segPath, d.sliceIndex, d.view, id, updateNodeData, fetchSlice, showLabels]);
+
+  const toggleLabels = useCallback(() => {
+    const nextShowLabels = !showLabels;
+    updateNodeData(id, { showLabels: nextShowLabels });
+    if (d.sessionId && d.showOverlay && d.segPath) {
+      fetchSlice(
+        d.sessionId,
+        d.sliceIndex || 0,
+        d.view || 'axial',
+        d.segPath,
+        nextShowLabels,
+      );
+    }
+  }, [d.sessionId, d.showOverlay, d.segPath, d.sliceIndex, d.view, id, updateNodeData, fetchSlice, showLabels]);
 
   // --- Coordinate selection ---
   const handleImageClick = useCallback(
@@ -493,6 +516,8 @@ function SliceViewerNode({ id, data }: NodeProps) {
       hasInput={true}
       hasOutput={false}
       info={SLICE_VIEWER_INFO}
+      minWidth={380}
+      maxWidth={420}
     >
       {/* ── Patient Search ──────────────────────────────────────────────── */}
       <div ref={searchWrapperRef} style={{ position: 'relative', marginBottom: 8 }}>
@@ -824,6 +849,30 @@ function SliceViewerNode({ id, data }: NodeProps) {
                 >
                   {d.showOverlay ? 'On' : 'Off'}
                 </button>
+                <button
+                  onClick={toggleLabels}
+                  disabled={!d.showOverlay}
+                  style={{
+                    ...smallBtnStyle,
+                    minWidth: 26,
+                    fontSize: 12,
+                    fontWeight: 800,
+                    color: showLabels && d.showOverlay ? '#fff' : 'var(--text-muted)',
+                    borderColor: showLabels && d.showOverlay ? 'var(--accent-green)' : 'var(--border-color)',
+                    background: showLabels && d.showOverlay ? 'var(--accent-green)' : 'var(--bg-tertiary)',
+                    opacity: d.showOverlay ? 1 : 0.45,
+                    cursor: d.showOverlay ? 'pointer' : 'not-allowed',
+                  }}
+                  title={
+                    d.showOverlay
+                      ? showLabels
+                        ? 'Hide segmentation labels'
+                        : 'Show segmentation labels'
+                      : 'Turn annotations on before showing labels'
+                  }
+                >
+                  T
+                </button>
                 <span style={{
                   fontSize: 9, color: 'var(--text-muted)', fontFamily: 'monospace',
                   overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1,
@@ -919,6 +968,32 @@ function SliceViewerNode({ id, data }: NodeProps) {
                 }}
               >
                 {d.showOverlay ? '● Annotation On' : '○ Annotation Off'}
+              </button>
+            )}
+            {d.segPath && (
+              <button
+                onClick={toggleLabels}
+                disabled={!d.showOverlay}
+                style={{
+                  ...smallBtnStyle,
+                  minWidth: 28,
+                  fontSize: 12,
+                  fontWeight: 800,
+                  color: showLabels && d.showOverlay ? '#fff' : 'var(--text-muted)',
+                  borderColor: showLabels && d.showOverlay ? 'var(--accent-green)' : 'var(--border-color)',
+                  background: showLabels && d.showOverlay ? 'var(--accent-green)' : 'var(--bg-tertiary)',
+                  opacity: d.showOverlay ? 1 : 0.45,
+                  cursor: d.showOverlay ? 'pointer' : 'not-allowed',
+                }}
+                title={
+                  d.showOverlay
+                    ? showLabels
+                      ? 'Hide segmentation labels'
+                      : 'Show segmentation labels'
+                    : 'Turn annotations on before showing labels'
+                }
+              >
+                T
               </button>
             )}
             <button

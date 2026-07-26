@@ -5,7 +5,7 @@
  * crowdsourcing assignment store.
  */
 
-import { memo, useCallback, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { type NodeProps } from '@xyflow/react';
 
 import BaseNode from './BaseNode';
@@ -83,9 +83,15 @@ function CampaignStatusNode({ id, data }: NodeProps) {
   const [busy, setBusy] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const lastAutoRefreshKey = useRef<string | null>(null);
+  const hasCreatedCampaign = Boolean(d.campaign);
 
-  const refreshStatus = useCallback(async () => {
+  const refreshStatus = useCallback(async (force = false) => {
     if (!d.campaignName?.trim()) return;
+    if (force && !hasCreatedCampaign) {
+      setLocalError('Run Campaign Setup first to create or reuse this campaign.');
+      return;
+    }
 
     setBusy(true);
     setLocalError(null);
@@ -93,15 +99,32 @@ function CampaignStatusNode({ id, data }: NodeProps) {
       const res = await api.getCollaborationCampaign(d.campaignName);
       updateNodeData(id, { campaign: mapCampaign(res) } as Partial<CampaignStatusNodeData>);
     } catch (error) {
-      setLocalError(error instanceof Error ? error.message : 'Campaign status failed to load');
+      const message = error instanceof Error ? error.message : 'Campaign status failed to load';
+      setLocalError(
+        message.includes('Campaign not found')
+          ? 'Campaign has not been created yet. Run Campaign Setup first.'
+          : message,
+      );
     } finally {
       setBusy(false);
     }
-  }, [d.campaignName, id, updateNodeData]);
+  }, [d.campaignName, hasCreatedCampaign, id, updateNodeData]);
 
   useEffect(() => {
-    refreshStatus();
-  }, [refreshStatus]);
+    if (!d.campaignName || !hasCreatedCampaign) return;
+    const key = `${d.campaignName}:${d.campaign?.createdAt || ''}:${d.campaign?.progress?.assignedPatients ?? 0}:${d.campaign?.progress?.completed ?? 0}:${d.campaign?.progress?.reviewed ?? 0}`;
+    if (lastAutoRefreshKey.current === key) return;
+    lastAutoRefreshKey.current = key;
+    refreshStatus(false);
+  }, [
+    d.campaign?.createdAt,
+    d.campaign?.progress?.assignedPatients,
+    d.campaign?.progress?.completed,
+    d.campaign?.progress?.reviewed,
+    d.campaignName,
+    hasCreatedCampaign,
+    refreshStatus,
+  ]);
 
   const campaign = d.campaign;
   const progress = campaign?.progress;
@@ -170,7 +193,7 @@ function CampaignStatusNode({ id, data }: NodeProps) {
         />
         <button
           type="button"
-          onClick={refreshStatus}
+          onClick={() => refreshStatus(true)}
           disabled={busy || !d.campaignName}
           style={{
             padding: '6px 8px',
@@ -234,7 +257,9 @@ function CampaignStatusNode({ id, data }: NodeProps) {
         </>
       ) : (
         <NodeHint>
-          Connect a campaign branch, then run or refresh to inspect collaboration progress.
+          {d.campaignName
+            ? `"${d.campaignName}" is not created yet. Run Campaign Setup first, then inspect progress.`
+            : 'Connect a campaign branch, then run or refresh to inspect collaboration progress.'}
         </NodeHint>
       )}
 

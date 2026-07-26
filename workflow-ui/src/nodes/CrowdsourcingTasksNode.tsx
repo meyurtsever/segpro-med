@@ -1,12 +1,12 @@
 /**
  * CrowdsourcingTasksNode
  * ======================
- * Read-only assignment guide shown when an expert enters crowdsourcing mode.
+ * Assignment guide shown when an expert enters crowdsourcing mode.
  * It replaces campaign-level status for task execution so the expert sees the
  * current patient and the remaining queue directly on the canvas.
  */
 
-import { memo, useState, type CSSProperties } from 'react';
+import { memo, useCallback, useState, type CSSProperties } from 'react';
 import { type NodeProps } from '@xyflow/react';
 
 import BaseNode from './BaseNode';
@@ -28,7 +28,7 @@ const TASKS_INFO: NodeInfo = {
 
 const tableHeaderStyle: CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: '1.1fr 1fr 0.85fr',
+  gridTemplateColumns: '1.05fr 1fr 0.7fr 58px',
   gap: 6,
   padding: '7px 8px',
   borderBottom: '1px solid var(--border-color)',
@@ -47,7 +47,7 @@ const taskRowStyle = (task: CrowdsourcingTaskItem): CSSProperties => {
 
   return {
     display: 'grid',
-    gridTemplateColumns: '1.1fr 1fr 0.85fr',
+    gridTemplateColumns: '1.05fr 1fr 0.7fr 58px',
     gap: 6,
     padding: '8px',
     borderBottom: '1px solid rgba(255,255,255,0.06)',
@@ -57,6 +57,7 @@ const taskRowStyle = (task: CrowdsourcingTaskItem): CSSProperties => {
     color,
     fontSize: 12,
     alignItems: 'center',
+    cursor: task.status === 'current' ? 'default' : 'pointer',
   };
 };
 
@@ -86,6 +87,14 @@ function CrowdsourcingTasksNode({ id, data }: NodeProps) {
   const visibleTasks = showAllTasks ? tasks : tasks.filter((task) => task.status !== 'completed');
   const pendingCount = tasks.filter((task) => task.status === 'pending' || task.status === 'current').length;
   const completedCount = tasks.filter((task) => task.status === 'completed').length;
+  const handleSelectTask = useCallback(
+    (task: CrowdsourcingTaskItem) => {
+      if (task.status === 'current') return;
+      if (!d.onSelectTask) return;
+      d.onSelectTask(task.campaignId, task.patientId);
+    },
+    [d],
+  );
 
   return (
     <BaseNode
@@ -207,9 +216,27 @@ function CrowdsourcingTasksNode({ id, data }: NodeProps) {
             <span>Patient</span>
             <span>Campaign</span>
             <span>Status</span>
+            <span>Action</span>
           </div>
           {visibleTasks.map((task) => (
-            <div key={`${task.campaignId}:${task.patientId}`} style={taskRowStyle(task)}>
+            <div
+              key={`${task.campaignId}:${task.patientId}`}
+              style={taskRowStyle(task)}
+              role="button"
+              tabIndex={task.status === 'current' ? -1 : 0}
+              title={task.status === 'current' ? 'Current assignment' : `Load ${task.patientId}`}
+              onClick={(event) => {
+                event.stopPropagation();
+                handleSelectTask(task);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  handleSelectTask(task);
+                }
+              }}
+            >
               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {task.patientId}
               </span>
@@ -217,6 +244,23 @@ function CrowdsourcingTasksNode({ id, data }: NodeProps) {
                 {task.campaignId}
               </span>
               <span style={{ fontWeight: 900 }}>{statusLabel(task.status)}</span>
+              <button
+                type="button"
+                disabled={task.status === 'current' || !d.onSelectTask}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  handleSelectTask(task);
+                }}
+                style={{
+                  ...smallButtonStyle,
+                  padding: '4px 6px',
+                  fontSize: 10,
+                  opacity: task.status === 'current' || !d.onSelectTask ? 0.55 : 1,
+                  cursor: task.status === 'current' || !d.onSelectTask ? 'default' : 'pointer',
+                }}
+              >
+                {task.status === 'current' ? 'Open' : 'Load'}
+              </button>
             </div>
           ))}
         </div>

@@ -220,6 +220,16 @@ def _normalize_modality(modality: str | None) -> str:
     value = (modality or "MRI").strip().upper()
     if value in {"MAMMO", "MAMMOGRAPHY"}:
         return "MG"
+    if (
+        value == "CT"
+        or " CT " in f" {value} "
+        or "ABDOMEN" in value
+        or "ABDOMINAL" in value
+        or "COMPUTED TOMOGRAPHY" in value
+    ):
+        return "CT"
+    if "MAMMO" in value:
+        return "MG"
     if value not in PROMPT_FILES:
         return "MRI"
     return value
@@ -274,11 +284,11 @@ def _load_prompt_presets(modality: str) -> list[VlmPromptPreset]:
     return presets
 
 
-def _resolve_prompt(req: VlmAnalysisRequest) -> tuple[str, str, str, dict[str, Any]]:
+def _resolve_prompt(req: VlmAnalysisRequest, modality: str | None = None) -> tuple[str, str, str, dict[str, Any]]:
     if req.custom_prompt and req.custom_prompt.strip():
         return req.custom_prompt.strip(), "custom", "Custom Prompt", {}
 
-    presets = _load_prompt_presets(req.modality)
+    presets = _load_prompt_presets(modality or req.modality)
     prompt = next((preset for preset in presets if preset.key == req.prompt_key), None)
     if prompt is None:
         prompt = next((preset for preset in presets if preset.key == "describe_slice"), None)
@@ -634,7 +644,7 @@ async def list_prompts(modality: str = "MRI"):
 async def analyze(req: VlmAnalysisRequest):
     t0 = time.time()
     normalized_modality = _normalize_modality(req.modality)
-    prompt, prompt_key, prompt_title, parameters = _resolve_prompt(req)
+    prompt, prompt_key, prompt_title, parameters = _resolve_prompt(req, normalized_modality)
 
     if req.annotations and req.use_overlay:
         prompt += _annotation_context(req.annotations)
@@ -667,7 +677,7 @@ async def analyze(req: VlmAnalysisRequest):
 async def suggest_labels(req: VlmLabelSuggestRequest):
     t0 = time.time()
     normalized_modality = _normalize_modality(req.modality)
-    prompt, prompt_key, prompt_title, parameters = _resolve_prompt(req)
+    prompt, prompt_key, prompt_title, parameters = _resolve_prompt(req, normalized_modality)
 
     if req.annotations:
         prompt += _annotation_context(req.annotations)
