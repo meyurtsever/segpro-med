@@ -207,6 +207,14 @@ tmp/
 Thumbs.db
 latest_*.jpg
 
+# Local JPEG image data
+*.jpg
+*.jpeg
+*.jpe
+*.JPG
+*.JPEG
+*.JPE
+
 # IDE and editor files
 .vscode/
 .idea/

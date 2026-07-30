@@ -50,12 +50,12 @@ logger = logging.getLogger(__name__)
 
 class MEDSAM2Handlers:
     """Handlers for MEDSAM2 annotation operations"""
-    
+
     # Class-level cache for SAM2 model to avoid repeated loading and Hydra issues
     _sam2_model_cache = None
     _sam2_model_config_path = None
     _sam2_model_checkpoint_path = None
-    
+
     def __init__(self, state):
         self.state = state
         self.selected_coordinates = []  # Store [(x, y), ...] coordinate pairs
@@ -65,25 +65,25 @@ class MEDSAM2Handlers:
         self.annotation_overlays = {}  # Store overlays for each slice {slice_index: overlay_data}
         self.score_threshold = 0.3  # Default score threshold for filtering annotations
         self.point_mode_enabled = False  # Flag to control whether clicks should be processed
-        
+
         # Initialize brain ROI detector for automatic prompts
         self.brain_roi_detector = BrainROIDetector()
-        
+
         # XAI (Explainable AI) state - XAI always computes, checkbox controls visibility
         self.xai_show_overlay = False  # Checkbox controls show/hide
         self._xai_integration = None  # XAI integration instance
         self.xai_computed_slice = None  # Track which slice XAI was computed for
-        
+
         # Uncertainty Maps (confidence-based XAI)
         self.last_mask_logits = None  # Store raw logits for uncertainty computation
         self.uncertainty_overlay_enabled = False  # Checkbox for uncertainty visualization
-    
+
     # ========== XAI (Explainable AI) Methods ==========
-    
+
     def is_xai_valid_for_current_slice(self) -> tuple[bool, str]:
         """
         Check if XAI overlay is valid for the current slice.
-        
+
         Returns:
             Tuple of (is_valid, error_message)
             - is_valid: True if XAI can be shown on current slice
@@ -92,22 +92,22 @@ class MEDSAM2Handlers:
         # Check if XAI has been computed at all
         if self._xai_integration is None:
             return False, "XAI not computed yet. Run AI-guided annotation first."
-        
+
         if self.xai_computed_slice is None:
             return False, "XAI not computed yet. Run AI-guided annotation first."
-        
+
         # Check if current slice matches the computed slice
         current_slice = self.state.current_slice_idx
         if current_slice != self.xai_computed_slice:
             return False, f"XAI was computed for slice {self.xai_computed_slice}, but you're on slice {current_slice}. Navigate to slice {self.xai_computed_slice} or run new AI annotation on this slice."
-        
+
         return True, ""
-    
+
     def set_xai_show_overlay(self, show: bool) -> None:
         """
         Set whether to show XAI overlay (checkbox state).
         XAI always computes in background, this just controls visibility.
-        
+
         Args:
             show: Whether to show the XAI overlay
         """
@@ -115,17 +115,17 @@ class MEDSAM2Handlers:
         if self._xai_integration is not None:
             self._xai_integration.toggle_overlay(show)
         logger.info(f"XAI overlay visibility: {'SHOW' if show else 'HIDE'}")
-    
+
     def compute_uncertainty_map(
         self,
         method: str = "margin"
     ) -> tuple[Optional[np.ndarray], Optional[dict]]:
         """
         Compute confidence/uncertainty map from mask logits.
-        
+
         Args:
             method: Uncertainty computation method ("margin", "entropy", or "variance")
-            
+
         Returns:
             Tuple of (uncertainty_overlay, stats):
             - uncertainty_overlay: RGB image with colored uncertainty heatmap
@@ -134,69 +134,69 @@ class MEDSAM2Handlers:
         if not XAI_AVAILABLE or self._xai_integration is None:
             logger.warning("XAI not available - cannot compute uncertainty")
             return None, None
-        
+
         # Get mask logits from XAI integration
         mask_logits = self._xai_integration.get_mask_logits()
-        
+
         if mask_logits is None:
             logger.warning("No mask logits available - run segmentation first")
             return None, None
-        
+
         try:
             from xai.segmentation.uncertainty_maps import UncertaintyMapGenerator
-            
+
             logger.info(f"Computing uncertainty map using method: {method}")
-            
+
             # Create uncertainty generator
             generator = UncertaintyMapGenerator()
-            
+
             # Compute uncertainty
             uncertainty_map, stats = generator.compute_from_logits(
                 mask_logits,
                 method=method
             )
-            
+
             # Create colored overlay
             colored_overlay = generator.create_colored_overlay(
                 uncertainty_map,
                 colormap="RdYlGn_r"  # Red = uncertain, Green = certain
             )
-            
+
             logger.info(f"Uncertainty map computed: {stats}")
-            
+
             return colored_overlay, stats
-            
+
         except Exception as e:
             logger.error(f"Failed to compute uncertainty map: {e}")
             import traceback
             logger.debug(f"Traceback: {traceback.format_exc()}")
             return None, None
-    
+
     def _prepare_xai_for_inference(self, model) -> bool:
         """
         Prepare XAI before running inference. XAI always computes.
-        
+
         Args:
             model: The SAM2 model
-            
+
         Returns:
             True if XAI is prepared
         """
         if not XAI_AVAILABLE:
             return False
-        
+
         try:
             self._xai_integration = get_xai_integration()
             return self._xai_integration.prepare_for_inference(
-                model, 
+                model,
                 show_overlay=self.xai_show_overlay
             )
         except Exception as e:
             logger.warning(f"Failed to prepare XAI: {e}")
             return False
-    
+
     def _capture_xai_data(
-        self, 
+        self,
         image: np.ndarray,
         mask: np.ndarray = None,
         prompts: list = None,
@@ -204,7 +204,7 @@ class MEDSAM2Handlers:
     ) -> None:
         """
         Capture XAI data after inference.
-        
+
         Args:
             image: Original input image
             mask: Segmentation mask
@@ -212,11 +212,11 @@ class MEDSAM2Handlers:
             boxes: Box prompts in XYXY format [[x1, y1, x2, y2], ...]
         """
         logger.info(f"🔥 _capture_xai_data WRAPPER CALLED: XAI_AVAILABLE={XAI_AVAILABLE}, integration={self._xai_integration is not None}, prompts={prompts}, boxes={boxes}")
-        
+
         if not XAI_AVAILABLE or self._xai_integration is None:
             logger.warning(f"⚠️ XAI capture skipped: XAI_AVAILABLE={XAI_AVAILABLE}, integration exists={self._xai_integration is not None}")
             return
-        
+
         try:
             # Record which slice this XAI was computed for
             self.xai_computed_slice = self.state.current_slice_idx
@@ -229,20 +229,20 @@ class MEDSAM2Handlers:
             )
         except Exception as e:
             logger.warning(f"Failed to capture XAI data: {e}")
-    
+
     def get_xai_display_image(self, base_image: np.ndarray) -> np.ndarray:
         """
         Get display image with or without XAI overlay based on checkbox state.
-        
+
         Args:
             base_image: The base image
-            
+
         Returns:
             Image with or without XAI overlay
         """
         if not XAI_AVAILABLE or self._xai_integration is None:
             return base_image
-        
+
         try:
             return self._xai_integration.get_display_image(
                 base_image=base_image,
@@ -251,55 +251,55 @@ class MEDSAM2Handlers:
         except Exception as e:
             logger.warning(f"Failed to get XAI display image: {e}")
             return base_image
-    
+
     def toggle_xai_overlay(self) -> Optional[np.ndarray]:
         """
         Toggle XAI overlay and return the appropriate cached image.
-        
+
         Returns:
             Cached image (with or without overlay) or None
         """
         if not XAI_AVAILABLE or self._xai_integration is None:
             return None
-        
+
         self.xai_show_overlay = not self.xai_show_overlay
         return self._xai_integration.toggle_overlay(self.xai_show_overlay)
-    
+
     def _get_combined_mask_for_xai(self) -> Optional[np.ndarray]:
         """
         Get mask for XAI visualization.
-        
+
         IMPORTANT: Returns ONLY the most recent annotation's mask, not all combined.
         This ensures XAI explains "Why did you segment THIS specific structure?"
         not "Why did you segment everything on this slice?"
-        
+
         Returns:
             Most recent annotation's mask or None if no masks available
         """
         if not hasattr(self, 'annotation_overlays') or not self.annotation_overlays:
             return None
-        
+
         # Get masks for current slice
         current_slice = self.state.current_slice_idx
         if current_slice not in self.annotation_overlays:
             return None
-        
+
         slice_overlays = self.annotation_overlays[current_slice]
-        
+
         # Get the MOST RECENT annotation (highest annotation_id)
         # This is the one the user just created
         if not slice_overlays:
             return None
-        
+
         # Find most recent annotation by max annotation_id
         max_annotation_id = max(slice_overlays.keys())
         most_recent_annotation = slice_overlays[max_annotation_id]
-        
+
         if isinstance(most_recent_annotation, dict) and 'mask' in most_recent_annotation:
             return most_recent_annotation['mask'].astype(np.float32)
-        
+
         return None
-    
+
     def _cleanup_xai(self) -> None:
         """Clean up XAI resources after inference."""
         if self._xai_integration is not None:
@@ -307,11 +307,11 @@ class MEDSAM2Handlers:
                 self._xai_integration.cleanup()
             except Exception as e:
                 logger.debug(f"XAI cleanup: {e}")
-    
+
     def get_xai_stats(self) -> Dict[str, Any]:
         """
         Get XAI statistics for debugging/display.
-        
+
         Returns:
             Dictionary with XAI stats
         """
@@ -323,9 +323,9 @@ class MEDSAM2Handlers:
                 'source': self._xai_integration.get_xai_source()
             }
         return {'available': XAI_AVAILABLE, 'show_overlay': self.xai_show_overlay, 'has_data': False}
-    
+
     # ========== End XAI Methods ==========
-    
+
     def handle_image_click(self, evt: gr.SelectData) -> str:
         """Handle click events on the image to capture coordinates"""
         try:
@@ -335,14 +335,14 @@ class MEDSAM2Handlers:
             if not point_mode_enabled:
                 logger.info("Point mode not enabled, ignoring click")
                 return ""
-            
+
             logger.info(f"Image click event received: {type(evt)}, data: {evt}")
             logger.info(f"Event attributes: {dir(evt) if evt else 'None'}")
-            
+
             if evt is None:
                 logger.warning("Event is None")
                 return "No click data received (None event)"
-            
+
             # Check for different possible coordinate attributes
             coordinates = None
             if hasattr(evt, 'index') and evt.index is not None:
@@ -360,50 +360,52 @@ class MEDSAM2Handlers:
                 if hasattr(evt.target, 'value') and isinstance(evt.target.value, (list, tuple)):
                     coordinates = evt.target.value[:2]
                     logger.info(f"Using evt.target.value: {coordinates}")
-            
+
             if coordinates is None:
                 logger.warning(f"No coordinates found. Event details: index={getattr(evt, 'index', None)}, value={getattr(evt, 'value', None)}")
                 return "No click coordinates received. Please try clicking directly on the image."
-            
+
             # Ensure we have exactly 2 coordinates
             if not isinstance(coordinates, (list, tuple)) or len(coordinates) < 2:
                 logger.warning(f"Invalid coordinates format: {coordinates}")
                 return f"Invalid coordinates format: {coordinates}"
-            
+
             x, y = int(coordinates[0]), int(coordinates[1])
             self.selected_coordinates.append((x, y))
-            
+
             # Format coordinates for display
             coords_str = "; ".join([f"({x},{y})" for x, y in self.selected_coordinates])
-            
+
             # Show Gradio info message for user feedback
             total_points = len(self.selected_coordinates)
             if total_points == 1:
                 gr.Info(f"✅ Selected coordinates ({x}, {y}) for point-based prompting")
             else:
                 gr.Info(f"✅ Added point ({x}, {y}) - Total: {total_points} points selected for point-based prompting")
-            
+
             logger.info(f"Added coordinate: ({x}, {y}). Total points: {len(self.selected_coordinates)}")
             return coords_str
-            
+
         except Exception as e:
             logger.error(f"Error handling image click: {str(e)}")
             import traceback
             logger.error(f"Full traceback: {traceback.format_exc()}")
-            return f"Error: {str(e)}"    @log_exception
+            return f"Error: {str(e)}"
+
+    @log_exception
     def clear_coordinates(self) -> str:
         """Clear all selected coordinates, prompt boxes, and reset annotated slice"""
         coords_count = len(self.selected_coordinates)
         self.selected_coordinates = []
         self.prompt_boxes = []
         self.annotated_slice = None  # Reset annotated slice when clearing coordinates
-        
+
         # Show info message about clearing coordinates
         if coords_count > 0:
             gr.Info(f"✅ Cleared {coords_count} selected coordinates and prompts")
         else:
             gr.Info("✅ Cleared all coordinates and prompts")
-        
+
         logger.info("Cleared all coordinates, prompt boxes, and reset annotated slice")
         return ""
     @log_exception
@@ -423,32 +425,48 @@ class MEDSAM2Handlers:
                 crosshair=None,
                 add_orientation_marker=False
             )
-            
+
             # Convert to format expected by image_annotator
             if len(original_slice_img.shape) == 2:
                 img_rgb = np.stack([original_slice_img] * 3, axis=-1)
             else:
                 img_rgb = original_slice_img
-            
+
             if img_rgb.dtype != np.uint8:
                 img_rgb = (img_rgb * 255).astype(np.uint8)
-            
+
             # Create AnnotatedImageValue format
             annotated_value = {
                 "image": img_rgb,
                 "boxes": [],  # Clear all boxes/annotations
                 "orientation": 0
             }
-            
+
             return "Annotation overlays cleared", annotated_value
         else:
             return "Annotation overlays cleared", None
+
+    def reset_task_state(self) -> None:
+        """Clear task-specific prompts, overlays, and explainability state."""
+        self.selected_coordinates = []
+        self.prompt_boxes = []
+        self.annotated_slice = None
+        self.annotation_overlays = {}
+        self.xai_computed_slice = None
+        self.last_mask_logits = None
+        logger.info("Reset MEDSAM2 task-specific state")
+
+    def start_new_suggestion_run(self) -> None:
+        """Start a run whose masks replace every prior MEDSAM suggestion."""
+        self.annotation_overlays = {}
+        logger.info("Started a clean MEDSAM2 suggestion run")
+
     @log_exception
     def generate_prompt_json(self, dicom_folder: str) -> Tuple[bool, str]:
         """Generate the brain_target_prompts.json file from selected coordinates"""
         if not self.selected_coordinates:
             return False, "No coordinates selected"
-            
+
         if not dicom_folder or not os.path.exists(dicom_folder):
             return False, f"DICOM folder not found: {dicom_folder}"
         try:
@@ -458,11 +476,11 @@ class MEDSAM2Handlers:
               # Store the slice that will be annotated (keep as 1-based for UI consistency)
             self.annotated_slice = current_slice
             logger.info(f"Stored annotated slice: {self.annotated_slice} (UI-based)")
-            
+
             # Prepare points and labels for the current slice
             points = []
             labels = []
-            
+
             for x, y in self.selected_coordinates:
                 points.append([int(x), int(y)])  # Ensure integers
                 labels.append(1)  # 1 for foreground point            # Create the prompt structure expected by MEDSAM2
@@ -475,7 +493,7 @@ class MEDSAM2Handlers:
                     "labels": labels
                 }
             }
-            
+
             # Save to brain_target_prompts.json in the project root (not in DICOM folder)
             prompt_file = "brain_target_prompts.json"
             with open(prompt_file, 'w') as f:
@@ -487,40 +505,40 @@ class MEDSAM2Handlers:
             return True, prompt_file
         except Exception as e:
             logger.error(f"Error generating prompt JSON: {str(e)}")
-            return False, f"Error: {str(e)}"    
+            return False, f"Error: {str(e)}"
     @log_exception
     def generate_prompt_json_all_slices(self, dicom_folder: str) -> Tuple[bool, str]:
         """Generate prompt JSON for all slices using selected coordinates or box prompts as template"""
         # Check if we have either point coordinates or box prompts
         has_point_prompts = bool(self.selected_coordinates)
         has_box_prompts = bool(getattr(self, 'prompt_boxes', []))
-        
+
         if not has_point_prompts and not has_box_prompts:
             return False, "No coordinates or box prompts selected"
-            
+
         if not dicom_folder or not os.path.exists(dicom_folder):
             return False, f"DICOM folder not found: {dicom_folder}"
-        
+
         try:
             # Get total number of slices from current data
             if self.state.current_data is None:
                 return False, "No DICOM data loaded"
-            
+
             total_slices = self.state.current_data.shape[2]  # Assuming axial view
             logger.info(f"Generating prompts for {total_slices} slices using user coordinates or box prompts")
-            
+
             # Prepare prompt data based on available input type
             points = []
             labels = []
             boxes = []
-            
+
             # Handle point prompts if available
             if has_point_prompts:
                 for x, y in self.selected_coordinates:
                     points.append([int(x), int(y)])  # Ensure integers
                     labels.append(1)  # 1 for foreground point
                 logger.info(f"Using point prompts: {points}")
-            
+
             # Handle box prompts if available
             if has_box_prompts:
                 for box in self.prompt_boxes:
@@ -528,7 +546,7 @@ class MEDSAM2Handlers:
                     box_coords = [int(box['x1']), int(box['y1']), int(box['x2']), int(box['y2'])]
                     boxes.append(box_coords)
                 logger.info(f"Using box prompts: {boxes}")
-            
+
             # Create prompt structure for all slices using the same prompts
             prompt_data = {}
             for slice_idx in range(total_slices):
@@ -536,7 +554,7 @@ class MEDSAM2Handlers:
                 # So we use the UI slice number (1-based) + 1 as the key to compensate for MEDSAM2's subtraction
                 ui_slice = slice_idx + 1  # Convert to 1-based UI slice
                 prompt_key = str(ui_slice + 1)  # Add 1 more to compensate for MEDSAM2's internal subtraction
-                
+
                 # Build prompt structure based on available prompts
                 slice_prompt = {}
                 if points:
@@ -544,16 +562,16 @@ class MEDSAM2Handlers:
                     slice_prompt["labels"] = labels
                 if boxes:
                     slice_prompt["boxes"] = boxes
-                
+
                 prompt_data[prompt_key] = slice_prompt
-            
+
             logger.info(f"Prompt data for all slices: {json.dumps(prompt_data, indent=2)}")
-            
+
             # Save to brain_target_prompts.json in the project root
             prompt_file = "brain_target_prompts.json"
             with open(prompt_file, 'w') as f:
                 json.dump(prompt_data, f, indent=2)
-            
+
             logger.info(f"Generated all-records prompt file: {prompt_file} for {total_slices} slices")
             logger.info(f"Using prompt keys: UI slice + 1 to compensate for MEDSAM2's internal subtraction")
             if points:
@@ -561,7 +579,7 @@ class MEDSAM2Handlers:
             if boxes:
                 logger.info(f"Using box coordinates: {boxes}")
             return True, prompt_file
-            
+
         except Exception as e:
             logger.error(f"Error generating all-records prompt JSON: {str(e)}")
             return False, f"Error: {str(e)}"
@@ -570,29 +588,29 @@ class MEDSAM2Handlers:
     def generate_automatic_brain_prompts(self, dicom_folder: str, processing_mode: str = "All Records") -> Tuple[bool, str]:
         """
         Generate automatic brain structure prompts using anatomical detection
-        
+
         Args:
             dicom_folder: Path to DICOM folder
             processing_mode: "Single Slice" or "All Records"
-        
+
         Returns:
             Tuple of (success, message_or_filename)
         """
         if not dicom_folder or not os.path.exists(dicom_folder):
             return False, f"DICOM folder not found: {dicom_folder}"
-        
+
         if self.state.current_data is None:
             return False, "No DICOM data loaded"
-        
+
         try:
             import pydicom
             import glob
-            
+
             # Get DICOM files
             dicom_files = glob.glob(os.path.join(dicom_folder, "*.dcm"))
             if not dicom_files:
                 return False, f"No DICOM files found in {dicom_folder}"
-            
+
             # Sort files by slice position if possible
             dicom_datasets = []
             for file_path in sorted(dicom_files):
@@ -602,7 +620,7 @@ class MEDSAM2Handlers:
                 except Exception as e:
                     logger.warning(f"Failed to read {file_path}: {e}")
                     continue
-            
+
             # Sort by instance number or position
             try:
                 if dicom_datasets and hasattr(dicom_datasets[0][1], 'InstanceNumber'):
@@ -611,16 +629,16 @@ class MEDSAM2Handlers:
                     dicom_datasets.sort(key=lambda x: float(x[1].ImagePositionPatient[2]))
             except Exception as e:
                 logger.warning(f"Could not sort DICOM files: {e}")
-            
+
             prompt_data = {}
-            
+
             if processing_mode == "Single Slice":
                 # Generate prompts for current slice only
                 current_slice = self.state.current_slice_idx
-                
+
                 if current_slice - 1 >= len(dicom_datasets):
                     return False, f"Current slice {current_slice} out of range"
-                
+
                 file_path, dicom_ds = dicom_datasets[current_slice - 1]  # Convert to 0-based
                   # Get the current slice image
                 slice_image = display_slice(
@@ -632,29 +650,29 @@ class MEDSAM2Handlers:
                     crosshair=None,  # Don't include crosshair in analysis
                     add_orientation_marker=False
                 )
-                
+
                 # Generate bounding boxes for this slice
                 boxes = self.brain_roi_detector.generate_prompt_boxes(
-                    slice_image, 
-                    dicom_ds, 
+                    slice_image,
+                    dicom_ds,
                     include_eyes=True
                 )
-                
+
                 if boxes:
                     # Convert to MEDSAM2 format (UI slice + 1 to compensate for internal subtraction)
                     prompt_key = str(current_slice + 1)
                     prompt_data[prompt_key] = {"boxes": boxes}
-                    
+
                     logger.info(f"Generated {len(boxes)} automatic prompts for slice {current_slice}")
                     self.annotated_slice = current_slice  # Store the annotated slice
                 else:
                     return False, f"No brain regions detected in slice {current_slice}"
-                    
+
             else:  # "All Records"
                 # Generate prompts for all slices
                 total_slices = len(dicom_datasets)
                 successful_slices = 0
-                
+
                 for i, (file_path, dicom_ds) in enumerate(dicom_datasets):
                     try:                        # Get the slice image (convert from 0-based dataset index to 1-based UI slice)
                         ui_slice = i + 1
@@ -669,50 +687,52 @@ class MEDSAM2Handlers:
                         )
                           # Generate bounding boxes for this slice with dynamic sizing
                         boxes = self.brain_roi_detector.generate_prompt_boxes(
-                            slice_image, 
-                            dicom_ds, 
+                            slice_image,
+                            dicom_ds,
                             include_eyes=True,
                             slice_index=i  # Pass 0-based slice index for characteristics caching
                         )
-                        
+
                         if boxes:
                             # Convert to MEDSAM2 format - use 1-based indexing that matches volume processing
                             prompt_key = str(i + 1)  # Direct 1-based indexing from dataset
                             prompt_data[prompt_key] = {"boxes": boxes}
                             successful_slices += 1
-                            
+
                             logger.info(f"Generated {len(boxes)} dynamic boxes for slice {i+1} (dataset index {i})")
-                            
+
                     except Exception as e:
                         logger.warning(f"Failed to generate prompts for slice {i+1}: {e}")
                         continue
-                
+
                 if successful_slices == 0:
                     return False, "No brain regions detected in any slice"
-                
+
                 logger.info(f"Generated automatic prompts for {successful_slices}/{total_slices} slices")
-            
+
             # Save prompt file
             prompt_file = "brain_target_prompts.json"
             with open(prompt_file, 'w') as f:
                 json.dump(prompt_data, f, indent=2)
-            
+
             logger.info(f"Saved automatic brain prompts to {prompt_file}")
             logger.info(f"Prompt data sample: {json.dumps(dict(list(prompt_data.items())[:2]), indent=2)}")
-            
+
             return True, prompt_file
-            
+
         except Exception as e:
             logger.error(f"Error generating automatic brain prompts: {str(e)}")
-            return False, f"Error: {str(e)}"    @log_exception
-    def run_medsam2_annotation_automatic(self, dicom_folder: str, output_dir: str, 
-                                        save_visualizations: bool, device: str, 
-                                        processing_mode: str = "All Records", 
+            return False, f"Error: {str(e)}"
+
+    @log_exception
+    def run_medsam2_annotation_automatic(self, dicom_folder: str, output_dir: str,
+                                        save_visualizations: bool, device: str,
+                                        processing_mode: str = "All Records",
                                         score_threshold: float = 0.3) -> Tuple[str, Optional[Dict], bool]:
         """
         Run MEDSAM2 annotation with automatic brain structure detection
         Returns tuple for compatibility with UI handler: (status_message, annotated_image_data, success_flag)
-        
+
         Args:
             dicom_folder: Path to DICOM folder
             output_dir: Output directory for results
@@ -720,40 +740,40 @@ class MEDSAM2Handlers:
             device: Processing device (cpu/cuda)
             processing_mode: "Single Slice" or "All Records"
             score_threshold: Score threshold for filtering results (All Records mode)
-        
+
         Returns:
             Tuple of (status_message, annotated_image_data, success_flag)
         """
         if not dicom_folder or not os.path.exists(dicom_folder):
             return f"Error: DICOM folder not found: {dicom_folder}", None, False
-        
+
         # Store the score threshold
         self.score_threshold = score_threshold
-        
+
         try:
-            # Generate automatic prompts            
+            # Generate automatic prompts
             success, prompt_file_or_error = self.generate_automatic_brain_prompts(dicom_folder, processing_mode)
             if not success:
                 return f"Error generating automatic prompts: {prompt_file_or_error}", None, False
-            
+
             prompt_file = prompt_file_or_error
-            
+
             # Prepare the MEDSAM2 command
             script_path = os.path.join("models", "medsam2", "brain_mri_dicom_inference.py")
             if not os.path.exists(script_path):
                 return f"Error: MEDSAM2 script not found at {script_path}", None, False
-            
+
             # Get absolute paths for checkpoint and config
             medsam2_dir = os.path.join("models", "medsam2")
             checkpoint_path = os.path.join(medsam2_dir, "checkpoints", "sam2.1_hiera_base_plus.pt")
             config_path = os.path.join(medsam2_dir, "configs", "sam2.1_hiera_b+.yaml")
-            
+
             # Verify checkpoint and config exist
             if not os.path.exists(checkpoint_path):
                 return f"Error: Checkpoint not found at {checkpoint_path}", None, False
             if not os.path.exists(config_path):
                 return f"Error: Config not found at {config_path}", None, False
-            
+
             # Build command
             cmd = [
                 "python", script_path,
@@ -765,28 +785,28 @@ class MEDSAM2Handlers:
                 "--device", device,
                 "--quiet"  # Reduce logging for better performance
             ]
-            
+
             # Add processing mode specific flags
             if processing_mode == "Single Slice":
                 cmd.append("--single_slice")
-            
+
             if save_visualizations:
                 cmd.append("--save_visualizations")
-                
+
             logger.info(f"Running MEDSAM2 automatic annotation command: {' '.join(cmd)}")
-            
+
             # Run the annotation
             result = subprocess.run(
-                cmd, 
-                capture_output=True, 
-                text=True, 
+                cmd,
+                capture_output=True,
+                text=True,
                 cwd=os.getcwd()
-            )            
+            )
             # Process the result
             status_msg = ""
             annotated_result = None
             success_flag = False
-            
+
             if result.returncode == 0:
                 status_msg = f"✅ Automatic brain annotation completed successfully!\n"
                 status_msg += f"Output directory: {output_dir}\n"
@@ -796,7 +816,7 @@ class MEDSAM2Handlers:
                     for line in stdout_lines[-10:]:  # Show last 10 lines
                         if any(keyword in line.lower() for keyword in ['processed', 'saved', 'completed', 'slice']):
                             status_msg += f"• {line}\n"
-                
+
                 success_flag = True                # Filter results by score threshold and load masks into annotation_overlays
                 if processing_mode == "All Records":
                     try:
@@ -806,7 +826,7 @@ class MEDSAM2Handlers:
                     except Exception as e:
                         logger.warning(f"Could not filter results by score: {e}")
                         status_msg += f"\nNote: Could not filter results by score: {str(e)}\n"
-                
+
                 # Try to load results and create annotation display
                 try:
                     load_msg, result_image = self.load_annotation_results(output_dir, processing_mode)
@@ -814,7 +834,7 @@ class MEDSAM2Handlers:
                         status_msg += f"\n{load_msg}"
                           # Convert result to annotated format like manual workflow
                         from utils.visualization import display_slice, create_annotation_boxes_from_mask
-                        
+
                         # Get clean image
                         clean_img = display_slice(
                             self.state.current_data,
@@ -825,7 +845,7 @@ class MEDSAM2Handlers:
                             crosshair=None,
                             add_orientation_marker=False
                         )
-                        
+
                         # Ensure it's RGB and uint8
                         if len(clean_img.shape) == 2:
                             img_rgb = np.stack([clean_img] * 3, axis=-1)
@@ -835,17 +855,17 @@ class MEDSAM2Handlers:
                             img_rgb = (img_rgb * 255).astype(np.uint8)
                           # Convert MEDSAM2 masks to polygon shapes
                         annotation_shapes = []
-                        if (hasattr(self, 'annotation_overlays') and 
+                        if (hasattr(self, 'annotation_overlays') and
                             self.state.current_slice_idx in self.annotation_overlays):
-                            
+
                             overlay_data = self.annotation_overlays[self.state.current_slice_idx]
-                            
+
                             # Handle both old format (single mask) and new format (multiple annotations)
                             if isinstance(overlay_data, dict) and 'mask' in overlay_data:
                                 # Old format - single annotation
                                 mask_array = overlay_data['mask']
                                 annotation_shapes = create_annotation_boxes_from_mask(
-                                    mask_array, 
+                                    mask_array,
                                     label="Auto Brain Annotation",
                                     label_index=1
                                 )
@@ -855,34 +875,34 @@ class MEDSAM2Handlers:
                                     if isinstance(annotation_data, dict) and 'mask' in annotation_data:
                                         mask_array = annotation_data['mask']
                                         shapes = create_annotation_boxes_from_mask(
-                                            mask_array, 
+                                            mask_array,
                                             label=f"Auto Brain Annotation {annotation_id}",
                                             label_index=1
                                         )
                                         annotation_shapes.extend(shapes)
-                            
+
                             logger.info(f"Converted automatic annotation mask to {len(annotation_shapes)} polygon shapes")
-                        
+
                         # Create AnnotatedImageValue format with polygon shapes
                         annotated_result = {
                             "image": img_rgb,
                             "boxes": annotation_shapes,
                             "orientation": 0
                         }
-                        
+
                     else:
                         status_msg += f"\nNote: Annotation completed but overlay could not be loaded: {load_msg}"
-                        
+
                 except Exception as e:
                     logger.warning(f"Could not load result for display: {e}")
                     status_msg += f"\nNote: Annotation completed but display loading failed: {str(e)}"
-                
+
             else:
                 status_msg = f"❌ Automatic brain annotation failed (return code: {result.returncode})\n"
                 if result.stderr:
                     status_msg += f"Error output:\n{result.stderr[:500]}"
                 if result.stdout:                    status_msg += f"\nStandard output:\n{result.stdout[:500]}"
-            
+
             # Track automatic segmentation for behavioral analytics
             try:
                 track_automatic_segmentation(
@@ -891,27 +911,161 @@ class MEDSAM2Handlers:
                 )
             except Exception as track_e:
                 logger.debug(f"Behavioral tracking skipped: {track_e}")
-            
+
             return status_msg, annotated_result, success_flag
-            
+
         except Exception as e:
             logger.error(f"Error running automatic MEDSAM2 annotation: {str(e)}")
             return f"Error: {str(e)}", None, False
-    
+
     @log_exception
-    def run_medsam2_annotation(self, dicom_folder: str, output_dir: str, 
+    def run_medsam2_image_annotation(
+        self,
+        output_dir: str,
+        save_visualizations: bool,
+        device: str,
+    ) -> str:
+        """Run point/box-guided MedSAM2 directly on a loaded raster image."""
+        if self.state.current_data is None:
+            return "Error: No image data loaded."
+
+        has_points = bool(self.selected_coordinates)
+        has_boxes = bool(self.prompt_boxes)
+        if not has_points and not has_boxes:
+            return "Error: No prompts selected. Please click points or draw a box first."
+
+        try:
+            from hydra.core.global_hydra import GlobalHydra
+            from models.medsam2.build_sam import build_sam2
+            from models.medsam2.sam2_image_predictor import SAM2ImagePredictor
+
+            config_path = os.path.join(
+                "models", "medsam2", "configs", "sam2.1_hiera_t512.yaml"
+            )
+            checkpoint_path = os.path.join(
+                "models", "medsam2", "checkpoints", "MedSAM2_latest.pt"
+            )
+            if not os.path.exists(config_path):
+                return f"Error: Config not found at {config_path}"
+            if not os.path.exists(checkpoint_path):
+                return f"Error: Checkpoint not found at {checkpoint_path}"
+
+            resolved_device = device
+            if device == "cuda" and not torch.cuda.is_available():
+                resolved_device = "cpu"
+                logger.warning("CUDA was requested but is unavailable; using CPU")
+
+            if (
+                self._sam2_model_cache is not None
+                and self._sam2_model_config_path == config_path
+                and self._sam2_model_checkpoint_path == checkpoint_path
+            ):
+                model = self._sam2_model_cache
+            else:
+                if GlobalHydra.instance().is_initialized():
+                    GlobalHydra.instance().clear()
+                model = build_sam2(
+                    config_path, checkpoint_path, device=resolved_device
+                )
+                self._sam2_model_cache = model
+                self._sam2_model_config_path = config_path
+                self._sam2_model_checkpoint_path = checkpoint_path
+
+            image = display_slice(
+                self.state.current_data,
+                self.state.current_slice_idx,
+                "axial",
+                window_level=None,
+                window_width=None,
+                crosshair=None,
+                add_orientation_marker=False,
+            )
+            predictor = SAM2ImagePredictor(model)
+            predictor.set_image(image)
+
+            point_coords = None
+            point_labels = None
+            if has_points:
+                point_coords = np.asarray(self.selected_coordinates, dtype=np.float32)
+                point_labels = np.ones(len(point_coords), dtype=np.int32)
+
+            box = None
+            if has_boxes:
+                prompt_box = self.prompt_boxes[-1]
+                box = np.asarray(
+                    [
+                        prompt_box["x1"],
+                        prompt_box["y1"],
+                        prompt_box["x2"],
+                        prompt_box["y2"],
+                    ],
+                    dtype=np.float32,
+                )
+
+            masks, scores, _ = predictor.predict(
+                point_coords=point_coords,
+                point_labels=point_labels,
+                box=box,
+                multimask_output=True,
+            )
+            masks = np.asarray(masks)
+            scores = np.asarray(scores).reshape(-1)
+            while masks.ndim > 3 and masks.shape[0] == 1:
+                masks = masks[0]
+            if masks.ndim == 2:
+                best_mask = masks
+            else:
+                best_mask = masks[int(np.argmax(scores))]
+            best_mask = (best_mask > 0).astype(np.uint8)
+
+            self.annotated_slice = self.state.current_slice_idx
+            masks_dir = os.path.join(output_dir, "masks")
+            os.makedirs(masks_dir, exist_ok=True)
+            slice_num = str(self.annotated_slice).zfill(4)
+            mask_path = os.path.join(masks_dir, f"slice_{slice_num}_mask.npy")
+            np.save(mask_path, best_mask)
+
+            if save_visualizations:
+                visualization = overlay_segmentation(
+                    image, best_mask, alpha=0.4, colormap={1: [255, 0, 0]}
+                )
+                Image.fromarray(visualization).save(
+                    os.path.join(output_dir, f"slice_{slice_num}_guided.png")
+                )
+
+            prompt_type = "box" if has_boxes else "point"
+            try:
+                track_ai_segmentation(
+                    model="medsam2",
+                    processing_mode="single_image",
+                    slice_idx=self.annotated_slice,
+                    prompt_type=prompt_type,
+                )
+            except Exception as track_e:
+                logger.debug(f"Behavioral tracking skipped: {track_e}")
+
+            return (
+                f"Raster image annotation completed successfully using "
+                f"{prompt_type} prompts! Results saved to: {output_dir}"
+            )
+        except Exception as e:
+            logger.exception("Raster image guided annotation failed")
+            return f"Error running guided annotation on image: {e}"
+
+    @log_exception
+    def run_medsam2_annotation(self, dicom_folder: str, output_dir: str,
                               save_visualizations: bool, device: str) -> str:
         """Run the MEDSAM2 annotation script with point or box prompts"""
         # Check if we have either point coordinates or box prompts
         has_points = bool(self.selected_coordinates)
         has_boxes = bool(self.prompt_boxes)
-        
+
         if not has_points and not has_boxes:
             return "Error: No prompts selected. Please either click points or draw a box for annotation."
-        
+
         if not dicom_folder or not os.path.exists(dicom_folder):
             return f"Error: DICOM folder not found: {dicom_folder}"
-        
+
         # Debug: Log the DICOM folder and check files
         logger.info(f"DICOM folder path: {dicom_folder}")
         try:
@@ -927,7 +1081,7 @@ class MEDSAM2Handlers:
         except Exception as e:
             logger.error(f"Error listing DICOM folder contents: {str(e)}")
             return f"Error: Cannot access DICOM folder contents: {str(e)}"
-        
+
         try:
             # Generate the appropriate prompt JSON file
             if has_boxes:
@@ -936,17 +1090,17 @@ class MEDSAM2Handlers:
             else:
                 success, prompt_file_or_error = self.generate_prompt_json(dicom_folder)
                 prompt_type = "point"
-                
+
             if not success:
                 return f"Error generating {prompt_type} prompts: {prompt_file_or_error}"
-            
+
             prompt_file = prompt_file_or_error
-            
+
             # Prepare the command with absolute paths
             script_path = os.path.join("models", "medsam2", "brain_mri_dicom_inference.py")
             if not os.path.exists(script_path):
                 return f"Error: MEDSAM2 script not found at {script_path}"
-            
+
             # Get absolute paths for checkpoint and config
             medsam2_dir = os.path.join("models", "medsam2")
             checkpoint_path = os.path.join(medsam2_dir, "checkpoints", "MedSAM2_latest.pt")
@@ -957,7 +1111,7 @@ class MEDSAM2Handlers:
                 return f"Error: Checkpoint not found at {checkpoint_path}"
             if not os.path.exists(config_path):
                 return f"Error: Config not found at {config_path}"
-            
+
             cmd = [
                 "python", script_path,
                 "--dicom_folder", dicom_folder,
@@ -968,7 +1122,7 @@ class MEDSAM2Handlers:
                 "--single_slice",  # Only process the slice with prompts
                 "--quiet"  # Reduce logging for better performance
             ]
-            
+
             # Add appropriate prompt argument based on type
             if has_boxes:
                 cmd.extend(["--prompt_boxes", prompt_file])
@@ -976,27 +1130,27 @@ class MEDSAM2Handlers:
             else:
                 cmd.extend(["--prompt_points", prompt_file])
                 logger.info(f"Using point prompts from: {prompt_file}")
-            
+
             if save_visualizations:
                 cmd.append("--save_visualizations")
-                
+
             logger.info(f"Running MEDSAM2 command: {' '.join(cmd)}")
             logger.info(f"Annotated slice stored: {self.annotated_slice}")
-            
+
             # Run the annotation
             result = subprocess.run(
-                cmd, 
-                capture_output=True, 
-                text=True, 
+                cmd,
+                capture_output=True,
+                text=True,
                 cwd=os.getcwd()
-            )            
+            )
             if result.returncode == 0:
                 logger.info("MEDSAM2 annotation completed successfully")
                 # Use the same slice number for the output file
                 expected_file_slice = self.annotated_slice  # Same as UI slice with our +1 adjustment
                 slice_num_padded = str(expected_file_slice).zfill(4)
                 logger.info(f"Will look for slice_{slice_num_padded}_mask.npy for UI slice {self.annotated_slice}")
-                
+
                 # Track AI segmentation for behavioral analytics
                 try:
                     track_ai_segmentation(
@@ -1007,11 +1161,11 @@ class MEDSAM2Handlers:
                     )
                 except Exception as track_e:
                     logger.debug(f"Behavioral tracking skipped: {track_e}")
-                
+
                 return f"Annotation completed successfully using {prompt_type} prompts! Results saved to: {output_dir}"
             else:
                 logger.error(f"MEDSAM2 failed: {result.stderr}")
-                
+
                 # Track failed AI segmentation
                 try:
                     track_ai_segmentation(
@@ -1022,25 +1176,25 @@ class MEDSAM2Handlers:
                     )
                 except Exception as track_e:
                     logger.debug(f"Behavioral tracking skipped: {track_e}")
-                
+
                 return f"Error running MEDSAM2: {result.stderr}"
         except Exception as e:
             logger.error(f"Error running MEDSAM2 annotation: {str(e)}")
             return f"Error: {str(e)}"
-            
+
             if save_visualizations:
                 cmd.append("--save_visualizations")
-                
+
             logger.info(f"Running MEDSAM2 command: {' '.join(cmd)}")
             logger.info(f"Annotated slice stored: {self.annotated_slice}")
-            
+
             # Run the annotation
             result = subprocess.run(
-                cmd, 
-                capture_output=True, 
-                text=True, 
+                cmd,
+                capture_output=True,
+                text=True,
                 cwd=os.getcwd()
-            )            
+            )
             if result.returncode == 0:
                 logger.info("MEDSAM2 annotation completed successfully")
                 # Use the same slice number for the output file
@@ -1049,32 +1203,32 @@ class MEDSAM2Handlers:
                 logger.info(f"Will look for slice_{slice_num_padded}_mask.npy for UI slice {self.annotated_slice}")
                 return f"Annotation completed successfully! Results saved to: {output_dir}"
             else:
-                logger.error(f"MEDSAM2 failed: {result.stderr}")            
+                logger.error(f"MEDSAM2 failed: {result.stderr}")
                 return f"Error running MEDSAM2: {result.stderr}"
         except Exception as e:
             logger.error(f"Error running MEDSAM2 annotation: {str(e)}")
             return f"Error: {str(e)}"
-    
+
     @log_exception
     def load_annotation_results(self, output_dir: str, processing_mode: str = "Single Slice") -> Tuple[str, Optional[np.ndarray]]:
         """Load and display annotation results from MEDSAM2 - combining .npy mask with original DICOM slice"""
         if not output_dir or not os.path.exists(output_dir):
             return "Error: Output directory not found", None
-        
+
         try:
             # Check if we have the original DICOM data loaded
             if self.state.current_data is None:
                 return "Error: No DICOM data loaded. Please load DICOM series first.", None
-            
+
             if processing_mode == "Single Slice":
                 return self.load_single_slice_results(output_dir)
             else:  # All Records mode
                 return self.load_all_records_results(output_dir)
-                
+
         except Exception as e:
             logger.error(f"Error loading annotation results: {str(e)}")
-            return f"Error: {str(e)}", None    
-        
+            return f"Error: {str(e)}", None
+
     @log_exception
     def load_single_slice_results(self, output_dir: str) -> Tuple[str, Optional[np.ndarray]]:
         """Load results for single slice mode"""
@@ -1103,7 +1257,7 @@ class MEDSAM2Handlers:
         # Check for the file with the same UI slice number
         slice_num_padded = str(expected_file_slice).zfill(4)
         mask_path = os.path.join(masks_dir, f"slice_{slice_num_padded}_mask.npy")
-        logger.info(f"Checking for mask file: {mask_path}")        
+        logger.info(f"Checking for mask file: {mask_path}")
         if mask_path and os.path.exists(mask_path):
             logger.info(f"SUCCESS: Found mask file for slice {self.annotated_slice}: {mask_path}")
             mask_array = np.load(mask_path)
@@ -1127,25 +1281,20 @@ class MEDSAM2Handlers:
             )
             from utils.visualization import make_image_for_gradio
             result_image = make_image_for_gradio(overlayed_img)
-            
-            # Preserve existing annotations and add new one
+
+            # A guided run replaces the previous result on this slice.
             current_slice = self.annotated_slice
-            if current_slice not in self.annotation_overlays:
-                self.annotation_overlays[current_slice] = {}
-            
-            # Generate a unique annotation ID based on timestamp or existing count
             import time
-            annotation_id = f"annotation_{int(time.time() * 1000) % 100000}"  # Last 5 digits of timestamp
-              # Store the new annotation alongside existing ones
-            self.annotation_overlays[current_slice][annotation_id] = {
+            annotation_id = f"annotation_{int(time.time() * 1000) % 100000}"
+            self.annotation_overlays[current_slice] = {annotation_id: {
                 'mask': mask_array,
                 'output_dir': output_dir,
                 'slice_idx': dicom_slice_idx,
                 'timestamp': time.time()
-            }
-            
+            }}
+
             logger.info(f"Added annotation {annotation_id} to slice {current_slice}. Total annotations for this slice: {len(self.annotation_overlays[current_slice])}")
-            
+
             # Now create a combined visualization showing ALL annotations for this slice
             combined_mask = None
             for ann_id, ann_data in self.annotation_overlays[current_slice].items():
@@ -1156,7 +1305,7 @@ class MEDSAM2Handlers:
                     else:
                         # Combine masks (overlay them)
                         combined_mask = np.maximum(combined_mask, mask)
-            
+
             # Create the final overlay image with all annotations
             if combined_mask is not None:
                 final_overlayed_img = overlay_segmentation(
@@ -1169,18 +1318,20 @@ class MEDSAM2Handlers:
                 logger.info(f"Created combined visualization showing {len(self.annotation_overlays[current_slice])} annotations")
             else:
                 final_result_image = result_image  # Fallback to single annotation view
-            
+
             return f"Successfully loaded annotation for slice {self.annotated_slice} (file: slice_{slice_num_padded}_mask.npy). Total annotations on slice: {len(self.annotation_overlays[current_slice])}", final_result_image
         else:
-            return f"Error: No mask file found for UI slice {self.annotated_slice}. Expected file 'slice_{slice_num_padded}_mask.npy'. Available files: {mask_files}", None    @log_exception
+            return f"Error: No mask file found for UI slice {self.annotated_slice}. Expected file 'slice_{slice_num_padded}_mask.npy'. Available files: {mask_files}", None
+
+    @log_exception
     def load_all_records_results(self, output_dir: str) -> Tuple[str, Optional[np.ndarray]]:
         """Load results for all records mode - show current slice if it has valid annotation"""
         current_slice = self.state.current_slice_idx
-        
+
         # Check if we have a stored overlay for the current slice
         if current_slice in self.annotation_overlays:
             overlay_data = self.annotation_overlays[current_slice]
-            
+
             # Handle both old format (single annotation) and new format (multiple annotations)
             if isinstance(overlay_data, dict) and 'mask' in overlay_data:
                 # Old format - single annotation
@@ -1190,7 +1341,7 @@ class MEDSAM2Handlers:
                 # Combine all masks for this slice
                 combined_mask = None
                 annotation_count = 0
-                
+
                 for annotation_id, annotation_data in overlay_data.items():
                     if isinstance(annotation_data, dict) and 'mask' in annotation_data:
                         mask = annotation_data['mask']
@@ -1200,12 +1351,12 @@ class MEDSAM2Handlers:
                             # Combine masks (overlay them)
                             combined_mask = np.maximum(combined_mask, mask)
                         annotation_count += 1
-                
+
                 if combined_mask is not None:
                     mask_array = combined_mask
                 else:
                     return f"No valid annotations found for slice {current_slice}", None
-            
+
             # Get the original DICOM slice image
             original_slice_img = display_slice(
                 self.state.current_data,
@@ -1215,18 +1366,18 @@ class MEDSAM2Handlers:
                 window_width=self.state.window_width,
                 crosshair=self.state.crosshair_position
             )
-            
+
             # Apply overlay
             overlayed_img = overlay_segmentation(
                 original_slice_img,
                 mask_array,
                 alpha=0.4,
                 colormap={1: [255, 0, 0]}  # Red overlay for annotations
-            )            
+            )
             # Convert to PIL Image for gradio
             from utils.visualization import make_image_for_gradio
             result_image = make_image_for_gradio(overlayed_img)
-            
+
             # Create informative message based on annotation structure
             if isinstance(overlay_data, dict) and 'mask' in overlay_data:
                 return f"Displaying annotation for slice {current_slice} (from all records processing)", result_image
@@ -1242,10 +1393,10 @@ class MEDSAM2Handlers:
                 window_width=self.state.window_width,
                 crosshair=self.state.crosshair_position
             )
-            
+
             from utils.visualization import make_image_for_gradio
             result_image = make_image_for_gradio(original_slice_img)
-            
+
             return f"No annotation available for slice {current_slice} (may not meet score threshold)", result_image
     def get_current_dicom_folder(self) -> Optional[str]:
         """Get the current DICOM folder path from application state"""
@@ -1258,68 +1409,75 @@ class MEDSAM2Handlers:
             return dicom_folder
         else:
             logger.warning("No files in state.file_list - cannot determine DICOM folder")
-            return None    @log_exception
-    def run_full_annotation_workflow(self, output_dir: str, save_visualizations: bool, 
-                                   device: str, processing_mode: str = "Single Slice", 
+            return None
+
+    @log_exception
+    def run_full_annotation_workflow(self, output_dir: str, save_visualizations: bool,
+                                   device: str, processing_mode: str = "Single Slice",
                                    score_threshold: float = 0.3, image_display_data=None) -> Tuple[str, Optional[np.ndarray], bool]:
         """Run the complete annotation workflow from coordinates to results"""
-        
+
         # Extract boxes from image display data if in box mode
         if self.box_mode_enabled and image_display_data:
             self.extract_boxes_from_image_data(image_display_data)
-        
+
         # Validate that coordinates or boxes are selected
         if not self.selected_coordinates and not self.prompt_boxes:
             return "Error: No coordinates or boxes selected. Please click on the image to select points or draw boxes first.", None, False
-        
+
+        self.start_new_suggestion_run()
+
         # Store the score threshold for filtering
         self.score_threshold = score_threshold
-        
-        # Log current annotation state before running new annotation
+
+        # Log the clean state for the new annotation run.
         current_slice = self.state.current_slice_idx
-        existing_count = 0
-        if current_slice in self.annotation_overlays:
-            annotations = self.annotation_overlays[current_slice]
-            if isinstance(annotations, dict):
-                if 'mask' in annotations:
-                    existing_count = 1  # Old format
-                else:
-                    existing_count = len([k for k, v in annotations.items() if isinstance(v, dict) and 'mask' in v])
-        
-        logger.info(f"Starting annotation workflow. Current slice {current_slice} has {existing_count} existing annotations")
-        
-        # Get current DICOM folder
-        dicom_folder = self.get_current_dicom_folder()
-        if not dicom_folder:
-            return "Error: No DICOM data loaded. Please load DICOM files first.", None, False
-        
-        # Run annotation based on processing mode
-        if processing_mode == "Single Slice":
-            annotation_result = self.run_medsam2_annotation(
-                dicom_folder, output_dir, save_visualizations, device
+        logger.info(f"Starting clean annotation workflow for slice {current_slice}")
+
+        is_raster_image = self.state.current_data_type == "image"
+        effective_processing_mode = (
+            "Single Slice" if is_raster_image else processing_mode
+        )
+
+        if is_raster_image:
+            annotation_result = self.run_medsam2_image_annotation(
+                output_dir, save_visualizations, device
             )
-        else:  # All Records mode
-            annotation_result = self.run_medsam2_all_records(
-                dicom_folder, output_dir, save_visualizations, device, score_threshold
-            )        # Check if annotation was successful
+        else:
+            dicom_folder = self.get_current_dicom_folder()
+            if not dicom_folder:
+                return "Error: No medical image data loaded.", None, False
+
+            if processing_mode == "Single Slice":
+                annotation_result = self.run_medsam2_annotation(
+                    dicom_folder, output_dir, save_visualizations, device
+                )
+            else:
+                annotation_result = self.run_medsam2_all_records(
+                    dicom_folder, output_dir, save_visualizations, device, score_threshold
+                )
+
+        # Check if annotation was successful
         if "successfully" in annotation_result.lower():
             # Try to load results
-            load_result, result_image = self.load_annotation_results(output_dir, processing_mode)
+            load_result, result_image = self.load_annotation_results(
+                output_dir, effective_processing_mode
+            )
               # Convert result_image to annotated format if it exists
             if result_image is not None:
                 # Get the original image without overlay for clean display
                 from utils.visualization import display_slice, create_annotation_boxes_from_mask
-                
+
                 # Get clean image
                 clean_img = display_slice(
                     self.state.current_data,
                     self.state.current_slice_idx,
                     self.state.current_view,
-                    window_level=self.state.window_level,
-                    window_width=self.state.window_width,
+                    window_level=None if is_raster_image else self.state.window_level,
+                    window_width=None if is_raster_image else self.state.window_width,
                     crosshair=None  # No crosshair lines for annotation overlay
                 )
-                
+
                 # Ensure it's RGB and uint8
                 if len(clean_img.shape) == 2:
                     img_rgb = np.stack([clean_img] * 3, axis=-1)
@@ -1327,7 +1485,7 @@ class MEDSAM2Handlers:
                     img_rgb = clean_img
                 if img_rgb.dtype != np.uint8:
                     img_rgb = (img_rgb * 255).astype(np.uint8)
-                
+
                 # XAI: Point-based explanation (ENABLED for guided annotation)
                 # Shows what features around the click points drove the segmentation
                 # Prepare XAI with model AND predictor if not already initialized
@@ -1335,17 +1493,17 @@ class MEDSAM2Handlers:
                     try:
                         from models.medsam2.build_sam import build_sam2
                         from models.medsam2.sam2_image_predictor import SAM2ImagePredictor
-                        
+
                         config_path = os.path.join("models", "medsam2", "configs", "sam2.1_hiera_t512.yaml")
                         checkpoint_path = os.path.join("models", "medsam2", "checkpoints", "MedSAM2_latest.pt")
                         device = "cuda" if torch.cuda.is_available() else "cpu"
-                        
+
                         # Build model
                         sam2_model = build_sam2(config_path, checkpoint_path, device=device)
-                        
+
                         # Create predictor (needed for gradient XAI)
                         predictor = SAM2ImagePredictor(sam2_model)
-                        
+
                         # Initialize XAI with both model and predictor
                         self._xai_integration = get_xai_integration()
                         self._xai_integration.prepare_for_inference(
@@ -1353,13 +1511,13 @@ class MEDSAM2Handlers:
                             predictor=predictor,
                             show_overlay=self.xai_show_overlay
                         )
-                        
+
                         logger.info("XAI: Initialized for guided annotation display (with predictor for gradient XAI)")
                     except Exception as init_e:
                         logger.warning(f"XAI initialization for guided annotation failed: {init_e}")
                         import traceback
                         logger.debug(f"XAI init traceback: {traceback.format_exc()}")
-                
+
                 if XAI_AVAILABLE and self.selected_coordinates:
                     try:
                         # Get most recent annotation mask (not all combined)
@@ -1367,17 +1525,17 @@ class MEDSAM2Handlers:
                         if combined_mask is not None:
                             # Convert selected coordinates to prompt points
                             prompt_points = [(int(x), int(y)) for x, y in self.selected_coordinates]
-                            
+
                             logger.info(f"XAI: Computing explanation for {len(prompt_points)} prompt point(s)")
-                            
+
                             # Capture XAI data with prompt context
                             self._capture_xai_data(img_rgb, mask=combined_mask, prompts=prompt_points)
-                            
+
                             # Apply overlay based on checkbox state (CRITICAL: img_rgb is updated with overlay)
                             img_rgb_with_xai = self.get_xai_display_image(img_rgb)
                             if img_rgb_with_xai is not None:
                                 img_rgb = img_rgb_with_xai  # Replace with XAI-overlayed version
-                            
+
                             if self.xai_show_overlay:
                                 logger.info(f"XAI overlay applied: showing features around {len(prompt_points)} click point(s)")
                             else:
@@ -1387,7 +1545,7 @@ class MEDSAM2Handlers:
                         logger.warning(f"Failed to apply XAI in guided annotation: {xai_e}")
                         import traceback
                         logger.debug(f"XAI error traceback: {traceback.format_exc()}")
-                
+
                 # XAI: Box-based explanation (ENABLED for guided annotation with box prompts)
                 # Shows what features within the box drove the segmentation
                 # Prepare XAI with model AND predictor if not already initialized
@@ -1395,17 +1553,17 @@ class MEDSAM2Handlers:
                     try:
                         from models.medsam2.build_sam import build_sam2
                         from models.medsam2.sam2_image_predictor import SAM2ImagePredictor
-                        
+
                         config_path = os.path.join("models", "medsam2", "configs", "sam2.1_hiera_t512.yaml")
                         checkpoint_path = os.path.join("models", "medsam2", "checkpoints", "MedSAM2_latest.pt")
                         device = "cuda" if torch.cuda.is_available() else "cpu"
-                        
+
                         # Build model
                         sam2_model = build_sam2(config_path, checkpoint_path, device=device)
-                        
+
                         # Create predictor (needed for gradient XAI)
                         predictor = SAM2ImagePredictor(sam2_model)
-                        
+
                         # Initialize XAI with both model and predictor
                         self._xai_integration = get_xai_integration()
                         self._xai_integration.prepare_for_inference(
@@ -1413,13 +1571,13 @@ class MEDSAM2Handlers:
                             predictor=predictor,
                             show_overlay=self.xai_show_overlay
                         )
-                        
+
                         logger.info("XAI: Initialized for box-based guided annotation (with predictor for gradient XAI)")
                     except Exception as init_e:
                         logger.warning(f"XAI initialization for box prompts failed: {init_e}")
                         import traceback
                         logger.debug(f"XAI init traceback: {traceback.format_exc()}")
-                
+
                 if XAI_AVAILABLE and self.prompt_boxes:
                     try:
                         # Get most recent annotation mask
@@ -1429,17 +1587,17 @@ class MEDSAM2Handlers:
                             box_coords = []
                             for box in self.prompt_boxes:
                                 box_coords.append([int(box['x1']), int(box['y1']), int(box['x2']), int(box['y2'])])
-                            
+
                             logger.info(f"XAI: Computing explanation for {len(box_coords)} box prompt(s)")
-                            
+
                             # Capture XAI data with box prompt context
                             self._capture_xai_data(img_rgb, mask=combined_mask, boxes=box_coords)
-                            
+
                             # Apply overlay based on checkbox state (CRITICAL: img_rgb is updated with overlay)
                             img_rgb_with_xai = self.get_xai_display_image(img_rgb)
                             if img_rgb_with_xai is not None:
                                 img_rgb = img_rgb_with_xai  # Replace with XAI-overlayed version
-                            
+
                             if self.xai_show_overlay:
                                 logger.info(f"XAI overlay applied: showing gradient map for {len(box_coords)} box prompt(s)")
                             else:
@@ -1449,23 +1607,23 @@ class MEDSAM2Handlers:
                         logger.warning(f"Failed to apply XAI for box prompts: {xai_e}")
                         import traceback
                         logger.debug(f"XAI error traceback: {traceback.format_exc()}")
-                
+
                 if XAI_AVAILABLE and not self.selected_coordinates and not self.prompt_boxes:
                     logger.debug("XAI: No prompts available for guided annotation")
-                
+
                 # Convert MEDSAM2 masks to polygon shapes
                 annotation_shapes = []
-                if (hasattr(self, 'annotation_overlays') and 
+                if (hasattr(self, 'annotation_overlays') and
                     self.state.current_slice_idx in self.annotation_overlays):
-                    
+
                     overlay_data = self.annotation_overlays[self.state.current_slice_idx]
-                    
+
                     # Handle both old format (single mask) and new format (multiple annotations)
                     if isinstance(overlay_data, dict) and 'mask' in overlay_data:
                         # Old format - single annotation
                         mask_array = overlay_data['mask']
                         annotation_shapes = create_annotation_boxes_from_mask(
-                            mask_array, 
+                            mask_array,
                             label="MEDSAM2 Annotation",
                             label_index=1
                         )
@@ -1475,14 +1633,14 @@ class MEDSAM2Handlers:
                             if isinstance(annotation_data, dict) and 'mask' in annotation_data:
                                 mask_array = annotation_data['mask']
                                 shapes = create_annotation_boxes_from_mask(
-                                    mask_array, 
+                                    mask_array,
                                     label=f"MEDSAM2 Annotation {annotation_id}",
                                     label_index=1
                                 )
                                 annotation_shapes.extend(shapes)
-                      
+
                     logger.info(f"Converted MEDSAM2 mask to {len(annotation_shapes)} polygon shapes")
-                
+
                 # Create AnnotatedImageValue format with polygon shapes
                 annotated_result = {
                     "image": img_rgb,
@@ -1493,7 +1651,7 @@ class MEDSAM2Handlers:
                 annotated_result = None
               # Clear coordinates after successful annotation
             self.clear_coordinates()
-            
+
             # Log final annotation count
             final_count = 0
             if current_slice in self.annotation_overlays:
@@ -1504,7 +1662,7 @@ class MEDSAM2Handlers:
                     else:
                         final_count = len([k for k, v in annotations.items() if isinstance(v, dict) and 'mask' in v])
             logger.info(f"Annotation workflow completed. Slice {current_slice} now has {final_count} total annotations")
-            
+
             # Return tuple indicating success for UI updates
             return f"{annotation_result}\n{load_result}", annotated_result, True
         else:
@@ -1516,29 +1674,29 @@ class MEDSAM2Handlers:
         try:
             import sys
             import os
-            
+
             # Add models path to sys.path
             models_path = os.path.join(os.getcwd(), "models", "medsam2")
             if models_path not in sys.path:
                 sys.path.append(models_path)
-            
+
             # Test imports
             try:
                 from build_sam import build_sam2
                 from sam2_image_predictor import SAM2ImagePredictor
             except ImportError as e:
                 return False, f"Import error: {str(e)}"
-            
+
             # Check if config and checkpoint files exist
             config_path = os.path.join("models", "medsam2", "configs", "sam2.1_hiera_t512.yaml")
             checkpoint_path = os.path.join("models", "medsam2", "checkpoints", "MedSAM2_latest.pt")
-            
+
             if not os.path.exists(config_path):
                 return False, f"Config file not found: {config_path}"
-            
+
             if not os.path.exists(checkpoint_path):
                 return False, f"Checkpoint file not found: {checkpoint_path}"
-            
+
             # Try to initialize model (this might fail due to device/memory, but should pass import/config issues)
             try:
                 logger.info("Testing SAM2 model initialization...")
@@ -1555,28 +1713,28 @@ class MEDSAM2Handlers:
                 else:
                     # Other errors might be expected (memory, CUDA, etc.)
                     return True, f"MEDSAM2 imports work, model init error (may be expected): {str(e)}"
-            
+
         except Exception as e:
             return False, f"Setup test failed: {str(e)}"
-    
+
     @log_exception
     def validate_medsam2_environment(self) -> Tuple[bool, str]:
         """Validate that MEDSAM2 environment is properly set up"""
         try:
             import sys
             import os
-            
+
             # Check if models directory exists
             models_dir = os.path.join(os.getcwd(), "models", "medsam2")
             if not os.path.exists(models_dir):
                 return False, f"MEDSAM2 models directory not found: {models_dir}"
-            
+
             # Check required files
             config_file = os.path.join(models_dir, "configs", "sam2.1_hiera_t512.yaml")
             checkpoint_file = os.path.join(models_dir, "checkpoints", "MedSAM2_latest.pt")
             build_sam_file = os.path.join(models_dir, "build_sam.py")
             predictor_file = os.path.join(models_dir, "sam2_image_predictor.py")
-            
+
             missing_files = []
             for file_path, name in [
                 (config_file, "Config file"),
@@ -1586,30 +1744,30 @@ class MEDSAM2Handlers:
             ]:
                 if not os.path.exists(file_path):
                     missing_files.append(f"{name}: {file_path}")
-            
+
             if missing_files:
                 return False, f"Missing MEDSAM2 files:\n" + "\n".join(missing_files)
-            
+
             return True, "MEDSAM2 environment validation passed"
-            
+
         except Exception as e:
             return False, f"Error validating MEDSAM2 environment: {str(e)}"
-    
+
     @log_exception
-    def run_medsam2_all_records(self, dicom_folder: str, output_dir: str, 
-                               save_visualizations: bool, device: str, 
+    def run_medsam2_all_records(self, dicom_folder: str, output_dir: str,
+                               save_visualizations: bool, device: str,
                                score_threshold: float) -> str:
         """Run MEDSAM2 annotation on all slices using user-selected coordinates or box prompts"""
         # Check if we have either point coordinates or box prompts
         has_point_prompts = bool(self.selected_coordinates)
         has_box_prompts = bool(getattr(self, 'prompt_boxes', []))
-        
+
         if not has_point_prompts and not has_box_prompts:
             return "Error: No coordinates or box prompts selected. Please click on the image to select points or draw boxes."
-        
+
         if not dicom_folder or not os.path.exists(dicom_folder):
             return f"Error: DICOM folder not found: {dicom_folder}"
-        
+
         # Debug: Log the DICOM folder and check files
         logger.info(f"DICOM folder path for all records: {dicom_folder}")
         try:
@@ -1625,31 +1783,31 @@ class MEDSAM2Handlers:
         except Exception as e:
             logger.error(f"Error listing DICOM folder contents: {str(e)}")
             return f"Error: Cannot access DICOM folder contents: {str(e)}"
-        
+
         try:
             # Generate the prompt JSON file for all slices using user coordinates
             success, prompt_file_or_error = self.generate_prompt_json_all_slices(dicom_folder)
             if not success:
                 return f"Error generating prompts: {prompt_file_or_error}"
-            
+
             prompt_file = prompt_file_or_error
-            
+
             # Prepare the command with absolute paths
             script_path = os.path.join("models", "medsam2", "brain_mri_dicom_inference.py")
             if not os.path.exists(script_path):
                 return f"Error: MEDSAM2 script not found at {script_path}"
-            
+
             # Get absolute paths for checkpoint and config
             medsam2_dir = os.path.join("models", "medsam2")
             checkpoint_path = os.path.join(medsam2_dir, "checkpoints", "MedSAM2_latest.pt")
             config_path = os.path.join(medsam2_dir, "configs", "sam2.1_hiera_t512.yaml")
-            
+
             # Verify checkpoint and config exist
             if not os.path.exists(checkpoint_path):
                 return f"Error: Checkpoint not found at {checkpoint_path}"
             if not os.path.exists(config_path):
                 return f"Error: Config not found at {config_path}"
-            
+
             # Build command for all records using user prompts (NOT auto prompts)
             cmd = [
                 "python", script_path,
@@ -1662,66 +1820,66 @@ class MEDSAM2Handlers:
                 # NOTE: No --single_slice flag, so it processes all slices with prompts
                 "--quiet"  # Reduce logging for better performance
             ]
-            
+
             if save_visualizations:
                 cmd.append("--save_visualizations")
-                
+
             logger.info(f"Running MEDSAM2 all records command with user coordinates: {' '.join(cmd)}")
             logger.info(f"User coordinates: {self.selected_coordinates}")
-            logger.info(f"Score threshold for filtering: {score_threshold}")            
+            logger.info(f"Score threshold for filtering: {score_threshold}")
             # Run the annotation
             result = subprocess.run(
-                cmd, 
-                capture_output=True, 
-                text=True, 
+                cmd,
+                capture_output=True,
+                text=True,
                 cwd=os.getcwd()
             )
-            
+
             if result.returncode == 0:
                 logger.info("MEDSAM2 all records annotation completed successfully")
                 # Apply score filtering to results using the new manual annotation filtering
                 filtered_results = self.filter_manual_results_by_score(output_dir, score_threshold)
                 return f"All records annotation completed successfully! {filtered_results}"
             else:
-                logger.error(f"MEDSAM2 all records failed: {result.stderr}")            
+                logger.error(f"MEDSAM2 all records failed: {result.stderr}")
                 return f"Error running MEDSAM2 all records: {result.stderr}"
         except Exception as e:
             logger.error(f"Error running MEDSAM2 all records annotation: {str(e)}")
             return f"Error: {str(e)}"
-    
+
     @log_exception
     def filter_manual_results_by_score(self, output_dir: str, score_threshold: float) -> str:
         """Filter manual annotation results based on score threshold - creates individual annotations for qualifying scores"""
         if not os.path.exists(output_dir):
             return "No results to filter."
-        
+
         try:
             # Load summary.json to get scores for manual annotation
             summary_path = os.path.join(output_dir, "summary.json")
             if not os.path.exists(summary_path):
                 return "No summary.json found for filtering."
-            
+
             with open(summary_path, 'r') as f:
                 summary_data = json.load(f)
-            
+
             slice_indices = summary_data.get('slice_indices', [])
             average_scores = summary_data.get('average_scores', [])
-            
+
             if not slice_indices or not average_scores:
                 return "No slice data found in summary.json"
-            
+
             logger.info(f"Manual annotation: Processing {len(slice_indices)} slices with {len(average_scores)} scores")
-            
+
             # Create individual annotations for each qualifying score
             valid_annotations = []
             filtered_annotations = []
             annotation_counter = 0
-            
+
             # Check if we have multiple scores per slice
             if len(average_scores) > len(slice_indices):
                 scores_per_slice = len(average_scores) // len(slice_indices)
                 logger.info(f"Manual annotation: Detected {scores_per_slice} scores per slice")
-                
+
                 # Process each score individually, creating separate annotations
                 for slice_idx in slice_indices:
                     slice_annotations = 0
@@ -1729,7 +1887,7 @@ class MEDSAM2Handlers:
                         score_index = slice_indices.index(slice_idx) * scores_per_slice + score_offset
                         if score_index < len(average_scores):
                             score = average_scores[score_index]
-                            
+
                             if score >= score_threshold:
                                 annotation_id = f"slice_{slice_idx}_ann_{score_offset}"
                                 valid_annotations.append((slice_idx, score, annotation_id))
@@ -1740,7 +1898,7 @@ class MEDSAM2Handlers:
                             else:
                                 filtered_annotations.append((slice_idx, score, f"slice_{slice_idx}_ann_{score_offset}"))
                                 logger.info(f"Manual annotation: slice_{slice_idx}_ann_{score_offset} filtered with score {score:.6f}")
-                    
+
                     if slice_annotations > 0:
                         logger.info(f"Manual annotation: Slice {slice_idx} has {slice_annotations} qualifying annotations")
             else:
@@ -1754,60 +1912,62 @@ class MEDSAM2Handlers:
                     else:
                         filtered_annotations.append((slice_idx, score, f"slice_{slice_idx}_ann_0"))
                         logger.info(f"Manual annotation: slice_{slice_idx}_ann_0 filtered with score {score:.6f}")
-            
+
             logger.info(f"Manual annotation: {len(valid_annotations)} annotations passed threshold (>= {score_threshold})")
             logger.info(f"Manual annotation: {len(filtered_annotations)} annotations filtered out")
-            
+
             result_msg = f"Manual annotation processed {len(average_scores)} scores from {len(slice_indices)} slices. "
             result_msg += f"{len(valid_annotations)} annotations passed threshold (>= {score_threshold}), "
             result_msg += f"{len(filtered_annotations)} filtered out."
-            
+
             # Show distribution by slice
             slice_counts = {}
             for slice_idx, _, _ in valid_annotations:
                 slice_counts[slice_idx] = slice_counts.get(slice_idx, 0) + 1
-            
+
             if slice_counts:
                 result_msg += f"\nAnnotations per slice: {dict(sorted(slice_counts.items()))}"
-            
+
             return result_msg
-            
+
         except Exception as e:
             logger.error(f"Error in manual annotation filtering: {str(e)}")
-            return f"Manual annotation filtering error: {str(e)}"    @log_exception
+            return f"Manual annotation filtering error: {str(e)}"
+
+    @log_exception
     def filter_automatic_results_by_score(self, output_dir: str, score_threshold: float) -> str:
         """Filter automatic annotation results based on score threshold - creates individual annotations for qualifying scores"""
         if not os.path.exists(output_dir):
             return "No results to filter."
-        
+
         try:
             masks_dir = os.path.join(output_dir, "masks")
             if not os.path.exists(masks_dir):
                 return "No masks directory found."
-            
+
             # Get all score files directly
             score_files = [f for f in os.listdir(masks_dir) if f.endswith('_scores.npy')]
-            
+
             if not score_files:
                 return "No score files found in masks directory."
-            
+
             valid_annotations = []
             filtered_annotations = []
-            
+
             for score_file in score_files:
                 # Extract slice number from filename (e.g., slice_0012_scores.npy -> 12)
                 slice_num_str = score_file.split('_')[1]
                 slice_idx = int(slice_num_str)
-                
+
                 # Load the scores for this slice
                 score_path = os.path.join(masks_dir, score_file)
                 scores = np.load(score_path)
-                
+
                 # Process each individual score in the slice
                 for score_idx, score in enumerate(scores):
                     score_value = float(score)
                     annotation_id = f"slice_{slice_idx}_ann_{score_idx}"
-                    
+
                     if score_value >= score_threshold:
                         valid_annotations.append((slice_idx, score_value, annotation_id))
                         # Store overlay with unique annotation ID
@@ -1816,23 +1976,23 @@ class MEDSAM2Handlers:
                     else:
                         filtered_annotations.append((slice_idx, score_value, annotation_id))
                         logger.info(f"Automatic annotation: {annotation_id} filtered with score {score_value:.6f}")
-            
+
             logger.info(f"Automatic annotation: {len(valid_annotations)} annotations passed threshold (>= {score_threshold})")
             logger.info(f"Automatic annotation: {len(filtered_annotations)} annotations filtered out")
-            
+
             # Sort for display
             valid_annotations.sort(key=lambda x: (x[0], x[2]))  # Sort by slice, then annotation ID
             filtered_annotations.sort(key=lambda x: (x[0], x[2]))
-            
+
             result_msg = f"Automatic annotation processed {len(score_files)} slices with {len(valid_annotations) + len(filtered_annotations)} total annotations. "
             result_msg += f"{len(valid_annotations)} annotations passed threshold (>= {score_threshold}), "
             result_msg += f"{len(filtered_annotations)} filtered out."
-            
+
             # Show distribution by slice
             slice_counts = {}
             for slice_idx, _, _ in valid_annotations:
                 slice_counts[slice_idx] = slice_counts.get(slice_idx, 0) + 1
-            
+
             if slice_counts:
                 result_msg += f"\nAnnotations per slice: {dict(sorted(slice_counts.items()))}"
                 # Show sample of valid annotations
@@ -1841,16 +2001,18 @@ class MEDSAM2Handlers:
                 else:
                     result_msg += f"\nSample valid annotations: {[(f'#{a[0]}({a[1]:.3f})', a[2]) for a in valid_annotations[:10]]}"
                     result_msg += f" and {len(valid_annotations) - 10} more..."
-            
+
             return result_msg
-            
+
         except Exception as e:
             logger.error(f"Error filtering automatic results by score: {str(e)}")
-            return f"Error filtering results: {str(e)}"              @log_exception
+            return f"Error filtering results: {str(e)}"
+
+    @log_exception
     def store_slice_overlay(self, output_dir: str, slice_idx: int) -> bool:
         """Store overlay data for a specific slice (legacy method for backward compatibility)"""
         return self.store_slice_overlay_with_id(output_dir, slice_idx, f"slice_{slice_idx}_default", 0)
-    
+
     @log_exception
     def store_slice_overlay_with_id(self, output_dir: str, slice_idx: int, annotation_id: str, score_idx: int) -> bool:
         """Store overlay data for a specific slice with unique annotation ID"""
@@ -1859,25 +2021,25 @@ class MEDSAM2Handlers:
             # After our +1 adjustment to the prompt key, MEDSAM2 uses the same UI slice number for the output file
             slice_num_padded = str(slice_idx).zfill(4)
             mask_path = os.path.join(output_dir, "masks", f"slice_{slice_num_padded}_mask.npy")
-            
+
             if os.path.exists(mask_path):
                 mask_array = np.load(mask_path)
-                
+
                 ui_slice_number = slice_idx
-                
+
                 # Initialize slice overlay storage if it doesn't exist
                 if ui_slice_number not in self.annotation_overlays:
                     self.annotation_overlays[ui_slice_number] = {}
-                
+
                 # Check if we already have an annotation for this slice to prevent duplicates
                 existing_annotations = self.annotation_overlays[ui_slice_number]
-                
+
                 # For "All Records" mode, we should only store one annotation per slice
                 # even if there are multiple qualifying scores
                 if len(existing_annotations) > 0:
                     logger.info(f"Annotation already exists for slice {ui_slice_number}, skipping duplicate")
                     return True
-                
+
                 # Store with unique annotation ID (but avoid duplicates)
                 self.annotation_overlays[ui_slice_number][annotation_id] = {
                     'mask': mask_array,
@@ -1886,13 +2048,13 @@ class MEDSAM2Handlers:
                     'annotation_id': annotation_id,
                     'score_idx': score_idx
                 }
-                
+
                 logger.info(f"Stored overlay for UI slice {ui_slice_number} with annotation ID {annotation_id}")
                 return True
             else:
                 logger.warning(f"Mask file not found for UI slice {slice_idx}: {mask_path}")
                 return False
-                
+
         except Exception as e:
             logger.error(f"Error storing overlay for slice {slice_idx} with ID {annotation_id}: {str(e)}")
             return False
@@ -1903,7 +2065,7 @@ class MEDSAM2Handlers:
             self.point_mode_enabled = False
         self.point_mode_enabled = True
         logger.info("Point mode enabled")
-    
+
     def disable_point_mode(self):
         """Disable point mode for coordinate capture"""
         # Ensure the attribute exists
@@ -1917,33 +2079,33 @@ class MEDSAM2Handlers:
         Convenience method - alias for load_annotation_results with Single Slice mode
         """
         return self.load_annotation_results(output_dir, "Single Slice")
-    
+
     def set_annotation_workflow(self, workflow_type: str):
         """Set the annotation workflow type ('manual' or 'automatic')"""
         if workflow_type not in ['manual', 'automatic']:
             raise ValueError("Workflow type must be 'manual' or 'automatic'")
-        
+
         self.workflow_type = workflow_type
         logger.info(f"Annotation workflow set to: {workflow_type}")
-    
+
     def get_annotation_workflow(self) -> str:
         """Get the current annotation workflow type"""
         return getattr(self, 'workflow_type', 'manual')  # Default to manual for backward compatibility
-    
+
     def filter_results_by_workflow(self, output_dir: str, score_threshold: float) -> str:
         """Filter results based on the current workflow type"""
         workflow = self.get_annotation_workflow()
-        
+
         if workflow == 'automatic':
             return self.filter_automatic_results_by_score(output_dir, score_threshold)
         else:
             return self.filter_manual_results_by_score(output_dir, score_threshold)
-    
+
     def get_slice_annotations(self, slice_idx: int) -> Dict[str, Any]:
         """Get all annotations for a specific slice"""
         if slice_idx not in self.annotation_overlays:
             return {}
-        
+
         # Handle both old format (single annotation) and new format (multiple annotations)
         slice_data = self.annotation_overlays[slice_idx]
         if isinstance(slice_data, dict) and 'mask' in slice_data:
@@ -1952,12 +2114,12 @@ class MEDSAM2Handlers:
         else:
             # New format - multiple annotations
             return slice_data
-    
+
     def get_slice_annotation_count(self, slice_idx: int) -> int:
         """Get the number of annotations for a specific slice"""
         annotations = self.get_slice_annotations(slice_idx)
         return len(annotations)
-    
+
     def get_all_slice_annotations(self) -> Dict[int, Dict[str, Any]]:
         """Get all annotations for all slices"""
         result = {}
@@ -1970,30 +2132,30 @@ class MEDSAM2Handlers:
         self.box_mode_enabled = True
         self.point_mode_enabled = False
         logger.info("Box mode enabled")
-    
+
     def disable_box_mode(self):
         """Disable box-based prompt mode and clear stored box prompts"""
         self.box_mode_enabled = False
         self.prompt_boxes = []  # Clear any stored box prompts
         logger.info("Box mode disabled and box prompts cleared")
-    
+
     def handle_box_annotation(self, annotated_image_value):
         """Handle box annotations from the image_annotator when in box mode"""
         try:
             if not self.box_mode_enabled:
                 logger.info("Box mode not enabled, ignoring box annotation")
                 return None  # Return None if not in box mode
-            
+
             if not annotated_image_value or not isinstance(annotated_image_value, dict):
                 logger.info("No valid annotation data received")
                 return None
-            
+
             boxes = annotated_image_value.get('boxes', [])
             if not boxes:
                 logger.info("No boxes found in annotation data")
                 self.prompt_boxes = []  # Clear if no boxes
                 return None
-            
+
             # Store the latest box as the prompt box for MEDSAM2
             # We'll use the most recent box as the prompt
             latest_box = boxes[-1]  # Get the last/most recent box
@@ -2005,26 +2167,26 @@ class MEDSAM2Handlers:
                 y1 = latest_box['ymin']
                 x2 = latest_box['xmax']
                 y2 = latest_box['ymax']
-                
+
                 prompt_box = {'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2}
                 self.prompt_boxes = [prompt_box]  # Store as single box for now
-                
+
                 logger.info(f"Stored prompt box from coordinates: ({x1}, {y1}) to ({x2}, {y2})")
                 logger.info(f"Box details: {prompt_box}")
-                
+
                 # Store box for XAI computation (will be applied during annotation run, not immediately)
                 # This prevents refresh loops while drawing/moving boxes
-                
+
                 return self.update_box_prompt_display()
             else:
                 logger.warning(f"Invalid box format: {latest_box}")
                 logger.info(f"Expected keys: xmin, ymin, xmax, ymax. Got keys: {list(latest_box.keys())}")
                 return None
-                
+
         except Exception as e:
             logger.error(f"Error handling box annotation: {str(e)}")
             return None
-    
+
     def clear_prompt_boxes(self):
         """Clear all stored prompt boxes"""
         self.prompt_boxes = []
@@ -2035,26 +2197,26 @@ class MEDSAM2Handlers:
         """Generate the brain_target_prompts.json file from selected box prompts"""
         if not self.prompt_boxes:
             return False, "No box prompts selected"
-            
+
         if not dicom_folder or not os.path.exists(dicom_folder):
             return False, f"DICOM folder not found: {dicom_folder}"
-        
+
         try:
             # Get current slice information from state
             current_slice = self.state.current_slice_idx
             logger.info(f"Current slice from state: {current_slice} (type: {type(current_slice)})")
-            
+
             # Store the slice that will be annotated (keep as 1-based for UI consistency)
             self.annotated_slice = current_slice
             logger.info(f"Stored annotated slice: {self.annotated_slice} (UI-based)")
-            
+
             # Convert box prompts to MEDSAM2 format
             # MEDSAM2 expects boxes as [x1, y1, x2, y2] format
             boxes = []
             for box in self.prompt_boxes:
                 box_coords = [int(box['x1']), int(box['y1']), int(box['x2']), int(box['y2'])]
                 boxes.append(box_coords)
-            
+
             # Create the prompt structure expected by MEDSAM2
             # prompt_key = UI_slice + 1 (MEDSAM2 will convert this to 0-based by subtracting 1 internally)
             # We add 1 to compensate for MEDSAM2's internal subtraction
@@ -2064,35 +2226,35 @@ class MEDSAM2Handlers:
                     "boxes": boxes
                 }
             }
-            
+
             # Save to brain_target_prompts.json in the project root (not in DICOM folder)
             prompt_file = "brain_target_prompts.json"
             with open(prompt_file, 'w') as f:
                 json.dump(prompt_data, f, indent=2)
-            
+
             logger.info(f"Generated box prompt file: {prompt_file} for slice {current_slice} with {len(self.prompt_boxes)} boxes")
             logger.info(f"Using prompt key: {prompt_key} (UI slice {current_slice} + 1) for MEDSAM2")
             logger.info(f"Boxes: {boxes}")
             logger.info(f"Stored annotated slice number: {self.annotated_slice}")
-            
+
             return True, prompt_file
-            
+
         except Exception as e:
             logger.error(f"Error generating box prompt JSON: {str(e)}")
             return False, f"Error: {str(e)}"
-    
+
     def update_box_prompt_display(self) -> str:
         """Update the display text for box prompts"""
         if not self.prompt_boxes:
             return ""
-        
+
         box_descriptions = []
         for i, box in enumerate(self.prompt_boxes):
             x1, y1, x2, y2 = box['x1'], box['y1'], box['x2'], box['y2']
             width = x2 - x1
             height = y2 - y1
             box_descriptions.append(f"Box {i+1}: ({x1},{y1}) to ({x2},{y2}) [W:{width} H:{height}]")
-        
+
         return f"Box prompts ready for MEDSAM2:\n" + "\n".join(box_descriptions)
 
     def extract_boxes_from_image_data(self, image_display_data):
@@ -2101,7 +2263,7 @@ class MEDSAM2Handlers:
             if not image_display_data or not isinstance(image_display_data, dict):
                 logger.info("No valid image display data")
                 return
-            
+
             boxes = image_display_data.get('boxes', [])
             if not boxes:
                 logger.info("No boxes found in image display data")
@@ -2115,25 +2277,25 @@ class MEDSAM2Handlers:
                     y1 = box['ymin']
                     x2 = box['xmax']
                     y2 = box['ymax']
-                    
+
                     prompt_box = {'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2}
                     converted_boxes.append(prompt_box)
                     logger.info(f"Converted box: ({x1}, {y1}) to ({x2}, {y2})")
                 else:
                     logger.warning(f"Invalid box format: {box}")
                     logger.info(f"Expected keys: xmin, ymin, xmax, ymax. Got keys: {list(box.keys())}")
-            
+
             self.prompt_boxes = converted_boxes
             logger.info(f"Extracted {len(converted_boxes)} boxes from image display data")
-            
+
         except Exception as e:
             logger.error(f"Error extracting boxes from image data: {str(e)}")
-    
+
     def get_annotations_info(self) -> str:
         """Get information about current annotations for debugging"""
         if not self.annotation_overlays:
             return "No annotations stored"
-        
+
         info_lines = []
         for slice_idx, annotations in self.annotation_overlays.items():
             if isinstance(annotations, dict):
@@ -2148,16 +2310,16 @@ class MEDSAM2Handlers:
                         if isinstance(ann_data, dict) and 'mask' in ann_data:
                             timestamp = ann_data.get('timestamp', 'unknown')
                             info_lines.append(f"  - {ann_id} (timestamp: {timestamp})")
-        
+
         return "\n".join(info_lines)
-    
+
     def sync_annotations_with_ui_shapes(self, annotated_image_value):
         """Synchronize stored annotations with current UI shapes - remove annotations for deleted shapes"""
         try:
             current_slice = self.state.current_slice_idx
             if current_slice not in self.annotation_overlays:
                 return "No annotations to sync"
-            
+
             # Get current boxes from UI
             ui_boxes = []
             if annotated_image_value and isinstance(annotated_image_value, dict):
@@ -2166,34 +2328,34 @@ class MEDSAM2Handlers:
                     if 'xmin' in box and 'ymin' in box and 'xmax' in box and 'ymax' in box:
                         # Convert to our internal format for comparison
                         ui_boxes.append({
-                            'x1': box['xmin'], 'y1': box['ymin'], 
+                            'x1': box['xmin'], 'y1': box['ymin'],
                             'x2': box['xmax'], 'y2': box['ymax']
                         })
-            
+
             # Get stored annotations for current slice
             stored_annotations = self.annotation_overlays[current_slice]
             if isinstance(stored_annotations, dict) and 'mask' in stored_annotations:
                 # Old format - single annotation, skip sync for now
                 return "Old format annotation, sync skipped"
-            
+
             # Check which stored annotations no longer have corresponding UI shapes
             annotations_to_remove = []
-            
+
             for annotation_id, annotation_data in stored_annotations.items():
                 if not isinstance(annotation_data, dict) or 'mask' not in annotation_data:
                     continue
-                
+
                 # For each stored annotation, check if there's a similar box in UI
                 annotation_found = False
-                
+
                 # We need to be flexible with matching since UI coordinates might have small variations
                 # For now, let's just count total shapes vs stored annotations
-                
+
             # Simple approach: if UI has fewer boxes than stored annotations, remove excess
-            stored_count = len([k for k, v in stored_annotations.items() 
+            stored_count = len([k for k, v in stored_annotations.items()
                               if isinstance(v, dict) and 'mask' in v])
             ui_count = len(ui_boxes)
-            
+
             if ui_count < stored_count:
                 # Some annotations were deleted - remove the oldest ones
                 # Sort by timestamp and remove oldest
@@ -2202,40 +2364,43 @@ class MEDSAM2Handlers:
                     if isinstance(ann_data, dict) and 'mask' in ann_data:
                         timestamp = ann_data.get('timestamp', 0)
                         timestamped_annotations.append((timestamp, ann_id))
-                
+
                 # Sort by timestamp (oldest first)
                 timestamped_annotations.sort()
                   # Remove the oldest annotations to match UI count
                 annotations_to_remove = timestamped_annotations[:stored_count - ui_count]
-                
+
                 for _, ann_id in annotations_to_remove:
                     del stored_annotations[ann_id]
                     logger.info(f"Removed annotation {ann_id} from slice {current_slice} due to shape deletion")
-                
-                return f"Removed {len(annotations_to_remove)} annotations to match UI shapes"            
+
+                return f"Removed {len(annotations_to_remove)} annotations to match UI shapes"
             return f"Sync complete: {stored_count} stored, {ui_count} UI shapes"
-            
+
         except Exception as e:
             logger.error(f"Error syncing annotations with UI shapes: {str(e)}")
             return f"Sync error: {str(e)}"
-    
+
     @log_exception
-    def run_sam2_fast_masking(self, dicom_folder: str, output_dir: str, 
+    def run_sam2_fast_masking(self, dicom_folder: str, output_dir: str,
                              save_visualizations: bool, processing_mode: str = "All Records") -> Tuple[str, Optional[Dict], bool]:
         """
         Run SAM2 fast masking pipeline integrated from test_comprehensive_mask_generator.py
-        
+
         Args:
             dicom_folder: Path to DICOM folder
             output_dir: Output directory for results
             save_visualizations: Whether to save visualizations
             processing_mode: "Single Slice" or "All Records"
-        
+
         Returns:
             Tuple of (status_message, annotated_image_data, success_flag)        """
         import time
         import torch
-        
+        is_raster_image = self.state.current_data_type == "image"
+        # A fresh run must not retain masks for slices that produce no result.
+        self.start_new_suggestion_run()
+
         # Track automatic segmentation for behavioral analytics
         try:
             track_automatic_segmentation(
@@ -2244,11 +2409,11 @@ class MEDSAM2Handlers:
             )
         except Exception as track_e:
             logger.debug(f"Behavioral tracking skipped: {track_e}")
-        
-        logger.debug("🚀 Starting SAM2 Fast Masking Pipeline - Import Phase")        
+
+        logger.debug("🚀 Starting SAM2 Fast Masking Pipeline - Import Phase")
         # Simple and effective Hydra clearing (adapted from working test_comprehensive_mask_generator.py)
         logger.debug("🧹 Simple Hydra clearing with retry mechanism...")
-        
+
         def force_clear_hydra():
             """Simple and effective Hydra clearing"""
             try:
@@ -2261,7 +2426,7 @@ class MEDSAM2Handlers:
                             del sys.modules[module]
                         except:
                             pass
-                
+
                 # Clear GlobalHydra instance
                 from hydra.core.global_hydra import GlobalHydra
                 if GlobalHydra.instance().is_initialized():
@@ -2271,7 +2436,7 @@ class MEDSAM2Handlers:
             except Exception as e:
                 logger.debug(f"Note: Hydra clearing attempt: {e}")
                 return False
-        
+
         # Try multiple times if needed (as in working script)
         import time
         for attempt in range(3):
@@ -2280,22 +2445,22 @@ class MEDSAM2Handlers:
             if attempt < 2:
                 logger.debug(f"Hydra clear attempt {attempt + 1} failed, retrying...")
                 time.sleep(0.1)
-        
+
         logger.debug("✅ Simple Hydra clearing completed")
-        
+
         # Add parent directory and models directory to path for imports (same as test_comprehensive_mask_generator.py)
         current_dir = os.path.dirname(os.path.abspath(__file__))
         parent_dir = os.path.dirname(current_dir)
         models_dir = os.path.join(parent_dir, "models", "medsam2")
         sam2_dir = os.path.join(models_dir, "sam2")  # Add SAM2 package directory
-        
+
         logger.debug(f"📁 Current directory: {current_dir}")
         logger.debug(f"📁 Parent directory: {parent_dir}")
         logger.debug(f"📁 Models directory: {models_dir}")
         logger.debug(f"📁 SAM2 directory: {sam2_dir}")
         logger.debug(f"📁 Models directory exists: {os.path.exists(models_dir)}")
         logger.debug(f"📁 SAM2 directory exists: {os.path.exists(sam2_dir)}")
-        
+
         # Check for utils.misc in different locations
         utils_misc_locations = [
             os.path.join(models_dir, "utils", "misc.py"),
@@ -2307,56 +2472,56 @@ class MEDSAM2Handlers:
           # Add all necessary paths for SAM2 modules
         logger.debug("Adding paths to sys.path...")
         paths_to_add = [parent_dir, models_dir, sam2_dir]
-        
+
         # Also add utils directory to handle utils.misc imports
         utils_dir = os.path.join(models_dir, "utils")
         if os.path.exists(utils_dir):
             paths_to_add.append(utils_dir)
             logger.debug(f"📁 Utils directory: {utils_dir} exists: True")
-        
+
         for path in paths_to_add:
             if path not in sys.path:
                 sys.path.insert(0, path)
                 logger.debug(f"➕ Added to sys.path: {path}")
-        
+
         logger.debug(f"📋 Updated sys.path (first 8): {sys.path[:8]}")
           # Check if brain_segmentation_configs exists
         brain_config_path = os.path.join(parent_dir, "brain_segmentation_configs.py")
         logger.debug(f"🧠 Brain config file exists: {os.path.exists(brain_config_path)}")
-        
+
         # Check SAM2 module paths
         build_sam_path = os.path.join(models_dir, "build_sam.py")
         auto_mask_gen_path = os.path.join(models_dir, "automatic_mask_generator.py")
         logger.debug(f"🔧 build_sam.py exists: {os.path.exists(build_sam_path)}")
         logger.debug(f"🎭 automatic_mask_generator.py exists: {os.path.exists(auto_mask_gen_path)}")
-        
+
         try:
             logger.debug("Importing brain_segmentation_configs...")
             from brain_segmentation_configs import get_brain_config
             logger.debug("✅ brain_segmentation_configs imported successfully")
-            
+
             logger.debug("Importing build_sam...")
             from models.medsam2.build_sam import build_sam2
             logger.debug("✅ build_sam imported successfully")
-            
+
             logger.debug("Importing automatic_mask_generator...")
             from models.medsam2.automatic_mask_generator import SAM2AutomaticMaskGenerator
             logger.debug("✅ automatic_mask_generator imported successfully")
-            
+
         except ImportError as e:
             logger.error(f"❌ Import error: {e}")
             logger.debug(f"📋 Current sys.path: {sys.path}")
             logger.debug(f"📁 Current working directory: {os.getcwd()}")
             return f"Error importing required modules: {e}", None, False
-        
+
         try:
             # Configuration - detect modality and choose appropriate config
             logger.debug("Detecting modality and loading configuration...")
-            
+
             # Detect MG modality from DICOM metadata
             is_mammography = False
             config_name = 'fast'  # Default configuration
-            
+
             # Check if we have DICOM metadata available
             if hasattr(self.state, 'current_metadata') and self.state.current_metadata:
                 modality = self.state.current_metadata.get('Modality', '')
@@ -2364,7 +2529,7 @@ class MEDSAM2Handlers:
                     is_mammography = True
                     config_name = 'mammography'
                     logger.info(f"🔍 Detected MG modality - using mammography-optimized configuration")
-            
+
             # If metadata not in state, try reading from DICOM file directly
             if not is_mammography and os.path.exists(dicom_folder):
                 try:
@@ -2380,9 +2545,9 @@ class MEDSAM2Handlers:
                             logger.info(f"🔍 Detected MG modality from DICOM file - using mammography-optimized configuration")
                 except Exception as e:
                     logger.debug(f"Could not check modality from DICOM file: {e}")
-            
+
             brain_config = get_brain_config(config_name)
-            
+
             # ADAPTIVE ADJUSTMENT: For large MG images, reduce parameters to avoid OOM
             if is_mammography and processing_mode == "Single Slice":
                 # Get image dimensions to check if we need to adjust parameters
@@ -2402,9 +2567,9 @@ class MEDSAM2Handlers:
                         )
                         image_dimensions = current_slice_data.shape[:2]  # (height, width)
                         max_dim = max(image_dimensions)
-                        
+
                         logger.info(f"🖼️ Detected image size: {image_dimensions[0]}×{image_dimensions[1]} pixels (max: {max_dim})")
-                        
+
                         # Adaptive thresholds for large mammography images (inclusive: >=)
                         # Note: breast region cropping will further reduce the effective size
                         if max_dim >= 3500:
@@ -2443,7 +2608,7 @@ class MEDSAM2Handlers:
                     status_msg = f"🔬 Using mammography configuration:\n"
             else:
                 status_msg = "🚀 Starting SAM2 Fast Masking Pipeline...\n"
-            
+
             if is_mammography:
                 logger.info(f"✅ Mammography config loaded: points_per_side={brain_config['points_per_side']}, "
                           f"pred_iou_thresh={brain_config['pred_iou_thresh']}, "
@@ -2452,14 +2617,14 @@ class MEDSAM2Handlers:
             else:
                 logger.debug(f"✅ Brain config loaded: {brain_config}")
                 status_msg = "🚀 Starting SAM2 Fast Masking Pipeline...\n"
-            
+
             # Setup paths
             config_path = os.path.join(models_dir, "configs", "sam2.1_hiera_b+.yaml")
             checkpoint_path = os.path.join(models_dir, "checkpoints", "sam2.1_hiera_base_plus.pt")
-            
+
             logger.debug(f"📁 Config path: {config_path}")
             logger.debug(f"📁 Checkpoint path: {checkpoint_path}")
-            
+
             # Verify files exist
             if not os.path.exists(config_path):
                 logger.error(f"❌ Config file not found at {config_path}")
@@ -2467,20 +2632,20 @@ class MEDSAM2Handlers:
             if not os.path.exists(checkpoint_path):
                 logger.error(f"❌ Checkpoint file not found at {checkpoint_path}")
                 return f"Error: Checkpoint file not found at {checkpoint_path}", None, False
-            
+
             logger.debug("✅ Model files verified")
-            
+
             # Create output directory
             logger.debug(f"📁 Creating output directory: {output_dir}")
             os.makedirs(output_dir, exist_ok=True)
             logger.debug("✅ Output directory created")
-            
+
             # Continue building status message
             if not status_msg.startswith("🔬"):
                 status_msg = "🚀 Starting SAM2 Fast Masking Pipeline...\n"
-            
+
             overall_start_time = time.time()
-            
+
             # Setup device
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
             logger.debug(f"🖥️ Using device: {device}")
@@ -2491,10 +2656,10 @@ class MEDSAM2Handlers:
             status_msg += f"Using device: {device}\n"            # Load SAM2 model (with caching to avoid repeated Hydra initialization)
             status_msg += "🔄 Loading SAM2 model...\n"
             logger.debug("🔄 Starting SAM2 model loading...")
-            
+
             # Check if we can reuse cached model
-            if (self._sam2_model_cache is not None and 
-                self._sam2_model_config_path == config_path and 
+            if (self._sam2_model_cache is not None and
+                self._sam2_model_config_path == config_path and
                 self._sam2_model_checkpoint_path == checkpoint_path):
                 logger.debug("✅ Using cached SAM2 model")
                 sam2_model = self._sam2_model_cache
@@ -2502,7 +2667,7 @@ class MEDSAM2Handlers:
             else:
                 # Need to load new model - apply simple Hydra clearing
                 logger.debug("🧹 Simple Hydra clearing before model loading...")
-                
+
                 # Simple clearing approach (from working script)
                 def force_clear_hydra():
                     try:
@@ -2515,7 +2680,7 @@ class MEDSAM2Handlers:
                                     del sys.modules[module]
                                 except:
                                     pass
-                        
+
                         # Clear GlobalHydra
                         from hydra.core.global_hydra import GlobalHydra
                         if GlobalHydra.instance().is_initialized():
@@ -2525,7 +2690,7 @@ class MEDSAM2Handlers:
                     except Exception as e:
                         logger.debug(f"Hydra clearing attempt: {e}")
                         return False
-                
+
                 # Try clearing with retry
                 import time
                 for attempt in range(3):
@@ -2533,18 +2698,18 @@ class MEDSAM2Handlers:
                         break
                     if attempt < 2:
                         time.sleep(0.1)
-                
+
                 model_load_start_time = time.time()
                 try:
                     logger.debug(f"📥 Loading SAM2 with config: {config_path}")
                     logger.debug(f"📥 Loading SAM2 with checkpoint: {checkpoint_path}")
                     sam2_model = build_sam2(config_path, checkpoint_path, device=device)
-                    
+
                     # Cache the model
                     self._sam2_model_cache = sam2_model
                     self._sam2_model_config_path = config_path
                     self._sam2_model_checkpoint_path = checkpoint_path
-                    
+
                     model_load_time = time.time() - model_load_start_time
                     logger.debug(f"✅ SAM2 model loaded successfully in {model_load_time:.2f}s")
                     status_msg += f"✅ SAM2 model loaded in {model_load_time:.2f}s\n"
@@ -2556,21 +2721,21 @@ class MEDSAM2Handlers:
                     self._sam2_model_config_path = None
                     self._sam2_model_checkpoint_path = None
                     return f"❌ Model loading failed: {e}", None, False
-            
+
             # Create mask generator with fast configuration
             if is_mammography:
                 status_msg += f"🔬 Creating mask generator with 'MAMMOGRAPHY' configuration (optimized for small masses)...\n"
             else:
                 status_msg += f"🔄 Creating mask generator with 'fast' configuration...\n"
-            
+
             status_msg += f"   • Grid resolution: {brain_config['points_per_side']}x{brain_config['points_per_side']} points\n"
             status_msg += f"   • IoU threshold: {brain_config['pred_iou_thresh']}\n"
             status_msg += f"   • Min region area: {brain_config['min_mask_region_area']} pixels\n"
-            
+
             if is_mammography:
                 status_msg += f"   • Multi-scale layers: {brain_config['crop_n_layers']} (for small masses)\n"
                 status_msg += f"   • ⚠️ MAMMOGRAPHY MODE: Optimized for detecting tiny masses/white spots\n"
-            
+
             generator_start_time = time.time()
             mask_generator = SAM2AutomaticMaskGenerator(
                 model=sam2_model,
@@ -2578,7 +2743,7 @@ class MEDSAM2Handlers:
             )
             generator_time = time.time() - generator_start_time
             status_msg += f"✅ Mask generator created in {generator_time:.3f}s\n"
-            
+
             # XAI: Always prepare (XAI computes in background, checkbox controls display)
             xai_prepared = False
             if XAI_AVAILABLE:
@@ -2592,11 +2757,11 @@ class MEDSAM2Handlers:
                     status_msg += f"⚠️ XAI preparation failed (continuing without): {xai_e}\n"
               # Find DICOM files and sort them properly to match UI ordering
             status_msg += "🔍 Finding DICOM files...\n"
-            dicom_files = [f for f in os.listdir(dicom_folder) if f.endswith('.dcm')]
-            
-            if not dicom_files:
+            dicom_files = [] if is_raster_image else [f for f in os.listdir(dicom_folder) if f.endswith('.dcm')]
+
+            if not dicom_files and not is_raster_image:
                 return "❌ No DICOM files found in the specified directory", None, False
-            
+
             # Sort DICOM files to match the UI ordering
             # Try to sort by numerical sequence if possible, otherwise alphabetical
             try:
@@ -2607,27 +2772,31 @@ class MEDSAM2Handlers:
                     if numbers:
                         return int(numbers[-1])  # Use the last number in filename
                     return filename
-                
+
                 dicom_files.sort(key=get_sort_key)
                 logger.debug(f"Sorted DICOM files by numerical sequence: {dicom_files[:5]}...")
             except:
                 # Fallback to alphabetical sort
                 dicom_files.sort()
                 logger.debug(f"Sorted DICOM files alphabetically: {dicom_files[:5]}...")
-            
+
             status_msg += f"✅ Found {len(dicom_files)} DICOM files\n"            # Determine slices to process based on mode
-            if processing_mode == "Single Slice":
+            if is_raster_image:
+                status_msg = status_msg.replace(
+                    "Finding DICOM files...", "Using loaded raster image..."
+                ).replace("Found 0 DICOM files", "Raster image ready")
+            if processing_mode == "Single Slice" or is_raster_image:
                 # Process only current slice using data from state (more reliable than file mapping)
                 if hasattr(self.state, 'current_slice_idx') and self.state.current_slice_idx is not None:
                     if self.state.current_data is None:
                         return "❌ No DICOM data loaded in state. Please load DICOM series first.", None, False
-                    
+
                     max_slices = 1
                     ui_slice_idx = self.state.current_slice_idx
-                    
+
                     # Store the annotated slice (UI-based, same as manual annotation system)
                     self.annotated_slice = ui_slice_idx
-                    
+
                     status_msg += f"📍 Processing single slice: UI slice {ui_slice_idx}\n"
                     logger.info(f"Single slice mode: UI slice {ui_slice_idx} using state data")
                 else:
@@ -2639,24 +2808,24 @@ class MEDSAM2Handlers:
                 status_msg += f"📊 Processing all {max_slices} slices from files\n"            # Process slices
             processing_start_time = time.time()
             results = []
-            
+
             for i in range(max_slices):
-                if processing_mode == "Single Slice":
+                if processing_mode == "Single Slice" or is_raster_image:
                     # For single slice, use data directly from state (no file reading needed)
                     ui_slice_idx = self.annotated_slice
-                    
+
                     # Get the slice data from state
                     from utils.visualization import display_slice
                     current_slice_data = display_slice(
                         self.state.current_data,
                         ui_slice_idx,
                         self.state.current_view,
-                        window_level=self.state.window_level,
-                        window_width=self.state.window_width,
+                        window_level=None if is_raster_image else self.state.window_level,
+                        window_width=None if is_raster_image else self.state.window_width,
                         crosshair=None,
                         add_orientation_marker=False
                     )
-                    
+
                     # Process this slice data directly (pass is_mammography for smart cropping)
                     result = self._process_slice_data_fast(
                         mask_generator, current_slice_data, output_dir, ui_slice_idx, save_visualizations,
@@ -2675,12 +2844,12 @@ class MEDSAM2Handlers:
                     # For all slices, use sequential file processing
                     dicom_file_idx = start_slice + i
                     ui_slice_idx = dicom_file_idx + 1  # UI slice is 1-based
-                    
+
                     if dicom_file_idx >= len(dicom_files):
                         break
-                        
+
                     dicom_path = os.path.join(dicom_folder, dicom_files[dicom_file_idx])
-                    
+
                     # Process DICOM file
                     result = self._process_dicom_slice_fast(
                         mask_generator, dicom_path, output_dir, ui_slice_idx, save_visualizations
@@ -2690,22 +2859,22 @@ class MEDSAM2Handlers:
                         status_msg += f"✅ Processed UI slice {ui_slice_idx} (file {dicom_files[dicom_file_idx]}): {result.get('num_masks', 0)} masks\n"
                     else:
                         status_msg += f"⚠️ Failed to process UI slice {ui_slice_idx} (file {dicom_files[dicom_file_idx]})\n"
-            
+
             processing_time = time.time() - processing_start_time
             overall_time = time.time() - overall_start_time
-            
+
             status_msg += f"\n📊 Processing Summary:\n"
             status_msg += f"   • Total slices processed: {len(results)}\n"
             status_msg += f"   • Processing time: {processing_time:.2f}s\n"
             status_msg += f"   • Overall time: {overall_time:.2f}s\n"
-            
+
             if results:
                 total_masks = sum(r.get('num_masks', 0) for r in results)
                 avg_masks = total_masks / len(results) if results else 0
                 status_msg += f"   • Total masks generated: {total_masks}\n"
                 status_msg += f"   • Average masks per slice: {avg_masks:.1f}\n"                # Create annotation overlays for UI
                 self._create_annotation_overlays_from_fast_results(results, output_dir)
-                
+
                 # XAI: DISABLED for fast-masking mode
                 # Fast-masking has no user prompts, making XAI meaningless
                 # XAI is only enabled for point-based (guided) annotation
@@ -2717,7 +2886,7 @@ class MEDSAM2Handlers:
                 #             status_msg += "🔍 XAI visualization ready (toggle checkbox to show)\n"
                 #     except Exception as xai_e:
                 #         logger.warning(f"XAI capture failed: {xai_e}")
-                
+
                 # Load and display results
                 try:
                     annotated_result = self._create_annotated_result_from_fast_masks(processing_mode)
@@ -2730,13 +2899,13 @@ class MEDSAM2Handlers:
         except Exception as e:
             logger.error(f"Error in SAM2 fast masking: {str(e)}")
             return f"❌ SAM2 Fast Masking failed: {str(e)}", None, False
-    
+
     def _clear_hydra_completely(self):
         """Clear Hydra initialization completely - simplified working version"""
         try:
             import sys
             logger.debug("🧹 Starting simple Hydra cleanup...")
-            
+
             # Clear from sys.modules if loaded
             modules_to_remove = [m for m in sys.modules.keys() if 'hydra' in m.lower()]
             for module in modules_to_remove:
@@ -2746,7 +2915,7 @@ class MEDSAM2Handlers:
                         logger.debug(f"🧹 Removed module: {module}")
                     except:
                         pass
-            
+
             # Clear GlobalHydra instance
             try:
                 from hydra.core.global_hydra import GlobalHydra
@@ -2757,16 +2926,16 @@ class MEDSAM2Handlers:
             except Exception as e:
                 logger.debug(f"🧹 Could not clear GlobalHydra: {e}")
                 return False
-                
+
         except Exception as e:
             logger.debug(f"🧹 Exception during Hydra cleanup: {e}")
             return False
-    
+
     def _extreme_hydra_clearing(self):
         """Extreme Hydra clearing - use simple approach with retry mechanism"""
         try:
             logger.debug("🧹 EXTREME Hydra clearing with retry mechanism...")
-            
+
             def force_clear_hydra():
                 """Simple and effective Hydra clearing"""
                 try:
@@ -2779,7 +2948,7 @@ class MEDSAM2Handlers:
                                 del sys.modules[module]
                             except:
                                 pass
-                    
+
                     # Clear GlobalHydra instance
                     from hydra.core.global_hydra import GlobalHydra
                     if GlobalHydra.instance().is_initialized():
@@ -2789,7 +2958,7 @@ class MEDSAM2Handlers:
                 except Exception as e:
                     logger.debug(f"Note: Hydra clearing attempt: {e}")
                     return False
-            
+
             # Try multiple times if needed (as in working script)
             import time
             for attempt in range(3):
@@ -2798,11 +2967,60 @@ class MEDSAM2Handlers:
                 if attempt < 2:
                     logger.debug(f"Hydra clear attempt {attempt + 1} failed, retrying...")
                     time.sleep(0.1)
-            
+
             logger.debug("✅ EXTREME Hydra clearing completed")
-            
+
         except Exception as e:
             logger.debug(f"🧹 Exception during extreme Hydra cleanup: {e}")
+
+    def _deduplicate_overlapping_masks(self, masks, iou_threshold: float = 0.85):
+        """Keep the highest-quality mask among near-duplicate segmentations."""
+        if len(masks) < 2:
+            return list(masks)
+
+        def quality(mask):
+            return (
+                float(mask.get("predicted_iou", 0) or 0),
+                float(mask.get("stability_score", 0) or 0),
+                float(mask.get("area", 0) or 0),
+            )
+
+        kept = []
+        kept_segments = []
+        for mask in sorted(masks, key=quality, reverse=True):
+            segmentation = mask.get("segmentation")
+            if segmentation is None:
+                kept.append(mask)
+                kept_segments.append((None, 0))
+                continue
+
+            candidate = np.asarray(segmentation, dtype=bool)
+            candidate_area = int(np.count_nonzero(candidate))
+            is_duplicate = False
+            for kept_segment, kept_area in kept_segments:
+                if kept_segment is None or kept_segment.shape != candidate.shape:
+                    continue
+                intersection = int(np.count_nonzero(candidate & kept_segment))
+                if intersection == 0:
+                    continue
+                union = candidate_area + kept_area - intersection
+                overlap_iou = intersection / union if union else 1.0
+                if overlap_iou >= iou_threshold:
+                    is_duplicate = True
+                    break
+
+            if not is_duplicate:
+                kept.append(mask)
+                kept_segments.append((candidate, candidate_area))
+
+        removed = len(masks) - len(kept)
+        if removed:
+            logger.info(
+                "Removed %d near-duplicate automatic masks at IoU >= %.2f",
+                removed,
+                iou_threshold,
+            )
+        return kept
 
     @log_exception
     def _process_dicom_slice_fast(self, mask_generator, dicom_path, output_dir, slice_idx, save_visualizations):
@@ -2811,10 +3029,10 @@ class MEDSAM2Handlers:
         import json
         import time
         import matplotlib.pyplot as plt
-        
+
         try:
             slice_start_time = time.time()
-            
+
             # Load DICOM
             load_start_time = time.time()
             try:
@@ -2824,7 +3042,7 @@ class MEDSAM2Handlers:
             except Exception as e:
                 logger.error(f"Error loading DICOM {dicom_path}: {e}")
                 return None
-            
+
             # Preprocess for SAM
             preprocess_start_time = time.time()
             try:
@@ -2833,7 +3051,7 @@ class MEDSAM2Handlers:
             except Exception as e:
                 logger.error(f"Error preprocessing DICOM: {e}")
                 return None
-            
+
             # Generate masks
             mask_start_time = time.time()
             try:
@@ -2842,7 +3060,7 @@ class MEDSAM2Handlers:
             except Exception as e:
                 logger.error(f"Error generating masks: {e}")
                 return None
-            
+
             # Filter masks based on UI annotation rules: area >= 500 and IoU >= 0.8
             filtered_masks = []
             for mask in masks:
@@ -2850,7 +3068,8 @@ class MEDSAM2Handlers:
                 iou = mask.get('predicted_iou', 0)
                 if area >= 500 and iou >= 0.8:
                     filtered_masks.append(mask)
-            
+            filtered_masks = self._deduplicate_overlapping_masks(filtered_masks)
+
             # Save mask data (JSON only, no comprehensive summary)
             slice_name = f"slice_{slice_idx:03d}"
             mask_data = {
@@ -2864,7 +3083,7 @@ class MEDSAM2Handlers:
                 },
                 "masks": []
             }
-            
+
             # Process masks
             for i, mask in enumerate(filtered_masks):
                 mask_info = {
@@ -2876,18 +3095,18 @@ class MEDSAM2Handlers:
                     "point_coords": mask.get('point_coords', [])
                 }
                 mask_data["masks"].append(mask_info)
-            
+
             # Save JSON
             json_path = os.path.join(output_dir, f"{slice_name}_masks.json")
             with open(json_path, 'w') as f:
                 json.dump(mask_data, f, indent=2)
-            
+
             # Save visualization if requested
             if save_visualizations and filtered_masks:
                 self._save_fast_visualization(rgb_image, filtered_masks, output_dir, slice_name)
-            
+
             total_time = time.time() - slice_start_time
-            
+
             return {
                 "success": True,
                 "slice_idx": slice_idx,
@@ -2901,7 +3120,7 @@ class MEDSAM2Handlers:
                 },
                 "masks": filtered_masks
             }
-            
+
         except Exception as e:
             logger.error(f"Error processing slice {slice_idx}: {e}")
             return None
@@ -2909,17 +3128,17 @@ class MEDSAM2Handlers:
     def _detect_breast_region_bbox(self, image, threshold_percentile=5, min_region_ratio=0.05, padding=50):
         """
         Detect the bounding box of the breast region in a mammography image.
-        
+
         Mammography images typically have large black (air) regions that don't contain
         useful information. This function finds the actual breast tissue region to
         allow cropping before processing, dramatically reducing memory usage.
-        
+
         Args:
             image: Input image (grayscale or RGB, numpy array)
             threshold_percentile: Percentile above which pixels are considered non-background (default: 5)
             min_region_ratio: Minimum ratio of image that should be detected as region (default: 0.05)
             padding: Pixels to add around detected region (default: 50)
-            
+
         Returns:
             tuple: (x_min, y_min, x_max, y_max, crop_info) or None if detection fails
                    crop_info contains metadata for mapping masks back to original coordinates
@@ -2930,56 +3149,56 @@ class MEDSAM2Handlers:
                 gray = np.mean(image, axis=2).astype(np.float32)
             else:
                 gray = image.astype(np.float32)
-            
+
             original_height, original_width = gray.shape
-            
+
             # Calculate threshold based on percentile (to handle different exposure levels)
             # Use a low percentile to identify background (typically very dark)
             threshold = np.percentile(gray, threshold_percentile)
-            
+
             # Add a small margin above the threshold to ensure we capture the breast
             # Mammography backgrounds are typically very close to 0, breast tissue is much brighter
             threshold = max(threshold + 10, np.percentile(gray, 10))
-            
+
             # Create binary mask of non-background pixels
             foreground_mask = gray > threshold
-            
+
             # Check if we have enough foreground
             foreground_ratio = np.sum(foreground_mask) / foreground_mask.size
             if foreground_ratio < min_region_ratio:
                 logger.warning(f"⚠️ Breast region detection: Only {foreground_ratio*100:.1f}% foreground detected, using full image")
                 return None
-            
+
             # Find bounding box of foreground region
             rows = np.any(foreground_mask, axis=1)
             cols = np.any(foreground_mask, axis=0)
-            
+
             if not np.any(rows) or not np.any(cols):
                 logger.warning("⚠️ Breast region detection: No foreground found, using full image")
                 return None
-            
+
             y_min, y_max = np.where(rows)[0][[0, -1]]
             x_min, x_max = np.where(cols)[0][[0, -1]]
-            
+
             # Add padding (but stay within image bounds)
             y_min = max(0, y_min - padding)
             y_max = min(original_height, y_max + padding + 1)
             x_min = max(0, x_min - padding)
             x_max = min(original_width, x_max + padding + 1)
-            
+
             # Calculate crop dimensions
             crop_width = x_max - x_min
             crop_height = y_max - y_min
-            
+
             # Check if cropping provides meaningful benefit (at least 20% reduction)
             original_pixels = original_height * original_width
             cropped_pixels = crop_height * crop_width
             reduction_ratio = 1 - (cropped_pixels / original_pixels)
-            
+
             if reduction_ratio < 0.20:
                 logger.info(f"📏 Breast region covers {(1-reduction_ratio)*100:.1f}% of image, cropping not beneficial")
                 return None
-            
+
             crop_info = {
                 'original_shape': (original_height, original_width),
                 'crop_bbox': (x_min, y_min, x_max, y_max),
@@ -2989,14 +3208,14 @@ class MEDSAM2Handlers:
                 'reduction_ratio': reduction_ratio,
                 'threshold_used': threshold
             }
-            
+
             logger.info(f"✂️ Breast region detected: ({x_min}, {y_min}) to ({x_max}, {y_max})")
             logger.info(f"   Original: {original_width}×{original_height} = {original_pixels/1e6:.2f} MP")
             logger.info(f"   Cropped:  {crop_width}×{crop_height} = {cropped_pixels/1e6:.2f} MP")
             logger.info(f"   Reduction: {reduction_ratio*100:.1f}% fewer pixels to process")
-            
+
             return (x_min, y_min, x_max, y_max, crop_info)
-            
+
         except Exception as e:
             logger.warning(f"⚠️ Breast region detection failed: {e}, using full image")
             return None
@@ -3004,30 +3223,30 @@ class MEDSAM2Handlers:
     def _map_masks_to_original_coordinates(self, masks, crop_info):
         """
         Map mask coordinates from cropped image back to original image coordinates.
-        
+
         Args:
             masks: List of mask dictionaries from SAM
             crop_info: Dictionary containing offset information from _detect_breast_region_bbox
-            
+
         Returns:
             List of masks with updated coordinates
         """
         if crop_info is None:
             return masks
-        
+
         offset_x = crop_info['offset_x']
         offset_y = crop_info['offset_y']
         original_height, original_width = crop_info['original_shape']
-        
+
         mapped_masks = []
         for mask in masks:
             mapped_mask = mask.copy()
-            
+
             # Update bounding box
             if 'bbox' in mapped_mask and len(mapped_mask['bbox']) == 4:
                 x, y, w, h = mapped_mask['bbox']
                 mapped_mask['bbox'] = [x + offset_x, y + offset_y, w, h]
-            
+
             # Update point coordinates
             if 'point_coords' in mapped_mask and mapped_mask['point_coords']:
                 mapped_coords = []
@@ -3037,7 +3256,7 @@ class MEDSAM2Handlers:
                     else:
                         mapped_coords.append(coord)
                 mapped_mask['point_coords'] = mapped_coords
-            
+
             # Update segmentation mask (expand to original size)
             if 'segmentation' in mapped_mask and mapped_mask['segmentation'] is not None:
                 crop_seg = mapped_mask['segmentation']
@@ -3047,15 +3266,15 @@ class MEDSAM2Handlers:
                 crop_h, crop_w = crop_seg.shape
                 full_seg[offset_y:offset_y+crop_h, offset_x:offset_x+crop_w] = crop_seg
                 mapped_mask['segmentation'] = full_seg
-            
+
             mapped_masks.append(mapped_mask)
-        
+
         logger.debug(f"📍 Mapped {len(mapped_masks)} masks back to original coordinates (offset: +{offset_x}, +{offset_y})")
         return mapped_masks
 
     def _process_slice_data_fast(self, mask_generator, slice_data, output_dir, slice_idx, save_visualizations, is_mammography=False):
         """Process slice data directly from state - for single slice mode
-        
+
         For mammography images, this function will:
         1. Detect the breast region (non-black area)
         2. Crop to that region to reduce memory usage
@@ -3064,47 +3283,47 @@ class MEDSAM2Handlers:
         """
         import json
         import time
-        
+
         try:
             slice_start_time = time.time()
             crop_info = None
             original_image_for_viz = None
-            
+
             # Convert slice data to format expected by SAM
             preprocess_start_time = time.time()
             try:
                 rgb_image = self._preprocess_slice_data_for_sam(slice_data)
                 preprocess_time = time.time() - preprocess_start_time
-                
+
                 original_height, original_width = rgb_image.shape[:2]
                 logger.info(f"🖼️ Original image dimensions: {rgb_image.shape} ({original_height}×{original_width} pixels)")
-                
+
                 # For mammography: detect and crop to breast region to save memory
                 if is_mammography:
                     logger.info("🔬 Mammography mode: Detecting breast region to optimize memory usage...")
-                    
+
                     # Store original for visualization
                     original_image_for_viz = rgb_image.copy()
-                    
+
                     # Detect breast region
                     bbox_result = self._detect_breast_region_bbox(rgb_image)
-                    
+
                     if bbox_result is not None:
                         x_min, y_min, x_max, y_max, crop_info = bbox_result
-                        
+
                         # Crop the image
                         rgb_image = rgb_image[y_min:y_max, x_min:x_max].copy()
-                        
+
                         cropped_height, cropped_width = rgb_image.shape[:2]
                         logger.info(f"✂️ Cropped to breast region: {cropped_width}×{cropped_height} pixels")
                         logger.info(f"   Memory reduction: {crop_info['reduction_ratio']*100:.1f}%")
                     else:
                         logger.info("📏 Using full image (cropping not beneficial or detection failed)")
-                
+
             except Exception as e:
                 logger.error(f"Error preprocessing slice data: {e}")
                 return None
-            
+
             # Generate masks on (potentially cropped) image
             mask_start_time = time.time()
             try:
@@ -3115,12 +3334,12 @@ class MEDSAM2Handlers:
             except Exception as e:
                 logger.error(f"Error generating masks: {e}")
                 return None
-            
+
             # Map masks back to original coordinates if we cropped
             if crop_info is not None:
                 logger.info(f"📍 Mapping {len(masks)} masks back to original coordinates...")
                 masks = self._map_masks_to_original_coordinates(masks, crop_info)
-            
+
             # Filter masks based on UI annotation rules: area >= 500 and IoU >= 0.8
             filtered_masks = []
             for mask in masks:
@@ -3128,7 +3347,8 @@ class MEDSAM2Handlers:
                 iou = mask.get('predicted_iou', 0)
                 if area >= 500 and iou >= 0.8:
                     filtered_masks.append(mask)
-            
+            filtered_masks = self._deduplicate_overlapping_masks(filtered_masks)
+
             # Save mask data (JSON only, no comprehensive summary)
             slice_name = f"slice_{slice_idx:03d}"
             mask_data = {
@@ -3141,7 +3361,7 @@ class MEDSAM2Handlers:
                 },
                 "masks": []
             }
-            
+
             # Process masks
             for i, mask in enumerate(filtered_masks):
                 mask_info = {
@@ -3153,19 +3373,19 @@ class MEDSAM2Handlers:
                     "point_coords": mask.get('point_coords', [])
                 }
                 mask_data["masks"].append(mask_info)
-            
+
             # Save JSON
             json_path = os.path.join(output_dir, f"{slice_name}_masks.json")
             with open(json_path, 'w') as f:
                 json.dump(mask_data, f, indent=2)
-            
+
             # Save visualization if requested (use original image if we cropped)
             if save_visualizations and filtered_masks:
                 viz_image = original_image_for_viz if original_image_for_viz is not None else rgb_image
                 self._save_fast_visualization(viz_image, filtered_masks, output_dir, slice_name)
-            
+
             total_time = time.time() - slice_start_time
-            
+
             # Include crop info in result for debugging
             result = {
                 "success": True,
@@ -3180,9 +3400,9 @@ class MEDSAM2Handlers:
                 "masks": filtered_masks,
                 "crop_info": crop_info  # Include crop info for debugging (None if not cropped)
             }
-            
+
             return result
-            
+
         except Exception as e:
             logger.error(f"Error processing slice data for slice {slice_idx}: {e}")
             return None
@@ -3193,40 +3413,40 @@ class MEDSAM2Handlers:
             # Convert to float32 for processing
             if pixel_array.dtype != np.float32:
                 pixel_array = pixel_array.astype(np.float32)
-            
+
             # Normalize to 0-255 range for SAM input
             pixel_min = np.min(pixel_array)
             pixel_max = np.max(pixel_array)
-            
+
             if pixel_max > pixel_min:
                 normalized = (pixel_array - pixel_min) / (pixel_max - pixel_min)
                 scaled = (normalized * 255).astype(np.uint8)
             else:
                 scaled = np.zeros_like(pixel_array, dtype=np.uint8)
-            
+
             # Convert grayscale to RGB (SAM expects 3-channel input)
             if len(scaled.shape) == 2:
                 rgb_image = np.stack([scaled, scaled, scaled], axis=2)
             else:
                 rgb_image = scaled
-            
+
             return rgb_image
-            
+
         except Exception as e:
             logger.error(f"Error preprocessing DICOM: {e}")
             raise
-    
+
     def _preprocess_slice_data_for_sam(self, slice_data):
         """Preprocess slice data from UI state for SAM input"""
         try:
             # Ensure slice_data is a numpy array
             if not isinstance(slice_data, np.ndarray):
                 slice_data = np.array(slice_data)
-            
+
             # Convert to float32 for processing
             if slice_data.dtype != np.float32:
                 slice_data = slice_data.astype(np.float32)
-            
+
             # If it's already in 0-255 range (uint8), keep it
             if slice_data.dtype == np.uint8 or (slice_data.min() >= 0 and slice_data.max() <= 255):
                 if slice_data.dtype != np.uint8:
@@ -3237,21 +3457,21 @@ class MEDSAM2Handlers:
                 # Normalize to 0-255 range for SAM input
                 slice_min = np.min(slice_data)
                 slice_max = np.max(slice_data)
-                
+
                 if slice_max > slice_min:
                     normalized = (slice_data - slice_min) / (slice_max - slice_min)
                     scaled = (normalized * 255).astype(np.uint8)
                 else:
                     scaled = np.zeros_like(slice_data, dtype=np.uint8)
-            
+
             # Convert grayscale to RGB (SAM expects 3-channel input)
             if len(scaled.shape) == 2:
                 rgb_image = np.stack([scaled, scaled, scaled], axis=2)
             else:
                 rgb_image = scaled
-            
+
             return rgb_image
-            
+
         except Exception as e:
             logger.error(f"Error preprocessing slice data: {e}")
             raise
@@ -3261,15 +3481,15 @@ class MEDSAM2Handlers:
         try:
             import matplotlib.pyplot as plt
             import matplotlib.patches as patches
-            
+
             fig, ax = plt.subplots(1, 1, figsize=(12, 8))
-            
+
             # Display original image
             if len(image.shape) == 3:
                 ax.imshow(image)
             else:
                 ax.imshow(image, cmap='gray')
-            
+
             # Overlay masks
             for i, mask in enumerate(masks):
                 # Get mask segmentation
@@ -3278,35 +3498,35 @@ class MEDSAM2Handlers:
                     # Create random color for each mask
                     color = plt.cm.tab10(i % 10)
                     ax.contour(segmentation, levels=[0.5], colors=[color], linewidths=2, alpha=0.8)
-                
+
                 # Draw bounding box
                 bbox = mask.get('bbox', [])
                 if len(bbox) == 4:
                     x, y, w, h = bbox
-                    rect = patches.Rectangle((x, y), w, h, linewidth=1, 
+                    rect = patches.Rectangle((x, y), w, h, linewidth=1,
                                            edgecolor='red', facecolor='none', alpha=0.7)
                     ax.add_patch(rect)
-            
+
             ax.set_title(f'SAM2 Fast Masking - {slice_name}')
             ax.axis('off')
               # Save
             viz_path = os.path.join(output_dir, f"{slice_name}_visualization.png")
             plt.savefig(viz_path, dpi=150, bbox_inches='tight')
             plt.close()
-            
+
         except Exception as e:
             logger.warning(f"Could not save visualization for {slice_name}: {e}")
-    
+
     def _create_annotation_overlays_from_fast_results(self, results, output_dir):
         """Create annotation overlays from fast masking results"""
         try:
             if not hasattr(self, 'annotation_overlays'):
                 self.annotation_overlays = {}
-            
+
             for result in results:
                 slice_idx = result['slice_idx']
                 masks = result.get('masks', [])
-                
+
                 # Get image dimensions for the current slice to filter out false positive masks
                 try:
                     from utils.visualization import display_slice
@@ -3314,50 +3534,50 @@ class MEDSAM2Handlers:
                         self.state.current_data,
                         slice_idx,
                         self.state.current_view,
-                        window_level=self.state.window_level,
-                        window_width=self.state.window_width,
+                        window_level=None if self.state.current_data_type == "image" else self.state.window_level,
+                        window_width=None if self.state.current_data_type == "image" else self.state.window_width,
                         crosshair=None,
                         add_orientation_marker=False
                     )
                     img_height, img_width = slice_img.shape[:2]
-                    
+
                     logger.info(f"Image dimensions: {img_width}x{img_height}")
-                    
+
                 except Exception as e:
                     # Fallback: skip filtering if we can't get image dimensions
                     logger.warning(f"Could not get image dimensions for filtering: {e}")
                     img_height, img_width = None, None
-                
+
                 # CRITICAL: Filter out false positive masks using bbox coordinates and sort by area (smallest to largest) to prevent occlusion
                 masks_with_area = []
                 filtered_count = 0
                 for i, mask in enumerate(masks):
                     area = mask.get('area', 0)
                     bbox = mask.get('bbox', [])
-                    
+
                     # Filter out masks with bbox that spans nearly the entire image (false positives)
                     is_false_positive = False
                     if len(bbox) == 4 and img_height is not None and img_width is not None:
                         x, y, w, h = bbox
-                        
+
                         # Check if bbox covers most of the image (with small tolerance for edge cases)
                         bbox_covers_width = (x <= 5) and (x + w >= img_width - 5)
                         bbox_covers_height = (y <= 5) and (y + h >= img_height - 5)
-                        
+
                         if bbox_covers_width and bbox_covers_height:
                             is_false_positive = True
                             filtered_count += 1
                             logger.info(f"Filtered out mask {i} with bbox {bbox} (covers entire image {img_width}x{img_height})")
-                    
+
                     if not is_false_positive:
                         masks_with_area.append((area, i, mask))
-                
+
                 if filtered_count > 0:
                     logger.info(f"Filtered out {filtered_count} false positive masks based on bbox analysis")
-                
+
                 # Sort by area (smallest first)
                 masks_with_area.sort(key=lambda x: x[0])
-                
+
                 # Convert masks to annotation format in sorted order (keeping existing logic)
                 slice_overlays = {}
                 for sort_idx, (area, orig_idx, mask) in enumerate(masks_with_area):
@@ -3370,28 +3590,28 @@ class MEDSAM2Handlers:
                             'area': area,
                             'sort_order': sort_idx  # Track sort order for unique colors
                         }
-                
+
                 if slice_overlays:
                     self.annotation_overlays[slice_idx] = slice_overlays
-                    
+
         except Exception as e:
             logger.error(f"Error creating annotation overlays: {e}")
-    
+
     def _create_annotated_result_from_fast_masks(self, processing_mode):
         """Create annotated result for UI display"""
         try:
             from utils.visualization import display_slice, create_annotation_boxes_from_mask
-            
+
             # Get clean image
             clean_img = display_slice(
                 self.state.current_data,
                 self.state.current_slice_idx,
                 self.state.current_view,
-                window_level=self.state.window_level,
-                window_width=self.state.window_width,
+                window_level=None if self.state.current_data_type == "image" else self.state.window_level,
+                window_width=None if self.state.current_data_type == "image" else self.state.window_width,
                 crosshair=None,
                 add_orientation_marker=False            )
-            
+
             # Ensure it's RGB and uint8
             if len(clean_img.shape) == 2:
                 img_rgb = np.stack([clean_img] * 3, axis=-1)
@@ -3399,7 +3619,7 @@ class MEDSAM2Handlers:
                 img_rgb = clean_img
             if img_rgb.dtype != np.uint8:
                 img_rgb = (img_rgb * 255).astype(np.uint8)
-            
+
             # XAI: Apply overlay based on checkbox state
             if XAI_AVAILABLE and self._xai_integration is not None:
                 try:
@@ -3408,7 +3628,7 @@ class MEDSAM2Handlers:
                         logger.info("XAI overlay applied to result image")
                 except Exception as xai_e:
                     logger.warning(f"Failed to apply XAI overlay: {xai_e}")
-            
+
             # Define a palette of distinct colors for unique shape coloring
             color_palette = [
                 (255, 0, 0),     # Red
@@ -3432,47 +3652,47 @@ class MEDSAM2Handlers:
                 (255, 20, 147),  # Deep Pink
                 (72, 61, 139)    # Dark Slate Blue
             ]
-            
+
             # Convert masks to polygon shapes with unique colors
             annotation_shapes = []
-            if (hasattr(self, 'annotation_overlays') and 
+            if (hasattr(self, 'annotation_overlays') and
                 self.state.current_slice_idx in self.annotation_overlays):
-                
+
                 overlay_data = self.annotation_overlays[self.state.current_slice_idx]
-                
+
                 # Sort overlay data by sort_order to maintain area-based ordering
                 sorted_overlays = sorted(
-                    overlay_data.items(), 
+                    overlay_data.items(),
                     key=lambda x: x[1].get('sort_order', 0)
                 )
-                
+
                 for idx, (annotation_id, annotation_data) in enumerate(sorted_overlays):
                     if isinstance(annotation_data, dict) and 'mask' in annotation_data:
                         mask_array = annotation_data['mask']
-                        
+
                         # Assign unique color based on sort order
                         color_idx = annotation_data.get('sort_order', idx) % len(color_palette)
                         unique_color = color_palette[color_idx]
-                        
+
                         shapes = create_annotation_boxes_from_mask(
-                            mask_array, 
+                            mask_array,
                             label=f"SAM2 Fast Mask {idx}",
                             label_index=idx + 1,
                             color=unique_color  # Pass unique color
                         )
                         annotation_shapes.extend(shapes)
-                
+
                 logger.info(f"Converted {len(annotation_shapes)} fast masks to annotation shapes with unique colors")
-            
+
             # Create AnnotatedImageValue format with polygon shapes
             annotated_result = {
                 "image": img_rgb,
                 "boxes": annotation_shapes,
                 "orientation": 0
             }
-            
+
             return annotated_result
-            
+
         except Exception as e:
             logger.error(f"Error creating annotated result: {e}")
             return None

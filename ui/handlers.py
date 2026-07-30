@@ -20,6 +20,11 @@ if utils_path not in sys.path:
 from utils.dicom_utils import load_dicom_series, get_dicom_metadata
 from utils.debug_utils import debug_dicom_loading
 from utils.nifti_utils import load_nifti_file
+from utils.raster_utils import (
+    RASTER_IMAGE_EXTENSIONS,
+    find_single_raster_image,
+    load_raster_image,
+)
 from utils.visualization import (display_slice, make_slice_figure, overlay_segmentation, 
                                       make_image_for_gradio, segmentation_to_shapes)
 from utils.conversion import dicom_to_nifti, nifti_to_mat, dicom_to_mat, nifti_to_png
@@ -258,7 +263,7 @@ class DataLoadingHandlers:
     
     @log_exception
     def load_data_for_annotator(self, file_obj, directory, apply_deidentification=False):
-        """Load DICOM data from file or directory and return AnnotatedImageValue format for image_annotator"""
+        """Load supported medical or raster data for the image annotator."""
         
         # Check if we have any valid input
         if not file_obj and not directory:
@@ -272,6 +277,7 @@ class DataLoadingHandlers:
         
         # Track if we're using lazy loading
         is_lazy = False
+        loaded_data_type = "dicom"
         
         # Determine input source - FILE TAKES PRIORITY OVER DIRECTORY
         if file_obj and hasattr(file_obj, 'name') and file_obj.name and os.path.exists(file_obj.name):
@@ -289,18 +295,36 @@ class DataLoadingHandlers:
                 self.state.current_data = img3d
                 self.state.current_metadata = meta
                 self.state.file_list = [path]
+                loaded_data_type = "nifti"
             elif ext == '.mat':
                 # Placeholder for MAT loading
                 self.state.current_data = None
                 self.state.current_metadata = {}
                 self.state.file_list = [path]
+            elif ext in RASTER_IMAGE_EXTENSIONS:
+                image_volume, metadata = load_raster_image(path)
+                self.state.current_data = image_volume
+                self.state.current_metadata = metadata
+                self.state.file_list = [path]
+                loaded_data_type = "image"
             else:
                 return None, gr.Dropdown(choices=[]), {}, gr.Slider(visible=False), "0/0", "x: 0, y: 0, z: 0", f"Unsupported file type: {ext}", 500, 1000, gr.Radio()
         elif directory:
-            # Load from directory only if no file was provided
+            # A campaign patient may be a DICOM series or one metadata-free image.
             path = directory
-            self.state.current_directory = directory  # Store the directory path
-            self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(path, apply_deidentification=apply_deidentification)
+            self.state.current_directory = directory
+            raster_path = find_single_raster_image(directory)
+            if raster_path is not None:
+                image_volume, metadata = load_raster_image(str(raster_path))
+                self.state.current_data = image_volume
+                self.state.current_metadata = metadata
+                self.state.file_list = [str(raster_path)]
+                loaded_data_type = "image"
+            else:
+                self.state.current_data, self.state.current_metadata, self.state.file_list = load_dicom_series(
+                    path,
+                    apply_deidentification=apply_deidentification,
+                )
             
             # Check if data is lazy-loaded
             from utils.lazy_dicom_loader import LazyVolumeWrapper
@@ -344,7 +368,7 @@ class DataLoadingHandlers:
             placeholder = {"image": image, "boxes": []}
             return placeholder, gr.Dropdown(choices=[], value=None), {}, gr.Slider(visible=False, minimum=0, maximum=1, value=0), "0/0", "x: 0, y: 0, z: 0", "Failed to load data", gr.update(visible=False), gr.update(visible=False), gr.Dropdown(choices=[], value=None), gr.update(visible=False), gr.update(visible=False)
         
-        self.state.current_data_type = "dicom"
+        self.state.current_data_type = loaded_data_type
         shape = self.state.current_data.shape
         self.state.current_shape = shape
         # Center crosshair
@@ -431,7 +455,13 @@ class DataLoadingHandlers:
         has_multiple_slices = slider_max > 0
         
         # Create status message with lazy loading indicator
-        status_message = f"DICOM data loaded: {len(self.state.file_list)} slice(s)"
+        if self.state.current_data_type == "image":
+            status_message = (
+                f"Image loaded: {os.path.basename(self.state.file_list[0])} "
+                f"({shape[2]} x {shape[1]})"
+            )
+        else:
+            status_message = f"DICOM data loaded: {len(self.state.file_list)} slice(s)"
         if is_lazy:
             status_message += " [Lazy Loading: Active - Files loaded on-demand for better performance]"
         
@@ -449,7 +479,7 @@ class DataLoadingHandlers:
         # Track data loading for behavioral analytics
         try:
             track_data_load(
-                dataset="dicom",
+                dataset=self.state.current_data_type or "unknown",
                 modality=modality if modality else "unknown",
                 total_slices=len(self.state.file_list),
                 directory=self.state.current_directory

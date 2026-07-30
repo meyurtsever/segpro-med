@@ -17,23 +17,14 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from auth.auth_manager import AuthManager
-from crowdsourcing.campaign_manager import CrowdsourcingManager
+from crowdsourcing.campaign_manager import (
+    CrowdsourcingManager,
+    resolve_patient_data_path,
+)
 
 router = APIRouter()
 
 AssignmentMode = Literal["selected", "allUnassigned"]
-VALID_MODALITIES = ["flair", "t1", "t1c", "t2"]
-MEDICAL_IMAGE_EXTENSIONS = {
-    ".dcm",
-    ".dicom",
-    ".ima",
-    ".nii",
-    ".gz",
-    ".mat",
-    ".mha",
-    ".mhd",
-    ".nrrd",
-}
 
 
 class CampaignScanRequest(BaseModel):
@@ -191,63 +182,17 @@ def _campaign_info(manager: CrowdsourcingManager, campaign_name: str) -> Campaig
     )
 
 
-def _looks_like_dicom(path: str) -> bool:
-    try:
-        import pydicom
-
-        pydicom.dcmread(path, stop_before_pixels=True)
-        return True
-    except Exception:
-        return False
-
-
-def _contains_medical_image_data(folder_path: str) -> bool:
-    if not os.path.isdir(folder_path):
-        return False
-
-    for root, _, files in os.walk(folder_path):
-        for filename in files:
-            full_path = os.path.join(root, filename)
-            lower_name = filename.lower()
-            if lower_name.endswith(".nii.gz"):
-                return True
-
-            _, ext = os.path.splitext(lower_name)
-            if ext in MEDICAL_IMAGE_EXTENSIONS:
-                return True
-
-            if _looks_like_dicom(full_path):
-                return True
-
-    return False
-
 
 def _task_with_paths(task: dict[str, Any]) -> dict[str, Any]:
     campaign_id = str(task.get("campaign_id") or task.get("campaign") or "")
     patient_id = str(task.get("patient_id") or "")
     dataset_path = str(task.get("dataset_path") or "")
     patient_path = os.path.join(dataset_path, patient_id) if dataset_path and patient_id else None
-    load_path = patient_path if patient_path and os.path.exists(patient_path) else None
-    modality = None
-
-    if patient_path and os.path.isdir(patient_path):
-        for candidate in VALID_MODALITIES:
-            candidate_path = os.path.join(patient_path, candidate)
-            if os.path.isdir(candidate_path):
-                load_path = candidate_path
-                modality = candidate
-                break
-
-        if modality is None:
-            for entry in os.listdir(patient_path):
-                entry_path = os.path.join(patient_path, entry)
-                if os.path.isdir(entry_path) and entry.lower() in VALID_MODALITIES:
-                    load_path = entry_path
-                    modality = entry
-                    break
-
-        if modality is None and _contains_medical_image_data(patient_path):
-            load_path = patient_path
+    load_path, modality = (
+        resolve_patient_data_path(patient_path)
+        if patient_path
+        else (None, None)
+    )
 
     return {
         "campaign_id": campaign_id,

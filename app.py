@@ -166,6 +166,11 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 if current_dir not in sys.path:
     sys.path.append(current_dir)
 
+# Prevent viewport-only pan and resize gestures from emitting annotation changes.
+from utils.image_annotator_patch import apply_image_annotator_viewport_patch
+
+apply_image_annotator_viewport_patch()
+
 # Import our modular components
 from ui.state import AppState
 from ui.viewer_tab import create_viewer_tab
@@ -249,6 +254,7 @@ class SegMedPro:
         
         # Connect editor-specific handlers (only editor tab gets AI functionality)
         self.editor_image_handlers.medsam2_handlers = self.editor_medsam2_handlers
+        self.editor_medsam2_handlers.image_handlers = self.editor_image_handlers
         
         # Keep legacy aliases for backward compatibility
         self.segmentation_handlers = self.viewer_segmentation_handlers  # Viewer gets priority for legacy code
@@ -364,7 +370,7 @@ class SegMedPro:
         }
         """
         
-        with gr.Blocks(title="SegMed-Pro", css=custom_css) as app:
+        with gr.Blocks(title="KoGA: Medical Image Preparation Tool", css=custom_css) as app:
             # Authentication state
             is_logged_in = gr.State(False)
             current_user_state = gr.State(None)
@@ -376,14 +382,13 @@ class SegMedPro:
                         pass  # Empty column for centering
                     
                     with gr.Column(scale=2):
-                        gr.Markdown("# SegMed-Pro: Medical Imaging Annotation Tool")
+                        gr.Markdown("# KoGA: Medical Image Preparation Tool")
                         gr.Markdown("## Please login to continue")
                         
                         username_input = gr.Textbox(
                             label="Username",
                             placeholder="Enter your username",
-                            value="admin1",
-                            #value="jane_smith",
+                            value="jane_smith",
                             interactive=True
                         )
                         
@@ -391,8 +396,7 @@ class SegMedPro:
                             label="Password",
                             placeholder="Enter your password",
                             type="password",
-                            value="adminpass",
-                            #value="expert456",
+                            value="expert456",
                             interactive=True
                         )
                         
@@ -403,8 +407,6 @@ class SegMedPro:
                         # Demo credentials info
                         gr.Markdown("""
                         ### Demo Credentials:
-                        **Admin:** username: `admin1`, password: `adminpass`  
-                        **Expert:** username: `john_doe`, password: `pass123`  
                         **Expert:** username: `jane_smith`, password: `expert456`
                         """)
                     
@@ -416,7 +418,7 @@ class SegMedPro:
                 # Header with user info and logout aligned to the right
                 with gr.Row():
                     with gr.Column(scale=8):
-                        gr.Markdown("# SegMed-Pro: Medical Imaging Annotation Tool")
+                        gr.Markdown("# KoGA: Medical Image Preparation Tool")
                     
                     with gr.Column(scale=4, min_width=300, elem_classes=["user-controls"]):
                         with gr.Row():
@@ -439,7 +441,22 @@ class SegMedPro:
                     editor_components = create_editor_tab(current_user=self.current_user)
                     conversion_components = create_conversion_tab()
                     label_manager_components = create_label_manager_tab()
-                    
+
+                    label_table_component = label_manager_components[5]
+                    label_status_component = label_manager_components[11]
+                    label_annotators = [
+                        editor_components['visualization'][6],
+                        viewer_components['visualization'][1],
+                    ]
+
+                    def load_labels_for_user(user_state):
+                        table, status, config = self.label_manager_handlers.load_user_labels(user_state)
+                        return table, status, gr.update(**config), gr.update(**config)
+
+                    def reset_label_manager_ui():
+                        table, status, config = self.label_manager_handlers.get_default_ui_state()
+                        return table, status, gr.update(**config), gr.update(**config)
+
                     # Admin-only Management tab
                     with gr.Tab("Management", visible=False, id=4) as management_tab:
                         management_components = create_management_tab()
@@ -589,8 +606,16 @@ class SegMedPro:
                     editor_components['modal_system']['backdrop'],
                     editor_components['modal_system']['welcome_modal']
                 ]
+            ).then(
+                fn=load_labels_for_user,
+                inputs=[current_user_state],
+                outputs=[
+                    label_table_component,
+                    label_status_component,
+                    *label_annotators,
+                ],
             )
-            
+
             # Allow Enter key to trigger login
             password_input.submit(
                 fn=handle_login,
@@ -623,8 +648,16 @@ class SegMedPro:
                     editor_components['modal_system']['backdrop'],
                     editor_components['modal_system']['welcome_modal']
                 ]
+            ).then(
+                fn=load_labels_for_user,
+                inputs=[current_user_state],
+                outputs=[
+                    label_table_component,
+                    label_status_component,
+                    *label_annotators,
+                ],
             )
-            
+
             # Connect logout
             logout_btn.click(
                 fn=handle_logout,
@@ -646,14 +679,26 @@ class SegMedPro:
                     password_input,
                     login_status
                 ]
+            ).then(
+                fn=reset_label_manager_ui,
+                inputs=[],
+                outputs=[
+                    label_table_component,
+                    label_status_component,
+                    *label_annotators,
+                ],
             )
-            
+
             # Connect standard handlers
             self._connect_viewer_handlers(viewer_components)
             self._connect_editor_handlers(editor_components)
             self._connect_conversion_handlers(conversion_components)
-            self._connect_label_manager_handlers(label_manager_components)
-            
+            self._connect_label_manager_handlers(
+                label_manager_components,
+                user_state=current_user_state,
+                annotators=label_annotators,
+            )
+
             # Connect crowdsourcing handlers if contribute tab exists
             if contribute_components:
                 self._connect_contribute_handlers(contribute_components, editor_components, tabs, active_tab_state, change_tab)
@@ -727,8 +772,8 @@ class SegMedPro:
         }
         """
         
-        with gr.Blocks(title="SegMed-Pro", css=custom_css) as app:
-            gr.Markdown("# SegMed-Pro: Medical Imaging Annotation Tool")
+        with gr.Blocks(title="KoGA: Medical Image Preparation Tool", css=custom_css) as app:
+            gr.Markdown("# KoGA: Medical Image Preparation Tool")
             with gr.Tabs() as tabs:
                 # Create viewer tab
                 viewer_components = create_viewer_tab()
@@ -748,7 +793,28 @@ class SegMedPro:
             # Connect event handlers for conversion tab
             self._connect_conversion_handlers(conversion_components)
             # Connect event handlers for label manager tab
-            self._connect_label_manager_handlers(label_manager_components)
+            label_annotators = [
+                editor_components['visualization'][6],
+                viewer_components['visualization'][1],
+            ]
+            self._connect_label_manager_handlers(
+                label_manager_components,
+                annotators=label_annotators,
+            )
+
+            def load_guest_labels():
+                table, status, config = self.label_manager_handlers.load_user_labels('guest')
+                return table, status, gr.update(**config), gr.update(**config)
+
+            app.load(
+                fn=load_guest_labels,
+                inputs=[],
+                outputs=[
+                    label_manager_components[5],
+                    label_manager_components[11],
+                    *label_annotators,
+                ],
+            )
             # Connect event handlers for custom annotator tab - HIDDEN
             # self._connect_custom_annotator_handlers(custom_annotator_components)
             
@@ -1041,72 +1107,130 @@ class SegMedPro:
             outputs=[conversion_status, conversion_output]
         )
 
-    def _connect_label_manager_handlers(self, components):
-        """Connect event handlers for the label manager tab"""
-        (label_file_input, load_btn, save_btn, save_quick_btn, save_filename, label_table, 
-         new_label_name, new_label_color, add_label_btn,
-         selected_label_name, delete_label_btn, status_box,
-         update_label_dropdown) = components  # updated to receive update_label_dropdown
-        
-        handlers = self.label_manager_handlers        # Load label set
+    def _connect_label_manager_handlers(
+        self, components, user_state=None, annotators=None
+    ):
+        """Connect the existing Label Manager table to per-user handlers."""
+        (
+            label_file_input,
+            load_btn,
+            save_btn,
+            save_quick_btn,
+            save_filename,
+            label_table,
+            new_label_name,
+            new_label_color,
+            add_label_btn,
+            selected_label_name,
+            delete_label_btn,
+            status_box,
+            update_label_dropdown,
+        ) = components
+
+        handlers = self.label_manager_handlers
+        annotators = annotators or []
+        if user_state is None:
+            user_state = gr.State(value={'user_id': 'guest'})
+
+        def with_annotator_updates(result):
+            table, status, config = result
+            return (
+                table,
+                status,
+                *[gr.update(**config) for _ in annotators],
+            )
+
+        table_outputs = [label_table, status_box, *annotators]
+
+        def load_label_set(file_obj, current_user):
+            return with_annotator_updates(
+                handlers.load_label_set(file_obj, current_user)
+            )
+
+        def sync_table(table_data, current_user):
+            return with_annotator_updates(
+                handlers.sync_table_to_user(table_data, current_user)
+            )
+
+        def add_label(table_data, name, color, current_user):
+            return with_annotator_updates(
+                handlers.add_new_label(
+                    table_data, name, color, current_user
+                )
+            )
+
+        def delete_label(table_data, name, current_user):
+            return with_annotator_updates(
+                handlers.delete_label_by_name(
+                    table_data, name, current_user
+                )
+            )
+
         load_btn.click(
-            fn=handlers.load_label_set,
-            inputs=[label_file_input],
-            outputs=[label_table, status_box]
+            fn=load_label_set,
+            inputs=[label_file_input, user_state],
+            outputs=table_outputs,
         ).then(
             fn=update_label_dropdown,
             inputs=[label_table],
-            outputs=[selected_label_name]
+            outputs=[selected_label_name],
         )
-        
-        # Sync table edits back to internal storage when user edits table directly
-        label_table.change(
-            fn=handlers.sync_table_to_internal,
+
+        # ``input`` fires only for user edits, avoiding a loop when the
+        # normalized table is returned as an output.
+        label_table.input(
+            fn=sync_table,
+            inputs=[label_table, user_state],
+            outputs=table_outputs,
+        ).then(
+            fn=update_label_dropdown,
             inputs=[label_table],
-            outputs=[]
+            outputs=[selected_label_name],
         )
-        
-        # Save label set with custom filename
+
         save_btn.click(
-            fn=lambda table_data, filename: handlers.save_label_set_with_filename(table_data, filename)[1],
-            inputs=[label_table, save_filename],
-            outputs=[status_box]
+            fn=lambda table_data, filename, current_user: (
+                handlers.save_label_set_with_filename(
+                    table_data, filename, current_user
+                )[1]
+            ),
+            inputs=[label_table, save_filename, user_state],
+            outputs=[status_box],
         )
-          # Quick save with default filename
+
         save_quick_btn.click(
-            fn=lambda table_data: handlers.save_label_set(table_data)[1],  # Return only status message
-            inputs=[label_table],
-            outputs=[status_box]
+            fn=lambda table_data, current_user: handlers.save_label_set(
+                table_data, user_state=current_user
+            )[1],
+            inputs=[label_table, user_state],
+            outputs=[status_box],
         )
-        
-        # Add new label
+
         add_label_btn.click(
-            fn=handlers.add_new_label,
-            inputs=[label_table, new_label_name, new_label_color],
-            outputs=[label_table, status_box]
+            fn=add_label,
+            inputs=[
+                label_table,
+                new_label_name,
+                new_label_color,
+                user_state,
+            ],
+            outputs=table_outputs,
         ).then(
             fn=update_label_dropdown,
             inputs=[label_table],
-            outputs=[selected_label_name]
+            outputs=[selected_label_name],
         )
-          # Sync table changes to internal storage when user edits the table
-        label_table.change(
-            fn=handlers.sync_table_to_internal,
-            inputs=[label_table],
-            outputs=[]
-        )
-        
-        # Delete selected label (by name)
+
         delete_label_btn.click(
-            fn=handlers.delete_label_by_name,
-            inputs=[label_table, selected_label_name],
-            outputs=[label_table, status_box]
+            fn=delete_label,
+            inputs=[label_table, selected_label_name, user_state],
+            outputs=table_outputs,
         ).then(
             fn=update_label_dropdown,
             inputs=[label_table],
-            outputs=[selected_label_name]
+            outputs=[selected_label_name],
         )
-    
+
     def _connect_custom_annotator_handlers(self, components):
         """Connect event handlers for the custom annotator tab"""
         # Unpack components following the new structure
@@ -1400,33 +1524,13 @@ class SegMedPro:
                     else:
                         logger.warning("XAI get_xai_display_image returned None")
                     
-                    # Rebuild annotated result with current annotations and XAI state
+                    # Rebuild with the authoritative user-edited slice state.
                     current_slice = self.editor_medsam2_handlers.state.current_slice_idx
-                    annotation_shapes = []
-                    
-                    # Get annotation masks for current slice
-                    if (hasattr(self.editor_medsam2_handlers, 'annotation_overlays') and 
-                        current_slice in self.editor_medsam2_handlers.annotation_overlays):
-                        overlay_data = self.editor_medsam2_handlers.annotation_overlays[current_slice]
-                        
-                        # Convert masks to polygon shapes
-                        if isinstance(overlay_data, dict):
-                            if 'mask' in overlay_data:
-                                # Old format - single annotation
-                                mask_array = overlay_data['mask']
-                                annotation_shapes = create_annotation_boxes_from_mask(
-                                    mask_array, label="MEDSAM2 Annotation", label_index=1
-                                )
-                            else:
-                                # New format - multiple annotations
-                                for annotation_id, annotation_data in overlay_data.items():
-                                    if isinstance(annotation_data, dict) and 'mask' in annotation_data:
-                                        mask_array = annotation_data['mask']
-                                        shapes = create_annotation_boxes_from_mask(
-                                            mask_array, label=f"MEDSAM2 Annotation {annotation_id}", label_index=1
-                                        )
-                                        annotation_shapes.extend(shapes)
-                    
+                    annotation_shapes = (
+                        self.editor_image_handlers.get_effective_annotations_for_slice(
+                            current_slice
+                        )
+                    )
                     # Return AnnotatedImageValue with updated XAI overlay state
                     return {
                         "image": img_rgb,
@@ -1630,29 +1734,14 @@ class SegMedPro:
                         else:
                             logger.warning("No mask logits available")
                     
-                    # Rebuild with current annotations
+                    # Rebuild with the authoritative user-edited slice state.
                     current_slice = self.editor_medsam2_handlers.state.current_slice_idx
-                    annotation_shapes = []
-                    
-                    if (hasattr(self.editor_medsam2_handlers, 'annotation_overlays') and 
-                        current_slice in self.editor_medsam2_handlers.annotation_overlays):
-                        overlay_data = self.editor_medsam2_handlers.annotation_overlays[current_slice]
-                        
-                        if isinstance(overlay_data, dict):
-                            if 'mask' in overlay_data:
-                                mask_array = overlay_data['mask']
-                                annotation_shapes = create_annotation_boxes_from_mask(
-                                    mask_array, label="MEDSAM2 Annotation", label_index=1
-                                )
-                            else:
-                                for annotation_id, annotation_data in overlay_data.items():
-                                    if isinstance(annotation_data, dict) and 'mask' in annotation_data:
-                                        mask_array = annotation_data['mask']
-                                        shapes = create_annotation_boxes_from_mask(
-                                            mask_array, label=f"MEDSAM2 Annotation {annotation_id}", label_index=1
-                                        )
-                                        annotation_shapes.extend(shapes)
-                    
+                    annotation_shapes = (
+                        self.editor_image_handlers.get_effective_annotations_for_slice(
+                            current_slice
+                        )
+                    )
+
                     return {
                         "image": img_rgb,
                         "boxes": annotation_shapes,
@@ -2274,14 +2363,19 @@ class SegMedPro:
         image_display.select(
             fn=handle_image_select_conditionally,
             inputs=[],
-            outputs=[coordinates_text, image_display]
+            outputs=[coordinates_text, image_display],
+            queue=False,
+            show_progress="hidden"
         )
         
         def handle_image_annotation_change(annotated_image_value):
             """Handle annotation changes, box prompt extraction, and label updates (EDITOR-SPECIFIC)"""
             try:                
                 # First, let the normal annotation handler process the change
-                self.editor_image_handlers.on_annotation_change_editor_save(annotated_image_value)
+                annotations_changed = self.editor_image_handlers.on_annotation_change_editor_save(annotated_image_value)
+                if annotations_changed is False:
+                    # Viewport-only events contain the same annotation fingerprint.
+                    return gr.update(), gr.update()
                 
                 # If box mode is enabled, also extract box prompts for MEDSAM2
                 if hasattr(self.editor_medsam2_handlers, 'box_mode_enabled') and self.editor_medsam2_handlers.box_mode_enabled:
@@ -2325,7 +2419,9 @@ class SegMedPro:
         image_display.change(
             fn=handle_image_annotation_change,
             inputs=[image_display],
-            outputs=[current_labels_dataset, current_labels_placeholder]
+            outputs=[current_labels_dataset, current_labels_placeholder],
+            queue=False,
+            show_progress="hidden"
         )
         
         # Handle tool selection for annotation duration tracking (EDITOR-SPECIFIC)
@@ -2379,16 +2475,22 @@ class SegMedPro:
         
         # Custom wrapper function to handle the 3-tuple return and button visibility (EDITOR-SPECIFIC)
         def handle_annotation_workflow(output_dir, save_visualizations, device_selector, processing_mode, score_threshold, image_display_data, current_user_id):
-            logger.info(f"Annotation Status: workflow started with processing_mode={processing_mode}")
+            effective_processing_mode = "Single Slice" if self.state.current_data_type == "image" else processing_mode
+            logger.info(f"Annotation Status: workflow started with processing_mode={effective_processing_mode}")
             status, image, success = self.editor_medsam2_handlers.run_full_annotation_workflow(
-                output_dir, save_visualizations, device_selector, processing_mode, score_threshold, image_display_data
+                output_dir, save_visualizations, device_selector, effective_processing_mode,
+                score_threshold, image_display_data
             )
+            if success:
+                self.editor_image_handlers.replace_previous_run_annotations(
+                    all_slices=effective_processing_mode == "All Records"
+                )
             logger.info(f"Annotation Status: workflow completed with success={success}")
             
             # If processing mode is "All Records" and annotation was successful, refresh 3D viewer
             # Always return a valid Plotly figure to avoid the __module__ attribute error
             from ui.editor_tab import create_empty_3d_plot, create_3d_visualization
-            if processing_mode == "All Records" and success:
+            if effective_processing_mode == "All Records" and success:
                 logger.info(f"3D Viewer status: Updating 3D viewer for All Records mode with output_dir={output_dir}")
                 try:
                     viewer_3d_update = create_3d_visualization(output_dir, score_threshold)
@@ -2398,7 +2500,7 @@ class SegMedPro:
                     viewer_3d_update = create_empty_3d_plot(f"Error updating 3D view: {str(e)}")
             else:
                 # For non-"All Records" mode, show message
-                logger.info(f"3D Viewer status: Not updating 3D viewer: mode={processing_mode}, success={success}")
+                logger.info(f"3D Viewer status: Not updating 3D viewer: mode={effective_processing_mode}, success={success}")
                 viewer_3d_update = create_empty_3d_plot("3D Viewer available in 'All Records' mode")
             
             # Show segmentation completion modal if successful and we have annotations
@@ -2868,29 +2970,14 @@ class SegMedPro:
                     
                     # If we have visual grounding, update the image display
                     if image_with_grounding is not None:
-                        # Get existing annotation shapes
-                        annotation_shapes = []
+                        # Preserve the authoritative user-edited slice state.
                         current_slice = self.state.current_slice_idx
-                        
-                        if (hasattr(self.editor_medsam2_handlers, 'annotation_overlays') and 
-                            current_slice in self.editor_medsam2_handlers.annotation_overlays):
-                            overlay_data = self.editor_medsam2_handlers.annotation_overlays[current_slice]
-                            
-                            if isinstance(overlay_data, dict):
-                                if 'mask' in overlay_data:
-                                    mask_array = overlay_data['mask']
-                                    annotation_shapes = create_annotation_boxes_from_mask(
-                                        mask_array, label="MEDSAM2 Annotation", label_index=1
-                                    )
-                                else:
-                                    for annotation_id, annotation_data in overlay_data.items():
-                                        if isinstance(annotation_data, dict) and 'mask' in annotation_data:
-                                            mask_array = annotation_data['mask']
-                                            shapes = create_annotation_boxes_from_mask(
-                                                mask_array, label=f"MEDSAM2 Annotation {annotation_id}", label_index=1
-                                            )
-                                            annotation_shapes.extend(shapes)
-                        
+                        annotation_shapes = (
+                            self.editor_image_handlers.get_effective_annotations_for_slice(
+                                current_slice
+                            )
+                        )
+
                         return (
                             gr.Dataset(samples=updated_samples), 
                             gr.update(visible=accept_btn_visible),
@@ -3023,6 +3110,8 @@ class SegMedPro:
           # Auto-brain annotation handler - Updated to use SAM2 Fast Masking Pipeline (EDITOR-SPECIFIC)
         def handle_auto_brain_annotation(output_dir, save_visualizations, device_selector, processing_mode, score_threshold, dir_input_value):
             """Handle automatic brain structure annotation using SAM2 Fast Masking Pipeline (EDITOR-SPECIFIC)"""
+            is_raster_image = self.state.current_data_type == "image"
+            effective_processing_mode = "Single Slice" if is_raster_image else processing_mode
             # Get the current directory from state or use directory input as fallback
             dicom_folder = getattr(self.state, 'current_directory', None)
             
@@ -3031,22 +3120,26 @@ class SegMedPro:
                 dicom_folder = dir_input_value.strip() if dir_input_value else None
             
             if not dicom_folder:
-                return "Error: No DICOM folder specified. Please load data first or enter a directory path.", None, gr.update(visible=False)
+                return "Error: No medical image source found. Please load data first.", None, gr.update(visible=False)
             
             if not os.path.exists(dicom_folder):
-                return f"Error: DICOM folder not found: {dicom_folder}", None, gr.update(visible=False)
+                return f"Error: Medical image source not found: {dicom_folder}", None, gr.update(visible=False)
             
             # Check if we have loaded data for this directory
             if not hasattr(self.state, 'current_data') or self.state.current_data is None:
-                return "Error: Please load DICOM data first using the 'Load Data' button before running automatic annotation.", None, gr.update(visible=False)            
+                return "Error: Please load medical image data before running automatic annotation.", None, gr.update(visible=False)
             # Run the SAM2 Fast Masking Pipeline (replaces old automatic annotation)
             status, annotated_result, success = self.editor_medsam2_handlers.run_sam2_fast_masking(
-                dicom_folder, output_dir, save_visualizations, processing_mode
+                dicom_folder, output_dir, save_visualizations, effective_processing_mode
             )
+            if success:
+                self.editor_image_handlers.replace_previous_run_annotations(
+                    all_slices=effective_processing_mode == "All Records"
+                )
               # If processing mode is "All Records" and annotation was successful, refresh 3D viewer
             # Always return a valid Plotly figure to avoid the __module__ attribute error
             from ui.editor_tab import create_empty_3d_plot, create_3d_visualization
-            if processing_mode == "All Records" and success:
+            if effective_processing_mode == "All Records" and success:
                 try:
                     viewer_3d_update = create_3d_visualization(output_dir, score_threshold)
                 except Exception as e:
@@ -3118,6 +3211,12 @@ class SegMedPro:
                 return "No dataset selected", gr.update(), None, None, None, None, None, None, None
             
             try:
+                # Automatic masks and prompts belong only to the previously loaded task.
+                self.editor_medsam2_handlers.reset_task_state()
+                self.editor_image_handlers.user_annotations.clear()
+                self.editor_image_handlers.combined_annotations.clear()
+                self.editor_image_handlers._loaded_fingerprints.clear()
+
                 # Track assignment loaded for behavioral analytics
                 if task_info:
                     try:
@@ -3140,6 +3239,19 @@ class SegMedPro:
                 # result is a tuple: (annotated_value, dropdown, metadata, slider, slice_info, crosshair_text, status_message, window_level, window_width, view_selector, prev_btn, next_btn)
                 if result and len(result) >= 12:
                     annotated_value, dropdown, metadata, slider, slice_info, crosshair_text, status_message, window_level, window_width, view_selector, prev_btn, next_btn = result
+
+                    # Restore any saved draft, including explicitly emptied slices.
+                    self.editor_image_handlers.load_persistent_annotations()
+                    restored = self.editor_image_handlers.update_slice_for_annotator(
+                        0,
+                        self.state.current_view,
+                    )
+                    if restored and restored[0] is not None:
+                        annotated_value = restored[0]
+                        metadata = restored[3]
+                        window_level = restored[4]
+                        window_width = restored[5]
+
                     logger.info(f"DEBUG: Extracted annotated_value type: {type(annotated_value)}")
                     if isinstance(annotated_value, dict):
                         logger.info(f"DEBUG: annotated_value keys: {list(annotated_value.keys())}")
@@ -3800,18 +3912,12 @@ class SegMedPro:
                         gr.update(),  # selected_task_info
                     ]
                 
-                # Find the first available modality directory
-                valid_modalities = ['flair', 't1', 't1c', 't2']
-                modality_path = None
+                # Support legacy modality folders and direct raster/medical data.
+                from crowdsourcing.campaign_manager import resolve_patient_data_path
+                data_path, _ = resolve_patient_data_path(patient_path)
                 
-                for modality in valid_modalities:
-                    potential_path = os.path.join(patient_path, modality)
-                    if os.path.exists(potential_path) and os.path.isdir(potential_path):
-                        modality_path = potential_path
-                        break
-                
-                if not modality_path:
-                    logger.error(f"No valid modality found for patient {patient_id}")
+                if not data_path:
+                    logger.error(f"No supported imaging data found for patient {patient_id}")
                     return [
                         gr.update(),  # tabs (no change)
                         gr.update(),  # dicom_viewer
@@ -3821,7 +3927,7 @@ class SegMedPro:
                         gr.update(),  # next_slice_btn
                         gr.update(),  # metadata_display
                         gr.update(),  # submit_btn
-                        gr.update(value=f"❌ Error: No valid modality found for patient {patient_id}", visible=True),  # submission_status
+                        gr.update(value=f"❌ Error: No supported imaging data found for patient {patient_id}", visible=True),  # submission_status
                         gr.update(),  # welcome_guide
                         gr.update(),  # welcome_guide_content
                         gr.update(),  # assignments_remaining
@@ -3830,7 +3936,7 @@ class SegMedPro:
                     ]
                 
                 # Update current directory in state
-                self.state.current_directory = modality_path
+                self.state.current_directory = data_path
                 
                 # Track assignment loaded for behavioral analytics
                 try:
@@ -3846,10 +3952,10 @@ class SegMedPro:
                 
                 # Direct data loading - replicate the exact logic from "Load Task in Editor"
                 try:
-                    logger.info(f"DEBUG: Direct loading DICOM data from: {modality_path}")
+                    logger.info(f"Loading assignment data from: {data_path}")
                     
                     # Call load_data_for_annotator directly and get the properly formatted result
-                    result = self.data_handlers.load_data_for_annotator(None, modality_path, False)
+                    result = self.data_handlers.load_data_for_annotator(None, data_path, False)
                     
                     if not result or len(result) < 12:
                         logger.error(f"Failed to load assignment: Invalid result")
@@ -4042,110 +4148,212 @@ class SegMedPro:
                 ]
             )
             
-            # Connect next assignment button - use the new load_next_assignment from contribute tab
-            def handle_next_assignment_wrapper(user_id):
-                """Wrapper to handle next assignment loading and update both editor and contribute tabs"""
-                # Load the next assignment using contribute tab's function
-                load_status, dataset_path, success, task_info = contribute_components['load_next_assignment'](user_id)
-                
-                if success and dataset_path:
-                    # Load the dataset into editor
-                    try:
-                        result = self.data_handlers.load_data_for_annotator(None, dataset_path, False)
-                        if result and len(result) >= 12:
-                            annotated_value, dropdown, metadata, slider, slice_info, crosshair_text, status_message, window_level, window_width, view_selector, prev_btn, next_btn = result
-                            
-                            # Update contribute tab dataset to show current status
-                            contribute_dataset, contribute_status = contribute_components['get_assigned_tasks_dataset'](user_id)
-                            
-                            # Prepare remaining assignments info
-                            from crowdsourcing.campaign_manager import CrowdsourcingManager
-                            cm = CrowdsourcingManager()
-                            remaining = cm.get_remaining_assignments_for_user(user_id)
-                            remaining_count = len(remaining) - 1  # Subtract 1 because we just loaded one
-                            
-                            # Create assignments remaining display
-                            if remaining_count > 0:
-                                assignments_display = f"""
-                                <div style='padding: 12px; background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-radius: 8px; border: 1px solid #3b82f6; margin: 8px 0;'>
-                                    <div style='color: #1e40af; font-weight: 600; font-size: 13px; text-align: center;'>
-                                        📋 {remaining_count} assignments remaining after this one
-                                    </div>
-                                </div>
-                                """
-                            else:
-                                assignments_display = f"""
-                                <div style='padding: 12px; background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); border-radius: 8px; border: 1px solid #10b981; margin: 8px 0;'>
-                                    <div style='color: #047857; font-weight: 600; font-size: 13px; text-align: center;'>
-                                        🎉 This is your final assignment!
-                                    </div>
-                                </div>
-                                """
-                            
-                            return [
-                                gr.update(selected=1),  # Switch to Editor tab
-                                "",  # error_display (clear any errors)
-                                annotated_value,  # image_display
-                                slider,  # slice_slider  
-                                gr.update(visible=True),  # prev_slice_btn
-                                gr.update(visible=True),  # next_slice_btn
-                                metadata,  # metadata_display
-                                gr.update(visible=True),  # submit_btn
-                                gr.update(value=load_status, visible=True),  # submission_status
-                                gr.update(visible=True, open=True),  # welcome_guide
-                                self._populate_welcome_guide_info(task_info),  # welcome_guide_content
-                                gr.update(value=assignments_display, visible=True),  # assignments_remaining
-                                gr.update(visible=remaining_count > 0),  # next_assignment_btn
-                                task_info,  # selected_task_info
-                                contribute_dataset,  # Update contribute tab dataset
-                                contribute_status,  # Update contribute tab status
-                            ]
-                    except Exception as e:
-                        logger.error(f"Error loading next assignment data: {e}")
-                
-                # Failed to load - return error states
+            # Previous/next task navigation with draft confirmation.
+            navigation_outputs = [
+                contribute_components['selected_dataset_path'],
+                contribute_components['crowdsourcing_mode'],
+                contribute_components['selected_task_info'],
+                editor_components['crowdsourcing']['navigation_backdrop'],
+                editor_components['crowdsourcing']['navigation_modal'],
+                editor_components['crowdsourcing']['navigation_state'],
+                editor_components['crowdsourcing']['status'],
+            ]
+
+            def annotation_count(annotated_value):
+                if annotated_value is None:
+                    return 0
+                if isinstance(annotated_value, (list, tuple)):
+                    return len(annotated_value)
+                if isinstance(annotated_value, dict):
+                    return len(
+                        annotated_value.get('boxes')
+                        or annotated_value.get('annotations')
+                        or []
+                    )
+                return len(getattr(annotated_value, 'annotations', None) or [])
+
+            def task_has_annotations(user_id, annotated_value):
+                if annotation_count(annotated_value) > 0:
+                    return True
+                if any(
+                    annotation_count(annotations) > 0
+                    for annotations in self.editor_image_handlers.user_annotations.values()
+                ):
+                    return True
+                if not user_id or not self.state.current_directory:
+                    return False
+
+                from utils.annotation_manager import AnnotationManager
+                saved = AnnotationManager().load_annotations(
+                    user_id,
+                    self.state.current_directory,
+                )
+                return bool(saved and saved.get('slice_annotations'))
+
+            def navigation_result(target, status_message=None):
                 return [
-                    gr.update(),  # tabs (no change)
-                    "",  # error_display (clear)
-                    gr.update(),  # image_display
-                    gr.update(),  # slice_slider
-                    gr.update(),  # prev_slice_btn
-                    gr.update(),  # next_slice_btn
-                    gr.update(),  # metadata_display
-                    gr.update(),  # submit_btn
-                    gr.update(value=load_status, visible=True),  # submission_status (show error)
-                    gr.update(),  # welcome_guide
-                    gr.update(),  # welcome_guide_content
-                    gr.update(),  # assignments_remaining
-                    gr.update(),  # next_assignment_btn
-                    "",  # selected_task_info
-                    gr.update(),  # contribute tab dataset
-                    gr.update(),  # contribute tab status
+                    target['dataset_path'],
+                    True,
+                    target['task_info'],
+                    gr.update(visible=False),
+                    gr.update(visible=False),
+                    {},
+                    gr.update(value=status_message or target['status'], visible=True),
                 ]
-            
-            editor_components['crowdsourcing']['next_assignment_btn'].click(
-                fn=handle_next_assignment_wrapper,
-                inputs=[contribute_components['current_user_state']],
-                outputs=[
-                    tabs,  # tabs
-                    editor_components['visualization'][0],                       # error_display (status/errors)
-                    editor_components['visualization'][6],                       # image_display
-                    editor_components['visualization'][10],                      # slice_slider
-                    editor_components['visualization'][9],                       # prev_slice_btn
-                    editor_components['visualization'][11],                      # next_slice_btn
-                    editor_components['visualization'][1],                       # metadata_display
-                    editor_components['crowdsourcing']['submit_btn'],            # submit_btn
-                    editor_components['crowdsourcing']['status'],                # submission_status
-                    editor_components['welcome_modal']['guide'],                 # welcome_guide
-                    editor_components['welcome_modal']['content'],               # welcome_guide_content
-                    editor_components['crowdsourcing']['assignments_remaining'], # assignments_remaining
-                    editor_components['crowdsourcing']['next_assignment_btn'],   # next_assignment_btn
-                    contribute_components['selected_task_info'],                 # selected_task_info
-                    contribute_components['tasks_dataset'],                      # contribute tab dataset
-                    contribute_components['task_status'],                        # contribute tab status
-                ]
+
+            def request_task_navigation(direction, user_id, task_info, annotated_value):
+                status, dataset_path, success, target_task = contribute_components[
+                    'load_adjacent_assignment'
+                ](user_id, task_info, direction)
+                if not success:
+                    return [
+                        gr.update(),
+                        gr.update(),
+                        gr.update(),
+                        gr.update(visible=False),
+                        gr.update(visible=False),
+                        {},
+                        gr.update(value=status, visible=True),
+                    ]
+
+                target = {
+                    'direction': direction,
+                    'dataset_path': dataset_path,
+                    'task_info': target_task,
+                    'status': status,
+                }
+                if task_has_annotations(user_id, annotated_value):
+                    return [
+                        gr.update(),
+                        gr.update(),
+                        gr.update(),
+                        gr.update(visible=True),
+                        gr.update(visible=True),
+                        target,
+                        gr.update(
+                            value="Choose whether to save this task's annotations before navigating.",
+                            visible=True,
+                        ),
+                    ]
+                return navigation_result(target)
+
+            def save_draft_and_navigate(target, user_id, annotated_value):
+                if not target:
+                    return [gr.update()] * 3 + [
+                        gr.update(visible=False),
+                        gr.update(visible=False),
+                        {},
+                        gr.update(),
+                    ]
+                try:
+                    self.editor_image_handlers.save_user_annotations(
+                        annotated_value,
+                        self.state.current_slice_idx,
+                    )
+                    return navigation_result(
+                        target,
+                        "Draft saved. Loading the selected task...",
+                    )
+                except Exception as exc:
+                    logger.error(f"Could not save task draft before navigation: {exc}")
+                    return [
+                        gr.update(),
+                        gr.update(),
+                        gr.update(),
+                        gr.update(visible=True),
+                        gr.update(visible=True),
+                        target,
+                        gr.update(value=f"Could not save draft: {exc}", visible=True),
+                    ]
+
+            def discard_draft_and_navigate(target, user_id):
+                if not target:
+                    return [gr.update()] * 3 + [
+                        gr.update(visible=False),
+                        gr.update(visible=False),
+                        {},
+                        gr.update(),
+                    ]
+                from utils.annotation_manager import AnnotationManager
+                if not AnnotationManager().delete_study_annotations(
+                    user_id,
+                    self.state.current_directory,
+                ):
+                    return [
+                        gr.update(),
+                        gr.update(),
+                        gr.update(),
+                        gr.update(visible=True),
+                        gr.update(visible=True),
+                        target,
+                        gr.update(value="Could not discard this task's draft.", visible=True),
+                    ]
+
+                self.editor_image_handlers.user_annotations.clear()
+                self.editor_image_handlers.combined_annotations.clear()
+                self.editor_image_handlers._loaded_fingerprints.clear()
+                return navigation_result(
+                    target,
+                    "Draft discarded. Loading the selected task...",
+                )
+
+            editor_components['crowdsourcing']['previous_task_btn'].click(
+                fn=lambda user_id, task_info, annotated_value: request_task_navigation(
+                    'previous', user_id, task_info, annotated_value
+                ),
+                inputs=[
+                    contribute_components['current_user_state'],
+                    contribute_components['selected_task_info'],
+                    editor_components['visualization'][6],
+                ],
+                outputs=navigation_outputs,
             )
-            
+
+            editor_components['crowdsourcing']['next_assignment_btn'].click(
+                fn=lambda user_id, task_info, annotated_value: request_task_navigation(
+                    'next', user_id, task_info, annotated_value
+                ),
+                inputs=[
+                    contribute_components['current_user_state'],
+                    contribute_components['selected_task_info'],
+                    editor_components['visualization'][6],
+                ],
+                outputs=navigation_outputs,
+            )
+
+            editor_components['crowdsourcing']['navigation_save_btn'].click(
+                fn=save_draft_and_navigate,
+                inputs=[
+                    editor_components['crowdsourcing']['navigation_state'],
+                    contribute_components['current_user_state'],
+                    editor_components['visualization'][6],
+                ],
+                outputs=navigation_outputs,
+            )
+
+            editor_components['crowdsourcing']['navigation_discard_btn'].click(
+                fn=discard_draft_and_navigate,
+                inputs=[
+                    editor_components['crowdsourcing']['navigation_state'],
+                    contribute_components['current_user_state'],
+                ],
+                outputs=navigation_outputs,
+            )
+
+            editor_components['crowdsourcing']['navigation_cancel_btn'].click(
+                fn=lambda: (
+                    gr.update(visible=False),
+                    gr.update(visible=False),
+                    {},
+                    gr.update(value="Task navigation cancelled.", visible=True),
+                ),
+                outputs=[
+                    editor_components['crowdsourcing']['navigation_backdrop'],
+                    editor_components['crowdsourcing']['navigation_modal'],
+                    editor_components['crowdsourcing']['navigation_state'],
+                    editor_components['crowdsourcing']['status'],
+                ],
+            )
             # Connect welcome guide close button
             editor_components['welcome_modal']['close_btn'].click(
                 fn=lambda: gr.update(visible=False, open=False),

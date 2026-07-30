@@ -1,258 +1,551 @@
-"""
-SegMed-Pro Label Manager Handlers
-
-This module contains event handlers for the label manager tab.
-"""
+"""Event handlers and persistence helpers for the Label Manager tab."""
 
 import os
 import re
-from typing import List, Tuple, Optional
+from typing import Any, Dict, Iterable, List, Optional, Tuple
+
+from auth.user_preferences import get_preferences_manager
+from utils.label_config import get_default_labels
+
 
 class LabelManagerHandlers:
-    def __init__(self, state=None):
+    """Manage predefined and custom labels without sharing state across users."""
+
+    QUICK_ADD_NAME = '+'
+
+    def __init__(self, state=None, preferences_manager=None):
         self.state = state
-        self.current_labels = []  # Internal storage with full RGB data [ID, Name, Color Preview, R, G, B]
+        self.preferences_manager = (
+            preferences_manager or get_preferences_manager()
+        )
 
-    def load_label_set(self, file_obj):
-        """Load ITK-SNAP label file and return table data with color preview"""
-        if file_obj is None:
-            return [], "No file selected."
-        
-        try:
-            # Gradio File returns a dict with 'name' key
-            file_path = file_obj.name if hasattr(file_obj, 'name') else file_obj
-            
-            labels = []
-            with open(file_path, 'r') as f:
-                lines = f.readlines()
-            
-            # Parse ITK-SNAP format: IDX R G B A VIS MSH "LABEL"
-            for line in lines:
-                line = line.strip()
-                if line and not line.startswith('#') and not line.startswith('//'):
-                    # Use regex to parse the line properly
-                    match = re.match(r'\s*(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+[\d.]+\s+\d+\s+\d+\s+"([^"]*)"', line)
-                    if match:
-                        idx, r, g, b, name = match.groups()
-                        idx, r, g, b = int(idx), int(r), int(g), int(b)
-                        
-                        # Create accurate color preview with HTML
-                        hex_color = f"#{r:02x}{g:02x}{b:02x}"
-                        color_preview = f"<div style='width: 20px; height: 20px; background-color: {hex_color}; border: 1px solid #000;'></div>"
-                        # Store both preview and RGB values for saving
-                        labels.append([idx, name, color_preview, r, g, b])
-            
-            # Sort by index
-            labels.sort(key=lambda x: x[0])
-            self.current_labels = labels
-            
-            # Return only display columns for the table UI
-            display_data = self.get_table_display_data(labels)
-            return display_data, f"[OK] Loaded {len(labels)} labels successfully."
-        except Exception as e:
-            return [], f"[ERROR] Error loading file: {str(e)}"
+    @staticmethod
+    def resolve_user_id(user_state) -> str:
+        """Resolve a stable user identifier from a Gradio state value."""
+        if isinstance(user_state, dict):
+            user_id = user_state.get('user_id')
+            if user_id:
+                return str(user_id)
+        if isinstance(user_state, str) and user_state.strip():
+            return user_state.strip()
+        return 'guest'
 
-    def sync_table_to_internal(self, table_data):
-        """Sync table display data back to internal storage when user edits the table"""
-        # Check if table_data is empty or None safely to avoid DataFrame ambiguity
+    @staticmethod
+    def _to_bool(value: Any) -> bool:
+        if isinstance(value, str):
+            return value.strip().lower() in {
+                '1', 'true', 'yes', 'on', 'active'
+            }
+        return bool(value)
+
+    @staticmethod
+    def _normalize_color(value: Any, fallback: str = '#808080') -> str:
+        text = str(value or '').strip()
+        direct_match = re.fullmatch(r'#([0-9a-fA-F]{6})', text)
+        if direct_match:
+            return f"#{direct_match.group(1).lower()}"
+
+        preview_match = re.search(
+            r'background-color:\s*#([0-9a-fA-F]{6})', text
+        )
+        if preview_match:
+            return f"#{preview_match.group(1).lower()}"
+        return fallback
+
+    @staticmethod
+    def _color_preview(color: str) -> str:
+        return (
+            "<div style='width: 20px; height: 20px; "
+            f"background-color: {color}; border: 1px solid #000;'></div>"
+        )
+
+    @staticmethod
+    def _table_rows(table_data) -> List[List[Any]]:
         if table_data is None:
-            return
-        if hasattr(table_data, 'empty') and table_data.empty:
-            return
-        if isinstance(table_data, list) and len(table_data) == 0:
-            return
-        if not self.current_labels:
-            return
-        
-        try:
-            # Handle DataFrame or list for table_data
-            if hasattr(table_data, 'values'):
-                display_data = table_data.values.tolist()
-            else:
-                display_data = table_data if isinstance(table_data, list) else []
-            
-            # Update names in internal storage based on display data changes
-            for i, display_row in enumerate(display_data):
-                if i < len(self.current_labels) and len(display_row) >= 2:
-                    # Update the label name (column 1) if it was edited
-                    self.current_labels[i][1] = str(display_row[1])
-                    
-        except Exception as e:
-            print(f"[DEBUG] Error syncing table data: {str(e)}")
+            return []
+        if hasattr(table_data, 'values'):
+            return table_data.values.tolist()
+        if isinstance(table_data, list):
+            return table_data
+        return []
 
-    def save_label_set(self, table_data, file_name="label_set_edited.label"):
-        """Save label data to ITK-SNAP format (Quick Save - overwrites default file)"""
-        # Sync table edits back to internal storage first
-        self.sync_table_to_internal(table_data)
-        
-        # Use internal full data instead of display table data
-        if not self.current_labels:
-            return None, "[ERROR] No label data to save."
-        
+    def _normalize_labels(
+        self, labels: Optional[Iterable[Dict[str, Any]]]
+    ) -> List[Dict[str, Any]]:
+        defaults = get_default_labels()
+        defaults_by_id = {label['id']: label for label in defaults}
+        defaults_by_name = {
+            label['name'].casefold(): label for label in defaults
+        }
+        overrides_by_default_id = {}
+        custom_candidates = []
+
+        for raw_label in labels or []:
+            if not isinstance(raw_label, dict):
+                continue
+            try:
+                label_id = int(raw_label.get('id', 0))
+            except (TypeError, ValueError):
+                label_id = 0
+            name = str(raw_label.get('name', '')).strip()
+            default = defaults_by_id.get(label_id)
+            if default is None and name:
+                default = defaults_by_name.get(name.casefold())
+
+            if default is not None:
+                overrides_by_default_id[default['id']] = {
+                    'id': default['id'],
+                    'name': name or default['name'],
+                    'color': self._normalize_color(
+                        raw_label.get('color'), default['color']
+                    ),
+                    'active': self._to_bool(
+                        raw_label.get('active', True)
+                    ),
+                    'predefined': True,
+                }
+                continue
+            if name:
+                custom_candidates.append(raw_label)
+
+        normalized = []
+        used_ids = set()
+        used_names = set()
+        for default in defaults:
+            label = dict(
+                overrides_by_default_id.get(default['id'], default)
+            )
+            label['name'] = (
+                str(label.get('name', '')).strip() or default['name']
+            )
+            label['color'] = self._normalize_color(
+                label.get('color'), default['color']
+            )
+            label['active'] = self._to_bool(
+                label.get('active', True)
+            )
+            label['predefined'] = True
+            normalized.append(label)
+            used_ids.add(label['id'])
+            used_names.add(label['name'].casefold())
+
+        next_id = max(used_ids, default=0) + 1
+        for raw_label in custom_candidates:
+            name = str(raw_label.get('name', '')).strip()
+            name_key = name.casefold()
+            if not name or name_key in used_names:
+                continue
+            try:
+                requested_id = int(raw_label.get('id', 0))
+            except (TypeError, ValueError):
+                requested_id = 0
+            if requested_id <= 0 or requested_id in used_ids:
+                while next_id in used_ids:
+                    next_id += 1
+                requested_id = next_id
+            used_ids.add(requested_id)
+            used_names.add(name_key)
+            next_id = max(next_id, requested_id + 1)
+            normalized.append({
+                'id': requested_id,
+                'name': name,
+                'color': self._normalize_color(raw_label.get('color')),
+                'active': self._to_bool(raw_label.get('active', True)),
+                'predefined': False,
+            })
+
+        return normalized
+
+    def _get_user_labels(self, user_state) -> List[Dict[str, Any]]:
+        user_id = self.resolve_user_id(user_state)
+        stored = self.preferences_manager.get_user_labels(user_id)
+        normalized = self._normalize_labels(stored)
+        if normalized != stored:
+            self.preferences_manager.update_user_labels(user_id, normalized)
+        return normalized
+
+    def _persist(
+        self, user_state, labels: Iterable[Dict[str, Any]]
+    ) -> Tuple[List[Dict[str, Any]], bool]:
+        user_id = self.resolve_user_id(user_state)
+        normalized = self._normalize_labels(labels)
+        saved = self.preferences_manager.update_user_labels(
+            user_id, normalized
+        )
+        return normalized, saved
+
+    def _labels_from_table(
+        self, table_data, user_state
+    ) -> List[Dict[str, Any]]:
+        existing = self._get_user_labels(user_state)
+        existing_by_id = {label['id']: label for label in existing}
+        defaults_by_id = {
+            label['id']: label for label in get_default_labels()
+        }
+        labels = []
+        used_ids = set(existing_by_id)
+        next_id = max(used_ids, default=0) + 1
+
+        for row in self._table_rows(table_data):
+            if len(row) < 2:
+                continue
+            try:
+                label_id = int(row[0])
+                if label_id <= 0:
+                    raise ValueError
+            except (TypeError, ValueError):
+                name = str(row[1] or '').strip()
+                if not name or name == self.QUICK_ADD_NAME:
+                    continue
+                while next_id in used_ids:
+                    next_id += 1
+                label_id = next_id
+                used_ids.add(label_id)
+                next_id += 1
+
+            default = defaults_by_id.get(label_id)
+            previous = existing_by_id.get(label_id, {})
+            fallback_name = previous.get(
+                'name', default['name'] if default else ''
+            )
+            name = str(row[1] or '').strip() or fallback_name
+            if not name:
+                continue
+            fallback_color = previous.get(
+                'color', default['color'] if default else '#808080'
+            )
+            label = {
+                'id': label_id,
+                'name': name,
+                'color': self._normalize_color(
+                    row[2] if len(row) > 2 else None,
+                    fallback_color,
+                ),
+                'active': self._to_bool(
+                    row[3] if len(row) > 3 else previous.get(
+                        'active', True
+                    )
+                ),
+                'predefined': bool(
+                    default is not None
+                    or previous.get('predefined', False)
+                ),
+            }
+            labels.append(label)
+
+        present_ids = {label['id'] for label in labels}
+        for default in get_default_labels():
+            if default['id'] not in present_ids:
+                restored = dict(
+                    existing_by_id.get(default['id'], default)
+                )
+                restored['id'] = default['id']
+                restored['predefined'] = True
+                labels.append(restored)
+
+        return self._normalize_labels(labels)
+
+    def _pending_table_rows(self, table_data) -> List[List[Any]]:
+        """Keep native add-row entries visible until a name is entered."""
+        pending = []
+        for row in self._table_rows(table_data):
+            try:
+                label_id = int(row[0])
+                if label_id > 0:
+                    continue
+            except (TypeError, ValueError, IndexError):
+                pass
+            name = str(row[1] if len(row) > 1 else '').strip()
+            if name and name != self.QUICK_ADD_NAME:
+                continue
+            color = self._normalize_color(
+                row[2] if len(row) > 2 else None
+            )
+            active = self._to_bool(
+                row[3] if len(row) > 3 else True
+            )
+            pending.append(['', self.QUICK_ADD_NAME, color, active])
+        return pending
+
+    def _quick_add_row(self) -> List[Any]:
+        return ['', self.QUICK_ADD_NAME, '#808080', True]
+
+    def get_table_display_data(
+        self, full_data: Iterable[Dict[str, Any]]
+    ) -> List[List[Any]]:
+        """Return the four columns displayed by the Current Labels table."""
+        return [
+            [
+                label['id'],
+                label['name'],
+                label['color'],
+                label['active'],
+            ]
+            for label in full_data
+        ]
+
+    @staticmethod
+    def get_annotator_config(
+        labels: Iterable[Dict[str, Any]]
+    ) -> Dict[str, Any]:
+        """Build dynamic image_annotator choices from active labels only."""
+        active_labels = [label for label in labels if label['active']]
+        # Send raw names. The image_annotator Python component converts
+        # them to ``(label, index)`` choices while serializing an update.
+        # Pre-paired values are paired a second time and break the label modal.
+        return {
+            'label_list': [
+                label['name'] for label in active_labels
+            ],
+            'label_colors': [
+                label['color'] for label in active_labels
+            ],
+            'use_default_label': False,
+        }
+
+    def _ui_result(self, labels, status):
+        return (
+            self.get_table_display_data(labels) + [
+                self._quick_add_row()
+            ],
+            status,
+            self.get_annotator_config(labels),
+        )
+
+    def load_user_labels(self, user_state):
+        """Load one user's private label table and active annotator choices."""
+        labels = self._get_user_labels(user_state)
+        user_id = self.resolve_user_id(user_state)
+        return self._ui_result(
+            labels, f"[OK] Loaded labels for {user_id}."
+        )
+
+    def get_default_ui_state(self):
+        """Return a non-persistent default state for logout/reset rendering."""
+        return self._ui_result(get_default_labels(), "")
+
+    def sync_table_to_user(self, table_data, user_state):
+        """Persist editable attributes and preserve the bottom quick-add row."""
+        pending_rows = self._pending_table_rows(table_data)
+        labels = self._labels_from_table(table_data, user_state)
+        labels, saved = self._persist(user_state, labels)
+        status = (
+            "[OK] Label preferences saved."
+            if saved
+            else "[ERROR] Could not save label preferences."
+        )
+        return (
+            self.get_table_display_data(labels) + (
+                pending_rows or [self._quick_add_row()]
+            ),
+            status,
+            self.get_annotator_config(labels),
+        )
+
+    def load_label_set(self, file_obj, user_state=None):
+        """Load a label file as this user's custom set plus predefined labels."""
+        if file_obj is None:
+            labels = self._get_user_labels(user_state)
+            return self._ui_result(labels, "No file selected.")
+
         try:
-            save_path = os.path.join(os.getcwd(), file_name)
-            
-            with open(save_path, 'w', encoding='utf-8') as f:
-                # Write ITK-SNAP header
-                f.write("################################################\n")
-                f.write("# ITK-SnAP Label Description File\n")
-                f.write("# File format: \n")
-                f.write("# IDX   -R-  -G-  -B-  -A--  VIS MSH  LABEL\n")
-                f.write("# Fields: \n")
-                f.write("#    IDX:   Zero-based index \n")
-                f.write("#    -R-:   Red color component (0..255)\n")
-                f.write("#    -G-:   Green color component (0..255)\n")
-                f.write("#    -B-:   Blue color component (0..255)\n")
-                f.write("#    -A-:   Label transparency (0.00 .. 1.00)\n")
-                f.write("#    VIS:   Label visibility (0 or 1)\n")
-                f.write("#    IDX:   Label mesh visibility (0 or 1)\n")
-                f.write("#  LABEL:   Label description \n")
-                f.write("################################################\n")
-                
-                # Write label data from internal storage
-                for row in self.current_labels:
-                    idx = int(row[0])
-                    name = str(row[1])
-                    # Get RGB values from stored columns or extract from color preview
-                    if len(row) >= 6:  # RGB values are stored in columns 3,4,5
-                        r = int(row[3])
-                        g = int(row[4]) 
-                        b = int(row[5])
-                    else:
-                        # Extract RGB from color preview HTML (fallback)
-                        color_preview = str(row[2])
-                        color_match = re.search(r'background-color:\s*#([0-9a-fA-F]{6})', color_preview)
-                        if color_match:
-                            hex_color = color_match.group(1)
-                            r = int(hex_color[0:2], 16)
-                            g = int(hex_color[2:4], 16)
-                            b = int(hex_color[4:6], 16)
-                        else:
-                            r = g = b = 255  # Default to white if color extraction fails
-                    
-                    # Format: IDX R G B A VIS MSH "LABEL"
-                    f.write(f"    {idx:2d}   {r:3d}  {g:3d}  {b:3d}        1  1  1    \"{name}\"\n")
-            
+            file_path = (
+                file_obj.name if hasattr(file_obj, 'name') else file_obj
+            )
+            imported = []
+            with open(file_path, 'r', encoding='utf-8') as label_file:
+                for line in label_file:
+                    line = line.strip()
+                    if (
+                        not line
+                        or line.startswith('#')
+                        or line.startswith('//')
+                    ):
+                        continue
+                    match = re.match(
+                        r'\s*(\d+)\s+(\d+)\s+(\d+)\s+(\d+)'
+                        r'\s+[\d.]+\s+\d+\s+\d+\s+"([^"]*)"',
+                        line,
+                    )
+                    if match:
+                        label_id, red, green, blue, name = match.groups()
+                        imported.append({
+                            'id': int(label_id),
+                            'name': name.strip(),
+                            'color': (
+                                f"#{int(red):02x}{int(green):02x}"
+                                f"{int(blue):02x}"
+                            ),
+                            'active': True,
+                            'predefined': False,
+                        })
+
+            existing = self._get_user_labels(user_state)
+            active_defaults = {
+                label['id']: label['active']
+                for label in existing
+                if label['predefined']
+            }
+            labels = get_default_labels()
+            for label in labels:
+                label['active'] = active_defaults.get(label['id'], True)
+
+            default_names = {
+                label['name'].casefold() for label in labels
+            }
+            used_ids = {label['id'] for label in labels}
+            next_id = max(used_ids) + 1
+            for imported_label in imported:
+                if imported_label['name'].casefold() in default_names:
+                    continue
+                requested_id = imported_label['id']
+                if requested_id <= 0 or requested_id in used_ids:
+                    while next_id in used_ids:
+                        next_id += 1
+                    requested_id = next_id
+                imported_label['id'] = requested_id
+                used_ids.add(requested_id)
+                next_id = max(next_id, requested_id + 1)
+                labels.append(imported_label)
+
+            labels, saved = self._persist(user_state, labels)
+            status = (
+                f"[OK] Loaded {len(imported)} labels successfully."
+                if saved
+                else "[ERROR] Labels loaded but preferences could not be saved."
+            )
+            return self._ui_result(labels, status)
+        except Exception as e:
+            labels = self._get_user_labels(user_state)
+            return self._ui_result(
+                labels, f"[ERROR] Error loading file: {str(e)}"
+            )
+
+    def add_new_label(
+        self, table_data, new_name, color_hex, user_state=None
+    ):
+        """Add and activate a custom label for the current user."""
+        labels = self._labels_from_table(table_data, user_state)
+        name = str(new_name or '').strip()
+        if not name:
+            return self._ui_result(
+                labels, "[ERROR] Please enter a label name."
+            )
+        if any(label['name'].casefold() == name.casefold() for label in labels):
+            return self._ui_result(
+                labels, f"[ERROR] Label '{name}' already exists."
+            )
+
+        color = self._normalize_color(color_hex, '')
+        if not color:
+            return self._ui_result(
+                labels,
+                "[ERROR] Invalid color. Please use the color picker.",
+            )
+
+        next_id = max((label['id'] for label in labels), default=0) + 1
+        labels.append({
+            'id': next_id,
+            'name': name,
+            'color': color,
+            'active': True,
+            'predefined': False,
+        })
+        labels, saved = self._persist(user_state, labels)
+        status = (
+            f"[OK] Added label '{name}' with ID {next_id}."
+            if saved
+            else "[ERROR] Could not save the new label."
+        )
+        return self._ui_result(labels, status)
+
+    def delete_label_by_name(
+        self, table_data, label_name, user_state=None
+    ):
+        """Delete a custom label; predefined labels can only be passive."""
+        labels = self._labels_from_table(table_data, user_state)
+        if not label_name:
+            return self._ui_result(
+                labels, "[ERROR] Please select a label name to delete."
+            )
+
+        selected = next(
+            (label for label in labels if label['name'] == label_name),
+            None,
+        )
+        if selected is None:
+            return self._ui_result(
+                labels, f"[ERROR] Label '{label_name}' not found."
+            )
+        if selected['predefined']:
+            return self._ui_result(
+                labels,
+                "[ERROR] Predefined labels cannot be deleted. "
+                "Clear Active to make the label passive.",
+            )
+
+        labels = [
+            label for label in labels if label['id'] != selected['id']
+        ]
+        labels, saved = self._persist(user_state, labels)
+        status = (
+            f"[OK] Deleted label '{label_name}'."
+            if saved
+            else "[ERROR] Could not save the deletion."
+        )
+        return self._ui_result(labels, status)
+
+    def save_label_set(
+        self,
+        table_data,
+        file_name="label_set_edited.label",
+        user_state=None,
+    ):
+        """Save the current user's label table in ITK-SNAP format."""
+        labels = self._labels_from_table(table_data, user_state)
+        labels, saved = self._persist(user_state, labels)
+        if not saved:
+            return None, "[ERROR] Could not save label preferences."
+        if not labels:
+            return None, "[ERROR] No label data to save."
+
+        try:
+            safe_name = os.path.basename(file_name)
+            save_path = os.path.join(os.getcwd(), safe_name)
+            with open(save_path, 'w', encoding='utf-8') as label_file:
+                label_file.write("################################################\n")
+                label_file.write("# ITK-SnAP Label Description File\n")
+                label_file.write("# IDX   -R-  -G-  -B-  -A--  VIS MSH  LABEL\n")
+                label_file.write("################################################\n")
+                for label in labels:
+                    color = label['color'].lstrip('#')
+                    red = int(color[0:2], 16)
+                    green = int(color[2:4], 16)
+                    blue = int(color[4:6], 16)
+                    visible = 1 if label['active'] else 0
+                    name = label['name'].replace('"', "'")
+                    label_file.write(
+                        f"    {label['id']:2d}   {red:3d}  {green:3d}  "
+                        f"{blue:3d}        1  {visible}  1    "
+                        f"\"{name}\"\n"
+                    )
             return save_path, f"[OK] Saved to {save_path}"
-            
         except Exception as e:
             return None, f"[ERROR] Error saving: {str(e)}"
 
-    def save_label_set_with_filename(self, table_data, custom_filename):
-        """Save label data to ITK-SNAP format with custom filename (Save Labels - new file)"""
-        # Sync table edits back to internal storage first
-        self.sync_table_to_internal(table_data)
-        
-        if not custom_filename or not custom_filename.strip():
-            custom_filename = "label_set_custom.label"
-        
-        # Ensure .label extension
-        if not custom_filename.endswith('.label'):
-            custom_filename += '.label'
-            
-        return self.save_label_set(table_data, custom_filename)
+    def save_label_set_with_filename(
+        self, table_data, custom_filename, user_state=None
+    ):
+        """Save labels with a user-provided .label filename."""
+        filename = str(custom_filename or '').strip()
+        if not filename:
+            filename = "label_set_custom.label"
+        if not filename.lower().endswith('.label'):
+            filename += '.label'
+        return self.save_label_set(table_data, filename, user_state)
 
-    def add_new_label(self, table_data, new_name, color_hex):
-        """Add a new label with specified name and color"""
-        if not new_name or not new_name.strip():
-            return table_data, "[ERROR] Please enter a label name."
-
-        try:
-            print(f"[DEBUG] color_hex received: {repr(color_hex)}")  # Debug print
-            if not color_hex or not isinstance(color_hex, str):
-                return table_data, "[ERROR] Invalid color format."
-            color_hex = color_hex.strip()
-            r = g = b = None
-            # Handle #RRGGBB
-            if len(color_hex) == 7 and color_hex.startswith('#') and all(c in '0123456789abcdefABCDEF' for c in color_hex[1:]):
-                r = int(color_hex[1:3], 16)
-                g = int(color_hex[3:5], 16)
-                b = int(color_hex[5:7], 16)
-            # Handle rgba(r, g, b, a)
-            elif color_hex.startswith('rgba'):
-                match = re.match(r'rgba\(([^,]+),([^,]+),([^,]+),', color_hex)
-                if match:
-                    r = int(float(match.group(1)))
-                    g = int(float(match.group(2)))
-                    b = int(float(match.group(3)))
-                else:
-                    return table_data, "[ERROR] Invalid RGBA color format."
-            else:
-                return table_data, "[ERROR] Invalid color format. Please select a color using the color picker."
-
-            # Handle DataFrame or list for table_data
-            if hasattr(table_data, 'values'):
-                data_list = table_data.values.tolist()
-            else:
-                data_list = table_data if table_data is not None else []
-
-            # Find next available index from internal data
-            existing_indices = [int(row[0]) for row in self.current_labels] if self.current_labels else []
-            next_idx = max(existing_indices) + 1 if existing_indices else 1
-
-            # Create accurate color preview with HTML
-            hex_color = f"#{r:02x}{g:02x}{b:02x}"
-            color_preview = f"<div style='width: 20px; height: 20px; background-color: {hex_color}; border: 1px solid #000;'></div>"
-            
-            # Add new label with RGB values stored for saving
-            new_label = [next_idx, new_name.strip(), color_preview, r, g, b]
-            self.current_labels.append(new_label)
-
-            # Return only display columns for the table UI
-            display_data = self.get_table_display_data(self.current_labels)
-            return display_data, f"[OK] Added label '{new_name}' with ID {next_idx}."
-
-        except Exception as e:
-            return table_data, f"[ERROR] Error adding label: {str(e)}"
-
-    def delete_label(self, table_data, label_idx):
-        """Delete label by index"""
-        # Handle empty table data
-        if not self.current_labels:
-            return table_data, "[ERROR] No labels to delete."
-        
-        try:
-            label_idx = int(label_idx)
-            
-            original_count = len(self.current_labels)
-            self.current_labels = [row for row in self.current_labels if int(row[0]) != label_idx]
-            
-            if len(self.current_labels) == original_count:
-                return table_data, f"[ERROR] Label with ID {label_idx} not found."
-            
-            # Return only display columns for the table UI
-            display_data = self.get_table_display_data(self.current_labels)
-            return display_data, f"[OK] Deleted label with ID {label_idx}."
-            
-        except Exception as e:
-            return table_data, f"[ERROR] Error deleting label: {str(e)}"
-
-    def delete_label_by_name(self, table_data, label_name):
-        """Delete label by name (for use with dropdown)."""
-        if not label_name:
-            return table_data, "[ERROR] Please select a label name to delete."
-        # Handle empty table data
-        if not self.current_labels:
-            return table_data, "[ERROR] No labels to delete."
-        try:
-            # Work with the full internal data
-            original_count = len(self.current_labels)
-            self.current_labels = [row for row in self.current_labels if row[1] != label_name]
-            if len(self.current_labels) == original_count:
-                return table_data, f"[ERROR] Label with name '{label_name}' not found."
-            
-            # Return only display columns for the table UI
-            display_data = self.get_table_display_data(self.current_labels)
-            return display_data, f"[OK] Deleted label with name '{label_name}'."
-        except Exception as e:
-            return table_data, f"[ERROR] Error deleting label: {str(e)}"
-
-    def get_label_names(self):
-        """Return a list of label names for populating the delete dropdown."""
-        return [row[1] for row in self.current_labels] if self.current_labels else []
-
-    def get_table_display_data(self, full_data):
-        """Return only the display columns (first 3) for the table UI"""
-        if not full_data:
-            return []
-        return [[row[0], row[1], row[2]] for row in full_data]
+    def get_label_names(self, user_state=None):
+        """Return label names for the current user's delete dropdown."""
+        return [
+            label['name'] for label in self._get_user_labels(user_state)
+        ]

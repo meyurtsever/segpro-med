@@ -187,12 +187,6 @@ export default function CrowdsourcingLoginModal({
               Demo Credentials
             </div>
             <div style={{ marginTop: 4 }}>
-              Admin: <code>admin1</code> / <code>adminpass</code>
-            </div>
-            <div>
-              Expert: <code>john_doe</code> / <code>pass123</code>
-            </div>
-            <div>
               Expert: <code>jane_smith</code> / <code>expert456</code>
             </div>
           </div>

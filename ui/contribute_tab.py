@@ -5,7 +5,10 @@ Contribute tab for expert users to work on assigned annotation tasks
 import gradio as gr
 import logging
 import os
-from crowdsourcing.campaign_manager import CrowdsourcingManager
+from crowdsourcing.campaign_manager import (
+    CrowdsourcingManager,
+    resolve_patient_data_path,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -166,23 +169,17 @@ def create_contribute_tab():
             if not os.path.exists(patient_path):
                 return f"❌ Patient data not found: {patient_path}", "", False, ""
             
-            # Find the first available modality directory
-            valid_modalities = ['flair', 't1', 't1c', 't2']
-            modality_path = None
-            
-            for modality in valid_modalities:
-                potential_path = os.path.join(patient_path, modality)
-                if os.path.exists(potential_path) and os.path.isdir(potential_path):
-                    modality_path = potential_path
-                    break
+            # Support legacy modality folders and direct raster/medical data.
+            modality_path, modality_name = resolve_patient_data_path(patient_path)
+
             
             if not modality_path:
-                return f"❌ No valid modality found for patient {patient_id}", "", False, ""
+                return f"❌ No supported imaging data found for patient {patient_id}", "", False, ""
             
             # Create task selection string for backward compatibility
             task_selection = f"{campaign_id}|{patient_id}|{dataset_path}"
             
-            status = f"✅ Loaded patient {patient_id} from campaign {campaign_id} (modality: {os.path.basename(modality_path)})"
+            status = f"✅ Loaded patient {patient_id} from campaign {campaign_id} (source: {modality_name.upper() if modality_name else 'direct image'})"
             return status, modality_path, True, task_selection
             
         except Exception as e:
@@ -201,20 +198,14 @@ def create_contribute_tab():
             if not os.path.exists(patient_path):
                 return create_error_message(f"Patient data not found: {patient_path}"), "", False, ""
             
-            # Find the first available modality directory
-            valid_modalities = ['flair', 't1', 't1c', 't2']
-            modality_path = None
-            
-            for modality in valid_modalities:
-                potential_path = os.path.join(patient_path, modality)
-                if os.path.exists(potential_path) and os.path.isdir(potential_path):
-                    modality_path = potential_path
-                    break
+            # Support legacy modality folders and direct raster/medical data.
+            modality_path, modality_name = resolve_patient_data_path(patient_path)
+
             
             if not modality_path:
-                return create_error_message(f"No valid modality found for patient {patient_id}"), "", False, ""
+                return create_error_message(f"No supported imaging data found for patient {patient_id}"), "", False, ""
             
-            status = create_info_message(f"✅ Loaded patient {patient_id} from campaign {campaign_id} (modality: {os.path.basename(modality_path)})")
+            status = create_info_message(f"✅ Loaded patient {patient_id} from campaign {campaign_id} (source: {modality_name.upper() if modality_name else 'direct image'})")
             return status, modality_path, True, selected_task_value
             
         except Exception as e:
@@ -233,20 +224,14 @@ def create_contribute_tab():
             if not os.path.exists(patient_path):
                 return f"❌ Patient data not found: {patient_path}", "", False
             
-            # Find the first available modality directory
-            valid_modalities = ['flair', 't1', 't1c', 't2']
-            modality_path = None
-            
-            for modality in valid_modalities:
-                potential_path = os.path.join(patient_path, modality)
-                if os.path.exists(potential_path) and os.path.isdir(potential_path):
-                    modality_path = potential_path
-                    break
+            # Support legacy modality folders and direct raster/medical data.
+            modality_path, modality_name = resolve_patient_data_path(patient_path)
+
             
             if not modality_path:
-                return f"❌ No valid modality found for patient {patient_id}", "", False
+                return f"❌ No supported imaging data found for patient {patient_id}", "", False
             
-            status = f"✅ Loaded patient {patient_id} from campaign {campaign_id} (modality: {os.path.basename(modality_path)})"
+            status = f"✅ Loaded patient {patient_id} from campaign {campaign_id} (source: {modality_name.upper() if modality_name else 'direct image'})"
             return status, modality_path, True
             
         except Exception as e:
@@ -433,6 +418,51 @@ def create_contribute_tab():
             
             return table_data, status
         
+        def load_adjacent_assignment(user_id, current_task_selection, direction):
+            """Resolve the previous or next task in the user's assigned order."""
+            if not user_id or not current_task_selection:
+                return "No current assignment selected", "", False, ""
+            if direction not in {"previous", "next"}:
+                return "Invalid task navigation direction", "", False, ""
+
+            crowdsourcing_manager.load_assignments()
+            assigned_tasks = crowdsourcing_manager.get_assigned_tasks(user_id)
+            try:
+                current_campaign, current_patient, _ = [
+                    part.strip() for part in current_task_selection.split("|", 2)
+                ]
+            except ValueError:
+                return "Invalid current assignment", "", False, ""
+
+            current_index = next(
+                (
+                    index
+                    for index, task in enumerate(assigned_tasks)
+                    if (task.get("campaign_id") or task.get("campaign")) == current_campaign
+                    and str(task.get("patient_id", "")).strip() == current_patient
+                ),
+                None,
+            )
+            if current_index is None:
+                return "Current assignment was not found", "", False, ""
+
+            target_index = current_index + (-1 if direction == "previous" else 1)
+            if target_index < 0:
+                return "You are already on the first assigned task", "", False, ""
+            if target_index >= len(assigned_tasks):
+                return "You are already on the last assigned task", "", False, ""
+
+            target = assigned_tasks[target_index]
+            campaign_id = target.get("campaign_id") or target.get("campaign")
+            task_selection = (
+                f"{campaign_id}|{target['patient_id']}|{target['dataset_path']}"
+            )
+            status, dataset_path, success = load_selected_task(
+                task_selection,
+                user_id,
+            )
+            return status, dataset_path, success, task_selection
+
         def load_next_assignment(user_id):
             """Load next assignment for app.py compatibility"""
             remaining = crowdsourcing_manager.get_remaining_assignments_for_user(user_id)
@@ -639,6 +669,7 @@ def create_contribute_tab():
         'task_selection_radio': task_selection_radio,  # New radio selection
         'get_assigned_tasks_dataset': get_assigned_tasks_dataset,  # Function for app.py
         'load_next_assignment': load_next_assignment,  # Function for app.py
+        'load_adjacent_assignment': load_adjacent_assignment,
         'refresh_assignments_after_submission': refresh_assignments_after_submission,  # New refresh function
         'clear_info_messages': clear_info_messages,  # Function to clear messages when leaving tab
     }

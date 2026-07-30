@@ -411,6 +411,28 @@ class AnnotationManager:
             logger.error(f"Error deleting slice annotations: {e}", exc_info=True)
             return False
     
+    def delete_study_annotations(self, user_id: str, study_path: str) -> bool:
+        """Delete every saved draft annotation for one user and study."""
+        try:
+            study_hash = self._get_study_hash(study_path)
+            annotation_dir = self.base_dir / user_id / study_hash
+            annotation_file = annotation_dir / "annotations.json"
+
+            if annotation_file.exists():
+                annotation_file.unlink()
+            if annotation_dir.exists() and not any(annotation_dir.iterdir()):
+                annotation_dir.rmdir()
+
+            logger.info(
+                "Deleted draft annotations for user '%s' and study '%s'",
+                user_id,
+                os.path.basename(os.path.normpath(study_path)),
+            )
+            return True
+        except Exception as exc:
+            logger.error("Error deleting study annotations: %s", exc, exc_info=True)
+            return False
+
     def get_all_user_annotations(self, user_id: str) -> List[Dict[str, Any]]:
         """
         Get all annotations for a specific user across all studies

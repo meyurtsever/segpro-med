@@ -187,6 +187,10 @@ def _get_annotation_shapes(medsam2_handlers) -> List[Dict]:
     from utils.visualization import create_annotation_boxes_from_mask
     
     current_slice = medsam2_handlers.state.current_slice_idx
+    image_handlers = getattr(medsam2_handlers, "image_handlers", None)
+    if image_handlers is not None:
+        return image_handlers.get_effective_annotations_for_slice(current_slice)
+
     annotation_shapes = []
     
     if (hasattr(medsam2_handlers, 'annotation_overlays') and 

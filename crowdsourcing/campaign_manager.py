@@ -8,6 +8,8 @@ import logging
 from datetime import datetime
 from typing import Dict, List, Tuple
 
+from utils.raster_utils import RASTER_IMAGE_EXTENSIONS
+
 logger = logging.getLogger(__name__)
 
 VALID_MODALITY_DIRS = {'flair', 't1', 't1c', 't2'}
@@ -21,7 +23,7 @@ MEDICAL_IMAGE_EXTENSIONS = {
     '.mha',
     '.mhd',
     '.nrrd',
-}
+} | RASTER_IMAGE_EXTENSIONS
 
 
 def _looks_like_dicom(path):
@@ -59,6 +61,35 @@ def _contains_medical_image_data(folder_path):
         logger.warning(f"Could not inspect folder {folder_path}: {e}")
 
     return False
+
+
+def resolve_patient_data_path(patient_path):
+    """Resolve a campaign patient folder to loadable data and modality.
+
+    Legacy datasets keep images in FLAIR/T1/T1c/T2 subfolders. Generic
+    datasets may keep DICOM, volume files, or a metadata-free raster image
+    directly in the patient folder.
+    """
+    if not os.path.isdir(patient_path):
+        return None, None
+
+    try:
+        subdirectories = {
+            entry.lower(): os.path.join(patient_path, entry)
+            for entry in os.listdir(patient_path)
+            if os.path.isdir(os.path.join(patient_path, entry))
+        }
+        for modality in ('flair', 't1', 't1c', 't2'):
+            if modality in subdirectories:
+                return subdirectories[modality], modality
+
+        if _contains_medical_image_data(patient_path):
+            return patient_path, None
+    except Exception as exc:
+        logger.warning(f"Could not resolve patient data path {patient_path}: {exc}")
+
+    return None, None
+
 
 class CrowdsourcingManager:
     """Manages crowdsourcing campaigns and assignments"""

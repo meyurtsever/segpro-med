@@ -128,6 +128,10 @@ def update_view_selector_for_modality(metadata, file_list=None):
         return ["Axial", "Sagittal", "Coronal"], "Axial", True
     
     modality = metadata.get('Modality', '')
+
+    # Conventional 2D image files have only one meaningful view.
+    if metadata.get('FileType') == 'Raster Image':
+        return ["Axial"], "Axial", False
     
     # Mammography (MG) - use specific orientations
     if modality == 'MG':
@@ -1400,8 +1404,11 @@ def create_editor_tab(current_user=None) -> dict:
                 create_load_medical_data_header()
                 
                 file_input = gr.File(
-                    label="Load File (DICOM, NIFTI, MAT)",
-                    file_types=[".dcm", ".nii", ".nii.gz", ".mat"]
+                    label="Load File (DICOM, NIFTI, MAT, PNG, JPEG)",
+                    file_types=[
+                        ".dcm", ".nii", ".nii.gz", ".mat",
+                        ".png", ".jpg", ".jpeg", ".jfif"
+                    ]
                 )
                 dir_input = gr.Textbox(
                     label="Enter directory path containing DICOM files",
@@ -1615,19 +1622,68 @@ def create_editor_tab(current_user=None) -> dict:
                             variant="primary",
                             size="lg"
                         )
-                    
-                    # Assignment progress and next task controls with Next.js style
+
+                    with gr.Row():
+                        previous_task_btn = gr.Button(
+                            "⬅️ Previous Task",
+                            variant="secondary",
+                            size="lg"
+                        )
+                        next_assignment_btn = gr.Button(
+                            "Next Task ➡️",
+                            variant="secondary",
+                            size="lg"
+                        )
+
+                    task_navigation_state = gr.State({})
+                    task_navigation_backdrop = gr.HTML(
+                        value="",
+                        visible=False,
+                        elem_classes=["modal-backdrop"],
+                    )
+                    with gr.Column(
+                        visible=False,
+                        elem_id="task-navigation-modal",
+                        elem_classes=["modal-container"],
+                    ) as task_navigation_modal:
+                        gr.HTML("""
+                        <style>
+                            #task-navigation-modal {
+                                width: 540px !important;
+                                max-width: 92vw !important;
+                                overflow: hidden !important;
+                            }
+                            #task-navigation-modal .task-navigation-copy {
+                                padding: 24px;
+                                color: #e5e7eb;
+                            }
+                        </style>
+                        <div class="modal-header">
+                            <h2 class="modal-title">Task Annotations</h2>
+                        </div>
+                        <div class="task-navigation-copy">
+                            <p>This task contains annotations. Would you like to save them before changing tasks?</p>
+                            <p><strong>Save & Continue</strong> keeps a draft. <strong>Don't Save</strong> permanently discards this task's annotations. Neither option submits the assignment.</p>
+                        </div>
+                        """)
+                        with gr.Row():
+                            save_task_navigation_btn = gr.Button(
+                                "Save & Continue",
+                                variant="primary",
+                            )
+                            discard_task_navigation_btn = gr.Button(
+                                "Don't Save",
+                                variant="stop",
+                            )
+                            cancel_task_navigation_btn = gr.Button(
+                                "Cancel",
+                                variant="secondary",
+                            )
+
+                    # Assignment progress with Next.js style
                     with gr.Row():
                         assignments_remaining = gr.HTML(
                             value="",
-                            visible=False
-                        )
-                    
-                    with gr.Row():
-                        next_assignment_btn = gr.Button(
-                            "➡️ Load Next Assignment",
-                            variant="primary",
-                            size="lg",
                             visible=False
                         )
                     
@@ -2048,7 +2104,14 @@ def create_editor_tab(current_user=None) -> dict:
             'submit_btn': submit_annotation_btn,
             'status': crowdsourcing_status,
             'assignments_remaining': assignments_remaining,
-            'next_assignment_btn': next_assignment_btn
+            'previous_task_btn': previous_task_btn,
+            'next_assignment_btn': next_assignment_btn,
+            'navigation_state': task_navigation_state,
+            'navigation_backdrop': task_navigation_backdrop,
+            'navigation_modal': task_navigation_modal,
+            'navigation_save_btn': save_task_navigation_btn,
+            'navigation_discard_btn': discard_task_navigation_btn,
+            'navigation_cancel_btn': cancel_task_navigation_btn
         },
         'welcome_modal': {
             'guide': welcome_guide,

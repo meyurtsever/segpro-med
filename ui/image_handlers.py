@@ -757,7 +757,7 @@ class ImageViewerHandlers:
             
             # Reconstruct user_annotations from persistent storage
             slice_annotations = annotation_data.get('slice_annotations', [])
-            
+
             for ann_record in slice_annotations:
                 slice_idx = ann_record.get('slice_idx')
                 view_type = ann_record.get('view_type', 'axial')
@@ -1335,7 +1335,7 @@ class ImagePlotToolHandlers:
             # Only save if the annotation has actually changed from what we loaded
             if current_fingerprint == stored_fingerprint:
                 logger.info(f"No changes detected for slice {slice_idx} - skipping save")
-                return
+                return False
             
             logger.info(f"Changes detected - saving annotations for slice {slice_idx}")
             
@@ -1351,7 +1351,7 @@ class ImagePlotToolHandlers:
                 self._loaded_fingerprints[slice_idx] = current_fingerprint
                 # Save empty state to persistent storage
                 self._save_to_persistent_storage()
-                return
+                return True
             
             # Extract annotations from the AnnotatedImageValue
             new_annotations = []
@@ -1365,7 +1365,7 @@ class ImagePlotToolHandlers:
                 annotations = annotated_image_value['annotations']            
             else:
                 logger.warning(f"Unknown annotation format: {type(annotated_image_value)}")
-                return
+                return False
             
             if annotations:
                 for annotation in annotations:
@@ -1427,11 +1427,13 @@ class ImagePlotToolHandlers:
             
             # Save to persistent storage
             self._save_to_persistent_storage()
+            return True
             
         except Exception as e:
             logger.error(f"Error saving user annotations for slice {slice_idx}: {e}")
             import traceback
             logger.error(f"Traceback: {traceback.format_exc()}")
+            return False
     
     def _save_to_persistent_storage(self):
         """Save all annotations to persistent storage using AnnotationManager"""
@@ -1756,25 +1758,64 @@ class ImagePlotToolHandlers:
         # Load persistent annotations for the current user
         self.load_persistent_annotations()
 
-    def get_all_annotations_for_slice(self, slice_idx: int) -> List:
-        """Get all annotations (MEDSAM2 + user) for a specific slice"""
-        all_annotations = []
-        
+    def get_effective_annotations_for_slice(self, slice_idx: int) -> List:
+        """Return user-edited shapes when present, otherwise original MEDSAM shapes."""
         try:
-            # Add MEDSAM2 annotations
-            medsam2_annotations = self.get_medsam2_annotations_for_slice(slice_idx)
-            all_annotations.extend(medsam2_annotations)
-              # Add user annotations
             if slice_idx in self.user_annotations:
-                for user_annotation in self.user_annotations[slice_idx]:
-                    all_annotations.append(user_annotation['data'])
-            
-            logger.info(f"Retrieved {len(all_annotations)} total annotations for slice {slice_idx}")
-            return all_annotations
+                return [
+                    annotation.get('data', annotation)
+                    if isinstance(annotation, dict)
+                    else annotation
+                    for annotation in self.user_annotations[slice_idx]
+                ]
+            if (
+                self.medsam2_handlers is None
+                or slice_idx not in self.medsam2_handlers.annotation_overlays
+            ):
+                return []
+
+            from utils.visualization import create_annotation_boxes_from_mask
+
+            overlay_data = self.medsam2_handlers.annotation_overlays[slice_idx]
+            if isinstance(overlay_data, dict) and 'mask' in overlay_data:
+                return create_annotation_boxes_from_mask(
+                    overlay_data['mask'],
+                    label="MEDSAM2 Annotation",
+                    label_index=1,
+                )
+
+            shapes = []
+            for annotation_id, annotation_data in overlay_data.items():
+                if isinstance(annotation_data, dict) and 'mask' in annotation_data:
+                    shapes.extend(
+                        create_annotation_boxes_from_mask(
+                            annotation_data['mask'],
+                            label=f"MEDSAM2 Annotation {annotation_id}",
+                            label_index=1,
+                        )
+                    )
+            return shapes
         except Exception as e:
-            logger.error(f"Error getting all annotations for slice {slice_idx}: {e}")
+            logger.error(f"Error getting effective annotations for slice {slice_idx}: {e}")
             return []
-    
+
+    def get_all_annotations_for_slice(self, slice_idx: int) -> List:
+        """Backward-compatible alias for effective replacement semantics."""
+        return self.get_effective_annotations_for_slice(slice_idx)
+
+    def replace_previous_run_annotations(self, all_slices: bool = False) -> None:
+        """Clear older in-memory Editor overrides for a successful AI run."""
+        if all_slices:
+            self.user_annotations.clear()
+            self.combined_annotations.clear()
+            self._loaded_fingerprints.clear()
+            return
+
+        slice_idx = self.state.current_slice_idx
+        self.user_annotations.pop(slice_idx, None)
+        self.combined_annotations.pop(slice_idx, None)
+        self._loaded_fingerprints.pop(slice_idx, None)
+
     def on_annotation_change_editor_save(self, annotated_image_value):
         """Handle annotation changes in the ImageAnnotator component"""
         try:
@@ -1800,7 +1841,10 @@ class ImagePlotToolHandlers:
                     logger.info(f"Annotation change contains {box_count} boxes")
             
             # Save current annotations immediately - this handles deletions, edits, additions
-            self.save_user_annotations(annotated_image_value, current_slice)
+            annotations_changed = self.save_user_annotations(annotated_image_value, current_slice)
+            if annotations_changed is False:
+                logger.debug(f"Ignoring unchanged annotation event for slice {current_slice}")
+                return False
             
             # Track the save operation
             self._last_saved_slice = current_slice
@@ -2021,12 +2065,12 @@ class ImagePlotToolHandlers:
                                 self._slice_fingerprints = slice_fingerprints
                 except Exception as track_e:
                     logger.debug(f"Behavioral tracking skipped: {track_e}")
-              # Don't return anything to avoid circular dependency with image_display.change
-            return None
+              # Report whether downstream label updates are necessary.
+            return True
             
         except Exception as e:
             logger.error(f"Error handling annotation change: {e}")
-            return None
+            return False
 
     def handle_annotator_slider_change(self, slider_value, current_annotated_value=None):
         """Handle slider changes in the annotator - save current annotations and load new slice"""
@@ -2229,7 +2273,20 @@ class ImagePlotToolHandlers:
                             'type': box.get('type', ''),
                             'label': box.get('label', ''),
                             'color': box.get('color', ''),
-                            'coordinates': str(box.get('coordinates', box.get('points', []))),
+                            'coordinates': str(box.get('coordinates', [])),
+                            'points': str(box.get('points', [])),
+                            'bbox': (
+                                box.get('xmin'),
+                                box.get('ymin'),
+                                box.get('xmax'),
+                                box.get('ymax'),
+                            ),
+                            'position': (
+                                box.get('x'),
+                                box.get('y'),
+                                box.get('width'),
+                                box.get('height'),
+                            ),
                         }                        # Add any other properties that might be relevant
                         if 'stroke' in box:
                             box_info['stroke'] = box['stroke']
@@ -2446,6 +2503,9 @@ class ImagePlotToolHandlers:
             
             # Replace slice_annotations completely (no merging by annotation_id)
             annotation_data['slice_annotations'] = all_slice_annotations
+            edited_slices_by_view = annotation_data.get('edited_slices_by_view', {}) or {}
+            edited_slices_by_view[self.state.current_view] = sorted(current_slice_indices)
+            annotation_data['edited_slices_by_view'] = edited_slices_by_view
             annotation_data['annotation_type'] = 'manual'
             annotation_data['study_metadata'] = study_metadata
             
@@ -2565,6 +2625,9 @@ class ImagePlotToolHandlers:
             
             # Reconstruct user_annotations from persistent storage
             slice_annotations = annotation_data.get('slice_annotations', [])
+            edited_slices_by_view = annotation_data.get('edited_slices_by_view', {}) or {}
+            for slice_idx in edited_slices_by_view.get(self.state.current_view, []):
+                self.user_annotations.setdefault(int(slice_idx), [])
             
             for ann_record in slice_annotations:
                 slice_idx = ann_record.get('slice_idx')

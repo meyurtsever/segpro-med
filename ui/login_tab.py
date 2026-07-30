@@ -27,8 +27,8 @@ def create_login_interface(auth_callback):
             logger.warning(f"Failed login attempt for username: {username}")
             return "Invalid username or password", None
     
-    with gr.Blocks(title="SegMed-Pro Login") as login_interface:
-        gr.Markdown("# SegMed-Pro: Medical Imaging Annotation Tool")
+    with gr.Blocks(title="KoGA: Medical Image Preparation Tool") as login_interface:
+        gr.Markdown("# KoGA: Medical Image Preparation Tool")
         gr.Markdown("## Please login to continue")
         
         with gr.Row():
@@ -56,8 +56,6 @@ def create_login_interface(auth_callback):
                 # Demo credentials info
                 gr.Markdown("""
                 ### Demo Credentials:
-                **Admin:** username: `admin1`, password: `adminpass`  
-                **Expert:** username: `john_doe`, password: `pass123`  
                 **Expert:** username: `jane_smith`, password: `expert456`
                 """)
             

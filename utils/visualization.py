@@ -139,11 +139,18 @@ def display_slice(volume, slice_idx=None, view='axial', window_level=None, windo
     else:
         raise ValueError(f"Invalid view: {view}")
     
-    # Normalize to 0-255
-    norm_slice = normalize_array(slice_data, window_level=window_level, window_width=window_width)
-    
-    # Convert to RGB for display
-    rgb_slice = np.stack((norm_slice,) * 3, axis=-1)
+    # Preserve conventional RGB images; normalize scalar medical slices.
+    if slice_data.ndim == 3 and slice_data.shape[-1] in (3, 4):
+        color_slice = slice_data[..., :3]
+        if color_slice.dtype == np.uint8 and window_level is None and window_width is None:
+            rgb_slice = color_slice.copy()
+        else:
+            rgb_slice = normalize_array(
+                color_slice, window_level=window_level, window_width=window_width
+            )
+    else:
+        norm_slice = normalize_array(slice_data, window_level=window_level, window_width=window_width)
+        rgb_slice = np.stack((norm_slice,) * 3, axis=-1)
     
     # Create a PIL image for additional overlay elements
     pil_img = Image.fromarray(rgb_slice)

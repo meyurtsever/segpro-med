@@ -494,7 +494,8 @@ MEDICAL_TOOLTIPS = {
     "file_input": """
         <strong>File Upload</strong><br><br>
         Upload single medical image files. Supported formats include DICOM (.dcm), 
-        NIFTI (.nii, .nii.gz), and MATLAB (.mat) files. 
+        NIFTI (.nii, .nii.gz), MATLAB (.mat), PNG (.png), and JPEG
+        (.jpg, .jpeg, .jfif) files.
         <br><br>
         <em>Tip:</em> For multiple files, use the directory path option below.
     """,
